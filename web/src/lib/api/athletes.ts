@@ -26,7 +26,7 @@ export type Athlete = {
   health_info: string | null;
   allergies: string | null;
   medications: string | null;
-  groups?: { name: string } | null;
+  groups?: { name: string; branch: string } | null;
 };
 
 export type AthleteInput = {
@@ -56,7 +56,7 @@ const ATHLETE_FIELDS =
 export async function listAllAthletes(): Promise<Athlete[]> {
   const { data, error } = await supabase
     .from("athletes")
-    .select(`${ATHLETE_FIELDS}, groups!group_id(name)`)
+    .select(`${ATHLETE_FIELDS}, groups!group_id(name, branch)`)
     .order("full_name", { ascending: true });
 
   if (error) throw error;
@@ -66,7 +66,7 @@ export async function listAllAthletes(): Promise<Athlete[]> {
 export async function getAthlete(id: string): Promise<Athlete> {
   const { data, error } = await supabase
     .from("athletes")
-    .select(`${ATHLETE_FIELDS}, groups!group_id(name)`)
+    .select(`${ATHLETE_FIELDS}, groups!group_id(name, branch)`)
     .eq("id", id)
     .single();
   if (error) throw error;

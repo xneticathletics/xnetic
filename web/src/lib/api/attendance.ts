@@ -11,6 +11,38 @@ export type RosterEntry = {
   status: AttendanceStatus | null;
 };
 
+export type AthleteRecentAttendance = {
+  id: string;
+  status: AttendanceStatus;
+  session_date: string;
+  start_time: string;
+  group_name: string | null;
+  venue_name: string | null;
+};
+
+// Sporcu Profili sayfasındaki "Son Antrenman" listesi için — grup ve salon
+// adıyla birlikte, en yeniden eskiye sıralı tüm yoklama kayıtları (devam
+// yüzdesi de bu listeden hesaplanır). Mobildeki src/lib/api/attendance.ts
+// listAthleteRecentAttendance ile birebir aynı.
+export async function listAthleteRecentAttendance(athleteId: string): Promise<AthleteRecentAttendance[]> {
+  const { data, error } = await supabase
+    .from("attendance")
+    .select("id, status, training_sessions(session_date, start_time, groups(name), venues(name))")
+    .eq("athlete_id", athleteId);
+  if (error) throw error;
+  return ((data as any[]) ?? [])
+    .map((r) => ({
+      id: r.id,
+      status: r.status as AttendanceStatus,
+      session_date: r.training_sessions?.session_date ?? "",
+      start_time: r.training_sessions?.start_time ?? "",
+      group_name: r.training_sessions?.groups?.name ?? null,
+      venue_name: r.training_sessions?.venues?.name ?? null,
+    }))
+    .filter((r) => r.session_date)
+    .sort((a, b) => `${b.session_date}${b.start_time}`.localeCompare(`${a.session_date}${a.start_time}`));
+}
+
 export async function getSessionRoster(sessionId: string, groupId: string): Promise<RosterEntry[]> {
   const { data: athletes, error: athErr } = await supabase
     .from("athletes")

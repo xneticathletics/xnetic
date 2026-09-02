@@ -6,6 +6,7 @@ import LoginPage from "./routes/LoginPage";
 import AppLayout from "./components/layout/AppLayout";
 import DashboardPage from "./routes/DashboardPage";
 import AthletesListPage from "./routes/athletes/AthletesListPage";
+import AthleteDetailPage from "./routes/athletes/AthleteDetailPage";
 import GroupsListPage from "./routes/groups/GroupsListPage";
 import BranchesListPage from "./routes/branches/BranchesListPage";
 import VenuesListPage from "./routes/venues/VenuesListPage";
@@ -51,6 +52,7 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/athletes" element={<AthletesListPage />} />
+              <Route path="/athletes/:id" element={<AthleteDetailPage />} />
               <Route path="/groups" element={<GroupsListPage />} />
               <Route path="/branches" element={<BranchesListPage />} />
               <Route path="/venues" element={<VenuesListPage />} />
