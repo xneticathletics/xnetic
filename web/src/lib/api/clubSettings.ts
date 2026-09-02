@@ -10,6 +10,7 @@ export type ClubSettings = {
   announcement_home_preview_days: number;
   announcement_visibility_days: number;
   payment_overdue_grace_days: number;
+  finance_period_start_day: number;
 };
 
 export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
@@ -22,6 +23,7 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
   announcement_home_preview_days: 1,
   announcement_visibility_days: 10,
   payment_overdue_grace_days: 0,
+  finance_period_start_day: 1,
 };
 
 // club_id EXPLICIT olarak filtrelenir — RLS'e (".limit(1)") güvenmek Süper
@@ -43,6 +45,7 @@ export async function getClubSettings(clubId: string): Promise<ClubSettings> {
     announcement_home_preview_days: data.announcement_home_preview_days,
     announcement_visibility_days: data.announcement_visibility_days,
     payment_overdue_grace_days: data.payment_overdue_grace_days,
+    finance_period_start_day: data.finance_period_start_day,
   };
 }
 

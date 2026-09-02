@@ -161,3 +161,93 @@ export async function notifyMatchResult(match: MatchRow) {
 
   await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body).catch(() => {})));
 }
+
+export type MatchRosterEntry = {
+  athlete_id: string;
+  full_name: string;
+  photo_url: string | null;
+  selected: boolean;
+};
+
+// Maçın bağlı olduğu grubun MÜSABIK işaretli aktif sporcularını döner
+// (Spor Okulu sporcuları maç kadrosuna girmez). Bu grubu birincil grubu
+// olarak taşıyanlar YANINDA, bu grubu EK grup olarak işaretlenmiş
+// sporcular da (Sporcu Yönetimi'ndeki "Ek Gruplar" — ör. birincil grubu
+// U15 ama U14'te de oynayan bir müsabık) listeye dahil edilir. Mobildeki
+// src/lib/api/matches.ts getMatchRoster ile birebir aynı.
+export async function getMatchRoster(matchId: string, groupId: string): Promise<MatchRosterEntry[]> {
+  const [primaryResult, extraLinksResult, rosterResult] = await Promise.all([
+    supabase
+      .from("athletes")
+      .select("id, full_name, photo_url")
+      .eq("group_id", groupId)
+      .eq("status", "active")
+      .eq("athlete_type", "musabik"),
+    supabase.from("athlete_groups").select("athlete_id").eq("group_id", groupId),
+    supabase.from("match_roster").select("athlete_id").eq("match_id", matchId),
+  ]);
+  if (primaryResult.error) throw primaryResult.error;
+  if (extraLinksResult.error) throw extraLinksResult.error;
+  if (rosterResult.error) throw rosterResult.error;
+
+  const byId = new Map<string, { id: string; full_name: string; photo_url: string | null }>();
+  (primaryResult.data ?? []).forEach((a) => byId.set(a.id, a));
+
+  const extraAthleteIds = (extraLinksResult.data ?? []).map((r) => r.athlete_id);
+  if (extraAthleteIds.length > 0) {
+    const { data: extraAthletes, error: extraAthletesError } = await supabase
+      .from("athletes")
+      .select("id, full_name, photo_url")
+      .in("id", extraAthleteIds)
+      .eq("status", "active")
+      .eq("athlete_type", "musabik");
+    if (extraAthletesError) throw extraAthletesError;
+    (extraAthletes ?? []).forEach((a) => byId.set(a.id, a));
+  }
+
+  const selectedIds = new Set((rosterResult.data ?? []).map((r) => r.athlete_id));
+  return Array.from(byId.values())
+    .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"))
+    .map((a) => ({
+      athlete_id: a.id,
+      full_name: a.full_name,
+      photo_url: a.photo_url,
+      selected: selectedIds.has(a.id),
+    }));
+}
+
+export type RosterConflict = { opponentName: string; matchDate: string };
+
+// Bir sporcu, aynı gün BAŞKA bir maçın kadrosunda zaten var mı? (Ör.
+// hem U14 hem U15'te oynayan bir sporcu, aynı gün iki farklı maça
+// seçilmiş olabilir.) Kadroya eklerken basit bir uyarı göstermek için.
+export async function checkRosterConflict(
+  athleteId: string,
+  matchDate: string,
+  excludeMatchId: string
+): Promise<RosterConflict | null> {
+  const { data, error } = await supabase
+    .from("match_roster")
+    .select("matches!inner(id, match_date, opponent_name)")
+    .eq("athlete_id", athleteId)
+    .eq("matches.match_date", matchDate)
+    .neq("matches.id", excludeMatchId)
+    .limit(1);
+  if (error) throw error;
+  const row = (data as any[] | null)?.[0];
+  const match = row?.matches;
+  if (!match) return null;
+  return { opponentName: match.opponent_name, matchDate: match.match_date };
+}
+
+// Maçın kadrosunu tamamen yeni seçilen liste ile değiştirir.
+export async function setMatchRoster(matchId: string, athleteIds: string[]) {
+  const { error: delError } = await supabase.from("match_roster").delete().eq("match_id", matchId);
+  if (delError) throw delError;
+  if (athleteIds.length === 0) return;
+
+  const { error: insError } = await supabase
+    .from("match_roster")
+    .insert(athleteIds.map((athlete_id) => ({ match_id: matchId, athlete_id })));
+  if (insError) throw insError;
+}

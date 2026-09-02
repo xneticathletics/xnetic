@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import {
@@ -7,8 +7,12 @@ import {
   deleteMatch,
   getMatchResult,
   notifyMatchResult,
+  getMatchRoster,
+  setMatchRoster,
+  checkRosterConflict,
   type MatchRow,
   type MatchInput,
+  type MatchRosterEntry,
 } from "../../lib/api/matches";
 import type { Group } from "../../lib/api/groups";
 import type { Branch } from "../../lib/api/branches";
@@ -62,7 +66,64 @@ export default function MatchModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [roster, setRoster] = useState<MatchRosterEntry[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+
+  const loadRoster = async (matchId: string, groupId: string) => {
+    setRosterLoading(true);
+    try {
+      setRoster(await getMatchRoster(matchId, groupId));
+    } catch {
+      setRoster([]);
+    } finally {
+      setRosterLoading(false);
+    }
+  };
+
+  // Yeni müsabakada, kaydedilmeden kadro seçilemez — mobil uygulamayla
+  // aynı davranış (kadro seçimi müsabaka bir kere kaydedildikten sonra açılır).
+  useEffect(() => {
+    if (match && match.group_id) loadRoster(match.id, match.group_id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.id]);
+
   const set = <K extends keyof MatchInput>(key: K, value: MatchInput[K]) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleGroupChange = (groupId: string) => {
+    set("group_id", groupId);
+    if (match) loadRoster(match.id, groupId);
+    else setRoster([]);
+  };
+
+  const applyRosterToggle = (athleteId: string) => {
+    setRoster((prev) => prev.map((r) => (r.athlete_id === athleteId ? { ...r, selected: !r.selected } : r)));
+  };
+
+  // Bir sporcuyu kadroya EKLERKEN, aynı gün başka bir maçın kadrosunda
+  // zaten olup olmadığını kontrol ediyoruz — engelleyici değil, sadece
+  // bilgilendirme amaçlı bir uyarı.
+  const toggleRoster = async (athleteId: string) => {
+    const entry = roster.find((r) => r.athlete_id === athleteId);
+    if (!entry) return;
+
+    if (!entry.selected && match && form.match_date) {
+      try {
+        const conflict = await checkRosterConflict(athleteId, form.match_date, match.id);
+        if (conflict) {
+          const proceed = confirm(
+            `${entry.full_name}, ${conflict.matchDate} tarihinde "${conflict.opponentName}" maçının kadrosunda da yer alıyor. Yine de bu maça da eklemek istiyor musun?`
+          );
+          if (!proceed) return;
+        }
+      } catch {
+        // Kontrol başarısız olsa bile kadro seçimini engelleme.
+      }
+    }
+
+    applyRosterToggle(athleteId);
+  };
+
+  const selectedCount = roster.filter((r) => r.selected).length;
 
   // Bireysel branşlarda (Yüzme, Atletizm vb.) "vs. rakip takım" ve skor
   // kavramı yok — sonuç serbest metinle giriliyor (bkz. mobil MatchFormScreen).
@@ -119,6 +180,7 @@ export default function MatchModal({
       } else {
         saved = (await createMatch(payload)) as unknown as MatchRow;
       }
+      await setMatchRoster(saved.id, roster.filter((r) => r.selected).map((r) => r.athlete_id));
       if (shouldNotify) notifyMatchResult(saved).catch(() => {});
       onSaved();
     } catch (e: any) {
@@ -142,7 +204,7 @@ export default function MatchModal({
   return (
     <Modal title={isEdit ? "Müsabakayı Düzenle" : "Yeni Müsabaka"} onClose={onClose}>
       <FormField label="Grup *">
-        <select className={inputClass} value={form.group_id ?? ""} onChange={(e) => set("group_id", e.target.value)}>
+        <select className={inputClass} value={form.group_id ?? ""} onChange={(e) => handleGroupChange(e.target.value)}>
           <option value="">Grup seç</option>
           {groups.map((g) => (
             <option key={g.id} value={g.id}>
@@ -184,6 +246,37 @@ export default function MatchModal({
       <FormField label="Açıklama">
         <textarea className={`${inputClass} h-20`} value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value || null)} />
       </FormField>
+
+      {form.group_id && (
+        <FormField label={`Maç Kadrosu ${roster.length > 0 ? `(${selectedCount}/${roster.length})` : ""}`}>
+          {rosterLoading ? (
+            <p className="text-sm text-muted">Yükleniyor…</p>
+          ) : !isEdit ? (
+            <p className="text-xs text-muted">Kadro seçimi, müsabaka bir kere kaydedildikten sonra açılır.</p>
+          ) : roster.length === 0 ? (
+            <p className="text-xs text-muted">Bu grupta Müsabık işaretli sporcu yok — Spor Okulu sporcuları maç kadrosuna girmiyor.</p>
+          ) : (
+            <div className="max-h-[35vh] space-y-1.5 overflow-y-auto pr-1">
+              {roster.map((r) => (
+                <label
+                  key={r.athlete_id}
+                  className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-line bg-bg p-2"
+                >
+                  <input type="checkbox" checked={r.selected} onChange={() => toggleRoster(r.athlete_id)} className="h-4 w-4" />
+                  {r.photo_url ? (
+                    <img src={r.photo_url} className="h-7 w-7 rounded-full object-cover" alt="" />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-line text-xs font-bold">
+                      {r.full_name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm font-semibold">{r.full_name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </FormField>
+      )}
 
       {isEdit && (
         <div className="mb-3 rounded-lg border border-violet/40 bg-violet/5 p-3">
