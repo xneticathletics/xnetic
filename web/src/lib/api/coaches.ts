@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import { getClubSettings } from "./clubSettings";
+import { getCurrentClubId } from "./currentUser";
 
 export type Coach = {
   id: string;
@@ -143,7 +144,9 @@ export async function setCoachAssignment(coachId: string, groupId: string, assig
     const { error } = await supabase.from("groups").update({ head_coach_id: coachId }).eq("id", groupId);
     if (error) throw error;
   } else if (assignment === "assistant") {
-    const { assistant_coach_limit } = await getClubSettings();
+    const clubId = await getCurrentClubId();
+    if (!clubId) throw new Error("Kulüp bulunamadı");
+    const { assistant_coach_limit } = await getClubSettings(clubId);
     const { data: existing, error: countError } = await supabase
       .from("group_coaches")
       .select("coach_id")

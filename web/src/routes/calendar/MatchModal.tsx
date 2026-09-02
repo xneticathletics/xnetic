@@ -1,19 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
-import { createMatch, updateMatch, deleteMatch, type MatchRow, type MatchInput } from "../../lib/api/matches";
+import {
+  createMatch,
+  updateMatch,
+  deleteMatch,
+  getMatchResult,
+  notifyMatchResult,
+  type MatchRow,
+  type MatchInput,
+} from "../../lib/api/matches";
 import type { Group } from "../../lib/api/groups";
+import type { Branch } from "../../lib/api/branches";
+
+const RESULT_LABEL: Record<string, string> = { win: "Galibiyet", draw: "Beraberlik", loss: "Mağlubiyet" };
+const RESULT_CLASS: Record<string, string> = { win: "text-teal", draw: "text-yellow", loss: "text-coral" };
 
 export default function MatchModal({
   match,
   defaultDate,
   groups,
+  branches,
   onClose,
   onSaved,
 }: {
   match: MatchRow | null;
   defaultDate: string;
   groups: Group[];
+  branches: Branch[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -27,24 +41,85 @@ export default function MatchModal({
           start_time: match.start_time.slice(0, 5),
           location: match.location,
           notes: match.notes,
+          our_score: match.our_score,
+          opponent_score: match.opponent_score,
+          result_note: match.result_note,
         }
-      : { group_id: "", opponent_name: "", match_date: defaultDate, start_time: "", location: null, notes: null }
+      : {
+          group_id: "",
+          opponent_name: "",
+          match_date: defaultDate,
+          start_time: "",
+          location: null,
+          notes: null,
+          our_score: null,
+          opponent_score: null,
+          result_note: null,
+        }
   );
+  const [ourScoreText, setOurScoreText] = useState(match?.our_score != null ? String(match.our_score) : "");
+  const [oppScoreText, setOppScoreText] = useState(match?.opponent_score != null ? String(match.opponent_score) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const set = <K extends keyof MatchInput>(key: K, value: MatchInput[K]) => setForm((f) => ({ ...f, [key]: value }));
 
+  // Bireysel branşlarda (Yüzme, Atletizm vb.) "vs. rakip takım" ve skor
+  // kavramı yok — sonuç serbest metinle giriliyor (bkz. mobil MatchFormScreen).
+  const selectedGroupBranch = groups.find((g) => g.id === form.group_id)?.branch ?? null;
+  const isIndividualBranch = useMemo(
+    () => !!branches.find((b) => b.name === selectedGroupBranch)?.is_individual,
+    [branches, selectedGroupBranch]
+  );
+
+  const liveOur = ourScoreText.trim() ? Number(ourScoreText) : null;
+  const liveOpp = oppScoreText.trim() ? Number(oppScoreText) : null;
+  const liveResult = getMatchResult({ our_score: liveOur, opponent_score: liveOpp });
+
   const handleSave = async () => {
-    if (!form.group_id || !form.opponent_name.trim() || !form.match_date || !form.start_time) {
-      setError("Grup, rakip takım, tarih ve saat alanları zorunludur.");
+    if (!form.group_id || !form.match_date || !form.start_time) {
+      setError("Grup, tarih ve saat alanları zorunludur.");
+      return;
+    }
+    if (!isIndividualBranch && !form.opponent_name.trim()) {
+      setError("Rakip takım adı zorunludur.");
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      if (isEdit) await updateMatch(match.id, form);
-      else await createMatch(form);
+      // Bireysel branşta "Rakip Takım" alanı gösterilmiyor ama veritabanında
+      // zorunlu — mobildeki gibi otomatik bir değerle dolduruyoruz.
+      const payload: MatchInput = {
+        ...form,
+        opponent_name: isIndividualBranch
+          ? form.opponent_name.trim() || selectedGroupBranch || "Müsabaka"
+          : form.opponent_name,
+        our_score: isIndividualBranch ? null : liveOur,
+        opponent_score: isIndividualBranch ? null : liveOpp,
+        result_note: isIndividualBranch ? (form.result_note?.trim() || null) : null,
+      };
+
+      let shouldNotify = false;
+      if (isEdit && match) {
+        if (isIndividualBranch) {
+          const trimmedNote = payload.result_note;
+          shouldNotify = trimmedNote !== null && trimmedNote !== (match.result_note?.trim() || null);
+        } else {
+          shouldNotify =
+            (payload.our_score !== match.our_score || payload.opponent_score !== match.opponent_score) &&
+            payload.our_score !== null &&
+            payload.opponent_score !== null;
+        }
+      }
+
+      let saved: MatchRow;
+      if (isEdit && match) {
+        saved = (await updateMatch(match.id, payload)) as unknown as MatchRow;
+      } else {
+        saved = (await createMatch(payload)) as unknown as MatchRow;
+      }
+      if (shouldNotify) notifyMatchResult(saved).catch(() => {});
       onSaved();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -77,14 +152,16 @@ export default function MatchModal({
         </select>
       </FormField>
 
-      <FormField label="Rakip Takım *">
-        <input
-          className={inputClass}
-          value={form.opponent_name}
-          onChange={(e) => set("opponent_name", e.target.value)}
-          placeholder="Örn. Fenerbahçe U16"
-        />
-      </FormField>
+      {!isIndividualBranch && (
+        <FormField label="Rakip Takım *">
+          <input
+            className={inputClass}
+            value={form.opponent_name}
+            onChange={(e) => set("opponent_name", e.target.value)}
+            placeholder="Örn. Fenerbahçe U16"
+          />
+        </FormField>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <FormField label="Tarih *">
@@ -107,6 +184,51 @@ export default function MatchModal({
       <FormField label="Açıklama">
         <textarea className={`${inputClass} h-20`} value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value || null)} />
       </FormField>
+
+      {isEdit && (
+        <div className="mb-3 rounded-lg border border-violet/40 bg-violet/5 p-3">
+          <p className="mb-2 text-xs font-bold text-violet">Müsabaka Sonucu</p>
+          {isIndividualBranch ? (
+            <FormField label="Sonuç Açıklaması">
+              <textarea
+                className={`${inputClass} h-20`}
+                value={form.result_note ?? ""}
+                onChange={(e) => set("result_note", e.target.value || null)}
+                placeholder="Örn. Ali 1., Ayşe 3. oldu. Mehmet finale kaldı."
+              />
+            </FormField>
+          ) : (
+            <>
+              <div className="mb-2 grid grid-cols-2 gap-3">
+                <FormField label="Bizim Skor">
+                  <input
+                    className={`${inputClass} text-center font-bold`}
+                    value={ourScoreText}
+                    onChange={(e) => setOurScoreText(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="—"
+                    inputMode="numeric"
+                  />
+                </FormField>
+                <FormField label="Rakip Skor">
+                  <input
+                    className={`${inputClass} text-center font-bold`}
+                    value={oppScoreText}
+                    onChange={(e) => setOppScoreText(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="—"
+                    inputMode="numeric"
+                  />
+                </FormField>
+              </div>
+              {liveResult && (
+                <p className={`text-xs font-bold ${RESULT_CLASS[liveResult]}`}>{RESULT_LABEL[liveResult]}</p>
+              )}
+            </>
+          )}
+          <p className="mt-2 text-[11px] text-muted">
+            Sonucu kaydedince grubun velilerine, antrenörlerine, koordinatörüne ve sporcularına otomatik bildirim gider.
+          </p>
+        </div>
+      )}
 
       {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}
 

@@ -24,8 +24,13 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
   payment_overdue_grace_days: 0,
 };
 
-export async function getClubSettings(): Promise<ClubSettings> {
-  const { data, error } = await supabase.from("club_settings").select("*").maybeSingle();
+// club_id EXPLICIT olarak filtrelenir — RLS'e (".limit(1)") güvenmek Süper
+// Admin için kırılıyordu: is_super_admin() RLS'te TÜM kulüpleri gördüğü
+// için ".limit(1)" o an veritabanında hangi kulüp "ilk" geliyorsa onu
+// (kendi kulübü olmadığı hâlde) döndürüyordu (bkz. mobildeki
+// src/lib/api/clubSettings.ts — aynı mantık, birebir uyarlandı).
+export async function getClubSettings(clubId: string): Promise<ClubSettings> {
+  const { data, error } = await supabase.from("club_settings").select("*").eq("club_id", clubId).maybeSingle();
   if (error) throw error;
   if (!data) return DEFAULT_CLUB_SETTINGS;
   return {
@@ -41,21 +46,18 @@ export async function getClubSettings(): Promise<ClubSettings> {
   };
 }
 
-export async function updateClubSettings(input: ClubSettings) {
-  const { error } = await supabase.from("club_settings").upsert(input, { onConflict: "club_id" });
+export async function updateClubSettings(clubId: string, input: ClubSettings) {
+  const { error } = await supabase.from("club_settings").upsert({ ...input, club_id: clubId }, { onConflict: "club_id" });
   if (error) throw error;
 }
 
-export async function getClubName(): Promise<string | null> {
-  const { data, error } = await supabase.from("clubs").select("name").limit(1).maybeSingle();
+export async function getClubName(clubId: string): Promise<string | null> {
+  const { data, error } = await supabase.from("clubs").select("name").eq("id", clubId).maybeSingle();
   if (error) return null;
   return data?.name ?? null;
 }
 
-export async function updateClubName(name: string): Promise<void> {
-  const { data: clubRow, error: fetchError } = await supabase.from("clubs").select("id").limit(1).maybeSingle();
-  if (fetchError) throw fetchError;
-  if (!clubRow) throw new Error("Kulüp bulunamadı");
-  const { error } = await supabase.from("clubs").update({ name }).eq("id", clubRow.id);
+export async function updateClubName(clubId: string, name: string): Promise<void> {
+  const { error } = await supabase.from("clubs").update({ name }).eq("id", clubId);
   if (error) throw error;
 }

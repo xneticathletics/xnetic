@@ -16,6 +16,7 @@ export default function BranchesListPage() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Branch | "new" | null>(null);
   const [name, setName] = useState("");
+  const [isIndividual, setIsIndividual] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = () => {
@@ -30,10 +31,12 @@ export default function BranchesListPage() {
 
   const openNew = () => {
     setName("");
+    setIsIndividual(false);
     setEditing("new");
   };
   const openEdit = (b: Branch) => {
     setName(b.name);
+    setIsIndividual(b.is_individual);
     setEditing(b);
   };
 
@@ -41,8 +44,8 @@ export default function BranchesListPage() {
     if (!name.trim()) return;
     setSaving(true);
     try {
-      if (editing === "new") await createBranch(name.trim());
-      else if (editing) await updateBranch(editing.id, name.trim());
+      if (editing === "new") await createBranch(name.trim(), isIndividual);
+      else if (editing) await updateBranch(editing.id, name.trim(), isIndividual);
       setEditing(null);
       load();
     } catch (e: any) {
@@ -63,7 +66,16 @@ export default function BranchesListPage() {
   };
 
   const columns: Column<Branch>[] = [
-    { key: "name", label: "Branş", render: (b) => <span className="font-semibold">{b.name}</span> },
+    {
+      key: "name",
+      label: "Branş",
+      render: (b) => (
+        <span className="font-semibold">
+          {b.name}
+          {b.is_individual && <span className="ml-2 text-xs font-semibold text-teal">Bireysel</span>}
+        </span>
+      ),
+    },
     { key: "coordinator", label: "Koordinatör", render: (b) => b.coordinator?.name ?? "—" },
     {
       key: "actions",
@@ -112,6 +124,14 @@ export default function BranchesListPage() {
               autoFocus
             />
           </FormField>
+          <label className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted">
+            <input
+              type="checkbox"
+              checked={isIndividual}
+              onChange={(e) => setIsIndividual(e.target.checked)}
+            />
+            Bireysel branş (Yüzme, Atletizm vb. — skor yerine sonuç açıklaması girilir)
+          </label>
           <button
             onClick={handleSave}
             disabled={saving || !name.trim()}

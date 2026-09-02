@@ -50,9 +50,14 @@ export default function ClubSettingsPage() {
   const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
-    getClubSettings().then(setForm).catch((e) => setError(e.message)).finally(() => setLoading(false));
-    getClubName().then((n) => setClubNameState(n ?? ""));
-  }, []);
+    if (!clubId) {
+      setError("Kulüp bulunamadı");
+      setLoading(false);
+      return;
+    }
+    getClubSettings(clubId).then(setForm).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    getClubName(clubId).then((n) => setClubNameState(n ?? ""));
+  }, [clubId]);
 
   const set = (key: keyof ClubSettings, value: number) => {
     if (!form) return;
@@ -60,11 +65,11 @@ export default function ClubSettingsPage() {
   };
 
   const handleSave = async () => {
-    if (!form) return;
+    if (!form || !clubId) return;
     setSaving(true);
     setError(null);
     try {
-      await updateClubSettings(form);
+      await updateClubSettings(clubId, form);
       alert("Ayarlar güncellendi.");
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -74,10 +79,10 @@ export default function ClubSettingsPage() {
   };
 
   const handleSaveName = async () => {
-    if (!clubName.trim()) return;
+    if (!clubName.trim() || !clubId) return;
     setNameSaving(true);
     try {
-      await updateClubName(clubName.trim());
+      await updateClubName(clubId, clubName.trim());
       alert("Kulüp adı güncellendi.");
     } catch (e: any) {
       alert(e.message ?? "Kaydedilemedi");

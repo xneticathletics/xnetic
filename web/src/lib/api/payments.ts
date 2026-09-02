@@ -66,13 +66,28 @@ export type MonthlyFinanceSummary = {
   overdue: number;
 };
 
-export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
+// İçinde bulunulan ayın (bugünün ayı) 1'i ile son günü arasındaki tarih
+// aralığını döner — mobildeki src/lib/api/payments.ts getCurrentMonthRange
+// ile aynı paylaşılan kaynak.
+export function getCurrentMonthRange(): { start: string; end: string } {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
   const start = `${year}-${pad2(month + 1)}-01`;
   const lastDay = new Date(year, month + 1, 0).getDate();
   const end = `${year}-${pad2(month + 1)}-${pad2(lastDay)}`;
+  return { start, end };
+}
+
+// Tahsil edilen (bu ay ödenmiş), bekleyen (bu ay vadeli, henüz gecikmemiş)
+// ve vadesi geçmiş (AY SINIRI OLMAKSIZIN, geçmiş aylardan kalanlar dahil TÜM
+// gecikmiş ödemeler) tutarlarını döner. "expected" bu üçünün basit toplamıdır
+// — üstteki toplam rakamın alttaki 3 kutunun toplamıyla HER ZAMAN birebir
+// tutması için bilerek böyle hesaplanır (aksi halde "Vadesi Geçmiş" geçen
+// aylardan tutar içerdiğinde üstteki toplamla alttaki kutular tutmuyordu —
+// mobildeki aynı fonksiyonla birebir aynı, bkz. src/lib/api/payments.ts).
+export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
+  const { start, end } = getCurrentMonthRange();
 
   const [thisMonthResult, allPendingResult] = await Promise.all([
     supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end),
@@ -81,20 +96,23 @@ export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<M
   if (thisMonthResult.error) throw thisMonthResult.error;
   if (allPendingResult.error) throw allPendingResult.error;
 
-  let expected = 0;
   let collected = 0;
   let pending = 0;
   (thisMonthResult.data ?? []).forEach((p) => {
     const amount = Number(p.amount);
-    expected += amount;
-    if (p.status === "paid") collected += amount;
-    else if (!isOverdue(p as Payment, graceDays)) pending += amount;
+    if (p.status === "paid") {
+      collected += amount;
+    } else if (!isOverdue(p as Payment, graceDays)) {
+      pending += amount;
+    }
   });
 
   let overdue = 0;
   (allPendingResult.data ?? []).forEach((p) => {
     if (isOverdue(p as Payment, graceDays)) overdue += Number(p.amount);
   });
+
+  const expected = collected + pending + overdue;
 
   return { expected, collected, pending, overdue };
 }

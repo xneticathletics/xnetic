@@ -20,8 +20,8 @@ export default function CoachAddModal({ onClose, onCreated }: { onClose: () => v
     setSaving(true);
     setError(null);
     try {
-      const res = await inviteUser({ email: email.trim(), role: "coach" });
-      setResult({ email: res.email, tempPassword: res.tempPassword });
+      const res = await inviteUser({ identifier: email.trim(), role: "coach" });
+      setResult({ email: res.identifier, tempPassword: res.tempPassword });
       onCreated();
     } catch (e: any) {
       setError(e.message ?? "Hesap oluşturulamadı");

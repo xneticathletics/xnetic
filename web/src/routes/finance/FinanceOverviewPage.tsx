@@ -12,6 +12,7 @@ import {
 } from "../../lib/api/payments";
 import { topUpAllActivePlans } from "../../lib/api/paymentPlans";
 import { getClubSettings } from "../../lib/api/clubSettings";
+import { useAuth } from "../../context/AuthContext";
 import PaymentPlanModal from "./PaymentPlanModal";
 
 const PERIOD_LABEL: Record<string, string> = { weekly: "Haftalık", monthly: "Aylık", yearly: "Yıllık" };
@@ -23,6 +24,7 @@ function formatTL(n: number) {
 }
 
 export default function FinanceOverviewPage() {
+  const { clubId } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [summary, setSummary] = useState<MonthlyFinanceSummary | null>(null);
   const [graceDays, setGraceDays] = useState(0);
@@ -33,9 +35,10 @@ export default function FinanceOverviewPage() {
   const [planModalOpen, setPlanModalOpen] = useState(false);
 
   const load = async () => {
+    if (!clubId) return;
     setLoading(true);
     try {
-      const settings = await getClubSettings();
+      const settings = await getClubSettings(clubId);
       setGraceDays(settings.payment_overdue_grace_days);
       await topUpAllActivePlans();
       const [all, s] = await Promise.all([listClubPayments(), getMonthlyFinanceSummary(settings.payment_overdue_grace_days)]);
@@ -50,7 +53,7 @@ export default function FinanceOverviewPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [clubId]);
 
   const filtered = useMemo(() => {
     let list = payments;

@@ -8,8 +8,18 @@ import {
   updateAthlete,
   deleteAthlete,
   uploadAthletePhoto,
+  getLinkedUser,
+  getLinkedParentUser,
+  listUnlinkedAthleteUsers,
+  listParentUsers,
+  linkAthleteAccount,
+  linkParentAccount,
+  getAthleteExtraGroups,
+  setAthleteExtraGroups,
   type Athlete,
   type AthleteInput,
+  type LinkedUser,
+  type AthleteGroupInfo,
 } from "../../lib/api/athletes";
 import { listGroups, type Group } from "../../lib/api/groups";
 
@@ -23,11 +33,15 @@ const emptyForm: AthleteInput = {
   license_no: null,
   school: null,
   jersey_size: null,
+  jersey_number: null,
   status: "active",
   athlete_type: "spor_okulu",
   photo_url: null,
   parent_name: null,
   parent_phone: null,
+  health_info: null,
+  allergies: null,
+  medications: null,
 };
 
 export default function AthletesListPage() {
@@ -40,6 +54,12 @@ export default function AthletesListPage() {
   const [form, setForm] = useState<AthleteInput>(emptyForm);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [athleteLinkedUser, setAthleteLinkedUser] = useState<LinkedUser | null>(null);
+  const [parentLinkedUser, setParentLinkedUser] = useState<LinkedUser | null>(null);
+  const [unlinkedAthleteUsers, setUnlinkedAthleteUsers] = useState<LinkedUser[]>([]);
+  const [parentUsers, setParentUsers] = useState<LinkedUser[]>([]);
+  const [extraGroups, setExtraGroups] = useState<AthleteGroupInfo[]>([]);
+  const [extraGroupSaving, setExtraGroupSaving] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -63,7 +83,16 @@ export default function AthletesListPage() {
   const openNew = () => {
     setForm(emptyForm);
     setPhotoFile(null);
+    setAthleteLinkedUser(null);
+    setParentLinkedUser(null);
+    setExtraGroups([]);
     setEditingId("new");
+    Promise.all([listUnlinkedAthleteUsers(), listParentUsers()])
+      .then(([au, pu]) => {
+        setUnlinkedAthleteUsers(au);
+        setParentUsers(pu);
+      })
+      .catch(() => {});
   };
   const openEdit = (a: Athlete) => {
     setForm({
@@ -76,18 +105,66 @@ export default function AthletesListPage() {
       license_no: a.license_no,
       school: a.school,
       jersey_size: a.jersey_size,
+      jersey_number: a.jersey_number,
       status: a.status,
       athlete_type: a.athlete_type,
       photo_url: a.photo_url,
       parent_name: a.parent_name,
       parent_phone: a.parent_phone,
+      health_info: a.health_info,
+      allergies: a.allergies,
+      medications: a.medications,
     });
     setPhotoFile(null);
     setEditingId(a.id);
+    Promise.all([
+      listUnlinkedAthleteUsers(),
+      listParentUsers(),
+      getLinkedUser(a.id),
+      getLinkedParentUser(a.id),
+      getAthleteExtraGroups(a.id),
+    ])
+      .then(([au, pu, linkedAthlete, linkedParent, extra]) => {
+        setUnlinkedAthleteUsers(au);
+        setParentUsers(pu);
+        setAthleteLinkedUser(linkedAthlete);
+        setParentLinkedUser(linkedParent);
+        setExtraGroups(extra);
+      })
+      .catch(() => {});
+  };
+
+  const toggleExtraGroup = async (g: Group) => {
+    if (editingId === "new" || !editingId) return;
+    const exists = extraGroups.some((eg) => eg.group_id === g.id);
+    const next = exists
+      ? extraGroups.filter((eg) => eg.group_id !== g.id)
+      : [...extraGroups, { group_id: g.id, group_name: g.name, branch: g.branch }];
+    setExtraGroupSaving(true);
+    try {
+      await setAthleteExtraGroups(editingId, next.map((eg) => eg.group_id));
+      setExtraGroups(next);
+    } catch (e: any) {
+      alert(e.message ?? "Kaydedilemedi");
+    } finally {
+      setExtraGroupSaving(false);
+    }
   };
 
   const handleSave = async () => {
     if (!form.full_name.trim()) return;
+    if (!form.group_id) {
+      alert("Bir grup seçmelisin.");
+      return;
+    }
+    if (!form.parent_name?.trim()) {
+      alert("Veli Adı Soyadı zorunludur.");
+      return;
+    }
+    if (!form.parent_phone?.trim()) {
+      alert("Veli Telefon zorunludur.");
+      return;
+    }
     setSaving(true);
     try {
       let saved;
@@ -98,6 +175,10 @@ export default function AthletesListPage() {
       if (photoFile && athleteId) {
         const url = await uploadAthletePhoto(athleteId, photoFile);
         await updateAthlete(athleteId, { photo_url: url });
+      }
+      if (athleteId) {
+        await linkAthleteAccount(athleteId, athleteLinkedUser?.id ?? null);
+        await linkParentAccount(athleteId, parentLinkedUser?.id ?? null);
       }
 
       setEditingId(null);
@@ -284,7 +365,7 @@ export default function AthletesListPage() {
               </FormField>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <FormField label="Lisans No">
                 <input
                   className={inputClass}
@@ -297,9 +378,48 @@ export default function AthletesListPage() {
                   className={inputClass}
                   value={form.jersey_size ?? ""}
                   onChange={(e) => setForm((f) => ({ ...f, jersey_size: e.target.value || null }))}
+                  placeholder="Örn. S, M, L"
+                />
+              </FormField>
+              <FormField label="Forma Numarası">
+                <input
+                  className={inputClass}
+                  value={form.jersey_number ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, jersey_number: e.target.value || null }))}
+                  placeholder="Örn. 10"
                 />
               </FormField>
             </div>
+
+            <FormField label="Alerjiler">
+              <textarea
+                className={inputClass}
+                value={form.allergies ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, allergies: e.target.value || null }))}
+                placeholder="Örn. Fıstık, polen — yoksa boş bırak"
+                rows={2}
+              />
+            </FormField>
+
+            <FormField label="Kullandığı İlaçlar">
+              <textarea
+                className={inputClass}
+                value={form.medications ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, medications: e.target.value || null }))}
+                placeholder="Düzenli kullandığı bir ilaç varsa yaz"
+                rows={2}
+              />
+            </FormField>
+
+            <FormField label="Sağlık Notu">
+              <textarea
+                className={inputClass}
+                value={form.health_info ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, health_info: e.target.value || null }))}
+                placeholder="Kronik rahatsızlık, geçmiş ameliyat vb. antrenörün bilmesi gereken bilgi"
+                rows={2}
+              />
+            </FormField>
 
             <FormField label="Okul">
               <input
@@ -310,14 +430,14 @@ export default function AthletesListPage() {
             </FormField>
 
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="Veli Adı">
+              <FormField label="Veli Adı Soyadı *">
                 <input
                   className={inputClass}
                   value={form.parent_name ?? ""}
                   onChange={(e) => setForm((f) => ({ ...f, parent_name: e.target.value || null }))}
                 />
               </FormField>
-              <FormField label="Veli Telefonu">
+              <FormField label="Veli Telefonu *">
                 <input
                   className={inputClass}
                   value={form.parent_phone ?? ""}
@@ -334,6 +454,91 @@ export default function AthletesListPage() {
                 className="block w-full text-xs text-muted"
               />
             </FormField>
+
+            <div className="mt-2 border-t border-line pt-3">
+              <p className="mb-2 text-xs font-bold text-ink">Sporcu Giriş Hesabı</p>
+              {athleteLinkedUser ? (
+                <div className="flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2">
+                  <span className="text-sm font-semibold text-teal">{athleteLinkedUser.name}</span>
+                  <button type="button" onClick={() => setAthleteLinkedUser(null)} className="text-xs font-bold text-coral">
+                    Kaldır
+                  </button>
+                </div>
+              ) : (
+                <select
+                  className={inputClass}
+                  value=""
+                  onChange={(e) => {
+                    const u = unlinkedAthleteUsers.find((x) => x.id === e.target.value);
+                    if (u) setAthleteLinkedUser(u);
+                  }}
+                >
+                  <option value="">Bağlı hesap yok — seç</option>
+                  {unlinkedAthleteUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="mt-3 border-t border-line pt-3">
+              <p className="mb-2 text-xs font-bold text-ink">Veli Giriş Hesabı</p>
+              {parentLinkedUser ? (
+                <div className="flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2">
+                  <span className="text-sm font-semibold text-teal">{parentLinkedUser.name}</span>
+                  <button type="button" onClick={() => setParentLinkedUser(null)} className="text-xs font-bold text-coral">
+                    Kaldır
+                  </button>
+                </div>
+              ) : (
+                <select
+                  className={inputClass}
+                  value=""
+                  onChange={(e) => {
+                    const u = parentUsers.find((x) => x.id === e.target.value);
+                    if (u) setParentLinkedUser(u);
+                  }}
+                >
+                  <option value="">Bağlı hesap yok — seç</option>
+                  {parentUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {editingId !== "new" && (
+              <div className="mt-3 border-t border-line pt-3">
+                <p className="mb-1 text-xs font-bold text-ink">Ek Branşlar / Gruplar</p>
+                <p className="mb-2 text-xs text-muted">
+                  Yukarıdaki "Grup" ana (birincil) kaydı — bu sporcu ayrıca başka branş/gruplara da kayıtlı olabilir.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {groups
+                    .filter((g) => g.id !== form.group_id)
+                    .map((g) => {
+                      const active = extraGroups.some((eg) => eg.group_id === g.id);
+                      return (
+                        <button
+                          type="button"
+                          key={g.id}
+                          disabled={extraGroupSaving}
+                          onClick={() => toggleExtraGroup(g)}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                            active ? "border-teal bg-teal text-bg" : "border-line text-muted"
+                          }`}
+                        >
+                          {g.name} ({g.branch})
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
 
           <button

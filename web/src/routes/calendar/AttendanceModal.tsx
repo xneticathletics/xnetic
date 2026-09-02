@@ -78,7 +78,10 @@ export default function AttendanceModal({
                     {r.full_name.slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <span className="flex-1 text-sm font-semibold">{r.full_name}</span>
+                <span className="flex-1">
+                  <span className="block text-sm font-semibold">{r.full_name}</span>
+                  {!!r.birth_date && <span className="block text-[11px] text-muted">{r.birth_date}</span>}
+                </span>
                 <div className="flex gap-1.5">
                   <button
                     onClick={() => setStatus(r.athlete_id, "geldi")}

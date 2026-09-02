@@ -3,6 +3,7 @@ import { listSessions, completeSession, type TrainingSession } from "../../lib/a
 import { listMatches, type MatchRow } from "../../lib/api/matches";
 import { listGroups, type Group } from "../../lib/api/groups";
 import { listVenues, type Venue } from "../../lib/api/venues";
+import { listBranches, type Branch } from "../../lib/api/branches";
 import { buildMonthGrid, toDateKey, todayKey, MONTH_LABELS, WEEKDAY_LABELS } from "../../lib/date";
 import SessionModal from "./SessionModal";
 import MatchModal from "./MatchModal";
@@ -21,6 +22,7 @@ export default function CalendarPage() {
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,12 +32,13 @@ export default function CalendarPage() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([listSessions(), listMatches(), listGroups(), listVenues()])
-      .then(([s, m, g, v]) => {
+    Promise.all([listSessions(), listMatches(), listGroups(), listVenues(), listBranches()])
+      .then(([s, m, g, v, b]) => {
         setSessions(s);
         setMatches(m);
         setGroups(g);
         setVenues(v);
+        setBranches(b);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -208,19 +211,31 @@ export default function CalendarPage() {
             {dayItems.map((item) => {
               if (item.kind === "match") {
                 const m = item.data;
+                const isIndividual = !!branches.find((b) => b.name === m.groups?.branch)?.is_individual;
+                const hasResult = isIndividual
+                  ? !!m.result_note?.trim()
+                  : m.our_score !== null && m.opponent_score !== null;
                 return (
                   <div key={`match-${m.id}`} className="rounded-xl border border-coral bg-surface p-4">
                     <div className="mb-1 flex items-center justify-between">
                       <span className="font-bold text-ink">🏆 {m.groups?.name ?? "Grup atanmadı"}</span>
                       <span className="font-bold text-coral">{m.start_time.slice(0, 5)}</span>
                     </div>
-                    <p className="text-sm text-muted">vs. {m.opponent_name}</p>
+                    {!isIndividual && <p className="text-sm text-muted">vs. {m.opponent_name}</p>}
                     {!!m.location && <p className="text-sm text-muted">📍 {m.location}</p>}
+                    {hasResult &&
+                      (isIndividual ? (
+                        <p className="mt-1 text-sm text-muted">📋 {m.result_note}</p>
+                      ) : (
+                        <p className="mt-1 text-sm font-extrabold text-ink">
+                          {m.our_score} - {m.opponent_score}
+                        </p>
+                      ))}
                     <button
                       onClick={() => setMatchModal({ match: m })}
                       className="mt-2 text-xs font-bold text-teal hover:underline"
                     >
-                      Düzenle
+                      {hasResult ? "Sonucu Düzenle" : "Düzenle"}
                     </button>
                   </div>
                 );
@@ -294,6 +309,7 @@ export default function CalendarPage() {
           match={matchModal.match}
           defaultDate={selectedDate}
           groups={groups}
+          branches={branches}
           onClose={() => setMatchModal(null)}
           onSaved={() => {
             setMatchModal(null);

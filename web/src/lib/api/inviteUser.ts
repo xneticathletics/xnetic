@@ -3,13 +3,17 @@ import { supabase } from "../supabase";
 export type InviteRole = "parent" | "athlete" | "coach";
 
 export type InviteUserInput = {
-  email: string;
+  // Edge function (supabase/functions/invite-user/index.ts) telefon,
+  // kullanıcı adı ya da e-posta kabul eden tek bir "identifier" alanı
+  // bekliyor — mobildeki InviteUserScreen ile aynı sözleşme.
+  identifier: string;
   role: InviteRole;
+  name?: string;
 };
 
 export type InviteUserResult = {
   id: string;
-  email: string;
+  identifier: string;
   tempPassword: string;
 };
 

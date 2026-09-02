@@ -42,8 +42,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getClubName().then(setClubName).catch(() => {});
-  }, []);
+    if (!clubId) return;
+    getClubName(clubId).then(setClubName).catch(() => {});
+  }, [clubId]);
 
   useEffect(() => {
     Promise.all([
