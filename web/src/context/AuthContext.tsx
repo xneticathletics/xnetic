@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { resetCurrentUserCache } from "../lib/api/currentUser";
 
 export type UserRole =
   | "super_admin"
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     signOut: async () => {
       await supabase.auth.signOut();
+      resetCurrentUserCache();
     },
   };
 

@@ -47,7 +47,18 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-line p-3">
+      <div className="space-y-1 border-t border-line p-3">
+        <NavLink
+          to="/account"
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+              isActive ? "bg-yellow text-bg" : "text-muted hover:bg-bg hover:text-ink"
+            }`
+          }
+        >
+          <span>👤</span>
+          Hesabım
+        </NavLink>
         <button
           onClick={() => signOut()}
           className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-coral hover:bg-bg"
