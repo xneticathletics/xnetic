@@ -86,17 +86,17 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-8 flex items-center gap-5">
         {clubId && !logoFailed && (
           <img
             src={getClubLogoUrl(clubId)}
             alt="Kulüp logosu"
             onError={() => setLogoFailed(true)}
-            className="h-14 w-14 rounded-xl border border-line object-contain"
+            className="h-24 w-24 rounded-2xl border border-line object-contain"
           />
         )}
         <div>
-          <h1 className="text-xl font-bold text-ink">{clubName ?? "Kulüp Özeti"}</h1>
+          <h1 className="text-3xl font-extrabold text-ink">{clubName ?? "Kulüp Özeti"}</h1>
           <p className="text-sm text-muted">{new Date().toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
         </div>
       </div>
