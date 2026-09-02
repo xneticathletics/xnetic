@@ -11,6 +11,7 @@ import {
   type CoachBranchInfo,
 } from "../../lib/api/coaches";
 import { listBranches, type Branch } from "../../lib/api/branches";
+import { getUserIdsForRoleBucket } from "../../lib/api/notificationRolePrefs";
 import CoachEditModal from "./CoachEditModal";
 import CoachAddModal from "./CoachAddModal";
 
@@ -18,6 +19,7 @@ export default function CoachesListPage() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesByCoach, setBranchesByCoach] = useState<Record<string, CoachBranchInfo[]>>({});
+  const [coordinatorIds, setCoordinatorIds] = useState<Set<string>>(new Set());
   const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +28,17 @@ export default function CoachesListPage() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([listCoaches({ includeInactive: showInactive }), listBranches(), getAllCoachBranches()])
-      .then(([c, b, cb]) => {
+    Promise.all([
+      listCoaches({ includeInactive: showInactive }),
+      listBranches(),
+      getAllCoachBranches(),
+      getUserIdsForRoleBucket("coordinator"),
+    ])
+      .then(([c, b, cb, coordinators]) => {
         setCoaches(c);
         setBranches(b);
         setBranchesByCoach(cb);
+        setCoordinatorIds(new Set(coordinators));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -77,9 +85,14 @@ export default function CoachesListPage() {
       key: "name",
       label: "Antrenör",
       render: (c) => (
-        <Link to={`/coaches/${c.id}`} className="font-semibold text-ink hover:text-yellow hover:underline">
-          {c.name}
-        </Link>
+        <span className="inline-flex items-center gap-1.5">
+          <Link to={`/coaches/${c.id}`} className="font-semibold text-ink hover:text-yellow hover:underline">
+            {c.name}
+          </Link>
+          {coordinatorIds.has(c.id) && (
+            <span className="rounded-full bg-violet/20 px-2 py-0.5 text-[10px] font-bold text-violet">🏷️ Koordinatör</span>
+          )}
+        </span>
       ),
     },
     { key: "email", label: "E-posta", render: (c) => c.email ?? "—" },

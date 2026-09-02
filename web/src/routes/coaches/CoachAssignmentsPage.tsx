@@ -1,20 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listGroups, type Group } from "../../lib/api/groups";
 import { listCoaches, getGroupStaffingDetailed, setCoachAssignment, type Coach, type GroupStaffingDetailed } from "../../lib/api/coaches";
+import { listBranches, type Branch } from "../../lib/api/branches";
 
 export default function CoachAssignmentsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [staffing, setStaffing] = useState<Record<string, GroupStaffingDetailed>>({});
+  const [branchFilter, setBranchFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyGroupId, setBusyGroupId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
-    Promise.all([listGroups(), listCoaches(), getGroupStaffingDetailed()])
-      .then(([g, c, s]) => {
+    Promise.all([listGroups(), listBranches(), listCoaches(), getGroupStaffingDetailed()])
+      .then(([g, br, c, s]) => {
         setGroups(g);
+        setBranches(br);
         setCoaches(c);
         setStaffing(s);
       })
@@ -23,6 +27,11 @@ export default function CoachAssignmentsPage() {
   };
 
   useEffect(load, []);
+
+  const filteredGroups = useMemo(
+    () => (branchFilter ? groups.filter((g) => g.branch === branchFilter) : groups),
+    [groups, branchFilter]
+  );
 
   const handleHeadChange = async (groupId: string, coachId: string) => {
     setBusyGroupId(groupId);
@@ -56,11 +65,27 @@ export default function CoachAssignmentsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-bold text-ink">Grup Atamaları</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-ink">Grup Atamaları</h1>
+        <select
+          className="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
+          value={branchFilter}
+          onChange={(e) => setBranchFilter(e.target.value)}
+        >
+          <option value="">Tüm Branşlar</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.name}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
       <div className="space-y-4">
-        {groups.map((g) => {
+        {filteredGroups.length === 0 && <p className="text-sm text-muted">Bu branşta grup bulunamadı.</p>}
+        {filteredGroups.map((g) => {
           const s = staffing[g.id] ?? { headCoachId: null, headCoachName: null, assistants: [] };
           const assistantIds = new Set(s.assistants.map((a) => a.id));
           const busy = busyGroupId === g.id;
