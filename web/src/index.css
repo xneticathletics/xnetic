@@ -25,3 +25,30 @@ body {
   color: var(--color-ink);
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Tarayıcının varsayılan beyaz scrollbar'ı yerine, koyu temayla uyumlu
+   ince bir scrollbar — Firefox (scrollbar-*) ve Chromium (::-webkit-*)
+   için ayrı ayrı tanımlanıyor, ikisi de aynı anda desteklenmiyor. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) var(--color-bg);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-line);
+  border-radius: 999px;
+  border: 2px solid var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted);
+}

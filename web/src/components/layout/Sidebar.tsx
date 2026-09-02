@@ -34,7 +34,7 @@ export default function Sidebar() {
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-line bg-surface">
       <div className="flex items-center gap-3 border-b border-line px-5 py-5">
-        <img src="/xnetic-logo.png" alt="X-NETIC" className="h-9 w-9 rounded-lg object-contain" />
+        <img src="/xnetic-logo.png" alt="X-NETIC" className="h-12 w-12 rounded-lg object-contain" />
         <div>
           <div className="text-base font-extrabold text-ink">X-NETIC</div>
           <div className="text-xs font-semibold text-muted">Yönetim Paneli</div>
