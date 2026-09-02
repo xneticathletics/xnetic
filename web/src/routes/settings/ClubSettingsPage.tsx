@@ -14,18 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useClubSettings } from "../../context/ClubSettingsContext";
 import { exportClubData } from "../../lib/clubExport";
 import NotificationRolePrefsCard from "./NotificationRolePrefsCard";
-
-function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-5 rounded-xl border border-line bg-surface p-4 sm:p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="h-3 w-[3px] rounded-sm bg-yellow" />
-        <span className="text-xs font-bold uppercase tracking-wide text-muted">{title}</span>
-      </div>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
+import SettingsCard from "../../components/CollapsibleCard";
 
 function NumberField({
   label,
@@ -183,7 +172,7 @@ export default function ClubSettingsPage() {
     <div className="max-w-2xl">
       <h1 className="mb-6 text-xl font-bold text-ink">Kulüp Ayarları</h1>
 
-      <SettingsCard title="Kulüp Kimliği">
+      <SettingsCard title="Kulüp Kimliği" defaultOpen>
         <div className="flex items-center gap-5">
           <img src={logoUrl} alt="Kulüp logosu" className="h-20 w-20 rounded-xl border border-line object-contain" />
           <label className="inline-block cursor-pointer rounded-lg border border-teal px-3 py-2 text-xs font-bold text-teal">

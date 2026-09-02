@@ -6,6 +6,7 @@ import {
   applyRoleNotificationPrefs,
   type RoleBucket,
 } from "../../lib/api/notificationRolePrefs";
+import CollapsibleCard from "../../components/CollapsibleCard";
 
 export default function NotificationRolePrefsCard() {
   const [bucket, setBucket] = useState<RoleBucket>("club_admin");
@@ -45,13 +46,8 @@ export default function NotificationRolePrefsCard() {
   };
 
   return (
-    <div className="mb-5 rounded-xl border border-line bg-surface p-4 sm:p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="h-3 w-[3px] rounded-sm bg-yellow" />
-        <span className="text-xs font-bold uppercase tracking-wide text-muted">Bildirim Tercihleri</span>
-      </div>
-
-      <p className="mb-3 text-[11px] leading-relaxed text-muted">
+    <CollapsibleCard title="Bildirim Tercihleri">
+      <p className="text-[11px] leading-relaxed text-muted">
         Bir rol için değişiklik kaydettiğinde, o roldeki HERKESİN bildirim tercihi bu değerlerle güncellenir — kişi
         kişi değil, rol bazında yönetilir.
       </p>
@@ -103,6 +99,6 @@ export default function NotificationRolePrefsCard() {
           </button>
         </>
       )}
-    </div>
+    </CollapsibleCard>
   );
 }
