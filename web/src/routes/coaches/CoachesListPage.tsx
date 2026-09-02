@@ -1,21 +1,32 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DataTable, { type Column } from "../../components/DataTable";
-import { listCoaches, getAllCoachBranches, deactivateCoach, type Coach, type CoachBranchInfo } from "../../lib/api/coaches";
+import {
+  listCoaches,
+  getAllCoachBranches,
+  deactivateCoach,
+  reactivateCoach,
+  deleteCoachPermanently,
+  type Coach,
+  type CoachBranchInfo,
+} from "../../lib/api/coaches";
 import { listBranches, type Branch } from "../../lib/api/branches";
 import CoachEditModal from "./CoachEditModal";
+import CoachAddModal from "./CoachAddModal";
 
 export default function CoachesListPage() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesByCoach, setBranchesByCoach] = useState<Record<string, CoachBranchInfo[]>>({});
+  const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Coach | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const load = () => {
     setLoading(true);
-    Promise.all([listCoaches(), listBranches(), getAllCoachBranches()])
+    Promise.all([listCoaches({ includeInactive: showInactive }), listBranches(), getAllCoachBranches()])
       .then(([c, b, cb]) => {
         setCoaches(c);
         setBranches(b);
@@ -25,10 +36,10 @@ export default function CoachesListPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(load, [showInactive]);
 
   const handleDeactivate = async (c: Coach) => {
-    if (!confirm(`"${c.name}" adlı antrenörü pasifleştirmek istediğine emin misin? Hesap silinmez, listeden kalkar.`)) return;
+    if (!confirm(`"${c.name}" adlı antrenörü pasifleştirmek istediğine emin misin? Hesap silinmez, aktif listeden kalkar.`)) return;
     try {
       await deactivateCoach(c.id);
       load();
@@ -37,8 +48,40 @@ export default function CoachesListPage() {
     }
   };
 
+  const handleReactivate = async (c: Coach) => {
+    try {
+      await reactivateCoach(c.id);
+      load();
+    } catch (e: any) {
+      alert(e.message ?? "Aktifleştirilemedi");
+    }
+  };
+
+  const handleDeletePermanently = async (c: Coach) => {
+    if (
+      !confirm(
+        `"${c.name}" adlı antrenörü KALICI olarak silmek istediğine emin misin? Bu işlem geri alınamaz — branş/grup atamaları da kaldırılır.`
+      )
+    )
+      return;
+    try {
+      await deleteCoachPermanently(c.id);
+      load();
+    } catch (e: any) {
+      alert(e.message ?? "Silinemedi — bu antrenöre bağlı kayıtlar (ör. geçmiş antrenmanlar) olabilir.");
+    }
+  };
+
   const columns: Column<Coach>[] = [
-    { key: "name", label: "Antrenör", render: (c) => <span className="font-semibold">{c.name}</span> },
+    {
+      key: "name",
+      label: "Antrenör",
+      render: (c) => (
+        <Link to={`/coaches/${c.id}`} className="font-semibold text-ink hover:text-yellow hover:underline">
+          {c.name}
+        </Link>
+      ),
+    },
     { key: "email", label: "E-posta", render: (c) => c.email ?? "—" },
     { key: "phone", label: "Telefon", render: (c) => c.phone ?? "—" },
     {
@@ -51,16 +94,35 @@ export default function CoachesListPage() {
       },
     },
     {
+      key: "status",
+      label: "Durum",
+      render: (c) => (
+        <span className={c.is_active ? "text-teal" : "text-muted"}>{c.is_active ? "Aktif" : "Pasif"}</span>
+      ),
+    },
+    {
       key: "actions",
       label: "",
       className: "text-right",
       render: (c) => (
         <div className="flex justify-end gap-2">
+          <Link to={`/coaches/${c.id}`} className="text-xs font-bold text-teal hover:underline">
+            Detay
+          </Link>
           <button onClick={() => setEditing(c)} className="text-xs font-bold text-teal hover:underline">
             Düzenle
           </button>
-          <button onClick={() => handleDeactivate(c)} className="text-xs font-bold text-coral hover:underline">
-            Pasifleştir
+          {c.is_active ? (
+            <button onClick={() => handleDeactivate(c)} className="text-xs font-bold text-coral hover:underline">
+              Pasifleştir
+            </button>
+          ) : (
+            <button onClick={() => handleReactivate(c)} className="text-xs font-bold text-teal hover:underline">
+              Aktifleştir
+            </button>
+          )}
+          <button onClick={() => handleDeletePermanently(c)} className="text-xs font-bold text-coral hover:underline">
+            Komple Sil
           </button>
         </div>
       ),
@@ -75,11 +137,16 @@ export default function CoachesListPage() {
           <Link to="/coaches/assignments" className="rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal">
             Grup Atamaları
           </Link>
-          <Link to="/invite" className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
-            + Kullanıcı Davet Et
-          </Link>
+          <button onClick={() => setAdding(true)} className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
+            + Antrenör Ekle
+          </button>
         </div>
       </div>
+
+      <label className="mb-4 flex w-fit items-center gap-2 text-sm text-muted">
+        <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+        Pasif antrenörleri de göster
+      </label>
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
@@ -93,6 +160,15 @@ export default function CoachesListPage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            load();
+          }}
+        />
+      )}
+
+      {adding && (
+        <CoachAddModal
+          onClose={() => setAdding(false)}
+          onCreated={() => {
             load();
           }}
         />

@@ -15,7 +15,6 @@ const NAV_ITEMS = [
   { to: "/nutrition", label: "Beslenme", icon: "🥗" },
   { to: "/shop/products", label: "Mağaza", icon: "🛍️" },
   { to: "/announcements", label: "Duyurular", icon: "📣" },
-  { to: "/invite", label: "Kullanıcı Davet Et", icon: "✉️" },
   { to: "/users", label: "Kullanıcılar", icon: "👥" },
   { to: "/settings", label: "Kulüp Ayarları", icon: "⚙️" },
 ];

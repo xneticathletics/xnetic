@@ -12,8 +12,8 @@ import CalendarPage from "./routes/calendar/CalendarPage";
 import FinanceOverviewPage from "./routes/finance/FinanceOverviewPage";
 import FinancialDocumentsPage from "./routes/finance/FinancialDocumentsPage";
 import CoachesListPage from "./routes/coaches/CoachesListPage";
+import CoachDetailPage from "./routes/coaches/CoachDetailPage";
 import CoachAssignmentsPage from "./routes/coaches/CoachAssignmentsPage";
-import InviteUserPage from "./routes/invite/InviteUserPage";
 import AnnouncementsListPage from "./routes/announcements/AnnouncementsListPage";
 import ClubSettingsPage from "./routes/settings/ClubSettingsPage";
 import UsersListPage from "./routes/users/UsersListPage";
@@ -57,7 +57,7 @@ export default function App() {
               <Route path="/finance/documents" element={<FinancialDocumentsPage />} />
               <Route path="/coaches" element={<CoachesListPage />} />
               <Route path="/coaches/assignments" element={<CoachAssignmentsPage />} />
-              <Route path="/invite" element={<InviteUserPage />} />
+              <Route path="/coaches/:id" element={<CoachDetailPage />} />
               <Route path="/users" element={<UsersListPage />} />
               <Route path="/performance" element={<PerformanceOverviewPage />} />
               <Route path="/performance/:category" element={<PerformanceCategoryPage />} />

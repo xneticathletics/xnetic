@@ -6,19 +6,50 @@ export type Coach = {
   name: string;
   email: string | null;
   phone: string | null;
+  is_active: boolean;
+  photo_url: string | null;
+  birth_date: string | null;
+  education_level: string | null;
+  address: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
 };
 
-const COACH_FIELDS = "id, name, email, phone";
+const COACH_FIELDS =
+  "id, name, email, phone, is_active, photo_url, birth_date, education_level, address, emergency_contact_name, emergency_contact_phone";
 
-export async function listCoaches(): Promise<Coach[]> {
-  const { data, error } = await supabase
-    .from("users")
-    .select(COACH_FIELDS)
-    .eq("role", "coach")
-    .eq("is_active", true)
-    .order("name", { ascending: true });
+export async function listCoaches(opts?: { includeInactive?: boolean }): Promise<Coach[]> {
+  let query = supabase.from("users").select(COACH_FIELDS).eq("role", "coach");
+  if (!opts?.includeInactive) query = query.eq("is_active", true);
+  const { data, error } = await query.order("name", { ascending: true });
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getCoach(id: string): Promise<Coach> {
+  const { data, error } = await supabase.from("users").select(COACH_FIELDS).eq("id", id).single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCoach(id: string, input: Partial<Omit<Coach, "id" | "is_active">>) {
+  const { error } = await supabase.from("users").update(input).eq("id", id);
+  if (error) throw error;
+}
+
+export async function getCoachGroups(coachId: string): Promise<{ id: string; name: string; branch: string }[]> {
+  const [headResult, assistantResult] = await Promise.all([
+    supabase.from("groups").select("id, name, branch").eq("head_coach_id", coachId),
+    supabase.from("group_coaches").select("groups(id, name, branch)").eq("coach_id", coachId),
+  ]);
+  if (headResult.error) throw headResult.error;
+  if (assistantResult.error) throw assistantResult.error;
+
+  const head = (headResult.data ?? []).map((g) => ({ id: g.id, name: g.name, branch: g.branch }));
+  const assistant = ((assistantResult.data as any[]) ?? [])
+    .filter((r) => r.groups)
+    .map((r) => ({ id: r.groups.id, name: r.groups.name, branch: r.groups.branch }));
+  return [...head, ...assistant];
 }
 
 export type CoachBranchInfo = { branch_id: string; branch_name: string; level: number };
@@ -43,10 +74,26 @@ export async function setCoachBranches(coachId: string, entries: { branch_id: st
   if (insError) throw insError;
 }
 
-// Antrenörü tam silmiyoruz — hesabı pasifleştiriyoruz (listCoaches zaten
-// is_active=true filtresiyle çalışıyor, pasifleşen otomatik kalkar).
 export async function deactivateCoach(userId: string) {
   const { error } = await supabase.from("users").update({ is_active: false }).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function reactivateCoach(userId: string) {
+  const { error } = await supabase.from("users").update({ is_active: true }).eq("id", userId);
+  if (error) throw error;
+}
+
+// Antrenörün branş/grup atamalarını önce elle temizliyoruz — aksi halde
+// bazı ilişkili tablolardaki foreign key kısıtlamaları (ör. groups.head_coach_id)
+// silme işlemini engelleyebilir. Auth hesabı (giriş bilgisi) bu işlemle
+// silinmiyor — sadece kulüp kaydı kaldırılıyor, giriş bir daha bir kulübe
+// bağlı çalışmadığı için işlevsiz kalıyor.
+export async function deleteCoachPermanently(userId: string) {
+  await supabase.from("coach_branches").delete().eq("coach_id", userId);
+  await supabase.from("group_coaches").delete().eq("coach_id", userId);
+  await supabase.from("groups").update({ head_coach_id: null }).eq("head_coach_id", userId);
+  const { error } = await supabase.from("users").delete().eq("id", userId);
   if (error) throw error;
 }
 

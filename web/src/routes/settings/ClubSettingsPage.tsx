@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormField, { inputClass } from "../../components/FormField";
 import { getClubSettings, updateClubSettings, getClubName, updateClubName, type ClubSettings } from "../../lib/api/clubSettings";
 import { getClubLogoUrl, uploadClubLogo } from "../../lib/api/clubLogo";
+import { useAuth } from "../../context/AuthContext";
 
 function SectionHeader({ title }: { title: string }) {
   return (
@@ -37,6 +38,7 @@ function NumberField({
 }
 
 export default function ClubSettingsPage() {
+  const { clubId } = useAuth();
   const [form, setForm] = useState<ClubSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,7 +46,7 @@ export default function ClubSettingsPage() {
 
   const [clubName, setClubNameState] = useState("");
   const [nameSaving, setNameSaving] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(getClubLogoUrl());
+  const [logoUrl, setLogoUrl] = useState(clubId ? getClubLogoUrl(clubId) : "");
   const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
@@ -85,9 +87,10 @@ export default function ClubSettingsPage() {
   };
 
   const handleLogoUpload = async (file: File) => {
+    if (!clubId) return;
     setLogoUploading(true);
     try {
-      const url = await uploadClubLogo(file);
+      const url = await uploadClubLogo(file, clubId);
       setLogoUrl(url);
     } catch (e: any) {
       alert(e.message ?? "Yüklenemedi");

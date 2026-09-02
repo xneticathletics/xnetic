@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { listAllAthletes, type Athlete } from "../lib/api/athletes";
 import { listBranches, type Branch } from "../lib/api/branches";
 import { listCoaches, type Coach } from "../lib/api/coaches";
@@ -9,6 +10,8 @@ import { listAnnouncements, type Announcement } from "../lib/api/announcements";
 import { getMonthlyFinanceSummary, type MonthlyFinanceSummary } from "../lib/api/payments";
 import { getPendingOrderCount } from "../lib/api/shop";
 import { listPendingPasswordResetRequests } from "../lib/api/notifications";
+import { getClubName } from "../lib/api/clubSettings";
+import { getClubLogoUrl } from "../lib/api/clubLogo";
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -27,6 +30,9 @@ type DayItem =
   | { kind: "match"; time: string; data: MatchRow };
 
 export default function DashboardPage() {
+  const { clubId } = useAuth();
+  const [clubName, setClubName] = useState<string | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -37,6 +43,10 @@ export default function DashboardPage() {
   const [pendingResets, setPendingResets] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getClubName().then(setClubName).catch(() => {});
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -78,9 +88,19 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-ink">Kulüp Özeti</h1>
-        <p className="text-sm text-muted">{new Date().toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
+      <div className="mb-6 flex items-center gap-4">
+        {clubId && !logoFailed && (
+          <img
+            src={getClubLogoUrl(clubId)}
+            alt="Kulüp logosu"
+            onError={() => setLogoFailed(true)}
+            className="h-14 w-14 rounded-xl border border-line object-contain"
+          />
+        )}
+        <div>
+          <h1 className="text-xl font-bold text-ink">{clubName ?? "Kulüp Özeti"}</h1>
+          <p className="text-sm text-muted">{new Date().toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
+        </div>
       </div>
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
