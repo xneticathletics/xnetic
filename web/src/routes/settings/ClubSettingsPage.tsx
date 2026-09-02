@@ -13,6 +13,7 @@ import { getClubLogoUrl, uploadClubLogo } from "../../lib/api/clubLogo";
 import { useAuth } from "../../context/AuthContext";
 import { useClubSettings } from "../../context/ClubSettingsContext";
 import { exportClubData } from "../../lib/clubExport";
+import NotificationRolePrefsCard from "./NotificationRolePrefsCard";
 
 function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -272,6 +273,8 @@ export default function ClubSettingsPage() {
           })}
         </div>
       </SettingsCard>
+
+      <NotificationRolePrefsCard />
 
       <SettingsCard title="Yoklama & Antrenman Tamamlama">
         <NumberField

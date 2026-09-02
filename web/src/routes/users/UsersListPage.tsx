@@ -4,7 +4,7 @@ import Modal from "../../components/Modal";
 import { listClubUsers, type ClubUser } from "../../lib/api/clubUsers";
 import { resetUserPassword } from "../../lib/api/passwordReset";
 import { listPendingPasswordResetRequests, markNotificationRead } from "../../lib/api/notifications";
-import NotificationPrefsModal from "./NotificationPrefsModal";
+import { getUserIdsForRoleBucket } from "../../lib/api/notificationRolePrefs";
 import type { UserRole } from "../../context/AuthContext";
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -18,24 +18,25 @@ const ROLE_LABEL: Record<UserRole, string> = {
 export default function UsersListPage() {
   const [users, setUsers] = useState<ClubUser[]>([]);
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, string[]>>({});
+  const [coordinatorIds, setCoordinatorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [result, setResult] = useState<{ name: string; tempPassword: string } | null>(null);
-  const [prefsUser, setPrefsUser] = useState<ClubUser | null>(null);
 
   const load = () => {
     setLoading(true);
     setError(null);
-    Promise.all([listClubUsers(), listPendingPasswordResetRequests()])
-      .then(([u, pending]) => {
+    Promise.all([listClubUsers(), listPendingPasswordResetRequests(), getUserIdsForRoleBucket("coordinator")])
+      .then(([u, pending, coordinators]) => {
         setUsers(u);
         const byUser: Record<string, string[]> = {};
         pending.forEach((p) => {
           (byUser[p.requesterId] ??= []).push(p.notificationId);
         });
         setPendingByUserId(byUser);
+        setCoordinatorIds(new Set(coordinators));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -84,28 +85,32 @@ export default function UsersListPage() {
         </div>
       ),
     },
-    { key: "role", label: "Rol", render: (u) => ROLE_LABEL[u.role] ?? u.role },
+    {
+      key: "role",
+      label: "Rol",
+      render: (u) =>
+        u.role === "coach" && coordinatorIds.has(u.id) ? (
+          <span className="inline-flex items-center gap-1">
+            {ROLE_LABEL[u.role]}
+            <span className="rounded-full bg-violet/20 px-2 py-0.5 text-[10px] font-bold text-violet">🏷️ Koordinatör</span>
+          </span>
+        ) : (
+          ROLE_LABEL[u.role] ?? u.role
+        ),
+    },
     { key: "phone", label: "Telefon", render: (u) => u.phone ?? "—" },
     {
       key: "actions",
       label: "",
       className: "text-right",
       render: (u) => (
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => setPrefsUser(u)}
-            className="rounded-lg border border-teal px-3 py-1.5 text-xs font-bold text-teal"
-          >
-            🔔 Bildirimler
-          </button>
-          <button
-            onClick={() => handleReset(u)}
-            disabled={resettingId === u.id}
-            className="rounded-lg border border-coral px-3 py-1.5 text-xs font-bold text-coral disabled:opacity-60"
-          >
-            {resettingId === u.id ? "Sıfırlanıyor…" : "Şifreyi Sıfırla"}
-          </button>
-        </div>
+        <button
+          onClick={() => handleReset(u)}
+          disabled={resettingId === u.id}
+          className="rounded-lg border border-coral px-3 py-1.5 text-xs font-bold text-coral disabled:opacity-60"
+        >
+          {resettingId === u.id ? "Sıfırlanıyor…" : "Şifreyi Sıfırla"}
+        </button>
       ),
     },
   ];
@@ -122,6 +127,10 @@ export default function UsersListPage() {
           className="w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
         />
       </div>
+
+      <p className="mb-4 text-xs text-muted">
+        Bildirim tercihlerini artık rol bazında Kulüp Ayarları → Bildirim Tercihleri'nden yönetiyorsun.
+      </p>
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
@@ -140,16 +149,6 @@ export default function UsersListPage() {
           </p>
           <p className="text-xs text-muted">Bu şifreyi kişiye ilet — bir daha görüntülenmeyecek. İlk girişte değiştirmesi zorunlu.</p>
         </Modal>
-      )}
-
-      {prefsUser && (
-        <NotificationPrefsModal
-          user={prefsUser}
-          onClose={() => setPrefsUser(null)}
-          onSaved={(mutedTypes) => {
-            setUsers((prev) => prev.map((u) => (u.id === prefsUser.id ? { ...u, muted_notification_types: mutedTypes } : u)));
-          }}
-        />
       )}
     </div>
   );

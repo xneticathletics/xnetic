@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Modal from "../../components/Modal";
 import { getSessionRoster, saveAttendance, type AttendanceStatus, type RosterEntry } from "../../lib/api/attendance";
+import { listExcusesForSession, type SessionExcuse } from "../../lib/api/sessionExcuses";
 import type { TrainingSession } from "../../lib/api/trainingSessions";
 
 export default function AttendanceModal({
@@ -13,13 +14,19 @@ export default function AttendanceModal({
   onClose: () => void;
 }) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
+  const [excusesByAthlete, setExcusesByAthlete] = useState<Record<string, SessionExcuse>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getSessionRoster(session.id, session.group_id)
-      .then(setRoster)
+    Promise.all([getSessionRoster(session.id, session.group_id), listExcusesForSession(session.id)])
+      .then(([rosterData, excuses]) => {
+        setRoster(rosterData);
+        const byAthlete: Record<string, SessionExcuse> = {};
+        excuses.forEach((e) => (byAthlete[e.athlete_id] = e));
+        setExcusesByAthlete(byAthlete);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [session.id, session.group_id]);
@@ -81,6 +88,11 @@ export default function AttendanceModal({
                 <span className="flex-1">
                   <span className="block text-sm font-semibold">{r.full_name}</span>
                   {!!r.birth_date && <span className="block text-[11px] text-muted">{r.birth_date}</span>}
+                  {excusesByAthlete[r.athlete_id] && (
+                    <span className="mt-0.5 block text-[11px] font-semibold text-yellow">
+                      ⚠️ Gelemeyeceğini bildirdi: "{excusesByAthlete[r.athlete_id].reason}"
+                    </span>
+                  )}
                 </span>
                 <div className="flex gap-1.5">
                   <button

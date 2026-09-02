@@ -12,6 +12,7 @@ import {
 } from "../../lib/api/payments";
 import { topUpAllActivePlans } from "../../lib/api/paymentPlans";
 import { getClubSettings } from "../../lib/api/clubSettings";
+import { sendNotification } from "../../lib/api/notifications";
 import { useAuth } from "../../context/AuthContext";
 import PaymentPlanModal from "./PaymentPlanModal";
 import ExpenseModal from "./ExpenseModal";
@@ -37,6 +38,7 @@ export default function FinanceOverviewPage() {
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [incomeModalOpen, setIncomeModalOpen] = useState(false);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
 
   const load = async () => {
     if (!clubId) return;
@@ -80,6 +82,26 @@ export default function FinanceOverviewPage() {
     }
   };
 
+  // Tek bir gecikmiş ödeme için veliye manuel hatırlatma gönderir —
+  // mobildeki PaymentsListScreen "Hatırlat" butonuyla birebir aynı davranış.
+  const handleSendReminder = async (p: Payment) => {
+    const parentUserId = p.athletes?.parent_user_id;
+    if (!parentUserId) {
+      alert("Bu sporcunun bağlı bir veli hesabı yok, hatırlatma gönderilemedi.");
+      return;
+    }
+    setRemindingId(p.id);
+    try {
+      const body = `${p.athletes?.full_name ?? "Sporcu"} için ${formatTL(p.amount)} tutarındaki aidatın vadesi (${p.due_date}) geçti. Lütfen en kısa sürede ödeme yapın.`;
+      await sendNotification(parentUserId, "Aidat Hatırlatması", body, "payment_reminder");
+      alert("Hatırlatma gönderildi.");
+    } catch (e: any) {
+      alert(e.message ?? "Gönderilemedi");
+    } finally {
+      setRemindingId(null);
+    }
+  };
+
   const columns: Column<Payment>[] = [
     {
       key: "athlete",
@@ -110,9 +132,20 @@ export default function FinanceOverviewPage() {
       className: "text-right",
       render: (p) =>
         p.status !== "paid" ? (
-          <button onClick={() => handleMarkPaid(p)} className="text-xs font-bold text-teal hover:underline">
-            Ödendi İşaretle
-          </button>
+          <div className="flex justify-end gap-3">
+            {isOverdue(p, graceDays) && (
+              <button
+                onClick={() => handleSendReminder(p)}
+                disabled={remindingId === p.id}
+                className="text-xs font-bold text-yellow hover:underline disabled:opacity-60"
+              >
+                {remindingId === p.id ? "…" : "Hatırlat"}
+              </button>
+            )}
+            <button onClick={() => handleMarkPaid(p)} className="text-xs font-bold text-teal hover:underline">
+              Ödendi İşaretle
+            </button>
+          </div>
         ) : null,
     },
   ];

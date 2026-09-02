@@ -22,6 +22,7 @@ import {
   type AthleteGroupInfo,
 } from "../../lib/api/athletes";
 import { listGroups, type Group } from "../../lib/api/groups";
+import MembershipFreezeSection from "./MembershipFreezeSection";
 
 const emptyForm: AthleteInput = {
   full_name: "",
@@ -539,6 +540,8 @@ export default function AthletesListPage() {
                 </div>
               </div>
             )}
+
+            {editingId !== "new" && <MembershipFreezeSection athleteId={editingId} />}
           </div>
 
           <button
