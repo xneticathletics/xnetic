@@ -12,10 +12,7 @@ import { getPendingOrderCount } from "../lib/api/shop";
 import { listPendingPasswordResetRequests } from "../lib/api/notifications";
 import { getClubName } from "../lib/api/clubSettings";
 import { getClubLogoUrl } from "../lib/api/clubLogo";
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { todayKey } from "../lib/date";
 
 function formatTry(n: number) {
   return `${Math.round(n).toLocaleString("tr-TR")} ₺`;

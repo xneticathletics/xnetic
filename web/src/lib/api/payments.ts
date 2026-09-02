@@ -40,11 +40,23 @@ export async function markPaymentPaid(id: string) {
   if (error) throw error;
 }
 
+function pad2(n: number) {
+  return n < 10 ? `0${n}` : String(n);
+}
+
 export function isOverdue(payment: Payment, graceDays: number = 0): boolean {
   if (payment.status !== "pending") return false;
   const due = new Date(payment.due_date);
   due.setDate(due.getDate() + graceDays);
-  return due < new Date(new Date().toISOString().slice(0, 10));
+  // Not: toISOString() ile "bugün"ü hesaplamak UTC'ye çevirdiği için
+  // UTC'nin ilerisindeki saat dilimlerinde (ör. Türkiye, UTC+3) gece
+  // yarısından sonraki birkaç saatte tarihi bir gün geriye kaydırıp bir
+  // ödemeyi olduğundan erken "vadesi geçmiş" gösterebilirdi — yerel
+  // tarih parçalarından elle kuruyoruz (mobildeki aynı fonksiyonla
+  // birebir aynı — bkz. src/lib/api/payments.ts).
+  const now = new Date();
+  const todayLocal = new Date(`${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`);
+  return due < todayLocal;
 }
 
 export type MonthlyFinanceSummary = {
@@ -53,10 +65,6 @@ export type MonthlyFinanceSummary = {
   pending: number;
   overdue: number;
 };
-
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : String(n);
-}
 
 export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
   const now = new Date();

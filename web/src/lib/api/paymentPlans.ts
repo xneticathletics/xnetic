@@ -16,11 +16,20 @@ export type PaymentPlanInput = {
 
 const MONTHS_AHEAD = 3;
 
+function pad2(n: number) {
+  return n < 10 ? `0${n}` : String(n);
+}
+
+// Not: kasıtlı olarak toISOString() KULLANILMIYOR — o, tarihi UTC'ye
+// çevirir ve UTC'nin gerisindeki saat dilimlerinde (ör. Türkiye, UTC+3)
+// tarihi bir gün geriye kaydırabilir (yerel 20'si, UTC'de bir önceki
+// günün gecesine denk gelir). Yerel tarih parçalarından elle string
+// kurmak bu sorunu tamamen ortadan kaldırır (mobildeki aynı fonksiyonla
+// birebir aynı — bkz. src/lib/api/paymentPlans.ts).
 function computeDueDate(year: number, monthIndex0: number, day: number): string {
   const lastDayOfMonth = new Date(year, monthIndex0 + 1, 0).getDate();
   const clampedDay = Math.min(day, lastDayOfMonth);
-  const d = new Date(year, monthIndex0, clampedDay);
-  return d.toISOString().slice(0, 10);
+  return `${year}-${pad2(monthIndex0 + 1)}-${pad2(clampedDay)}`;
 }
 
 export async function topUpPlan(plan: PaymentPlan) {
