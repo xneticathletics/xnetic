@@ -28,7 +28,7 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity
-          onPress={() => navigation.getParent()?.navigate("Ana Menü" as never, { screen: "Home" } as never)}
+          onPress={() => (navigation.getParent()?.navigate as any)("Ana Menü", { screen: "Home" })}
           style={{ paddingHorizontal: 4 }}
         >
           <Text style={{ color: colors.yellow, fontWeight: "700", fontSize: 15 }}>🏠 Ana Sayfa</Text>

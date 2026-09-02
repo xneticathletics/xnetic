@@ -362,9 +362,9 @@ export default function HomeScreen({
               key={a.id}
               style={styles.announcementRow}
               onPress={() =>
-                navigation.getParent()?.navigate(
-                  "Profil" as never,
-                  { screen: "AnnouncementDetail", params: { announcementId: a.id } } as never
+                (navigation.getParent()?.navigate as any)(
+                  "Profil",
+                  { screen: "AnnouncementDetail", params: { announcementId: a.id } }
                 )
               }
             >

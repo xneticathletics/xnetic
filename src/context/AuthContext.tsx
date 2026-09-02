@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
-import { markSignedIn } from "../lib/deviceFlags";
 import { resolveLoginEmail } from "../lib/loginIdentifier";
 
 export type UserRole =
@@ -69,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
-      if (data.session) markSignedIn();
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -78,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // yanlışlıkla kullanılmaya devam edebilir (bkz. currentUser.ts).
       resetCurrentUserCache();
       setSession(newSession);
-      if (newSession) markSignedIn();
     });
 
     return () => listener.subscription.unsubscribe();

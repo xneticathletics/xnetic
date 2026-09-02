@@ -155,9 +155,9 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
       Alert.alert("Veli hesabı yok", "Bu sporcunun bağlı bir veli giriş hesabı yok, mesaj gönderilemiyor.", [{ text: "Tamam" }]);
       return;
     }
-    navigation.getParent()?.navigate(
-      "Mesajlar" as never,
-      { screen: "Chat", params: { userId: athlete.parent_user_id, userName: athlete.parent_name ?? athlete.full_name } } as never
+    (navigation.getParent()?.navigate as any)(
+      "Mesajlar",
+      { screen: "Chat", params: { userId: athlete.parent_user_id, userName: athlete.parent_name ?? athlete.full_name } }
     );
   };
   const goToEditForm = () =>

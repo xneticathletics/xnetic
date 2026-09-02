@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -6,7 +6,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
-import { hasSignedInBefore, resetSignedInFlag } from "../lib/deviceFlags";
 
 export default function LoginScreen({
   onForgotPassword, onCreateClub,
@@ -18,13 +17,6 @@ export default function LoginScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // "Kulüp Oluştur" sadece bu cihazda daha önce HİÇ giriş yapılmadıysa
-  // gösterilir — bir kulüp kurulduktan sonra bu link bir daha çıkmaz.
-  const [showCreateClub, setShowCreateClub] = useState(false);
-
-  useEffect(() => {
-    hasSignedInBefore().then((done) => setShowCreateClub(!done));
-  }, []);
 
   const handleSubmit = async () => {
     setError(null);
@@ -47,13 +39,7 @@ export default function LoginScreen({
           style={styles.logo}
           resizeMode="contain"
         />
-        <TouchableOpacity
-          activeOpacity={1}
-          onLongPress={() => { resetSignedInFlag().then(() => setShowCreateClub(true)); }}
-          delayLongPress={1500}
-        >
-          <Text style={styles.title}>X-NETIC</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>X-NETIC</Text>
         <Text style={styles.subtitle}>Spor Kulübü Yönetim Sistemleri</Text>
 
         <View style={styles.inputWrapper}>
@@ -107,11 +93,9 @@ export default function LoginScreen({
           <Text style={styles.forgotLinkText}>Şifremi Unuttum</Text>
         </TouchableOpacity>
 
-        {showCreateClub && (
-          <TouchableOpacity style={styles.forgotLink} onPress={onCreateClub}>
-            <Text style={styles.createClubLinkText}>Kulüp Oluştur</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.forgotLink} onPress={onCreateClub}>
+          <Text style={styles.createClubLinkText}>Kulüp Oluştur</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );

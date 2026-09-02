@@ -131,9 +131,9 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
   };
   const handleMessage = () => {
     if (!coach) return;
-    navigation.getParent()?.navigate(
-      "Mesajlar" as never,
-      { screen: "Chat", params: { userId: coach.id, userName: coach.name } } as never
+    (navigation.getParent()?.navigate as any)(
+      "Mesajlar",
+      { screen: "Chat", params: { userId: coach.id, userName: coach.name } }
     );
   };
   const goToAssignments = () => coach && navigation.navigate("CoachGroups", { coachId: coach.id, coachName: coach.name });
