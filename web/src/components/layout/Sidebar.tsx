@@ -26,47 +26,68 @@ const NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean; tileK
   { to: "/account", label: "Hesabım", icon: "👤" },
 ];
 
-export default function Sidebar() {
+// lg altında (telefon/tablet) sabit sidebar yerine, hamburger menüyle
+// açılan bir çekmece (drawer) — AppLayout.tsx'teki mobil üst bar bunu
+// açıp kapatıyor. lg ve üstünde eskisi gibi her zaman görünür/sabit.
+export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { signOut } = useAuth();
   const { settings } = useClubSettings();
   const visibleItems = NAV_ITEMS.filter((item) => !item.tileKey || !settings.disabled_home_tiles.includes(item.tileKey));
 
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-line bg-surface">
-      <div className="flex items-center gap-3 border-b border-line px-5 py-5">
-        <img src="/xnetic-logo.png" alt="X-NETIC" className="h-12 w-12 rounded-lg object-contain" />
-        <div>
-          <div className="text-base font-extrabold text-ink">X-NETIC</div>
-          <div className="text-xs font-semibold text-muted">Yönetim Paneli</div>
-        </div>
-      </div>
+    <>
+      {open && (
+        <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={onClose} aria-hidden="true" />
+      )}
 
-      <nav className="flex-1 space-y-1 p-3">
-        {visibleItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
-                isActive ? "bg-yellow text-bg" : "text-muted hover:bg-bg hover:text-ink"
-              }`
-            }
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 shrink-0 flex-col border-r border-line bg-surface transition-transform duration-200 lg:static lg:z-auto lg:w-60 lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center gap-3 border-b border-line px-5 py-5">
+          <img src="/xnetic-logo.png" alt="X-NETIC" className="h-12 w-12 rounded-lg object-contain" />
+          <div>
+            <div className="text-base font-extrabold text-ink">X-NETIC</div>
+            <div className="text-xs font-semibold text-muted">Yönetim Paneli</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="ml-auto rounded-lg p-1.5 text-muted hover:bg-bg hover:text-ink lg:hidden"
+            aria-label="Menüyü kapat"
           >
-            <span>{item.icon}</span>
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+            ✕
+          </button>
+        </div>
 
-      <div className="border-t border-line p-3">
-        <button
-          onClick={() => signOut()}
-          className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-coral hover:bg-bg"
-        >
-          Çıkış Yap
-        </button>
-      </div>
-    </aside>
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {visibleItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+                  isActive ? "bg-yellow text-bg" : "text-muted hover:bg-bg hover:text-ink"
+                }`
+              }
+            >
+              <span>{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="border-t border-line p-3">
+          <button
+            onClick={() => signOut()}
+            className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-coral hover:bg-bg"
+          >
+            Çıkış Yap
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
