@@ -6,10 +6,9 @@ export type Coach = {
   name: string;
   email: string | null;
   phone: string | null;
-  coach_level: number | null;
 };
 
-const COACH_FIELDS = "id, name, email, phone, coach_level";
+const COACH_FIELDS = "id, name, email, phone";
 
 export async function listCoaches(): Promise<Coach[]> {
   const { data, error } = await supabase
@@ -42,11 +41,6 @@ export async function setCoachBranches(coachId: string, entries: { branch_id: st
     .from("coach_branches")
     .insert(entries.map((e) => ({ coach_id: coachId, branch_id: e.branch_id, level: e.level })));
   if (insError) throw insError;
-}
-
-export async function updateCoachLevel(id: string, level: number | null) {
-  const { error } = await supabase.from("users").update({ coach_level: level }).eq("id", id);
-  if (error) throw error;
 }
 
 // Antrenörü tam silmiyoruz — hesabı pasifleştiriyoruz (listCoaches zaten

@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV_ITEMS = [
+  { to: "/", label: "Kulüp Özeti", icon: "📊", end: true },
   { to: "/athletes", label: "Sporcular", icon: "👥" },
   { to: "/groups", label: "Gruplar", icon: "🏷️" },
   { to: "/branches", label: "Branşlar", icon: "🏅" },
@@ -34,6 +35,7 @@ export default function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.end}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
                 isActive ? "bg-yellow text-bg" : "text-muted hover:bg-bg hover:text-ink"

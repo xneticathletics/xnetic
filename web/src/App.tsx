@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./routes/LoginPage";
 import AppLayout from "./components/layout/AppLayout";
+import DashboardPage from "./routes/DashboardPage";
 import AthletesListPage from "./routes/athletes/AthletesListPage";
 import GroupsListPage from "./routes/groups/GroupsListPage";
 import BranchesListPage from "./routes/branches/BranchesListPage";
@@ -45,7 +46,7 @@ export default function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Navigate to="/athletes" replace />} />
+              <Route path="/" element={<DashboardPage />} />
               <Route path="/athletes" element={<AthletesListPage />} />
               <Route path="/groups" element={<GroupsListPage />} />
               <Route path="/branches" element={<BranchesListPage />} />

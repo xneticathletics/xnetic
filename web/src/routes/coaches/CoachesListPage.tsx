@@ -41,7 +41,6 @@ export default function CoachesListPage() {
     { key: "name", label: "Antrenör", render: (c) => <span className="font-semibold">{c.name}</span> },
     { key: "email", label: "E-posta", render: (c) => c.email ?? "—" },
     { key: "phone", label: "Telefon", render: (c) => c.phone ?? "—" },
-    { key: "level", label: "Kademe", render: (c) => c.coach_level ?? "—" },
     {
       key: "branches",
       label: "Branşlar",

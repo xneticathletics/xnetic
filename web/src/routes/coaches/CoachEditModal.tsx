@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Modal from "../../components/Modal";
-import FormField, { inputClass } from "../../components/FormField";
-import { updateCoachLevel, setCoachBranches, type Coach, type CoachBranchInfo } from "../../lib/api/coaches";
+import FormField from "../../components/FormField";
+import { setCoachBranches, type Coach, type CoachBranchInfo } from "../../lib/api/coaches";
 import type { Branch } from "../../lib/api/branches";
 
 export default function CoachEditModal({
@@ -17,7 +17,6 @@ export default function CoachEditModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [level, setLevel] = useState<string>(coach.coach_level?.toString() ?? "");
   const [selected, setSelected] = useState<Record<string, number>>(
     Object.fromEntries(currentBranches.map((b) => [b.branch_id, b.level]))
   );
@@ -41,7 +40,6 @@ export default function CoachEditModal({
     setSaving(true);
     setError(null);
     try {
-      await updateCoachLevel(coach.id, level ? Number(level) : null);
       await setCoachBranches(
         coach.id,
         Object.entries(selected).map(([branch_id, lvl]) => ({ branch_id, level: lvl }))
@@ -56,17 +54,6 @@ export default function CoachEditModal({
 
   return (
     <Modal title={`${coach.name} — Düzenle`} onClose={onClose}>
-      <FormField label="Antrenörlük Kademesi (1-5)">
-        <select className={inputClass} value={level} onChange={(e) => setLevel(e.target.value)}>
-          <option value="">Belirtilmedi</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
-      </FormField>
-
       <FormField label="Uzmanlık Branşları">
         <div className="space-y-2">
           {branches.map((b) => {
