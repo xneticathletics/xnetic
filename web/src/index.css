@@ -52,3 +52,19 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-muted);
 }
+
+/* Tarayıcılar <button>'a varsayılan olarak pointer imleç vermiyor (sadece
+   <a> öyle) — bu yüzden Kaydet/Düzenle/Sil, filtre çipleri, sekme
+   seçiciler, kart başlıkları gibi düzinelerce tıklanabilir buton normal
+   ok imleciyle görünüyordu (Ana Sayfa'daki kutular Link/<a> olduğu için
+   zaten doğru davranıyordu). Global bir kural, her butonu tek tek
+   düzeltmek yerine hepsini kapsıyor. */
+button:not(:disabled),
+[role="button"],
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
