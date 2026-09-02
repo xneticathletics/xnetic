@@ -89,12 +89,12 @@ export default function LoginScreen({
           {submitting ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Giriş Yap</Text>}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.forgotLink} onPress={onForgotPassword}>
-          <Text style={styles.forgotLinkText}>Şifremi Unuttum</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={onForgotPassword}>
+          <Text style={styles.secondaryButtonText}>Şifremi Unuttum</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.forgotLink} onPress={onCreateClub}>
-          <Text style={styles.createClubLinkText}>Kulüp Oluştur</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={onCreateClub}>
+          <Text style={[styles.secondaryButtonText, styles.createClubButtonText]}>Kulüp Oluştur</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -140,7 +140,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   buttonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
-  forgotLink: { alignItems: "center", paddingVertical: spacing.md },
-  forgotLinkText: { color: colors.muted, fontWeight: "600", fontSize: 13 },
-  createClubLinkText: { color: colors.yellow, fontWeight: "700", fontSize: 13 },
+  secondaryButton: {
+    width: "100%",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: spacing.sm,
+  },
+  secondaryButtonText: { color: colors.ink, fontWeight: "700", fontSize: 15 },
+  createClubButtonText: { color: colors.yellow },
 });

@@ -161,6 +161,12 @@ export default function FinanceOverviewPage() {
           >
             📄 Finansal Dökümanlarım
           </Link>
+          <Link
+            to="/finance/coach-payments"
+            className="rounded-lg border border-violet px-4 py-2 text-sm font-bold text-violet"
+          >
+            🧑‍🏫 Antrenör Ödemeleri
+          </Link>
           <button onClick={() => setIncomeModalOpen(true)} className="rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal">
             + Gelir
           </button>

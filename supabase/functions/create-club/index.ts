@@ -38,6 +38,18 @@ Deno.serve(async (req) => {
     if (!password || String(password).length < 6) throw new Error("Şifre en az 6 karakter olmalıdır.");
     if (billingPeriod !== "monthly" && billingPeriod !== "yearly") throw new Error("Geçersiz plan seçimi.");
 
+    // Bakım modu ve güncel fiyatlar — Süper Admin'in Sistem Ayarları'ndan
+    // yönettiği tek satırlık platform ayarları. İstemci tarafındaki kontrolün
+    // (CreateClubScreen) atlanıp bu fonksiyona doğrudan istek atılması
+    // ihtimaline karşı bakım modu burada da doğrulanıyor.
+    const { data: settings, error: settingsError } = await admin
+      .from("platform_settings")
+      .select("monthly_price_try, yearly_price_try, maintenance_mode")
+      .eq("id", true)
+      .single();
+    if (settingsError) throw settingsError;
+    if (settings.maintenance_mode) throw new Error("Uygulama şu anda bakımda. Lütfen daha sonra tekrar deneyin.");
+
     const normalizedEmail = String(email).trim().toLowerCase();
 
     const { data: existing } = await admin
@@ -85,7 +97,7 @@ Deno.serve(async (req) => {
     // status/payment_reference alanlarıyla güncelleyecek (status='active'
     // olunca bu tutar platform gelirine sayılır — bkz. getPlatformStats).
     // Şimdilik 'mock_paid': gerçek para hareketi yok, gelir hesabına dahil edilmez.
-    const amountTry = billingPeriod === "yearly" ? 9990 : 999;
+    const amountTry = billingPeriod === "yearly" ? settings.yearly_price_try : settings.monthly_price_try;
     await admin.from("club_subscriptions").insert({
       club_id: club.id,
       billing_period: billingPeriod,

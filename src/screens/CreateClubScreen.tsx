@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
@@ -10,13 +10,13 @@ import { uploadClubLogo } from "../lib/api/clubLogo";
 import { useAuth } from "../context/AuthContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { formatPhoneNumber } from "../lib/phoneFormat";
+import { getPlatformSettings, type PlatformSettings } from "../lib/api/platformSettings";
 
 type Step = "plan" | "payment" | "form";
 
-const PLANS: { key: BillingPeriod; label: string; price: string; sub: string }[] = [
-  { key: "monthly", label: "Aylık", price: "999 ₺ / ay", sub: "Her ay otomatik yenilenir" },
-  { key: "yearly", label: "Yıllık", price: "9.990 ₺ / yıl", sub: "2 ay ücretsiz — en avantajlı" },
-];
+function formatTry(amount: number): string {
+  return amount.toLocaleString("tr-TR", { maximumFractionDigits: 0 });
+}
 
 export default function CreateClubScreen({ onBack }: { onBack: () => void }) {
   const { signIn } = useAuth();
@@ -24,6 +24,25 @@ export default function CreateClubScreen({ onBack }: { onBack: () => void }) {
 
   const [step, setStep] = useState<Step>("plan");
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod | null>(null);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPlatformSettings()
+      .then((s) => { if (!cancelled) setPlatformSettings(s); })
+      .catch((e) => { if (!cancelled) setSettingsError(e.message ?? "Bilgiler yüklenemedi"); })
+      .finally(() => { if (!cancelled) setSettingsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const PLANS: { key: BillingPeriod; label: string; price: string; sub: string }[] = platformSettings
+    ? [
+        { key: "monthly", label: "Aylık", price: `${formatTry(platformSettings.monthlyPriceTry)} ₺ / ay`, sub: "Her ay otomatik yenilenir" },
+        { key: "yearly", label: "Yıllık", price: `${formatTry(platformSettings.yearlyPriceTry)} ₺ / yıl`, sub: "2 ay ücretsiz — en avantajlı" },
+      ]
+    : [];
 
   const [clubName, setClubName] = useState("");
   const [logoUri, setLogoUri] = useState<string | null>(null);
@@ -105,7 +124,18 @@ export default function CreateClubScreen({ onBack }: { onBack: () => void }) {
 
         <Text style={styles.title}>Kulüp Oluştur</Text>
 
-        {step === "plan" && (
+        {settingsLoading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
+
+        {!settingsLoading && settingsError && <Text style={styles.errorText}>{settingsError}</Text>}
+
+        {!settingsLoading && !settingsError && platformSettings?.maintenanceMode && (
+          <View style={styles.maintenanceCard}>
+            <Text style={styles.maintenanceIcon}>🚧</Text>
+            <Text style={styles.maintenanceText}>{platformSettings.maintenanceMessage}</Text>
+          </View>
+        )}
+
+        {!settingsLoading && !settingsError && platformSettings && !platformSettings.maintenanceMode && step === "plan" && (
           <>
             <Text style={styles.subtitle}>Kulübün için bir plan seç.</Text>
             {PLANS.map((p) => {
@@ -122,7 +152,7 @@ export default function CreateClubScreen({ onBack }: { onBack: () => void }) {
                 </TouchableOpacity>
               );
             })}
-            <Text style={styles.priceNote}>Fiyatlar örnektir, ödeme adımından önce güncel fiyat gösterilecektir.</Text>
+            <Text style={styles.priceNote}>Fiyatlar KDV dahildir.</Text>
             <TouchableOpacity
               style={[styles.button, !billingPeriod && styles.buttonDisabled]}
               onPress={() => billingPeriod && setStep("payment")}
@@ -258,6 +288,12 @@ const styles = StyleSheet.create({
   planPrice: { color: colors.ink, fontSize: 20, fontWeight: "700", marginTop: 4 },
   planSub: { color: colors.muted, fontSize: 12, marginTop: 4 },
   priceNote: { color: colors.muted, fontSize: 11, fontStyle: "italic", marginBottom: spacing.lg },
+  maintenanceCard: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.lg, padding: spacing.xl, alignItems: "center", marginTop: spacing.xl,
+  },
+  maintenanceIcon: { fontSize: 36, marginBottom: spacing.sm },
+  maintenanceText: { color: colors.muted, fontSize: 13, textAlign: "center", lineHeight: 19 },
   summaryCard: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg,

@@ -37,7 +37,6 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
   const [note, setNote] = useState("");
 
   const [pendingPayments, setPendingPayments] = useState<CoachPayment[]>([]);
-  const [deductions, setDeductions] = useState<Record<string, string>>({});
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -56,7 +55,6 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
 
   const handleSelectCoach = async (id: string | null) => {
     setCoachId(id);
-    setDeductions({});
     setPendingPayments([]);
     if (!id) return;
     setLoadingPayments(true);
@@ -69,36 +67,21 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
     }
   };
 
-  const toggleDeduction = (payment: CoachPayment) => {
-    setDeductions((prev) => {
-      const next = { ...prev };
-      if (next[payment.id] != null) {
-        delete next[payment.id];
-      } else {
-        next[payment.id] = String(payment.amount);
-      }
-      return next;
-    });
-  };
-
-  const totalAllocated = Object.values(deductions).reduce((sum, v) => sum + (Number(v) || 0), 0);
   const advanceAmount = Number(amount) || 0;
+  // Kesinti her zaman antrenörün sıradaki (en yakın vadeli) bekleyen
+  // ödemesinden yapılır — listPendingCoachPaymentsFor due_date'e göre
+  // artan sırayla döndüğü için ilk eleman "sıradaki maaş"tır.
+  const nextPayment = pendingPayments[0] ?? null;
+  const deductedFromNext = nextPayment ? Math.min(advanceAmount, Number(nextPayment.amount)) : 0;
 
   const handleSave = async () => {
     if (savingRef.current) return;
     if (!coachId) return Alert.alert("Eksik bilgi", "Bir antrenör seçmelisin.", [{ text: "Tamam" }]);
     if (!advanceAmount || advanceAmount <= 0) return Alert.alert("Eksik bilgi", "Geçerli bir avans tutarı girmelisin.", [{ text: "Tamam" }]);
 
-    const deductionList = Object.entries(deductions)
-      .map(([paymentId, v]) => ({ coach_payment_id: paymentId, deducted_amount: Number(v) || 0 }))
-      .filter((d) => d.deducted_amount > 0);
-
-    if (deductionList.some((d) => {
-      const payment = pendingPayments.find((p) => p.id === d.coach_payment_id);
-      return payment && d.deducted_amount > Number(payment.amount);
-    })) {
-      return Alert.alert("Geçersiz tutar", "Bir ödemeden, o ödemenin tutarından fazla kesinti yapamazsın.", [{ text: "Tamam" }]);
-    }
+    const deductionList = nextPayment && deductedFromNext > 0
+      ? [{ coach_payment_id: nextPayment.id, deducted_amount: deductedFromNext }]
+      : [];
 
     savingRef.current = true;
     setSaving(true);
@@ -107,7 +90,11 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
         { coach_id: coachId, amount: advanceAmount, given_date: givenDate, note: note.trim() || null },
         deductionList
       );
-      Alert.alert("Kaydedildi", "Avans kaydedildi ve seçilen ödeme(ler)den kesinti uygulandı.", [{ text: "Tamam" }]);
+      Alert.alert(
+        "Kaydedildi",
+        deductionList.length > 0 ? "Avans kaydedildi ve sıradaki ödemeden kesinti uygulandı." : "Avans kaydedildi.",
+        [{ text: "Tamam" }]
+      );
       navigation.goBack();
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);
@@ -121,9 +108,8 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
         <Text style={styles.infoBox}>
-          Antrenöre verdiğin avansı kaydet, sonra hangi bekleyen maaş
-          ödeme(ler)inden ne kadar kesileceğini aşağıdan seç. Seçtiğin
-          ödemelerin tutarı otomatik olarak azaltılır.
+          Antrenöre verdiğin avansı kaydet — tutar otomatik olarak antrenörün
+          sıradaki (en yakın vadeli) bekleyen ödemesinden düşülür.
         </Text>
 
         <Field label="Antrenör *">
@@ -165,42 +151,23 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
 
         {coachId && (
           <View style={styles.deductionBox}>
-            <Text style={styles.deductionTitle}>Hangi Ödeme(ler)den Kesilsin?</Text>
+            <Text style={styles.deductionTitle}>Sıradaki Ödemeden Kesinti</Text>
             {loadingPayments ? (
               <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.md }} />
-            ) : pendingPayments.length === 0 ? (
-              <Text style={styles.deductionHint}>Bu antrenörün bekleyen ödemesi yok.</Text>
+            ) : !nextPayment ? (
+              <Text style={styles.deductionHint}>Bu antrenörün bekleyen ödemesi yok, avans kesintisiz kaydedilecek.</Text>
             ) : (
-              pendingPayments.map((p) => {
-                const checked = deductions[p.id] != null;
-                return (
-                  <View key={p.id} style={styles.deductionRow}>
-                    <TouchableOpacity style={styles.deductionCheckRow} onPress={() => toggleDeduction(p)}>
-                      <Text style={[styles.checkbox, checked && styles.checkboxChecked]}>{checked ? "✓" : ""}</Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.deductionDue}>Vade: {new Date(p.due_date).toLocaleDateString("tr-TR")}</Text>
-                        <Text style={styles.deductionAmount}>{formatTL(p.amount)}</Text>
-                      </View>
-                    </TouchableOpacity>
-                    {checked && (
-                      <TextInput
-                        onFocus={handleFocus}
-                        style={styles.deductionInput}
-                        value={deductions[p.id]}
-                        onChangeText={(v) => setDeductions((prev) => ({ ...prev, [p.id]: v }))}
-                        keyboardType="numeric"
-                        placeholder="Kesinti tutarı"
-                        placeholderTextColor={colors.muted}
-                      />
-                    )}
-                  </View>
-                );
-              })
-            )}
-            {pendingPayments.length > 0 && (
-              <Text style={[styles.deductionHint, totalAllocated !== advanceAmount && styles.deductionWarning]}>
-                Dağıtılan: {formatTL(totalAllocated)} / Avans: {formatTL(advanceAmount)}
-              </Text>
+              <>
+                <Text style={styles.deductionDue}>Vade: {new Date(nextPayment.due_date).toLocaleDateString("tr-TR")}</Text>
+                <Text style={styles.deductionAmount}>{formatTL(nextPayment.amount)}</Text>
+                {advanceAmount > 0 && (
+                  <Text style={[styles.deductionHint, advanceAmount > Number(nextPayment.amount) && styles.deductionWarning]}>
+                    {advanceAmount > Number(nextPayment.amount)
+                      ? `Avans tutarı bu ödemeden büyük, kesinti ${formatTL(deductedFromNext)} ile sınırlı kalacak.`
+                      : `Kesinti sonrası bu ödeme: ${formatTL(Number(nextPayment.amount) - deductedFromNext)}`}
+                  </Text>
+                )}
+              </>
             )}
           </View>
         )}
@@ -256,17 +223,6 @@ const styles = StyleSheet.create({
   deductionTitle: { color: colors.ink, fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
   deductionHint: { color: colors.muted, fontSize: 12, marginTop: spacing.sm },
   deductionWarning: { color: colors.coral, fontWeight: "600" },
-  deductionRow: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm, marginTop: spacing.sm },
-  deductionCheckRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  checkbox: {
-    width: 22, height: 22, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line,
-    textAlign: "center", textAlignVertical: "center", color: colors.bg, fontSize: 13, fontWeight: "700",
-  },
-  checkboxChecked: { backgroundColor: colors.violet, borderColor: colors.violet },
   deductionDue: { color: colors.muted, fontSize: 11 },
   deductionAmount: { color: colors.ink, fontSize: 14, fontWeight: "600" },
-  deductionInput: {
-    marginTop: spacing.sm, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm,
-    color: colors.ink, paddingHorizontal: spacing.sm, paddingVertical: 8, fontSize: 13,
-  },
 });

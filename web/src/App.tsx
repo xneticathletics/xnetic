@@ -13,6 +13,7 @@ import VenuesListPage from "./routes/venues/VenuesListPage";
 import CalendarPage from "./routes/calendar/CalendarPage";
 import FinanceOverviewPage from "./routes/finance/FinanceOverviewPage";
 import FinancialDocumentsPage from "./routes/finance/FinancialDocumentsPage";
+import CoachPaymentsPage from "./routes/finance/CoachPaymentsPage";
 import CoachesListPage from "./routes/coaches/CoachesListPage";
 import CoachDetailPage from "./routes/coaches/CoachDetailPage";
 import CoachAssignmentsPage from "./routes/coaches/CoachAssignmentsPage";
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="/finance" element={<Navigate to="/finance/overview" replace />} />
               <Route path="/finance/overview" element={<FinanceOverviewPage />} />
               <Route path="/finance/documents" element={<FinancialDocumentsPage />} />
+              <Route path="/finance/coach-payments" element={<CoachPaymentsPage />} />
               <Route path="/coaches" element={<CoachesListPage />} />
               <Route path="/coaches/assignments" element={<CoachAssignmentsPage />} />
               <Route path="/coaches/:id" element={<CoachDetailPage />} />

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Linking from "expo-linking";
@@ -12,9 +13,11 @@ import ForcePasswordChangeScreen from "../screens/ForcePasswordChangeScreen";
 import CoachOnboardingScreen from "../screens/CoachOnboardingScreen";
 import ConsentScreen from "../screens/ConsentScreen";
 import CreateClubScreen from "../screens/CreateClubScreen";
+import MaintenanceScreen from "../screens/MaintenanceScreen";
 import { getMyOnboardingStatus, getMyMustChangePassword } from "../lib/api/currentUser";
 import { hasAllRequiredConsents } from "../lib/api/consents";
 import { parseRecoveryUrl, startRecoverySession } from "../lib/api/passwordReset";
+import { getPlatformSettings } from "../lib/api/platformSettings";
 import RoleTabs from "../navigation/RoleTabs";
 
 const Stack = createNativeStackNavigator();
@@ -47,6 +50,11 @@ export default function RootNavigator() {
   // Sadece Veli rolünde: şifre değişimi + (varsa) onboarding bitince,
   // KVKK/sağlık/foto-video/sorumluluk onayları tamamlanmış mı kontrol edilir.
   const [consentsDone, setConsentsDone] = useState<boolean | null>(null);
+  // Süper Admin, Sistem Ayarları'ndan bakım modunu açtığında Süper Admin
+  // dışındaki tüm roller bu bayrakla App'e hiç girmeden MaintenanceScreen'e
+  // yönlendirilir — kontrolü diğer gate'lerden (şifre/onboarding/onay) önce yapıyoruz.
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
   // Şifre değiştirme işlemi (supabase.auth.updateUser) oturumu tazeliyor,
   // bu da AŞAĞIDAKİ [session, role] efektini TEKRAR tetikleyip sunucudan
   // must_change_password'ü YENİDEN sorguluyordu — bu ikinci sorgu, bizim
@@ -95,6 +103,31 @@ export default function RootNavigator() {
       .then((must) => { if (!cancelled && !passwordConfirmedRef.current) setMustChangePassword(must); })
       .catch(() => { if (!cancelled && !passwordConfirmedRef.current) setMustChangePassword(false); });
     return () => { cancelled = true; };
+  }, [session, role]);
+
+  useEffect(() => {
+    if (!session || !role || role === "super_admin") {
+      setMaintenanceMode(false);
+      return;
+    }
+    let cancelled = false;
+    const checkMaintenance = () => {
+      getPlatformSettings()
+        .then((s) => {
+          if (cancelled) return;
+          setMaintenanceMode(s.maintenanceMode);
+          setMaintenanceMessage(s.maintenanceMessage);
+        })
+        .catch(() => {});
+    };
+    checkMaintenance();
+    // Oturum zaten açıkken Süper Admin bakım modunu açarsa, uygulama arka
+    // planda/önde kalmaya devam ettiği sürece bunu fark etmiyordu — uygulama
+    // her öne geldiğinde de tekrar kontrol ediyoruz.
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") checkMaintenance();
+    });
+    return () => { cancelled = true; subscription.remove(); };
   }, [session, role]);
 
   useEffect(() => {
@@ -196,6 +229,10 @@ export default function RootNavigator() {
               )}
             </Stack.Screen>
           )
+        ) : maintenanceMode ? (
+          <Stack.Screen name="Maintenance">
+            {() => <MaintenanceScreen message={maintenanceMessage} />}
+          </Stack.Screen>
         ) : mustChangePassword === true ? (
           <Stack.Screen name="ForcePasswordChange">
             {() => <ForcePasswordChangeScreen onComplete={handlePasswordChanged} />}
