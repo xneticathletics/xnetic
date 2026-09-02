@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* X-NETIC marka renkleri — mobil uygulamadaki src/theme/tokens.ts ile birebir aynı. */
+@theme {
+  --color-bg: #10122a;
+  --color-surface: #1b1e3f;
+  --color-line: #2c2f58;
+  --color-yellow: #ffc845;
+  --color-teal: #3fd6c6;
+  --color-coral: #ff6b5d;
+  --color-violet: #9b7bff;
+  --color-ink: #f5f5f2;
+  --color-muted: #8b8fb8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}

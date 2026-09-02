@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "X-NETIC Club",
+    "slug": "x-netic-club",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "xneticclub",
+    "splash": {
+      "backgroundColor": "#10122A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "club.xnetic.app"
+    },
+    "android": {
+      "package": "club.xnetic.app"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}

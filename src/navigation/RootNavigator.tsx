@@ -1,0 +1,217 @@
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import * as Linking from "expo-linking";
+import { useAuth } from "../context/AuthContext";
+import { colors } from "../theme/tokens";
+import LoginScreen from "../screens/LoginScreen";
+import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
+import SplashScreen from "../screens/SplashScreen";
+import ForcePasswordChangeScreen from "../screens/ForcePasswordChangeScreen";
+import CoachOnboardingScreen from "../screens/CoachOnboardingScreen";
+import ConsentScreen from "../screens/ConsentScreen";
+import CreateClubScreen from "../screens/CreateClubScreen";
+import { getMyOnboardingStatus, getMyMustChangePassword } from "../lib/api/currentUser";
+import { hasAllRequiredConsents } from "../lib/api/consents";
+import { parseRecoveryUrl, startRecoverySession } from "../lib/api/passwordReset";
+import RoleTabs from "../navigation/RoleTabs";
+
+const Stack = createNativeStackNavigator();
+
+const navTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: colors.bg, card: colors.surface, border: colors.line },
+};
+
+// Expo Go, native (JS öncesi) splash ekranını özelleştirmemize izin
+// vermiyor (SDK 52+ sınırlaması — sadece uygulama ikonunu gösteriyor).
+// Bu yüzden JS içindeki SplashScreen'in en az bu kadar görünür kalmasını
+// sağlıyoruz; yoksa Supabase oturum kontrolü çok hızlı bitince göz açıp
+// kapayana kadar geçip gidiyordu.
+const MIN_SPLASH_MS = 1200;
+
+export default function RootNavigator() {
+  const { session, loading, role } = useAuth();
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showCreateClub, setShowCreateClub] = useState(false);
+  // Şifremi Unuttum linkine dokununca uygulama DOĞRUDAN açılır (harici
+  // bir web sayfası yok) — bu bayrak true olunca, oturum durumu ne
+  // olursa olsun Yeni Şifre Belirle ekranı gösterilir.
+  const [isRecovering, setIsRecovering] = useState(false);
+  // null = henüz kontrol edilmedi. Sıra: önce şifre değiştirme
+  // (TÜM roller), sonra — sadece Antrenör'de — bilgi tamamlama.
+  const [mustChangePassword, setMustChangePassword] = useState<boolean | null>(null);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  // Sadece Veli rolünde: şifre değişimi + (varsa) onboarding bitince,
+  // KVKK/sağlık/foto-video/sorumluluk onayları tamamlanmış mı kontrol edilir.
+  const [consentsDone, setConsentsDone] = useState<boolean | null>(null);
+  // Şifre değiştirme işlemi (supabase.auth.updateUser) oturumu tazeliyor,
+  // bu da AŞAĞIDAKİ [session, role] efektini TEKRAR tetikleyip sunucudan
+  // must_change_password'ü YENİDEN sorguluyordu — bu ikinci sorgu, bizim
+  // az önce yaptığımız DB güncellemesinden ÖNCE başladığı için hâlâ eski
+  // (true) değeri okuyup handlePasswordChanged'ın doğru "false"unu
+  // eziyordu. Kullanıcı "Devam Et"e bastığında ekranın kendini tekrar
+  // gösterdiği bug buydu. Yerel onaydan sonra bu efekti tamamen atlıyoruz.
+  const passwordConfirmedRef = useRef(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Şifre sıfırlama e-postasındaki linke dokununca uygulama bu URL ile
+  // açılır (hem uygulama kapalıyken hem açıkken çalışsın diye iki yolu
+  // da dinliyoruz).
+  useEffect(() => {
+    const handleUrl = (url: string) => {
+      const parsed = parseRecoveryUrl(url);
+      if (!parsed) return;
+      startRecoverySession(parsed.accessToken, parsed.refreshToken)
+        .then(() => setIsRecovering(true))
+        .catch(() => {});
+    };
+
+    Linking.getInitialURL().then((url) => { if (url) handleUrl(url); });
+    const subscription = Linking.addEventListener("url", ({ url }) => handleUrl(url));
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!session || !role) {
+      setMustChangePassword(null);
+      setOnboardingDone(null);
+      passwordConfirmedRef.current = false;
+      return;
+    }
+    if (passwordConfirmedRef.current) return;
+    let cancelled = false;
+    getMyMustChangePassword()
+      // Bu sorgu başladıktan SONRA (ama sonuçlanmadan ÖNCE) şifre yerel
+      // olarak onaylanmış olabilir — handlePasswordChanged'in senkron
+      // ref güncellemesi bu durumda da geçerli olsun diye, sonuç
+      // geldiğinde ref'i TEKRAR kontrol ediyoruz, sadece başlangıçta değil.
+      .then((must) => { if (!cancelled && !passwordConfirmedRef.current) setMustChangePassword(must); })
+      .catch(() => { if (!cancelled && !passwordConfirmedRef.current) setMustChangePassword(false); });
+    return () => { cancelled = true; };
+  }, [session, role]);
+
+  useEffect(() => {
+    // Şifre değiştirme adımı bitmeden onboarding kontrolünü hiç başlatma.
+    if (!session || !role || mustChangePassword !== false) {
+      if (mustChangePassword !== false) setOnboardingDone(null);
+      return;
+    }
+    if (role !== "coach") {
+      setOnboardingDone(true);
+      return;
+    }
+    let cancelled = false;
+    getMyOnboardingStatus()
+      .then((done) => { if (!cancelled) setOnboardingDone(done); })
+      .catch(() => { if (!cancelled) setOnboardingDone(true); });
+    return () => { cancelled = true; };
+  }, [session, role, mustChangePassword]);
+
+  useEffect(() => {
+    // Şifre değiştirme VE (varsa) onboarding bitmeden onay kontrolünü hiç başlatma.
+    if (!session || !role || mustChangePassword !== false || onboardingDone !== true) {
+      if (!(mustChangePassword === false && onboardingDone === true)) setConsentsDone(null);
+      return;
+    }
+    if (role !== "parent") {
+      setConsentsDone(true);
+      return;
+    }
+    let cancelled = false;
+    hasAllRequiredConsents()
+      .then((done) => { if (!cancelled) setConsentsDone(done); })
+      .catch(() => { if (!cancelled) setConsentsDone(true); });
+    return () => { cancelled = true; };
+  }, [session, role, mustChangePassword, onboardingDone]);
+
+  // Kulüp Oluştur akışı sonunda otomatik giriş yapılınca (ya da normal bir
+  // girişten sonra) bu bayrakları sıfırla — yoksa çıkış yapılıp login'e
+  // dönüldüğünde yanlışlıkla kaldığı adımda açılabilirdi.
+  useEffect(() => {
+    if (session) {
+      setShowForgotPassword(false);
+      setShowCreateClub(false);
+    }
+  }, [session]);
+
+  const handlePasswordChanged = useCallback(() => {
+    passwordConfirmedRef.current = true;
+    setMustChangePassword(false);
+  }, []);
+
+  const handleOnboardingComplete = useCallback(() => {
+    setOnboardingDone(true);
+  }, []);
+
+  const handleConsentsComplete = useCallback(() => {
+    setConsentsDone(true);
+  }, []);
+
+  if (loading || !minTimeElapsed) {
+    return <SplashScreen />;
+  }
+
+  const stillChecking =
+    !isRecovering &&
+    session && role && (
+      mustChangePassword === null ||
+      (mustChangePassword === false && onboardingDone === null) ||
+      (mustChangePassword === false && onboardingDone === true && consentsDone === null)
+    );
+
+  if (stillChecking) {
+    return <SplashScreen />;
+  }
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isRecovering ? (
+          <Stack.Screen name="ResetPassword">
+            {() => <ResetPasswordScreen onDone={() => setIsRecovering(false)} />}
+          </Stack.Screen>
+        ) : !session || !role ? (
+          showForgotPassword ? (
+            <Stack.Screen name="ForgotPassword">
+              {() => <ForgotPasswordScreen onBack={() => setShowForgotPassword(false)} />}
+            </Stack.Screen>
+          ) : showCreateClub ? (
+            <Stack.Screen name="CreateClub">
+              {() => <CreateClubScreen onBack={() => setShowCreateClub(false)} />}
+            </Stack.Screen>
+          ) : (
+            <Stack.Screen name="Login">
+              {() => (
+                <LoginScreen
+                  onForgotPassword={() => setShowForgotPassword(true)}
+                  onCreateClub={() => setShowCreateClub(true)}
+                />
+              )}
+            </Stack.Screen>
+          )
+        ) : mustChangePassword === true ? (
+          <Stack.Screen name="ForcePasswordChange">
+            {() => <ForcePasswordChangeScreen onComplete={handlePasswordChanged} />}
+          </Stack.Screen>
+        ) : onboardingDone === false ? (
+          <Stack.Screen name="Onboarding">
+            {() => <CoachOnboardingScreen onComplete={handleOnboardingComplete} />}
+          </Stack.Screen>
+        ) : consentsDone === false ? (
+          <Stack.Screen name="Consent">
+            {() => <ConsentScreen onComplete={handleConsentsComplete} />}
+          </Stack.Screen>
+        ) : (
+          <Stack.Screen name="App">{() => <RoleTabs role={role} />}</Stack.Screen>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
