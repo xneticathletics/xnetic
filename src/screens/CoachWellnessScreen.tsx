@@ -4,7 +4,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
-import { listAthletesInGroups, listAllAthletes } from "../lib/api/athletes";
+import { listAthletesInGroups, listAllAthletes, type Athlete } from "../lib/api/athletes";
+import { listGroups, type Group } from "../lib/api/groups";
 import { listCheckinsForAthletesOnDate, type AthleteLatestCheckin } from "../lib/api/wellnessCheckins";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -25,9 +26,13 @@ function todayKey() {
 export default function CoachWellnessScreen({ navigation }: Props) {
   const { role } = useAuth();
   const [rows, setRows] = useState<AthleteLatestCheckin[]>([]);
+  const [athleteGroupId, setAthleteGroupId] = useState<Record<string, string | null>>({});
+  const [groups, setGroups] = useState<Group[]>([]);
   const [query, setQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayKey());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [groupFilter, setGroupFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +45,13 @@ export default function CoachWellnessScreen({ navigation }: Props) {
       // club_admin'in kendi koçluk yaptığı grup yoktur — kulüpteki TÜM
       // sporcuları görür. Antrenör sadece kendi grubundakileri görür.
       // Wellness check-in sadece müsabık sporcular için bir uygulama.
-      const athletes =
-        role === "club_admin"
-          ? await listAllAthletes()
-          : await listAthletesInGroups(await getMyCoachedGroupIds());
-      const musabikAthletes = athletes.filter((a) => a.athlete_type === "musabik");
+      const [athletes, allGroups] = await Promise.all([
+        role === "club_admin" ? listAllAthletes() : listAthletesInGroups(await getMyCoachedGroupIds()),
+        listGroups(),
+      ]);
+      const musabikAthletes: Athlete[] = athletes.filter((a) => a.athlete_type === "musabik");
+      setGroups(allGroups);
+      setAthleteGroupId(Object.fromEntries(musabikAthletes.map((a) => [a.id, a.group_id])));
       setRows(await listCheckinsForAthletesOnDate(musabikAthletes.map((a) => a.id), selectedDate));
     } catch (e: any) {
       setError(e.message ?? "Yüklenemedi");
@@ -62,12 +69,32 @@ export default function CoachWellnessScreen({ navigation }: Props) {
     }, [load])
   );
 
+  const branches = useMemo(() => Array.from(new Set(groups.map((g) => g.branch))).sort((a, b) => a.localeCompare(b, "tr")), [groups]);
+  const groupsInBranch = useMemo(
+    () => (branchFilter ? groups.filter((g) => g.branch === branchFilter) : groups),
+    [groups, branchFilter]
+  );
+
   const searching = query.trim().length > 0;
   const displayRows = useMemo(() => {
-    if (!searching) return rows;
-    const q = query.trim().toLowerCase();
-    return rows.filter((r) => r.full_name.toLowerCase().includes(q));
-  }, [rows, query, searching]);
+    let list = rows;
+    if (searching) {
+      const q = query.trim().toLowerCase();
+      list = list.filter((r) => r.full_name.toLowerCase().includes(q));
+    }
+    if (groupFilter) {
+      list = list.filter((r) => athleteGroupId[r.athlete_id] === groupFilter);
+    } else if (branchFilter) {
+      const groupIdsInBranch = new Set(groupsInBranch.map((g) => g.id));
+      list = list.filter((r) => {
+        const gid = athleteGroupId[r.athlete_id];
+        return gid ? groupIdsInBranch.has(gid) : false;
+      });
+    }
+    // Check-in yapanlar üstte listelensin — her iki grup içinde de isim
+    // sırası korunur (stabil sıralama).
+    return [...list].sort((a, b) => Number(!!b.latest) - Number(!!a.latest));
+  }, [rows, query, searching, branchFilter, groupFilter, groupsInBranch, athleteGroupId]);
 
   const isToday = selectedDate === todayKey();
 
@@ -93,6 +120,52 @@ export default function CoachWellnessScreen({ navigation }: Props) {
         onChangeText={setQuery}
       />
 
+      {branches.length > 1 && (
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterChip, !branchFilter && styles.filterChipActive]}
+            onPress={() => {
+              setBranchFilter(null);
+              setGroupFilter(null);
+            }}
+          >
+            <Text style={[styles.filterChipText, !branchFilter && styles.filterChipTextActive]}>Tüm Branşlar</Text>
+          </TouchableOpacity>
+          {branches.map((b) => (
+            <TouchableOpacity
+              key={b}
+              style={[styles.filterChip, branchFilter === b && styles.filterChipActive]}
+              onPress={() => {
+                setBranchFilter(b);
+                setGroupFilter(null);
+              }}
+            >
+              <Text style={[styles.filterChipText, branchFilter === b && styles.filterChipTextActive]}>{b}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {groupsInBranch.length > 1 && (
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterChipGroup, !groupFilter && styles.filterChipGroupActive]}
+            onPress={() => setGroupFilter(null)}
+          >
+            <Text style={[styles.filterChipText, !groupFilter && styles.filterChipTextActive]}>Tüm Gruplar</Text>
+          </TouchableOpacity>
+          {groupsInBranch.map((g) => (
+            <TouchableOpacity
+              key={g.id}
+              style={[styles.filterChipGroup, groupFilter === g.id && styles.filterChipGroupActive]}
+              onPress={() => setGroupFilter(g.id)}
+            >
+              <Text style={[styles.filterChipText, groupFilter === g.id && styles.filterChipTextActive]}>{g.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -106,12 +179,12 @@ export default function CoachWellnessScreen({ navigation }: Props) {
       <FlatList
         data={displayRows}
         keyExtractor={(r) => r.athlete_id}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
+        contentContainerStyle={{ paddingBottom: spacing.xl, paddingTop: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={
           !loading ? (
             <Text style={styles.empty}>
-              {searching ? "Eşleşen sporcu bulunamadı." : "Müsabık sporcu bulunamadı."}
+              {searching || branchFilter || groupFilter ? "Eşleşen sporcu bulunamadı." : "Müsabık sporcu bulunamadı."}
             </Text>
           ) : null
         }
@@ -167,8 +240,21 @@ const styles = StyleSheet.create({
   dateFilterChange: { color: colors.teal, fontSize: 12, fontWeight: "700" },
   search: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
-    color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.md,
+    color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.sm,
   },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.sm },
+  filterChip: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
+    paddingHorizontal: spacing.md, paddingVertical: 6,
+  },
+  filterChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  filterChipGroup: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
+    paddingHorizontal: spacing.md, paddingVertical: 6,
+  },
+  filterChipGroupActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
+  filterChipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
+  filterChipTextActive: { color: colors.bg },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {

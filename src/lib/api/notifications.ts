@@ -22,7 +22,8 @@ export type NotificationEventType =
   | "membership_freeze"
   | "session_excuse"
   | "payment_claim"
-  | "payment_reminder";
+  | "payment_reminder"
+  | "announcement";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -33,6 +34,7 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "session_excuse", label: "Antrenmana Katılamayacak Bildirimi" },
   { key: "payment_claim", label: "Ödeme Bildirimi (Admin'e)" },
   { key: "payment_reminder", label: "Aidat Hatırlatması" },
+  { key: "announcement", label: "Yeni Duyuru" },
 ];
 
 // event_type verilmezse (ör. süper admin duyurusu gibi kategorisiz
