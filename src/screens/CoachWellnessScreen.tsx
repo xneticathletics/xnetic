@@ -146,7 +146,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
         </View>
       )}
 
-      {groupsInBranch.length > 1 && (
+      {!!branchFilter && groupsInBranch.length > 1 && (
         <View style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterChipGroup, !groupFilter && styles.filterChipGroupActive]}
