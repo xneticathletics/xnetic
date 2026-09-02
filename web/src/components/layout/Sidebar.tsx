@@ -3,18 +3,18 @@ import { useAuth } from "../../context/AuthContext";
 
 const NAV_ITEMS = [
   { to: "/", label: "Kulüp Özeti", icon: "📊", end: true },
+  { to: "/announcements", label: "Duyurular", icon: "📣" },
   { to: "/athletes", label: "Sporcular", icon: "👥" },
+  { to: "/coaches", label: "Antrenörler", icon: "🧑‍🏫" },
   { to: "/groups", label: "Gruplar", icon: "🏷️" },
   { to: "/branches", label: "Branşlar", icon: "🏅" },
   { to: "/venues", label: "Salonlar", icon: "🏟️" },
   { to: "/calendar", label: "Antrenman ve Müsabaka", icon: "📅" },
   { to: "/finance/overview", label: "Finans", icon: "💰" },
-  { to: "/coaches", label: "Antrenörler", icon: "🧑‍🏫" },
   { to: "/performance", label: "Performans Ölçümleri", icon: "⏱️" },
   { to: "/fitness", label: "Fitness", icon: "💪" },
   { to: "/nutrition", label: "Beslenme", icon: "🥗" },
   { to: "/shop/products", label: "Mağaza", icon: "🛍️" },
-  { to: "/announcements", label: "Duyurular", icon: "📣" },
   { to: "/users", label: "Kullanıcılar", icon: "👥" },
   { to: "/settings", label: "Kulüp Ayarları", icon: "⚙️" },
 ];
