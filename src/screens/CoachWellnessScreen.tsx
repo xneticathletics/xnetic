@@ -1,5 +1,8 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image } from "react-native";
+import {
+  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image,
+  KeyboardAvoidingView, Platform,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -99,6 +102,11 @@ export default function CoachWellnessScreen({ navigation }: Props) {
   const isToday = selectedDate === todayKey();
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
     <View style={styles.container}>
       <Text style={styles.description}>
         Sporcuların her sabah kendi doldurduğu, uyku/enerji/kas ağrısı/ruh
@@ -220,6 +228,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
         }}
       />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
