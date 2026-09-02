@@ -110,7 +110,8 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
       await sendNotification(
         recipientId,
         "Aidat Hatırlatması",
-        `${item.athletes?.full_name ?? "Sporcunuz"} için ${item.amount.toLocaleString("tr-TR")} ₺ tutarındaki aidatın vadesi (${item.due_date}) geçti. Lütfen en kısa sürede ödeme yapın.`
+        `${item.athletes?.full_name ?? "Sporcunuz"} için ${item.amount.toLocaleString("tr-TR")} ₺ tutarındaki aidatın vadesi (${item.due_date}) geçti. Lütfen en kısa sürede ödeme yapın.`,
+        "payment_reminder"
       );
       Alert.alert("Gönderildi", "Uyarı bildirimi gönderildi.", [{ text: "Tamam" }]);
     } catch (e: any) {

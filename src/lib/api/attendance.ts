@@ -59,7 +59,7 @@ async function notifyAbsentAthletes(sessionId: string, athleteIds: string[]) {
       if (a.parent_user_id) recipients.add(a.parent_user_id);
       if (a.athlete_user_id) recipients.add(a.athlete_user_id);
       const body = `${a.full_name}, ${session.session_date} tarihli antrenmana katılmadı olarak işaretlendi.`;
-      return Array.from(recipients).map((uid) => sendNotification(uid, title, body).catch(() => {}));
+      return Array.from(recipients).map((uid) => sendNotification(uid, title, body, "absence").catch(() => {}));
     })
   );
 }
@@ -115,7 +115,7 @@ async function notifyConsecutiveAbsence(sessionId: string, newlyAbsentIds: strin
       if (a.parent_user_id) recipients.add(a.parent_user_id);
       if (a.athlete_user_id) recipients.add(a.athlete_user_id);
       const body = `${a.full_name}, üst üste 2. antrenmana katılamadı. Bir engel varsa bizimle paylaşırsanız yardımcı olmaktan memnuniyet duyarız.`;
-      return Array.from(recipients).map((uid) => sendNotification(uid, title, body).catch(() => {}));
+      return Array.from(recipients).map((uid) => sendNotification(uid, title, body, "consecutive_absence").catch(() => {}));
     })
   );
 }

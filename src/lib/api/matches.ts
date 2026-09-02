@@ -272,5 +272,5 @@ export async function notifyMatchResult(match: MatchRow) {
   });
   if (recipients.size === 0) return;
 
-  await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body).catch(() => {})));
+  await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "match_result").catch(() => {})));
 }

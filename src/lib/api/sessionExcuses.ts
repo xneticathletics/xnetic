@@ -43,7 +43,7 @@ async function notifyCoachesOfExcuse(sessionId: string, athleteName: string, rea
   const body = `${athleteName}, ${session.session_date} tarihli antrenmana katılamayacağını bildirdi: "${reason}"`;
 
   await Promise.all(
-    Array.from(recipients).map((uid) => sendNotification(uid, title, body).catch(() => {}))
+    Array.from(recipients).map((uid) => sendNotification(uid, title, body, "session_excuse").catch(() => {}))
   );
 }
 

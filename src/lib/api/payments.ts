@@ -81,7 +81,7 @@ export async function notifyPaymentClaim(
   const body = `${athleteName} için ${amount.toLocaleString("tr-TR")} ₺ tutarındaki aidatın ${methodLabel} ile ödendiği bildirildi — kontrol edip onaylayabilirsiniz.`;
 
   await Promise.all(
-    (admins ?? []).map((a) => sendNotification(a.id, title, body).catch(() => {}))
+    (admins ?? []).map((a) => sendNotification(a.id, title, body, "payment_claim").catch(() => {}))
   );
 }
 

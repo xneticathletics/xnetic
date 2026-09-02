@@ -86,7 +86,7 @@ async function notifyProgramPublished(groupId: string, programName: string, item
   const body = `"${programName}" programı yayınlandı: ${summary}`;
 
   await Promise.all(
-    Array.from(recipients).map((uid) => sendNotification(uid, title, body).catch(() => {}))
+    Array.from(recipients).map((uid) => sendNotification(uid, title, body, "fitness_program").catch(() => {}))
   );
 }
 
