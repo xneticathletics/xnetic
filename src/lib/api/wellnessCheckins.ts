@@ -95,3 +95,23 @@ export async function listLatestCheckinsForAthletes(athleteIds: string[]): Promi
     .map((a) => ({ athlete_id: a.id, full_name: a.full_name, photo_url: a.photo_url, latest: latestByAthlete.get(a.id) ?? null }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
 }
+
+// listLatestCheckinsForAthletes'ten farkı: her sporcunun EN SON kaydı
+// yerine, verilen TARİHTEKİ kaydı döner (o gün doldurmadıysa null) —
+// takvimden geçmiş bir günü seçip o günün check-in'lerini görmek için.
+export async function listCheckinsForAthletesOnDate(athleteIds: string[], date: string): Promise<AthleteLatestCheckin[]> {
+  if (athleteIds.length === 0) return [];
+
+  const [athletesResult, checkinsResult] = await Promise.all([
+    supabase.from("athletes").select("id, full_name, photo_url").in("id", athleteIds),
+    supabase.from("wellness_checkins").select(FIELDS).in("athlete_id", athleteIds).eq("checkin_date", date),
+  ]);
+  if (athletesResult.error) throw athletesResult.error;
+  if (checkinsResult.error) throw checkinsResult.error;
+
+  const byAthlete = new Map<string, WellnessCheckin>((checkinsResult.data ?? []).map((c) => [c.athlete_id, c]));
+
+  return (athletesResult.data ?? [])
+    .map((a) => ({ athlete_id: a.id, full_name: a.full_name, photo_url: a.photo_url, latest: byAthlete.get(a.id) ?? null }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
+}

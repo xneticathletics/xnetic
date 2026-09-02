@@ -5,20 +5,15 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { listAthletesInGroups, listAllAthletes } from "../lib/api/athletes";
-import { listLatestCheckinsForAthletes, type AthleteLatestCheckin } from "../lib/api/wellnessCheckins";
+import { listCheckinsForAthletesOnDate, type AthleteLatestCheckin } from "../lib/api/wellnessCheckins";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import DatePickerModal from "../components/DatePickerModal";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachWellness">;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
-}
-
-function daysSince(iso: string): number {
-  const then = new Date(iso).getTime();
-  const now = new Date(new Date().toISOString().slice(0, 10)).getTime();
-  return Math.round((now - then) / (1000 * 60 * 60 * 24));
 }
 
 function todayKey() {
@@ -31,6 +26,8 @@ export default function CoachWellnessScreen({ navigation }: Props) {
   const { role } = useAuth();
   const [rows, setRows] = useState<AthleteLatestCheckin[]>([]);
   const [query, setQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState(todayKey());
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +45,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
           ? await listAllAthletes()
           : await listAthletesInGroups(await getMyCoachedGroupIds());
       const musabikAthletes = athletes.filter((a) => a.athlete_type === "musabik");
-      setRows(await listLatestCheckinsForAthletes(musabikAthletes.map((a) => a.id)));
+      setRows(await listCheckinsForAthletesOnDate(musabikAthletes.map((a) => a.id), selectedDate));
     } catch (e: any) {
       setError(e.message ?? "Yüklenemedi");
     } finally {
@@ -56,7 +53,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
       hasLoadedOnceRef.current = true;
       setRefreshing(false);
     }
-  }, [role]);
+  }, [role, selectedDate]);
 
   useFocusEffect(
     useCallback(() => {
@@ -67,15 +64,12 @@ export default function CoachWellnessScreen({ navigation }: Props) {
 
   const searching = query.trim().length > 0;
   const displayRows = useMemo(() => {
-    if (searching) {
-      const q = query.trim().toLowerCase();
-      return rows.filter((r) => r.full_name.toLowerCase().includes(q));
-    }
-    // Arama yokken sadece BUGÜN check-in yapmış sporcular gösterilir —
-    // geçmişte kalan/eski kayıtlar aramadan bulunabilir.
-    const today = todayKey();
-    return rows.filter((r) => r.latest?.checkin_date === today);
+    if (!searching) return rows;
+    const q = query.trim().toLowerCase();
+    return rows.filter((r) => r.full_name.toLowerCase().includes(q));
   }, [rows, query, searching]);
+
+  const isToday = selectedDate === todayKey();
 
   return (
     <View style={styles.container}>
@@ -84,9 +78,12 @@ export default function CoachWellnessScreen({ navigation }: Props) {
         hâlini içeren günlük bir takip anketi. Resmi bir test değil — erken
         uyarı sinyali almak için buradan kimlerin doldurduğunu görebilirsin.
       </Text>
-      <Text style={styles.subtitle}>
-        {searching ? "Sporcu ara — herhangi birine dokunup geçmişini gör." : "Bugün check-in yapan müsabık sporcular."}
-      </Text>
+
+      <TouchableOpacity style={styles.dateFilter} onPress={() => setDatePickerVisible(true)}>
+        <Text style={styles.dateFilterIcon}>📅</Text>
+        <Text style={styles.dateFilterText}>{isToday ? `Bugün — ${formatDate(selectedDate)}` : formatDate(selectedDate)}</Text>
+        <Text style={styles.dateFilterChange}>Değiştir</Text>
+      </TouchableOpacity>
 
       <TextInput
         style={styles.search}
@@ -99,6 +96,13 @@ export default function CoachWellnessScreen({ navigation }: Props) {
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
 
+      <DatePickerModal
+        visible={datePickerVisible}
+        selectedDate={selectedDate}
+        onSelect={setSelectedDate}
+        onClose={() => setDatePickerVisible(false)}
+      />
+
       <FlatList
         data={displayRows}
         keyExtractor={(r) => r.athlete_id}
@@ -107,16 +111,11 @@ export default function CoachWellnessScreen({ navigation }: Props) {
         ListEmptyComponent={
           !loading ? (
             <Text style={styles.empty}>
-              {searching
-                ? "Eşleşen sporcu bulunamadı."
-                : role === "club_admin"
-                ? "Bugün henüz check-in yapan sporcu yok."
-                : "Grubunda bugün check-in yapan sporcu yok."}
+              {searching ? "Eşleşen sporcu bulunamadı." : "Müsabık sporcu bulunamadı."}
             </Text>
           ) : null
         }
         renderItem={({ item }) => {
-          const stale = item.latest ? daysSince(item.latest.checkin_date) >= 3 : false;
           return (
             <TouchableOpacity
               style={styles.row}
@@ -132,12 +131,9 @@ export default function CoachWellnessScreen({ navigation }: Props) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowName}>{item.full_name}</Text>
                 {item.latest ? (
-                  <Text style={[styles.rowSub, stale && styles.rowSubStale]}>
-                    Son check-in: {formatDate(item.latest.checkin_date)}
-                    {stale ? " · Uzun süredir kayıt yok" : ""}
-                  </Text>
+                  <Text style={styles.rowSub}>Check-in yaptı</Text>
                 ) : (
-                  <Text style={styles.rowSubStale}>Hiç check-in yapmadı</Text>
+                  <Text style={styles.rowSubStale}>Bu tarihte check-in yapmadı</Text>
                 )}
               </View>
               {item.latest && (
@@ -161,7 +157,14 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.md,
     marginTop: spacing.sm, marginBottom: spacing.xs,
   },
-  subtitle: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: spacing.md },
+  dateFilter: {
+    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    paddingHorizontal: spacing.md, paddingVertical: 12, marginTop: spacing.sm, marginBottom: spacing.md,
+  },
+  dateFilterIcon: { fontSize: 15 },
+  dateFilterText: { flex: 1, color: colors.ink, fontSize: 13, fontWeight: "700" },
+  dateFilterChange: { color: colors.teal, fontSize: 12, fontWeight: "700" },
   search: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.md,
