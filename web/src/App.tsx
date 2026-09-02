@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ClubSettingsProvider } from "./context/ClubSettingsContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./routes/LoginPage";
 import AppLayout from "./components/layout/AppLayout";
@@ -42,6 +43,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ClubSettingsProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
@@ -89,6 +91,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ClubSettingsProvider>
       </AuthProvider>
     </BrowserRouter>
   );

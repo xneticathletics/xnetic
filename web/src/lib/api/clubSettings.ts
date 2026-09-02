@@ -11,6 +11,11 @@ export type ClubSettings = {
   announcement_visibility_days: number;
   payment_overdue_grace_days: number;
   finance_period_start_day: number;
+  // Sol menüde kulübün kullanmadığı, bu yüzden gizlenmiş bölümlerin key
+  // listesi — bkz. Sidebar.tsx TILE_NAV_KEYS. Listede olmayan bir bölüm
+  // her zaman görünürdür (varsayılan: hepsi aktif). Mobildeki
+  // disabled_home_tiles ile AYNI kulüp ayarı satırını paylaşır.
+  disabled_home_tiles: string[];
 };
 
 export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
@@ -24,6 +29,7 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
   announcement_visibility_days: 10,
   payment_overdue_grace_days: 0,
   finance_period_start_day: 1,
+  disabled_home_tiles: [],
 };
 
 // club_id EXPLICIT olarak filtrelenir — RLS'e (".limit(1)") güvenmek Süper
@@ -46,6 +52,7 @@ export async function getClubSettings(clubId: string): Promise<ClubSettings> {
     announcement_visibility_days: data.announcement_visibility_days,
     payment_overdue_grace_days: data.payment_overdue_grace_days,
     finance_period_start_day: data.finance_period_start_day,
+    disabled_home_tiles: data.disabled_home_tiles ?? [],
   };
 }
 
@@ -62,5 +69,24 @@ export async function getClubName(clubId: string): Promise<string | null> {
 
 export async function updateClubName(clubId: string, name: string): Promise<void> {
   const { error } = await supabase.from("clubs").update({ name }).eq("id", clubId);
+  if (error) throw error;
+}
+
+// Havale/EFT ile ödeme adımında veliye gösterilecek banka bilgisi (hesap
+// adı + IBAN, ayrı ayrı) — mobildeki Banka Bilgileri ekranıyla aynı
+// clubs.bank_account_name / bank_iban kolonlarını okur/yazar.
+export type ClubBankInfo = { bankAccountName: string | null; bankIban: string | null };
+
+export async function getClubBankInfo(clubId: string): Promise<ClubBankInfo> {
+  const { data, error } = await supabase.from("clubs").select("bank_account_name, bank_iban").eq("id", clubId).maybeSingle();
+  if (error) return { bankAccountName: null, bankIban: null };
+  return { bankAccountName: data?.bank_account_name ?? null, bankIban: data?.bank_iban ?? null };
+}
+
+export async function updateClubBankInfo(clubId: string, bankAccountName: string, bankIban: string): Promise<void> {
+  const { error } = await supabase
+    .from("clubs")
+    .update({ bank_account_name: bankAccountName, bank_iban: bankIban })
+    .eq("id", clubId);
   if (error) throw error;
 }

@@ -20,6 +20,7 @@ export type Athlete = {
   photo_url: string | null;
   parent_name: string | null;
   parent_phone: string | null;
+  registered_at: string | null;
   // KVKK kapsamında ayrı "Sağlık Verisi İşleme İzni" onayı alındıktan
   // sonra eklendi (bkz. mobil src/lib/consentTexts.ts) — mobille aynı alanlar.
   health_info: string | null;
@@ -50,7 +51,7 @@ export type AthleteInput = {
 };
 
 const ATHLETE_FIELDS =
-  "id, full_name, birth_date, group_id, blood_type, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, health_info, allergies, medications";
+  "id, full_name, birth_date, group_id, blood_type, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, registered_at, health_info, allergies, medications";
 
 export async function listAllAthletes(): Promise<Athlete[]> {
   const { data, error } = await supabase

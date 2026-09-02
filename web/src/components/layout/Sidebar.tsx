@@ -1,20 +1,26 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useClubSettings } from "../../context/ClubSettingsContext";
 
-const NAV_ITEMS = [
+// Her nav öğesinin, Kulüp Ayarları → Ana Sayfa Özellikleri'ndeki hangi
+// anahtara bağlı olduğunu belirtir — mobildeki TILES_BY_ROLE.club_admin
+// anahtarlarıyla aynı (bkz. src/screens/HomeScreen.tsx). "tileKey" olmayan
+// öğeler (Kulüp Özeti, Duyurular, Kullanıcılar, Kulüp Ayarları, Hesabım)
+// hiçbir zaman kapatılamaz — çekirdek/idari sayfalar.
+const NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean; tileKey?: string }[] = [
   { to: "/", label: "Kulüp Özeti", icon: "📊", end: true },
   { to: "/announcements", label: "Duyurular", icon: "📣" },
-  { to: "/athletes", label: "Sporcular", icon: "👥" },
-  { to: "/coaches", label: "Antrenörler", icon: "🧑‍🏫" },
-  { to: "/groups", label: "Gruplar", icon: "🏷️" },
-  { to: "/branches", label: "Branşlar", icon: "🏅" },
-  { to: "/venues", label: "Salonlar", icon: "🏟️" },
-  { to: "/calendar", label: "Antrenman ve Müsabaka", icon: "📅" },
-  { to: "/finance/overview", label: "Finans", icon: "💰" },
-  { to: "/performance", label: "Performans Ölçümleri", icon: "⏱️" },
-  { to: "/fitness", label: "Fitness", icon: "💪" },
-  { to: "/nutrition", label: "Beslenme", icon: "🥗" },
-  { to: "/shop/products", label: "Mağaza", icon: "🛍️" },
+  { to: "/athletes", label: "Sporcular", icon: "👥", tileKey: "sporcu" },
+  { to: "/coaches", label: "Antrenörler", icon: "🧑‍🏫", tileKey: "antrenorler" },
+  { to: "/groups", label: "Gruplar", icon: "🏷️", tileKey: "sporcu" },
+  { to: "/branches", label: "Branşlar", icon: "🏅", tileKey: "kulup_yapisi" },
+  { to: "/venues", label: "Salonlar", icon: "🏟️", tileKey: "kulup_yapisi" },
+  { to: "/calendar", label: "Antrenman ve Müsabaka", icon: "📅", tileKey: "antrenman" },
+  { to: "/finance/overview", label: "Finans", icon: "💰", tileKey: "aidat" },
+  { to: "/performance", label: "Performans Ölçümleri", icon: "⏱️", tileKey: "performans" },
+  { to: "/fitness", label: "Fitness", icon: "💪", tileKey: "fitness" },
+  { to: "/nutrition", label: "Beslenme", icon: "🥗", tileKey: "beslenme" },
+  { to: "/shop/products", label: "Mağaza", icon: "🛍️", tileKey: "magaza" },
   { to: "/users", label: "Kullanıcılar", icon: "👥" },
   { to: "/settings", label: "Kulüp Ayarları", icon: "⚙️" },
   { to: "/account", label: "Hesabım", icon: "👤" },
@@ -22,16 +28,21 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const { signOut } = useAuth();
+  const { settings } = useClubSettings();
+  const visibleItems = NAV_ITEMS.filter((item) => !item.tileKey || !settings.disabled_home_tiles.includes(item.tileKey));
 
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-line bg-surface">
-      <div className="border-b border-line px-5 py-5">
-        <div className="text-base font-extrabold text-ink">X-NETIC</div>
-        <div className="text-xs font-semibold text-muted">Yönetim Paneli</div>
+      <div className="flex items-center gap-3 border-b border-line px-5 py-5">
+        <img src="/xnetic-logo.png" alt="X-NETIC" className="h-9 w-9 rounded-lg object-contain" />
+        <div>
+          <div className="text-base font-extrabold text-ink">X-NETIC</div>
+          <div className="text-xs font-semibold text-muted">Yönetim Paneli</div>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
-        {NAV_ITEMS.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
