@@ -14,6 +14,8 @@ import { topUpAllActivePlans } from "../../lib/api/paymentPlans";
 import { getClubSettings } from "../../lib/api/clubSettings";
 import { useAuth } from "../../context/AuthContext";
 import PaymentPlanModal from "./PaymentPlanModal";
+import ExpenseModal from "./ExpenseModal";
+import ExtraIncomeModal from "./ExtraIncomeModal";
 
 const PERIOD_LABEL: Record<string, string> = { weekly: "Haftalık", monthly: "Aylık", yearly: "Yıllık" };
 
@@ -33,6 +35,8 @@ export default function FinanceOverviewPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [incomeModalOpen, setIncomeModalOpen] = useState(false);
 
   const load = async () => {
     if (!clubId) return;
@@ -117,13 +121,19 @@ export default function FinanceOverviewPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">Finans — Genel Bakış</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             to="/finance/documents"
             className="rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal"
           >
             📄 Finansal Dökümanlarım
           </Link>
+          <button onClick={() => setIncomeModalOpen(true)} className="rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal">
+            + Gelir
+          </button>
+          <button onClick={() => setExpenseModalOpen(true)} className="rounded-lg border border-coral px-4 py-2 text-sm font-bold text-coral">
+            + Gider
+          </button>
           <button onClick={() => setPlanModalOpen(true)} className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
             + Aidat Planı
           </button>
@@ -175,6 +185,26 @@ export default function FinanceOverviewPage() {
           onClose={() => setPlanModalOpen(false)}
           onSaved={() => {
             setPlanModalOpen(false);
+            load();
+          }}
+        />
+      )}
+
+      {expenseModalOpen && (
+        <ExpenseModal
+          onClose={() => setExpenseModalOpen(false)}
+          onSaved={() => {
+            setExpenseModalOpen(false);
+            load();
+          }}
+        />
+      )}
+
+      {incomeModalOpen && (
+        <ExtraIncomeModal
+          onClose={() => setIncomeModalOpen(false)}
+          onSaved={() => {
+            setIncomeModalOpen(false);
             load();
           }}
         />
