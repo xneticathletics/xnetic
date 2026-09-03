@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { useHeaderHeight } from "@react-navigation/elements";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../lib/fitnessExercises";
@@ -16,6 +17,7 @@ type ExerciseOption = { key: string; name: string };
 
 export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
+  const headerHeight = useHeaderHeight();
 
   const [items, setItems] = useState<FitnessProgramItemInput[]>([]);
 
@@ -104,8 +106,9 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={headerHeight}>
+      <View style={styles.container}>
+      <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
         {!finalizing ? (
           <>
             {items.length > 0 && (
@@ -240,6 +243,7 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       )}
+      </View>
     </KeyboardAvoidingView>
   );
 }
