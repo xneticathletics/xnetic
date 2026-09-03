@@ -10,7 +10,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessCategory">;
 
-type Row = { key: string; name: string; exerciseId?: string; isGlobal?: boolean; canEdit?: boolean };
+type Row = { key: string; name: string; exerciseId?: string; sourceLabel?: string; canEdit?: boolean };
 
 export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
@@ -55,13 +55,17 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
     );
   }
 
+  // "Global" / hangi kulübe ait olduğu etiketi SADECE Süper Admin'e
+  // gösterilir — normal kullanıcı için tüm hareketler aynı görünür, kimin
+  // eklediği önemli değil. Süper Admin bunu, kulüplerin neler eklediğini
+  // görüp beğendiği bir hareketi globale de eklemek için kullanıyor.
   const rows: Row[] = [
     ...meta.exercises.map((e) => ({ key: e.key, name: e.name })),
     ...customExercises.map((e) => ({
       key: `custom:${e.id}`,
       name: e.name,
       exerciseId: e.id,
-      isGlobal: e.club_id === null,
+      sourceLabel: role !== "super_admin" ? undefined : e.club_id === null ? "🌐 Global (Platform)" : `🏢 ${e.clubs?.name ?? "Bir kulüp"}`,
       canEdit: e.club_id === null ? role === "super_admin" : e.club_id === clubId,
     })),
   ];
@@ -89,7 +93,7 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
           >
             <View style={{ flex: 1 }}>
               <Text style={styles.rowName}>{item.name}</Text>
-              {item.isGlobal && <Text style={styles.globalBadge}>🌐 Genel (tüm kulüpler)</Text>}
+              {!!item.sourceLabel && <Text style={styles.globalBadge}>{item.sourceLabel}</Text>}
             </View>
             <View style={styles.rowActions}>
               {item.canEdit && (

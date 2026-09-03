@@ -40,9 +40,7 @@ export default function FitnessExercisesPage() {
             >
               <div className="mb-2 text-3xl">{cat.icon}</div>
               <p className={`mb-1 text-base font-extrabold ${cls.text}`}>{cat.label}</p>
-              <p className="text-xs text-muted">
-                {cat.exercises.length} sabit egzersiz{!loading && customCount > 0 ? ` · ${customCount} özel` : ""}
-              </p>
+              <p className="text-xs text-muted">{loading ? "…" : `${customCount} hareket`}</p>
             </Link>
           );
         })}

@@ -16,6 +16,10 @@ export type CustomPerformanceTest = {
   instructions: string;
   video_url: string | null;
   created_at: string;
+  // Süper Admin, global olmayan (başka bir kulübe ait) satırlarda hangi
+  // kulübün eklediğini görebilsin diye — sadece Süper Admin sorgularında
+  // dolu gelir (RLS diğer herkes için başka kulüplerin satırını hiç döndürmüyor).
+  clubs?: { name: string } | null;
 };
 
 export type CustomPerformanceTestInput = {
@@ -32,11 +36,11 @@ const FIELDS = "id, club_id, category, name, unit, equipment, instructions, vide
 export async function listTestsByCategory(category: string): Promise<CustomPerformanceTest[]> {
   const { data, error } = await supabase
     .from("performance_test_catalog")
-    .select(FIELDS)
+    .select(`${FIELDS}, clubs(name)`)
     .eq("category", category)
     .order("name", { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return (data as unknown as CustomPerformanceTest[]) ?? [];
 }
 
 export async function getCustomTest(id: string): Promise<CustomPerformanceTest | null> {

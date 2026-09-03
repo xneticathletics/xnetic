@@ -29,7 +29,6 @@ export default function FitnessTrainingScreen({ navigation }: Props) {
             <View style={styles.tileContent}>
               <Text style={styles.tileIcon}>{cat.icon}</Text>
               <Text style={styles.tileLabel}>{cat.label}</Text>
-              <Text style={styles.tileCount}>{cat.exercises.length} egzersiz</Text>
             </View>
           </TouchableOpacity>
         ))}

@@ -97,14 +97,10 @@ export default function FitnessCategoryPage() {
     {
       key: "source",
       label: "Kaynak",
-      render: (r) =>
-        r.kind === "static" ? (
-          <span className="text-muted">Sabit katalog</span>
-        ) : r.exercise.club_id === null ? (
-          <span className="text-muted">🌐 Genel (tüm kulüpler)</span>
-        ) : (
-          <span className="text-violet">Kulübe özel</span>
-        ),
+      // "Genel/tüm kulüpler" ayrımı sadece Süper Admin için anlamlı — web
+      // panelinde süper admin girişi olmadığı için burada hiç gösterilmiyor,
+      // kulübün kendi eklediği hareketler dışında hiçbir şey yazmıyor.
+      render: (r) => (r.kind === "custom" && r.exercise.club_id !== null ? <span className="text-violet">Kulübe özel</span> : <span className="text-xs text-muted">—</span>),
     },
     {
       key: "actions",

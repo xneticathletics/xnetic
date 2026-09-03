@@ -14,6 +14,10 @@ export type CustomFitnessExercise = {
   video_url: string | null;
   description: string | null;
   created_at: string;
+  // Süper Admin, global olmayan (başka bir kulübe ait) satırlarda hangi
+  // kulübün eklediğini görebilsin diye — sadece Süper Admin sorgularında
+  // dolu gelir (RLS diğer herkes için başka kulüplerin satırını zaten hiç döndürmüyor).
+  clubs?: { name: string } | null;
 };
 
 export type CustomFitnessExerciseInput = {
@@ -29,11 +33,11 @@ const FIELDS = "id, club_id, category, name, bodyweight, video_url, description,
 export async function listCustomExercisesByCategory(category: string): Promise<CustomFitnessExercise[]> {
   const { data, error } = await supabase
     .from("fitness_exercises")
-    .select(FIELDS)
+    .select(`${FIELDS}, clubs(name)`)
     .eq("category", category)
     .order("name", { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return (data as unknown as CustomFitnessExercise[]) ?? [];
 }
 
 export async function getCustomExercise(id: string): Promise<CustomFitnessExercise | null> {

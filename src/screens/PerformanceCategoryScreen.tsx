@@ -12,7 +12,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, "PerformanceCategory">;
 
 type Row = {
   key: string; name: string; unit: string; equipment: string | null;
-  testId: string; isGlobal: boolean; canEdit: boolean;
+  testId: string; sourceLabel?: string; canEdit: boolean;
 };
 
 export default function PerformanceCategoryScreen({ route, navigation }: Props) {
@@ -58,13 +58,15 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
     );
   }
 
+  // "Global" / hangi kulübe ait olduğu etiketi SADECE Süper Admin'e
+  // gösterilir — bkz. FitnessCategoryScreen.tsx'teki aynı mantık.
   const rows: Row[] = tests.map((t) => ({
     key: `custom:${t.id}`,
     name: t.name,
     unit: t.unit,
     equipment: t.equipment,
     testId: t.id,
-    isGlobal: t.club_id === null,
+    sourceLabel: role !== "super_admin" ? undefined : t.club_id === null ? "🌐 Global (Platform)" : `🏢 ${t.clubs?.name ?? "Bir kulüp"}`,
     canEdit: t.club_id === null ? role === "super_admin" : t.club_id === clubId,
   }));
 
@@ -96,7 +98,7 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
             <View style={{ flex: 1 }}>
               <Text style={styles.rowName}>{item.name}</Text>
               {!!item.equipment && <Text style={styles.rowEquipment}>🔧 {item.equipment}</Text>}
-              {item.isGlobal && <Text style={styles.globalBadge}>🌐 Genel (tüm kulüpler)</Text>}
+              {!!item.sourceLabel && <Text style={styles.globalBadge}>{item.sourceLabel}</Text>}
             </View>
             {item.canEdit && (
               <TouchableOpacity

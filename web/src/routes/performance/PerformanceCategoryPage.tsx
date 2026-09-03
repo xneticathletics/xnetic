@@ -55,7 +55,6 @@ export default function PerformanceCategoryPage() {
             <div className="flex-1">
               <div className="text-sm font-bold text-ink">{t.name}</div>
               {t.equipment && <div className="mt-0.5 text-xs text-muted">🔧 {t.equipment}</div>}
-              {t.club_id === null && <div className="mt-0.5 text-xs text-muted">🌐 Genel (tüm kulüpler)</div>}
             </div>
             <div className={`text-xs font-bold ${cls.text}`}>{t.unit}</div>
           </Link>
