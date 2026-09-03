@@ -9,7 +9,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessCategory">;
 
-type Row = { key: string; name: string };
+type Row = { key: string; name: string; exerciseId?: string };
 
 export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
@@ -55,7 +55,7 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
 
   const rows: Row[] = [
     ...meta.exercises.map((e) => ({ key: e.key, name: e.name })),
-    ...customExercises.map((e) => ({ key: `custom:${e.id}`, name: e.name })),
+    ...customExercises.map((e) => ({ key: `custom:${e.id}`, name: e.name, exerciseId: e.id })),
   ];
 
   return (
@@ -80,7 +80,17 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
             onPress={() => navigation.navigate("FitnessExerciseDetail", { exerciseKey: item.key })}
           >
             <Text style={styles.rowName}>{item.name}</Text>
-            <Text style={styles.rowArrow}>›</Text>
+            <View style={styles.rowActions}>
+              {item.exerciseId && (
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => navigation.navigate("FitnessExerciseForm", { exerciseId: item.exerciseId })}
+                >
+                  <Text style={styles.editButtonText}>✏️ Düzenle</Text>
+                </TouchableOpacity>
+              )}
+              <Text style={styles.rowArrow}>›</Text>
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -101,5 +111,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  rowActions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  editButton: { paddingHorizontal: spacing.sm, paddingVertical: 4 },
+  editButtonText: { color: colors.violet, fontSize: 12, fontWeight: "700" },
   rowArrow: { color: colors.muted, fontSize: 18, fontWeight: "700" },
 });

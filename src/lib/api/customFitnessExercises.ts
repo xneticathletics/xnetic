@@ -47,6 +47,12 @@ export async function createCustomExercise(input: CustomFitnessExerciseInput) {
   return data;
 }
 
+export async function updateCustomExercise(id: string, input: CustomFitnessExerciseInput) {
+  const { data, error } = await supabase.from("fitness_exercises").update(input).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
 // Hareket videosunu kulübün klasörüne yükler — web'deki
 // src/lib/api/fitnessExercises.ts (uploadExerciseVideo) ile aynı
 // "fitness-exercise-videos" bucket'ı, sadece dosya okuma yöntemi RN'e özel

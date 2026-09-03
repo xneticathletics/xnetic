@@ -163,7 +163,7 @@ export type HomeStackParamList = {
   FitnessProgramDetail: { programId: string; athleteId?: string; athleteName?: string };
   FitnessCategory: { category: string };
   FitnessExerciseDetail: { exerciseKey: string };
-  FitnessExerciseForm: undefined;
+  FitnessExerciseForm: { exerciseId?: string } | undefined;
   Nutrition: undefined;
   NutritionFoods: undefined;
   NutritionFoodCategory: { category: FoodCategoryKey };

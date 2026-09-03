@@ -1,17 +1,18 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES } from "../lib/fitnessExercises";
-import { createCustomExercise, uploadExerciseVideo } from "../lib/api/customFitnessExercises";
+import { createCustomExercise, updateCustomExercise, getCustomExercise, uploadExerciseVideo } from "../lib/api/customFitnessExercises";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessExerciseForm">;
 
-export default function FitnessExerciseFormScreen({ navigation }: Props) {
+export default function FitnessExerciseFormScreen({ route, navigation }: Props) {
+  const { exerciseId } = route.params ?? {};
   const { clubId } = useAuth();
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const [category, setCategory] = useState<string | null>(null);
@@ -20,12 +21,30 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
   const [videoUrl, setVideoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!!exerciseId);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
   // — hızlı çift dokunuşta handleSave iki kez çalışıp aynı hareketi iki kez
   // oluşturabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!exerciseId) return;
+    navigation.setOptions({ title: "Hareketi Düzenle" });
+    let cancelled = false;
+    getCustomExercise(exerciseId)
+      .then((ex) => {
+        if (cancelled || !ex) return;
+        setCategory(ex.category);
+        setName(ex.name);
+        setDescription(ex.description ?? "");
+        setVideoUrl(ex.video_url ?? "");
+      })
+      .catch((e) => { if (!cancelled) setError(e.message ?? "Hareket yüklenemedi"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [exerciseId, navigation]);
 
   const handlePickVideo = async () => {
     if (!clubId) return;
@@ -57,14 +76,20 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await createCustomExercise({
+      const input = {
         category,
         name: name.trim(),
         bodyweight: false,
         description: description.trim() || null,
         video_url: videoUrl.trim() || null,
-      });
-      Alert.alert("Eklendi", `"${name.trim()}" hareketi eklendi.`, [{ text: "Tamam" }]);
+      };
+      if (exerciseId) {
+        await updateCustomExercise(exerciseId, input);
+        Alert.alert("Güncellendi", `"${name.trim()}" hareketi güncellendi.`, [{ text: "Tamam" }]);
+      } else {
+        await createCustomExercise(input);
+        Alert.alert("Eklendi", `"${name.trim()}" hareketi eklendi.`, [{ text: "Tamam" }]);
+      }
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -73,6 +98,14 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -142,7 +175,7 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving || uploading}>
-          {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
+          {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>{exerciseId ? "Güncelle" : "Kaydet"}</Text>}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

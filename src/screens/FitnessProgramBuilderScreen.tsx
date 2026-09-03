@@ -159,41 +159,6 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
               </>
             )}
 
-            {exerciseKey && (
-              <View style={styles.row}>
-                <View style={styles.rowItem}>
-                  <Text style={styles.label}>Set Sayısı *</Text>
-                  <TextInput
-                    onFocus={handleFocus}
-                    style={styles.input}
-                    value={sets}
-                    onChangeText={setSets}
-                    keyboardType="numeric"
-                    placeholder="Örn. 3"
-                    placeholderTextColor={colors.muted}
-                  />
-                </View>
-                <View style={styles.rowItem}>
-                  <Text style={styles.label}>Tekrar Sayısı *</Text>
-                  <TextInput
-                    onFocus={handleFocus}
-                    style={styles.input}
-                    value={reps}
-                    onChangeText={setReps}
-                    keyboardType="numeric"
-                    placeholder="Örn. 12"
-                    placeholderTextColor={colors.muted}
-                  />
-                </View>
-              </View>
-            )}
-
-            {exerciseKey && (
-              <TouchableOpacity style={styles.addItemButton} onPress={handleAddItem}>
-                <Text style={styles.addItemButtonText}>+ Programa Ekle</Text>
-              </TouchableOpacity>
-            )}
-
             {items.length > 0 && (
               <TouchableOpacity style={styles.completeButton} onPress={() => setFinalizing(true)}>
                 <Text style={styles.completeButtonText}>Programı Tamamla</Text>
@@ -243,6 +208,38 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
           </>
         )}
       </ScrollView>
+
+      {!finalizing && exerciseKey && (
+        <View style={styles.stickyFooter}>
+          <View style={styles.row}>
+            <View style={styles.rowItem}>
+              <Text style={styles.label}>Set Sayısı *</Text>
+              <TextInput
+                style={styles.input}
+                value={sets}
+                onChangeText={setSets}
+                keyboardType="numeric"
+                placeholder="Örn. 3"
+                placeholderTextColor={colors.muted}
+              />
+            </View>
+            <View style={styles.rowItem}>
+              <Text style={styles.label}>Tekrar Sayısı *</Text>
+              <TextInput
+                style={styles.input}
+                value={reps}
+                onChangeText={setReps}
+                keyboardType="numeric"
+                placeholder="Örn. 12"
+                placeholderTextColor={colors.muted}
+              />
+            </View>
+          </View>
+          <TouchableOpacity style={styles.addItemButton} onPress={handleAddItem}>
+            <Text style={styles.addItemButtonText}>+ Programa Ekle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -257,6 +254,10 @@ const styles = StyleSheet.create({
   chipNeutralActive: { backgroundColor: colors.violet, borderColor: colors.violet },
   chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
   chipTextActive: { color: colors.bg, fontWeight: "800" },
+  stickyFooter: {
+    backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,
+  },
   row: { flexDirection: "row", gap: spacing.sm },
   rowItem: { flex: 1 },
   input: {
