@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import {
-  getProgram, listProgramItems, deleteProgram, listCompletionsForProgram, markProgramCompleted,
+  getProgram, listProgramItems, deleteProgram, listCompletionsForProgram, markProgramCompleted, getMyCompletionForProgram,
   type FitnessProgram, type FitnessProgramItem, type FitnessProgramCompletion,
 } from "../lib/api/fitnessPrograms";
 import { useAuth } from "../context/AuthContext";
@@ -34,6 +34,8 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
 
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
   const [loadingCompletions, setLoadingCompletions] = useState(false);
+  const [myCompletion, setMyCompletion] = useState<FitnessProgramCompletion | null>(null);
+  const [loadingMyCompletion, setLoadingMyCompletion] = useState(false);
   const [note, setNote] = useState("");
   const [difficulty, setDifficulty] = useState<number | null>(null);
   const [duration, setDuration] = useState("");
@@ -57,9 +59,17 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
         listCompletionsForProgram(programId)
           .then((data) => { if (!cancelled) setCompletions(data); })
           .finally(() => { if (!cancelled) setLoadingCompletions(false); });
+      } else if (athleteId) {
+        // Sporcu bir programı sadece bir kez tamamlayabiliyor (DB'de
+        // unique(program_id, athlete_id) kısıtı var) — daha önce
+        // tamamladıysa formu tekrar göstermiyoruz.
+        setLoadingMyCompletion(true);
+        getMyCompletionForProgram(programId, athleteId)
+          .then((data) => { if (!cancelled) setMyCompletion(data); })
+          .finally(() => { if (!cancelled) setLoadingMyCompletion(false); });
       }
       return () => { cancelled = true; };
-    }, [programId, canManage])
+    }, [programId, canManage, athleteId])
   );
 
   const handleDelete = () => {
@@ -123,7 +133,23 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
           </View>
         ))}
 
-        {!canManage && athleteId && (
+        {!canManage && athleteId && loadingMyCompletion && (
+          <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.lg }} />
+        )}
+
+        {!canManage && athleteId && !loadingMyCompletion && myCompletion && (
+          <View style={styles.completedBox}>
+            <Text style={styles.completedTitle}>✓ Bu antrenmanı tamamladın</Text>
+            <Text style={styles.completionDate}>
+              {formatDateTime(myCompletion.completed_at)}
+              {myCompletion.difficulty != null ? ` · Zorluk: ${myCompletion.difficulty}/10` : ""}
+              {myCompletion.duration_minutes != null ? ` · ${myCompletion.duration_minutes} dk` : ""}
+            </Text>
+            {!!myCompletion.note && <Text style={styles.completionNote}>{myCompletion.note}</Text>}
+          </View>
+        )}
+
+        {!canManage && athleteId && !loadingMyCompletion && !myCompletion && (
           <View style={styles.completeBox}>
             <Text style={styles.sectionTitle}>Antrenmanı Tamamladım</Text>
             <TextInput
@@ -220,6 +246,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.teal,
     borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.lg,
   },
+  completedBox: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.teal,
+    borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.lg,
+  },
+  completedTitle: { color: colors.teal, fontSize: 14, fontWeight: "800", marginBottom: 4 },
   noteInput: {
     backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, minHeight: 60, textAlignVertical: "top",

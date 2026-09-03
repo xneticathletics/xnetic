@@ -105,6 +105,22 @@ export async function listAllCompletionsForAthlete(athleteId: string): Promise<F
   return (data as unknown as FitnessProgramCompletion[]) ?? [];
 }
 
+// Sporcu/veli tarafında — bu programı bu sporcu daha önce tamamladı mı
+// (varsa tekil kaydı) döner. Her sporcu bir programı sadece bir kez
+// tamamlayabiliyor (bkz. DB'deki unique(program_id, athlete_id) kısıtı) —
+// FitnessProgramDetailScreen bunu, "Antrenmanı Tamamladım" formunu tekrar
+// göstermemek için kullanıyor.
+export async function getMyCompletionForProgram(programId: string, athleteId: string): Promise<FitnessProgramCompletion | null> {
+  const { data, error } = await supabase
+    .from("fitness_program_completions")
+    .select(COMPLETION_FIELDS)
+    .eq("program_id", programId)
+    .eq("athlete_id", athleteId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 // Antrenör/admin tarafında — programı grubundaki hangi sporcuların
 // tamamladığını görmek için.
 export async function listCompletionsForProgram(programId: string): Promise<FitnessProgramCompletion[]> {
