@@ -40,6 +40,18 @@ export async function listPrograms(): Promise<FitnessProgram[]> {
   return (data as unknown as FitnessProgram[]) ?? [];
 }
 
+// Sporcunun/velinin kendi grubuna ait programları görmesi için — Sporcu
+// Takip Merkezi'ndeki "Program" karosunda kullanılır (bkz. AthleteFitnessProgramScreen).
+export async function listProgramsForGroup(groupId: string): Promise<FitnessProgram[]> {
+  const { data, error } = await supabase
+    .from("fitness_programs")
+    .select(`${PROGRAM_FIELDS}, groups(name, branch)`)
+    .eq("group_id", groupId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as unknown as FitnessProgram[]) ?? [];
+}
+
 export async function getProgram(id: string): Promise<FitnessProgram> {
   const { data, error } = await supabase
     .from("fitness_programs")
@@ -63,6 +75,49 @@ export async function listProgramItems(programId: string): Promise<FitnessProgra
 export async function deleteProgram(id: string) {
   const { error } = await supabase.from("fitness_programs").delete().eq("id", id);
   if (error) throw error;
+}
+
+export type FitnessProgramCompletion = {
+  id: string;
+  program_id: string;
+  athlete_id: string;
+  completed_at: string;
+  note: string | null;
+  created_at: string;
+  athletes?: { full_name: string } | null;
+};
+
+const COMPLETION_FIELDS = "id, program_id, athlete_id, completed_at, note, created_at";
+
+// Sporcu/veli tarafında — o programı o sporcunun daha önce kaç kez
+// tamamladığını göstermek için (bkz. FitnessProgramDetailScreen).
+export async function listCompletionsForAthleteProgram(programId: string, athleteId: string): Promise<FitnessProgramCompletion[]> {
+  const { data, error } = await supabase
+    .from("fitness_program_completions")
+    .select(COMPLETION_FIELDS)
+    .eq("program_id", programId)
+    .eq("athlete_id", athleteId)
+    .order("completed_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Antrenör/admin tarafında — programı grubundaki hangi sporcuların
+// tamamladığını görmek için.
+export async function listCompletionsForProgram(programId: string): Promise<FitnessProgramCompletion[]> {
+  const { data, error } = await supabase
+    .from("fitness_program_completions")
+    .select(`${COMPLETION_FIELDS}, athletes(full_name)`)
+    .eq("program_id", programId)
+    .order("completed_at", { ascending: false });
+  if (error) throw error;
+  return (data as unknown as FitnessProgramCompletion[]) ?? [];
+}
+
+export async function markProgramCompleted(input: { program_id: string; athlete_id: string; note: string | null }) {
+  const { data, error } = await supabase.from("fitness_program_completions").insert(input).select().single();
+  if (error) throw error;
+  return data;
 }
 
 // Bir grubun tüm bağlı hesaplarına (sporcuların veli/kendi hesabı) + grubun

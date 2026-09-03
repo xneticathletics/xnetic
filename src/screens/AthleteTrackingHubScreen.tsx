@@ -8,10 +8,11 @@ type Props = NativeStackScreenProps<HomeStackParamList, "AthleteTrackingHub">;
 
 const ACCENTS = [colors.teal, colors.coral, colors.violet];
 
-const TILES: { key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail"; icon: string; title: string; sub: string }[] = [
+const TILES: { key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram"; icon: string; title: string; sub: string }[] = [
   { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri" },
   { key: "AthleteFitnessView", icon: "🏋️", title: "Çalışma", sub: "Fitness/kuvvet antrenmanı geçmişi" },
   { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk check-in geçmişi" },
+  { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı çalışma programı" },
 ];
 
 export default function AthleteTrackingHubScreen({ route, navigation }: Props) {

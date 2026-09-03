@@ -10,6 +10,8 @@ export type CustomFitnessExercise = {
   category: string;
   name: string;
   bodyweight: boolean;
+  video_url: string | null;
+  description: string | null;
   created_at: string;
 };
 
@@ -17,9 +19,26 @@ export type CustomFitnessExerciseInput = {
   category: string;
   name: string;
   bodyweight: boolean;
+  video_url: string | null;
+  description: string | null;
 };
 
-const FIELDS = "id, category, name, bodyweight, created_at";
+const FIELDS = "id, category, name, bodyweight, video_url, description, created_at";
+
+// Hareket videosunu kulübün klasörüne yükler (club-logos/athlete-photos ile
+// aynı desen) — henüz kaydedilmemiş (yeni) bir egzersiz için de çalışsın diye
+// dosya adı egzersiz id'sine değil, rastgele bir belirtece bağlı; "url
+// yapıştır" alternatifiyle aynı video_url sütununu doldurur.
+export async function uploadExerciseVideo(file: File, clubId: string): Promise<string> {
+  const ext = file.name.split(".").pop() || "mp4";
+  const path = `${clubId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("fitness-exercise-videos")
+    .upload(path, file, { contentType: file.type || "video/mp4" });
+  if (error) throw error;
+  const { data } = supabase.storage.from("fitness-exercise-videos").getPublicUrl(path);
+  return data.publicUrl;
+}
 
 export async function listCustomExercisesByCategory(category: string): Promise<CustomFitnessExercise[]> {
   const { data, error } = await supabase

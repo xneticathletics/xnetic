@@ -67,6 +67,31 @@ export async function deleteProgram(id: string) {
   if (error) throw error;
 }
 
+export type FitnessProgramCompletion = {
+  id: string;
+  program_id: string;
+  athlete_id: string;
+  completed_at: string;
+  note: string | null;
+  created_at: string;
+  athletes?: { full_name: string } | null;
+};
+
+// Antrenör/admin tarafında — programı grubundaki hangi sporcuların
+// tamamladığını görmek için. Mobildeki src/lib/api/fitnessPrograms.ts ile
+// aynı "fitness_program_completions" tablosu — sporcu/veli tarafında
+// "Antrenmanı Tamamladım" ile kaydediliyor (sadece mobilde, web'de veli/
+// sporcu girişi yok).
+export async function listCompletionsForProgram(programId: string): Promise<FitnessProgramCompletion[]> {
+  const { data, error } = await supabase
+    .from("fitness_program_completions")
+    .select("id, program_id, athlete_id, completed_at, note, created_at, athletes(full_name)")
+    .eq("program_id", programId)
+    .order("completed_at", { ascending: false });
+  if (error) throw error;
+  return (data as unknown as FitnessProgramCompletion[]) ?? [];
+}
+
 // Bir grubun tüm bağlı hesaplarına (sporcuların veli/kendi hesabı) + grubun
 // baş/yardımcı antrenör(ler)ine yeni program bildirimi gönderir. Bildirim
 // metnine programdaki hareketlerin kısa bir özeti de eklenir. Mobildeki

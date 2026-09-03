@@ -86,6 +86,7 @@ import AthleteTrackingListScreen from "../screens/AthleteTrackingListScreen";
 import AthleteTrackingHubScreen from "../screens/AthleteTrackingHubScreen";
 import AthletePerformanceViewScreen from "../screens/AthletePerformanceViewScreen";
 import AthleteFitnessViewScreen from "../screens/AthleteFitnessViewScreen";
+import AthleteFitnessProgramScreen from "../screens/AthleteFitnessProgramScreen";
 import MakePaymentScreen from "../screens/MakePaymentScreen";
 import AthleteBulkImportScreen from "../screens/AthleteBulkImportScreen";
 import ComingSoonScreen from "../screens/ComingSoonScreen";
@@ -159,7 +160,7 @@ export type HomeStackParamList = {
   FitnessTraining: undefined;
   FitnessProgram: undefined;
   FitnessProgramBuilder: undefined;
-  FitnessProgramDetail: { programId: string };
+  FitnessProgramDetail: { programId: string; athleteId?: string };
   FitnessCategory: { category: string };
   FitnessExerciseDetail: { exerciseKey: string };
   FitnessExerciseForm: undefined;
@@ -184,6 +185,7 @@ export type HomeStackParamList = {
   AthleteTrackingHub: { athleteId: string; athleteName: string };
   AthletePerformanceView: { athleteId: string; athleteName: string };
   AthleteFitnessView: { athleteId: string; athleteName: string };
+  AthleteFitnessProgram: { athleteId: string; athleteName: string };
   MakePayment: { paymentId: string; amount: number; dueDate: string; athleteName: string };
   AthleteBulkImport: undefined;
   ComingSoon: { title: string; description: string };
@@ -294,6 +296,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="AthleteTrackingHub" component={AthleteTrackingHubScreen} />
       <Stack.Screen name="AthletePerformanceView" component={AthletePerformanceViewScreen} />
       <Stack.Screen name="AthleteFitnessView" component={AthleteFitnessViewScreen} />
+      <Stack.Screen name="AthleteFitnessProgram" component={AthleteFitnessProgramScreen} options={{ title: "Program" }} />
       <Stack.Screen name="MakePayment" component={MakePaymentScreen} options={{ title: "Ödeme Yap" }} />
       <Stack.Screen name="AthleteBulkImport" component={AthleteBulkImportScreen} options={{ title: "Excelden Aktar" }} />
       <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />

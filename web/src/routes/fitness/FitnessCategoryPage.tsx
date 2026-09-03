@@ -70,9 +70,28 @@ export default function FitnessCategoryPage() {
       label: "Açıklama",
       render: (r) => (
         <span className="line-clamp-2 text-xs text-muted">
-          {r.kind === "static" ? r.instructions : "Kulübün eklediği özel bir hareket — açıklama girilmedi."}
+          {r.kind === "static"
+            ? r.instructions
+            : r.exercise.description || "Kulübün eklediği özel bir hareket — açıklama girilmedi."}
         </span>
       ),
+    },
+    {
+      key: "video",
+      label: "Video",
+      render: (r) =>
+        r.kind === "custom" && r.exercise.video_url ? (
+          <a
+            href={r.exercise.video_url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-bold text-teal hover:underline"
+          >
+            🎥 İzle
+          </a>
+        ) : (
+          <span className="text-xs text-muted">—</span>
+        ),
     },
     { key: "bodyweight", label: "Vücut Ağırlığı", render: (r) => (r.bodyweight ? "Evet" : "—") },
     {
