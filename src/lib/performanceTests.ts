@@ -56,6 +56,18 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
         key: "phv", name: "Zirve Boy Uzama Yaşı (PHV)", unit: "yaş", equipment: "Türetilmiş hesaplama",
         instructions: "Doğrudan ölçülmez — boy, oturarak boy, kilo ve kronolojik yaş verileri Mirwald formülüne girilerek hesaplanan türetilmiş bir değerdir.",
       },
+      {
+        key: "arm_span", name: "Kol Açıklığı (Wingspan)", unit: "cm",
+        instructions: "Sporcu kollarını omuz hizasında yana doğru tam açar; bir orta parmak ucundan diğerine kadar olan mesafe ölçülür.",
+      },
+      {
+        key: "skinfold_sum", name: "Deri Kıvrımı Toplamı (7 Bölge)", unit: "mm", equipment: "Kaliper gerekir",
+        instructions: "Standart 7 bölgeden (göğüs, karın, uyluk, triceps, subskapular, suprailiak, orta-aksiller) kaliperle kıvrım kalınlığı ölçülüp toplanır.",
+      },
+      {
+        key: "waist_hip_ratio", name: "Bel-Kalça Oranı", unit: "oran",
+        instructions: "Bel çevresi en dar noktadan, kalça çevresi en geniş noktadan mezura ile ölçülür; bel çevresinin kalça çevresine oranı hesaplanır.",
+      },
     ],
   },
   {
@@ -84,6 +96,14 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
       {
         key: "flying_sprint", name: "Flying Sprint (20m, uçan start)", unit: "sn",
         instructions: "Sporcu 10-20m'lik bir hazırlık koşusuyla önceden hızlanır ve tam hızda ölçüm bölgesine girer; böylece ivmelenme değil, saf maksimum sürat ölçülür.",
+      },
+      {
+        key: "flying_10m", name: "Flying 10m Sürat", unit: "sn",
+        instructions: "Sporcu önceden hazırlık koşusuyla hızlanıp tam hızda 10m'lik ölçüm bölgesine girer — saf maksimum sürati (ivmelenmeden bağımsız) gösterir.",
+      },
+      {
+        key: "repeated_sprint", name: "Tekrarlı Sprint Testi (RSA)", unit: "sn",
+        instructions: "6x20m sprint, her tekrar arasında 20sn aktif dinlenmeyle koşulur; her tekrarın süresi kaydedilip performans düşüşünden (yorgunluk indeksi) sürat dayanıklılığı değerlendirilir.",
       },
     ],
   },
@@ -114,6 +134,14 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
         key: "zigzag", name: "Zigzag Testi", unit: "sn",
         instructions: "Koniler çapraz açılarla 4-5 segment oluşturacak şekilde dizilir. Sporcu segmentler arasında yön değiştirerek zikzak çizip parkuru en hızlı şekilde tamamlar.",
       },
+      {
+        key: "arrowhead_agility", name: "Arrowhead Çeviklik Testi", unit: "sn",
+        instructions: "Ok başı (arrowhead) şeklinde dizilmiş koniler arasında sporcu sağa ve sola yön değiştirerek parkuru en hızlı şekilde tamamlar.",
+      },
+      {
+        key: "l_drill", name: "L-Drill (3-Cone Drill)", unit: "sn",
+        instructions: "L şeklinde dizilmiş 3 koni etrafında belirli bir sırayla (düz koşu, dönüş, slalom) koşulup parkur tamamlanır; toplam süre ölçülür.",
+      },
     ],
   },
   {
@@ -142,6 +170,18 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
       {
         key: "drop_jump", name: "Reaktif Sıçrama (Drop Jump / RSI)", unit: "RSI", equipment: "Sıçrama platformu gerekir",
         instructions: "Sporcu belirli yükseklikteki bir kutudan aşağı iner, yere değer değmez mümkün olan en kısa temas süresiyle maksimum yükseklikte tekrar sıçrar. Temas süresi ve sıçrama yüksekliğinden Reaktif Kuvvet İndeksi (RSI) hesaplanır.",
+      },
+      {
+        key: "single_leg_hop", name: "Tek Bacak Sıçrama Mesafesi (Single Leg Hop)", unit: "cm",
+        instructions: "Sporcu tek bacakla öne doğru maksimum mesafeye sıçrar, kontrollü iner. İniş noktasına kadar olan mesafe ölçülür — her iki bacak için ayrı ayrı yapılır.",
+      },
+      {
+        key: "triple_hop", name: "Üçlü Sıçrama (Triple Hop)", unit: "cm",
+        instructions: "Sporcu aynı bacakla art arda üç sıçrama yapar, son inişteki toplam mesafe ölçülür — her iki bacak için ayrı ayrı yapılır.",
+      },
+      {
+        key: "lateral_jump", name: "Yana Sıçrama (Lateral Jump)", unit: "cm",
+        instructions: "Sporcu iki ayakla yana doğru maksimum mesafeye sıçrar, kontrollü iniş yapar. Başlangıç çizgisinden iniş noktasına kadar olan mesafe ölçülür.",
       },
     ],
   },
@@ -172,6 +212,18 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
         key: "med_ball_throw", name: "Medicine Ball Throw", unit: "m",
         instructions: "Sporcu sabit bir çizginin gerisinde durur ve sağlık topunu göğüs önünden (chest pass) iki elle maksimum kuvvetle öne fırlatır. Topun düştüğü noktaya kadar olan mesafe ölçülür.",
       },
+      {
+        key: "pullup_test", name: "Barfiks Testi (Max Tekrar)", unit: "tekrar",
+        instructions: "Bar geniş tutuşla tutulur, çene barın üstüne çıkana kadar çekilir; doğru formda yapılabilen maksimum tekrar sayısı kaydedilir.",
+      },
+      {
+        key: "plank_hold", name: "Plank Tutma Süresi (Core Dayanıklılık)", unit: "sn",
+        instructions: "Sporcu doğru plank pozisyonunda (vücut düz bir hat halinde) formu bozmadan tutabildiği maksimum süre ölçülür.",
+      },
+      {
+        key: "leg_press_1rm", name: "Leg Press 1RM", unit: "kg", equipment: "Ekipman + gözetim gerekir",
+        instructions: "Isınma sonrası ağırlık kademeli olarak artırılarak sporcunun leg press makinesinde tek tekrarda doğru formda itebildiği maksimum ağırlık belirlenir.",
+      },
     ],
   },
   {
@@ -197,6 +249,14 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
         key: "vo2max", name: "VO2 Max", unit: "ml/kg/dk", equipment: "Laboratuvar / maske gerekir",
         instructions: "En doğru sonuç, laboratuvar ortamında maske takılarak egzersiz sırasında oksijen tüketiminin ölçülmesiyle elde edilir. Saha ortamında Cooper testi veya beep test sonuçlarından tahmini formüllerle de hesaplanabilir.",
       },
+      {
+        key: "resting_hr", name: "Dinlenik Kalp Atım Hızı", unit: "atım/dk",
+        instructions: "Sporcu en az 5 dakika sakin şekilde dinlendikten sonra, otururken 1 dakika boyunca nabız sayılır (nabız/dinlenik kalp atım ölçer de kullanılabilir).",
+      },
+      {
+        key: "hr_recovery", name: "Kalp Atım Toparlanma Testi (HRR)", unit: "atım/dk",
+        instructions: "Standart bir efor testi (ör. beep test) bitiminde nabız ölçülür, 1 dakika sonra tekrar ölçülür; iki değer arasındaki fark kardiyovasküler toparlanma hızını gösterir.",
+      },
     ],
   },
   {
@@ -217,6 +277,39 @@ export const PERFORMANCE_CATEGORIES: PerformanceCategory[] = [
       {
         key: "hip_gonio", name: "Kalça Fleksiyon / Ekstansiyon", unit: "derece", equipment: "Gonyometre gerekir",
         instructions: "Sporcu sırt üstü/yan yatar, gonyometre standart anatomik referans noktalarına (kalça ekleminin dönüş merkezi hizasına) yerleştirilerek kalçanın maksimum fleksiyon ve ekstansiyon açıları ölçülür.",
+      },
+      {
+        key: "ankle_dorsiflexion", name: "Ayak Bileği Dorsifleksiyon Testi", unit: "cm", equipment: "Duvar/cetvel gerekir",
+        instructions: "Sporcu duvara doğru diz duvara değecek şekilde öne eğilir, topuk yerden kalkmadan ayak parmak ucuyla duvar arasındaki maksimum mesafe ölçülür.",
+      },
+      {
+        key: "thomas_test", name: "Thomas Testi (Kalça Fleksör Esnekliği)", unit: "derece", equipment: "Muayene masası + gonyometre",
+        instructions: "Sporcu masada sırt üstü yatar, bir bacağı göğsüne doğru çeker; diğer bacağın masadan kalkma açısı gonyometre ile ölçülür — kalça fleksör kısalığını gösterir.",
+      },
+    ],
+  },
+  {
+    key: "denge",
+    label: "Denge / Koordinasyon",
+    icon: "⚖️",
+    color: colors.violet,
+    soft: `${colors.violet}22`,
+    tests: [
+      {
+        key: "stork_balance", name: "Stork Denge Testi", unit: "sn",
+        instructions: "Sporcu tek ayak üzerinde durur, diğer ayağın tabanını destek bacağın dizine yaslar, elleri belde. Dengeyi kaybedene (ayak yerden kalkana/eller belden ayrılana) kadar geçen süre ölçülür.",
+      },
+      {
+        key: "y_balance", name: "Y Denge Testi (Y-Balance Test)", unit: "cm",
+        instructions: "Sporcu tek ayak üzerinde dengede durup diğer ayakla Y şeklinde üç yönde (ön, arka-iç, arka-dış) mümkün olduğunca uzanır; her yöndeki uzanma mesafesi ölçülür.",
+      },
+      {
+        key: "single_leg_balance_eyes_closed", name: "Gözü Kapalı Tek Ayak Denge", unit: "sn",
+        instructions: "Sporcu gözleri kapalı, tek ayak üzerinde elleri belde dengede durmaya çalışır. Dengeyi kaybedene kadar geçen süre ölçülür.",
+      },
+      {
+        key: "flamingo_balance", name: "Flamingo Denge Testi", unit: "düşme sayısı",
+        instructions: "Sporcu dar bir denge çıtasında tek ayak üzerinde durur, diğer ayağı arkadan elle tutar. 1 dakika içinde dengeyi kaybedip düşme (yeniden başlama) sayısı kaydedilir — az olması iyidir.",
       },
     ],
   },
