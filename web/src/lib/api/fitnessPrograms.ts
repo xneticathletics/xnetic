@@ -73,6 +73,8 @@ export type FitnessProgramCompletion = {
   athlete_id: string;
   completed_at: string;
   note: string | null;
+  difficulty: number | null;
+  duration_minutes: number | null;
   created_at: string;
   athletes?: { full_name: string } | null;
 };
@@ -85,7 +87,7 @@ export type FitnessProgramCompletion = {
 export async function listCompletionsForProgram(programId: string): Promise<FitnessProgramCompletion[]> {
   const { data, error } = await supabase
     .from("fitness_program_completions")
-    .select("id, program_id, athlete_id, completed_at, note, created_at, athletes(full_name)")
+    .select("id, program_id, athlete_id, completed_at, note, difficulty, duration_minutes, created_at, athletes(full_name)")
     .eq("program_id", programId)
     .order("completed_at", { ascending: false });
   if (error) throw error;

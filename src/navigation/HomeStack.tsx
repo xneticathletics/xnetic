@@ -160,7 +160,7 @@ export type HomeStackParamList = {
   FitnessTraining: undefined;
   FitnessProgram: undefined;
   FitnessProgramBuilder: undefined;
-  FitnessProgramDetail: { programId: string; athleteId?: string };
+  FitnessProgramDetail: { programId: string; athleteId?: string; athleteName?: string };
   FitnessCategory: { category: string };
   FitnessExerciseDetail: { exerciseKey: string };
   FitnessExerciseForm: undefined;

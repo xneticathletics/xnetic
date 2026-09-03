@@ -13,7 +13,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, "AthleteFitnessProgram">
 // kendi grubuna gönderilen programları gösterir (coach/admin tarafındaki
 // FitnessProgramScreen'in TÜM kulübü listeleyen halinden farklı olarak).
 export default function AthleteFitnessProgramScreen({ route, navigation }: Props) {
-  const { athleteId } = route.params;
+  const { athleteId, athleteName } = route.params;
   const [programs, setPrograms] = useState<FitnessProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export default function AthleteFitnessProgramScreen({ route, navigation }: Props
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate("FitnessProgramDetail", { programId: item.id, athleteId })}
+              onPress={() => navigation.navigate("FitnessProgramDetail", { programId: item.id, athleteId, athleteName })}
             >
               <Text style={styles.cardName}>{item.name}</Text>
               <Text style={styles.cardDate}>{new Date(item.created_at).toLocaleDateString("tr-TR")}</Text>

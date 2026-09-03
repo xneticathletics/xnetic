@@ -83,23 +83,26 @@ export type FitnessProgramCompletion = {
   athlete_id: string;
   completed_at: string;
   note: string | null;
+  difficulty: number | null;
+  duration_minutes: number | null;
   created_at: string;
   athletes?: { full_name: string } | null;
+  fitness_programs?: { name: string } | null;
 };
 
-const COMPLETION_FIELDS = "id, program_id, athlete_id, completed_at, note, created_at";
+const COMPLETION_FIELDS = "id, program_id, athlete_id, completed_at, note, difficulty, duration_minutes, created_at";
 
-// Sporcu/veli tarafında — o programı o sporcunun daha önce kaç kez
-// tamamladığını göstermek için (bkz. FitnessProgramDetailScreen).
-export async function listCompletionsForAthleteProgram(programId: string, athleteId: string): Promise<FitnessProgramCompletion[]> {
+// Sporcu/veli tarafında — TÜM programlardaki tamamlama geçmişini (en yeni
+// önce) göstermek için — bkz. AthleteFitnessViewScreen'deki "Çalışma"
+// bölümü (mevcut fitness_measurements geçmişiyle birlikte gösteriliyor).
+export async function listAllCompletionsForAthlete(athleteId: string): Promise<FitnessProgramCompletion[]> {
   const { data, error } = await supabase
     .from("fitness_program_completions")
-    .select(COMPLETION_FIELDS)
-    .eq("program_id", programId)
+    .select(`${COMPLETION_FIELDS}, fitness_programs(name)`)
     .eq("athlete_id", athleteId)
     .order("completed_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data as unknown as FitnessProgramCompletion[]) ?? [];
 }
 
 // Antrenör/admin tarafında — programı grubundaki hangi sporcuların
@@ -114,7 +117,13 @@ export async function listCompletionsForProgram(programId: string): Promise<Fitn
   return (data as unknown as FitnessProgramCompletion[]) ?? [];
 }
 
-export async function markProgramCompleted(input: { program_id: string; athlete_id: string; note: string | null }) {
+export async function markProgramCompleted(input: {
+  program_id: string;
+  athlete_id: string;
+  note: string | null;
+  difficulty: number | null;
+  duration_minutes: number | null;
+}) {
   const { data, error } = await supabase.from("fitness_program_completions").insert(input).select().single();
   if (error) throw error;
   return data;

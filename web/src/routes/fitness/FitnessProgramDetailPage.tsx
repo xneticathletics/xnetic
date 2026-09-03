@@ -80,7 +80,11 @@ export default function FitnessProgramDetailPage() {
               <div key={c.id} className="rounded-lg border border-line bg-surface p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-ink">{c.athletes?.full_name ?? "Sporcu"}</span>
-                  <span className="text-xs text-muted">{formatDateTime(c.completed_at)}</span>
+                  <span className="text-xs text-muted">
+                    {formatDateTime(c.completed_at)}
+                    {c.difficulty != null ? ` · Zorluk: ${c.difficulty}/10` : ""}
+                    {c.duration_minutes != null ? ` · ${c.duration_minutes} dk` : ""}
+                  </span>
                 </div>
                 {c.note && <p className="mt-1 text-xs italic text-muted">{c.note}</p>}
               </div>

@@ -8,14 +8,15 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import {
-  getProgram, listProgramItems, deleteProgram,
-  listCompletionsForAthleteProgram, listCompletionsForProgram, markProgramCompleted,
+  getProgram, listProgramItems, deleteProgram, listCompletionsForProgram, markProgramCompleted,
   type FitnessProgram, type FitnessProgramItem, type FitnessProgramCompletion,
 } from "../lib/api/fitnessPrograms";
 import { useAuth } from "../context/AuthContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramDetail">;
+
+const DIFFICULTY_SCALE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -24,7 +25,7 @@ function formatDateTime(iso: string) {
 export default function FitnessProgramDetailScreen({ route, navigation }: Props) {
   const { role } = useAuth();
   const canManage = role === "coach" || role === "club_admin";
-  const { programId, athleteId } = route.params;
+  const { programId, athleteId, athleteName } = route.params;
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [program, setProgram] = useState<FitnessProgram | null>(null);
@@ -34,21 +35,9 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
   const [loadingCompletions, setLoadingCompletions] = useState(false);
   const [note, setNote] = useState("");
+  const [difficulty, setDifficulty] = useState<number | null>(null);
+  const [duration, setDuration] = useState("");
   const [marking, setMarking] = useState(false);
-
-  const loadCompletions = useCallback(() => {
-    if (canManage) {
-      setLoadingCompletions(true);
-      listCompletionsForProgram(programId)
-        .then(setCompletions)
-        .finally(() => setLoadingCompletions(false));
-    } else if (athleteId) {
-      setLoadingCompletions(true);
-      listCompletionsForAthleteProgram(programId, athleteId)
-        .then(setCompletions)
-        .finally(() => setLoadingCompletions(false));
-    }
-  }, [canManage, programId, athleteId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -62,9 +51,15 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
           navigation.setOptions({ title: p.name });
         })
         .finally(() => { if (!cancelled) setLoading(false); });
-      loadCompletions();
+
+      if (canManage) {
+        setLoadingCompletions(true);
+        listCompletionsForProgram(programId)
+          .then((data) => { if (!cancelled) setCompletions(data); })
+          .finally(() => { if (!cancelled) setLoadingCompletions(false); });
+      }
       return () => { cancelled = true; };
-    }, [programId, loadCompletions])
+    }, [programId, canManage])
   );
 
   const handleDelete = () => {
@@ -84,12 +79,19 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
     if (!athleteId) return;
     setMarking(true);
     try {
-      await markProgramCompleted({ program_id: programId, athlete_id: athleteId, note: note.trim() || null });
-      setNote("");
-      loadCompletions();
+      await markProgramCompleted({
+        program_id: programId,
+        athlete_id: athleteId,
+        note: note.trim() || null,
+        difficulty,
+        duration_minutes: duration.trim() ? Number(duration) : null,
+      });
+      // Tamamlama formu artık ekranda kalmıyor — doğrudan Sporcu Takip
+      // Merkezi'ne (Performansım) dönülüyor, geçmiş oradaki "Çalışma"
+      // bölümünde görünüyor (bkz. AthleteFitnessViewScreen).
+      navigation.navigate("AthleteTrackingHub", { athleteId, athleteName: athleteName ?? "" });
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);
-    } finally {
       setMarking(false);
     }
   };
@@ -133,29 +135,61 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
               placeholderTextColor={colors.muted}
               multiline
             />
+
+            <Text style={styles.label}>Zorluk Derecesi (1-10)</Text>
+            <View style={styles.difficultyRow}>
+              {DIFFICULTY_SCALE.map((n) => {
+                const active = difficulty === n;
+                return (
+                  <TouchableOpacity
+                    key={n}
+                    style={[styles.difficultyChip, active && styles.difficultyChipActive]}
+                    onPress={() => setDifficulty(active ? null : n)}
+                  >
+                    <Text style={[styles.difficultyChipText, active && styles.difficultyChipTextActive]}>{n}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={styles.label}>Süre (dakika)</Text>
+            <TextInput
+              onFocus={handleFocus}
+              style={styles.durationInput}
+              value={duration}
+              onChangeText={setDuration}
+              keyboardType="numeric"
+              placeholder="Örn. 45"
+              placeholderTextColor={colors.muted}
+            />
+
             <TouchableOpacity style={styles.completeButton} onPress={handleMarkCompleted} disabled={marking}>
               {marking ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.completeButtonText}>✓ Antrenmanı Tamamladım</Text>}
             </TouchableOpacity>
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>{canManage ? "Tamamlayanlar" : "Geçmişim"}</Text>
-        {loadingCompletions ? (
-          <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.sm }} />
-        ) : completions.length === 0 ? (
-          <Text style={styles.emptyText}>
-            {canManage ? "Bu programı henüz kimse tamamladı olarak işaretlemedi." : "Henüz bu programı tamamladım demedin."}
-          </Text>
-        ) : (
-          completions.map((c) => (
-            <View key={c.id} style={styles.completionRow}>
-              <View style={{ flex: 1 }}>
-                {canManage && <Text style={styles.completionName}>{c.athletes?.full_name ?? "Sporcu"}</Text>}
-                <Text style={styles.completionDate}>{formatDateTime(c.completed_at)}</Text>
-                {!!c.note && <Text style={styles.completionNote}>{c.note}</Text>}
-              </View>
-            </View>
-          ))
+        {canManage && (
+          <>
+            <Text style={styles.sectionTitle}>Tamamlayanlar</Text>
+            {loadingCompletions ? (
+              <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.sm }} />
+            ) : completions.length === 0 ? (
+              <Text style={styles.emptyText}>Bu programı henüz kimse tamamladı olarak işaretlemedi.</Text>
+            ) : (
+              completions.map((c) => (
+                <View key={c.id} style={styles.completionRow}>
+                  <Text style={styles.completionName}>{c.athletes?.full_name ?? "Sporcu"}</Text>
+                  <Text style={styles.completionDate}>
+                    {formatDateTime(c.completed_at)}
+                    {c.difficulty != null ? ` · Zorluk: ${c.difficulty}/10` : ""}
+                    {c.duration_minutes != null ? ` · ${c.duration_minutes} dk` : ""}
+                  </Text>
+                  {!!c.note && <Text style={styles.completionNote}>{c.note}</Text>}
+                </View>
+              ))
+            )}
+          </>
         )}
 
         {canManage && (
@@ -174,6 +208,7 @@ const styles = StyleSheet.create({
   groupText: { color: colors.violet, fontSize: 13, fontWeight: "600", marginBottom: 2 },
   dateText: { color: colors.muted, fontSize: 12, marginBottom: spacing.lg },
   sectionTitle: { color: colors.ink, fontSize: 15, fontWeight: "800", marginBottom: spacing.sm, marginTop: spacing.lg },
+  label: { color: colors.muted, fontSize: 12, fontWeight: "600", marginBottom: 8, marginTop: spacing.sm },
   itemRow: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
@@ -188,9 +223,20 @@ const styles = StyleSheet.create({
   noteInput: {
     backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, minHeight: 60, textAlignVertical: "top",
-    marginBottom: spacing.sm,
   },
-  completeButton: { backgroundColor: colors.teal, borderRadius: radius.md, paddingVertical: 14, alignItems: "center" },
+  difficultyRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  difficultyChip: {
+    width: 34, height: 34, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line,
+    backgroundColor: colors.bg, alignItems: "center", justifyContent: "center",
+  },
+  difficultyChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  difficultyChipText: { color: colors.ink, fontSize: 13, fontWeight: "700" },
+  difficultyChipTextActive: { color: colors.bg },
+  durationInput: {
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
+  },
+  completeButton: { backgroundColor: colors.teal, borderRadius: radius.md, paddingVertical: 14, alignItems: "center", marginTop: spacing.lg },
   completeButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
   emptyText: { color: colors.muted, fontSize: 12, fontStyle: "italic" },
   completionRow: {
