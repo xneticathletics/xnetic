@@ -1,18 +1,24 @@
 import React, { useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES } from "../lib/fitnessExercises";
-import { createCustomExercise } from "../lib/api/customFitnessExercises";
+import { createCustomExercise, uploadExerciseVideo } from "../lib/api/customFitnessExercises";
+import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessExerciseForm">;
 
 export default function FitnessExerciseFormScreen({ navigation }: Props) {
+  const { clubId } = useAuth();
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const [category, setCategory] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
@@ -20,6 +26,27 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
   // oluşturabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePickVideo = async () => {
+    if (!clubId) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("İzin gerekli", "Video seçmek için galeri erişim izni vermelisin.", [{ text: "Tamam" }]);
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"] });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const url = await uploadExerciseVideo(result.assets[0].uri, clubId);
+      setVideoUrl(url);
+    } catch (e: any) {
+      setError(e.message ?? "Video yüklenemedi");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -30,7 +57,13 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await createCustomExercise({ category, name: name.trim(), bodyweight: false });
+      await createCustomExercise({
+        category,
+        name: name.trim(),
+        bodyweight: false,
+        description: description.trim() || null,
+        video_url: videoUrl.trim() || null,
+      });
       Alert.alert("Eklendi", `"${name.trim()}" hareketi eklendi.`, [{ text: "Tamam" }]);
       navigation.goBack();
     } catch (e: any) {
@@ -70,9 +103,45 @@ export default function FitnessExerciseFormScreen({ navigation }: Props) {
           placeholderTextColor={colors.muted}
         />
 
+        <Text style={[styles.label, { marginTop: spacing.lg }]}>Açıklama</Text>
+        <TextInput
+          onFocus={handleFocus}
+          style={[styles.input, styles.inputMultiline]}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Hareketin nasıl yapıldığına dair kısa bir açıklama…"
+          placeholderTextColor={colors.muted}
+          multiline
+        />
+
+        <Text style={[styles.label, { marginTop: spacing.lg }]}>Video</Text>
+        <TextInput
+          onFocus={handleFocus}
+          style={styles.input}
+          value={videoUrl}
+          onChangeText={setVideoUrl}
+          placeholder="Video linki yapıştır (YouTube, Vimeo, vb.)"
+          placeholderTextColor={colors.muted}
+          autoCapitalize="none"
+        />
+        <View style={styles.videoRow}>
+          <TouchableOpacity style={styles.videoPickButton} onPress={handlePickVideo} disabled={uploading}>
+            {uploading ? (
+              <ActivityIndicator color={colors.ink} size="small" />
+            ) : (
+              <Text style={styles.videoPickButtonText}>📁 Dosya Seç ve Yükle</Text>
+            )}
+          </TouchableOpacity>
+          {!!videoUrl && (
+            <TouchableOpacity onPress={() => setVideoUrl("")}>
+              <Text style={styles.videoClearText}>Kaldır</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {error && <Text style={styles.errorText}>{error}</Text>}
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving || uploading}>
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
       </ScrollView>
@@ -91,6 +160,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
+  inputMultiline: { minHeight: 70, textAlignVertical: "top" },
+  videoRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginTop: spacing.sm },
+  videoPickButton: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    paddingHorizontal: spacing.md, paddingVertical: 10,
+  },
+  videoPickButtonText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
+  videoClearText: { color: colors.coral, fontWeight: "700", fontSize: 12 },
   errorText: { color: colors.coral, marginTop: spacing.md },
   saveButton: { backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.xl },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

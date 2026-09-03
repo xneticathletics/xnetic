@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, Modal } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Linking } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -18,13 +18,13 @@ type Props = NativeStackScreenProps<HomeStackParamList, "FitnessExerciseDetail">
 
 const CUSTOM_PREFIX = "custom:";
 
-type Resolved = { name: string; bodyweight: boolean; category: FitnessCategory; instructions: string | null };
+type Resolved = { name: string; bodyweight: boolean; category: FitnessCategory; instructions: string | null; videoUrl: string | null };
 
 // Egzersiz anahtarı ya sabit katalogdaki bir key (ör. "bench_press") ya da
 // sonradan eklenmiş özel bir egzersizin "custom:<uuid>" şeklindeki anahtarı
-// olabilir — ikisini de tek bir arayüzde çözer. Kulübün sonradan eklediği
-// özel egzersizlerin (custom:) sabit bir açıklaması olmadığı için
-// instructions bu durumda null döner.
+// olabilir — ikisini de tek bir arayüzde çözer. Sabit katalogdaki hareketler
+// için henüz bir video linki yok (videoUrl null), kulübün eklediği özel
+// hareketler kendi girdiği açıklama/videoyu kullanır.
 async function resolveExercise(exerciseKey: string): Promise<Resolved | null> {
   if (exerciseKey.startsWith(CUSTOM_PREFIX)) {
     const id = exerciseKey.slice(CUSTOM_PREFIX.length);
@@ -32,11 +32,14 @@ async function resolveExercise(exerciseKey: string): Promise<Resolved | null> {
     if (!ex) return null;
     const category = getFitnessCategory(ex.category);
     if (!category) return null;
-    return { name: ex.name, bodyweight: ex.bodyweight, category, instructions: null };
+    return { name: ex.name, bodyweight: ex.bodyweight, category, instructions: ex.description, videoUrl: ex.video_url };
   }
   const found = getFitnessExercise(exerciseKey);
   if (!found) return null;
-  return { name: found.exercise.name, bodyweight: !!found.exercise.bodyweight, category: found.category, instructions: found.exercise.instructions };
+  return {
+    name: found.exercise.name, bodyweight: !!found.exercise.bodyweight, category: found.category,
+    instructions: found.exercise.instructions, videoUrl: null,
+  };
 }
 
 function todayKey() {
@@ -189,7 +192,17 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
     );
   }
 
-  const { name, bodyweight, category, instructions } = resolved;
+  const { name, bodyweight, category, instructions, videoUrl } = resolved;
+
+  const handleVideoPress = () => {
+    if (videoUrl) {
+      Linking.openURL(videoUrl).catch(() => {
+        Alert.alert("Açılamadı", "Video linki açılamadı.", [{ text: "Tamam" }]);
+      });
+    } else {
+      setVideoModalVisible(true);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -209,7 +222,7 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
           <View style={styles.instructionsCard}>
             <View style={styles.instructionsHeader}>
               <Text style={styles.instructionsTitle}>Nasıl Yapılır?</Text>
-              <TouchableOpacity style={styles.videoButton} onPress={() => setVideoModalVisible(true)}>
+              <TouchableOpacity style={styles.videoButton} onPress={handleVideoPress}>
                 <Text style={styles.videoButtonIcon}>🎥</Text>
               </TouchableOpacity>
             </View>
