@@ -67,6 +67,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "ekranlar", label: "Ekranlar", sub: "Rol önizlemeleri", icon: "🖥️" },
     { key: "sa_duyurular", label: "Duyurular", sub: "Kulüp adminlerine gönder", icon: "📣" },
     { key: "fitness_kutuphane", label: "Egzersiz Kütüphanesi", sub: "Tüm kulüplerde görünen ortak hareketler", icon: "📚" },
+    { key: "performans_kutuphane", label: "Performans Testleri Kütüphanesi", sub: "Tüm kulüplerde görünen ortak testler", icon: "⏱️" },
   ],
 };
 
@@ -140,6 +141,8 @@ async function handleTilePress(
     navigation.navigate("SuperAdminAnnounce");
   } else if (key === "fitness_kutuphane") {
     navigation.navigate("FitnessTraining");
+  } else if (key === "performans_kutuphane") {
+    navigation.navigate("AthleticPerformance");
   }
 }
 

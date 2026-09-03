@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, Modal } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Linking } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { getPerformanceTest } from "../lib/performanceTests";
+import { getPerformanceCategory, type PerformanceCategory } from "../lib/performanceTests";
+import { getCustomTest, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
 import {
   listMeasurementsForAthleteTest, createMeasurement, deleteMeasurement, type PerformanceMeasurement,
 } from "../lib/api/performanceMeasurements";
@@ -14,6 +15,20 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PerformanceTestDetail">;
+
+const CUSTOM_PREFIX = "custom:";
+
+type Resolved = { test: CustomPerformanceTest; category: PerformanceCategory };
+
+async function resolveTest(testKey: string): Promise<Resolved | null> {
+  if (!testKey.startsWith(CUSTOM_PREFIX)) return null;
+  const id = testKey.slice(CUSTOM_PREFIX.length);
+  const test = await getCustomTest(id);
+  if (!test) return null;
+  const category = getPerformanceCategory(test.category);
+  if (!category) return null;
+  return { test, category };
+}
 
 function todayKey() {
   const d = new Date();
@@ -27,8 +42,9 @@ function formatDate(iso: string) {
 
 export default function PerformanceTestDetailScreen({ route, navigation }: Props) {
   const { testKey } = route.params;
-  const found = getPerformanceTest(testKey);
   const { handleFocus } = useKeyboardScroll();
+
+  const [resolved, setResolved] = useState<Resolved | null | undefined>(undefined);
 
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -49,8 +65,14 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
   const [videoModalVisible, setVideoModalVisible] = useState(false);
 
   useEffect(() => {
-    if (found) navigation.setOptions({ title: found.test.name });
-  }, [found, navigation]);
+    let cancelled = false;
+    resolveTest(testKey).then((r) => {
+      if (cancelled) return;
+      setResolved(r);
+      navigation.setOptions({ title: r?.test.name ?? "Test" });
+    });
+    return () => { cancelled = true; };
+  }, [testKey, navigation]);
 
   const loadHistory = useCallback(async (athleteId: string) => {
     setLoadingHistory(true);
@@ -109,7 +131,7 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
   const handleDelete = (m: PerformanceMeasurement) => {
     Alert.alert(
       "Ölçümü sil",
-      `${formatDate(m.measured_at)} tarihli ${m.value} ${found?.test.unit ?? ""} kaydını silmek istediğine emin misin?`,
+      `${formatDate(m.measured_at)} tarihli ${m.value} ${resolved?.test.unit ?? ""} kaydını silmek istediğine emin misin?`,
       [
         { text: "Vazgeç", style: "cancel" },
         {
@@ -128,7 +150,15 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
     );
   };
 
-  if (!found) {
+  if (resolved === undefined) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />
+      </View>
+    );
+  }
+
+  if (resolved === null) {
     return (
       <View style={styles.container}>
         <Text style={styles.error}>Test bulunamadı.</Text>
@@ -136,7 +166,17 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
     );
   }
 
-  const { test, category } = found;
+  const { test, category } = resolved;
+
+  const handleVideoPress = () => {
+    if (test.video_url) {
+      Linking.openURL(test.video_url).catch(() => {
+        Alert.alert("Açılamadı", "Video linki açılamadı.", [{ text: "Tamam" }]);
+      });
+    } else {
+      setVideoModalVisible(true);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -157,7 +197,7 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
           <View style={styles.instructionsCard}>
             <View style={styles.instructionsHeader}>
               <Text style={styles.instructionsTitle}>Nasıl Yapılır?</Text>
-              <TouchableOpacity style={styles.videoButton} onPress={() => setVideoModalVisible(true)}>
+              <TouchableOpacity style={styles.videoButton} onPress={handleVideoPress}>
                 <Text style={styles.videoButtonIcon}>🎥</Text>
               </TouchableOpacity>
             </View>

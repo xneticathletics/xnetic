@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import DataTable, { type Column } from "../../components/DataTable";
 import { inputClass } from "../../components/FormField";
-import { COLOR_CLASSES, getPerformanceTest } from "../../lib/performanceTests";
+import { COLOR_CLASSES, getPerformanceCategory, type PerformanceCategory } from "../../lib/performanceTests";
+import { getCustomTest, type CustomPerformanceTest } from "../../lib/api/customPerformanceTests";
 import { listAllAthletes, type Athlete } from "../../lib/api/athletes";
 import {
   listMeasurementsForAthleteTest,
@@ -11,13 +12,17 @@ import {
 } from "../../lib/api/performanceMeasurements";
 import PerformanceMeasurementModal from "./PerformanceMeasurementModal";
 
+const CUSTOM_PREFIX = "custom:";
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
 }
 
 export default function PerformanceTestDetailPage() {
   const { testKey } = useParams<{ category: string; testKey: string }>();
-  const found = getPerformanceTest(testKey ?? "");
+
+  const [test, setTest] = useState<CustomPerformanceTest | null | undefined>(undefined);
+  const [category, setCategory] = useState<PerformanceCategory | null>(null);
 
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athlete, setAthlete] = useState<Athlete | null>(null);
@@ -30,6 +35,22 @@ export default function PerformanceTestDetailPage() {
 
   const [editing, setEditing] = useState<PerformanceMeasurement | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (!testKey?.startsWith(CUSTOM_PREFIX)) {
+      setTest(null);
+      return;
+    }
+    let cancelled = false;
+    getCustomTest(testKey.slice(CUSTOM_PREFIX.length))
+      .then((t) => {
+        if (cancelled) return;
+        setTest(t);
+        setCategory(t ? getPerformanceCategory(t.category) ?? null : null);
+      })
+      .catch((e) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [testKey]);
 
   useEffect(() => {
     listAllAthletes()
@@ -65,8 +86,8 @@ export default function PerformanceTestDetailPage() {
   };
 
   const handleDelete = async (m: PerformanceMeasurement) => {
-    if (!found) return;
-    if (!confirm(`${formatDate(m.measured_at)} tarihli ${m.value} ${found.test.unit} kaydını silmek istediğine emin misin?`)) return;
+    if (!test) return;
+    if (!confirm(`${formatDate(m.measured_at)} tarihli ${m.value} ${test.unit} kaydını silmek istediğine emin misin?`)) return;
     try {
       await deleteMeasurement(m.id);
       if (athlete) loadHistory(athlete.id);
@@ -75,11 +96,14 @@ export default function PerformanceTestDetailPage() {
     }
   };
 
-  if (!found) {
+  if (test === undefined) {
+    return <p className="text-sm text-muted">Yükleniyor…</p>;
+  }
+
+  if (!test || !category) {
     return <p className="text-sm font-semibold text-coral">Test bulunamadı.</p>;
   }
 
-  const { test, category } = found;
   const cls = COLOR_CLASSES[category.color];
 
   const columns: Column<PerformanceMeasurement>[] = [
@@ -123,7 +147,14 @@ export default function PerformanceTestDetailPage() {
       </div>
 
       <div className="mb-6 rounded-xl border border-line bg-surface p-4">
-        <div className="mb-1 text-xs font-bold uppercase text-muted">Nasıl Yapılır?</div>
+        <div className="mb-1 flex items-center justify-between">
+          <div className="text-xs font-bold uppercase text-muted">Nasıl Yapılır?</div>
+          {test.video_url && (
+            <a href={test.video_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-teal hover:underline">
+              🎥 Video İzle
+            </a>
+          )}
+        </div>
         <p className="text-sm leading-relaxed text-ink">{test.instructions}</p>
       </div>
 

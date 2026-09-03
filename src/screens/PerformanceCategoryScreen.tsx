@@ -1,19 +1,54 @@
-import React, { useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getPerformanceCategory } from "../lib/performanceTests";
+import { listTestsByCategory, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
+import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PerformanceCategory">;
 
+type Row = {
+  key: string; name: string; unit: string; equipment: string | null;
+  testId: string; isGlobal: boolean; canEdit: boolean;
+};
+
 export default function PerformanceCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
+  const { role, clubId } = useAuth();
   const meta = getPerformanceCategory(category);
+
+  const [tests, setTests] = useState<CustomPerformanceTest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   useEffect(() => {
     if (meta) navigation.setOptions({ title: meta.label });
   }, [meta, navigation]);
+
+  const load = useCallback(async () => {
+    try {
+      setError(null);
+      setTests(await listTestsByCategory(category));
+    } catch (e: any) {
+      setError(e.message ?? "Yüklenemedi");
+    } finally {
+      setLoading(false);
+      hasLoadedOnceRef.current = true;
+      setRefreshing(false);
+    }
+  }, [category]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasLoadedOnceRef.current) setLoading(true);
+      load();
+    }, [load])
+  );
 
   if (!meta) {
     return (
@@ -23,6 +58,16 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
     );
   }
 
+  const rows: Row[] = tests.map((t) => ({
+    key: `custom:${t.id}`,
+    name: t.name,
+    unit: t.unit,
+    equipment: t.equipment,
+    testId: t.id,
+    isGlobal: t.club_id === null,
+    canEdit: t.club_id === null ? role === "super_admin" : t.club_id === clubId,
+  }));
+
   return (
     <View style={styles.container}>
       <View style={[styles.heroCard, { backgroundColor: meta.soft, borderColor: meta.color }]}>
@@ -31,10 +76,15 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
         <Text style={styles.heroSubtitle}>Kolaydan zora sıralı — bir test seç</Text>
       </View>
 
+      {loading && <ActivityIndicator color={colors.yellow} style={{ marginBottom: spacing.md }} />}
+      {error && <Text style={styles.error}>{error}</Text>}
+
       <FlatList
-        data={meta.tests}
+        data={rows}
         keyExtractor={(t) => t.key}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
+        ListEmptyComponent={!loading ? <Text style={styles.error}>Bu kategoride henüz test yok.</Text> : null}
         renderItem={({ item, index }) => (
           <TouchableOpacity
             style={styles.row}
@@ -46,7 +96,16 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
             <View style={{ flex: 1 }}>
               <Text style={styles.rowName}>{item.name}</Text>
               {!!item.equipment && <Text style={styles.rowEquipment}>🔧 {item.equipment}</Text>}
+              {item.isGlobal && <Text style={styles.globalBadge}>🌐 Genel (tüm kulüpler)</Text>}
             </View>
+            {item.canEdit && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate("PerformanceTestForm", { testId: item.testId })}
+              >
+                <Text style={styles.editButtonText}>✏️ Düzenle</Text>
+              </TouchableOpacity>
+            )}
             <Text style={[styles.rowUnit, { color: meta.color }]}>{item.unit}</Text>
           </TouchableOpacity>
         )}
@@ -71,5 +130,8 @@ const styles = StyleSheet.create({
   rowIndexText: { fontSize: 12, fontWeight: "800" },
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   rowEquipment: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  globalBadge: { color: colors.muted, fontSize: 10, marginTop: 2 },
+  editButton: { paddingHorizontal: spacing.xs, paddingVertical: 4 },
+  editButtonText: { color: colors.violet, fontSize: 11, fontWeight: "700" },
   rowUnit: { fontSize: 12, fontWeight: "700" },
 });

@@ -7,7 +7,7 @@ import {
   type PerformanceMeasurement,
 } from "../../lib/api/performanceMeasurements";
 import type { Athlete } from "../../lib/api/athletes";
-import type { PerformanceTest } from "../../lib/performanceTests";
+import type { CustomPerformanceTest } from "../../lib/api/customPerformanceTests";
 
 function todayKey() {
   const d = new Date();
@@ -23,7 +23,7 @@ export default function PerformanceMeasurementModal({
   onSaved,
 }: {
   athlete: Athlete;
-  test: PerformanceTest;
+  test: CustomPerformanceTest;
   measurement: PerformanceMeasurement | null;
   onClose: () => void;
   onSaved: () => void;
@@ -57,7 +57,7 @@ export default function PerformanceMeasurementModal({
       } else {
         await createMeasurement({
           athlete_id: athlete.id,
-          test_key: test.key,
+          test_key: `custom:${test.id}`,
           value: num,
           measured_at: measuredAt,
           notes: notes.trim() || null,

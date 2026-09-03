@@ -20,7 +20,6 @@ export default function PerformanceOverviewPage() {
             >
               <div className="mb-2 text-3xl">{cat.icon}</div>
               <div className="text-sm font-extrabold text-ink">{cat.label}</div>
-              <div className="mt-1 text-xs text-muted">{cat.tests.length} test</div>
             </Link>
           );
         })}

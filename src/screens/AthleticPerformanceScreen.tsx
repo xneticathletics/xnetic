@@ -4,16 +4,25 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { PERFORMANCE_CATEGORIES } from "../lib/performanceTests";
 import { useHomeButton } from "../hooks/useHomeButton";
+import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleticPerformance">;
 
 export default function AthleticPerformanceScreen({ navigation }: Props) {
   useHomeButton(navigation);
+  const { role } = useAuth();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.subtitle}>Bir kategori seç, testi seç, sporcunun ölçümünü kaydet.</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.subtitle}>Bir kategori seç, testi seç, sporcunun ölçümünü kaydet.</Text>
+        {role === "super_admin" && (
+          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("PerformanceTestForm")}>
+            <Text style={styles.addButtonText}>+ Test Ekle</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={styles.grid}>
         {PERFORMANCE_CATEGORIES.map((cat) => (
@@ -27,7 +36,6 @@ export default function AthleticPerformanceScreen({ navigation }: Props) {
             <View style={styles.tileContent}>
               <Text style={styles.tileIcon}>{cat.icon}</Text>
               <Text style={styles.tileLabel}>{cat.label}</Text>
-              <Text style={styles.tileCount}>{cat.tests.length} test</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -38,7 +46,10 @@ export default function AthleticPerformanceScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  subtitle: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.lg },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, marginBottom: spacing.lg },
+  subtitle: { flex: 1, color: colors.muted, fontSize: 12, lineHeight: 17 },
+  addButton: { backgroundColor: colors.violet, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
+  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   tile: {
     width: "31%", aspectRatio: 1, backgroundColor: colors.surface, borderWidth: 2,
@@ -52,5 +63,4 @@ const styles = StyleSheet.create({
   },
   tileIcon: { fontSize: 24, marginBottom: 2, textAlign: "center" },
   tileLabel: { color: colors.ink, fontSize: 11, fontWeight: "800", textAlign: "center" },
-  tileCount: { color: colors.muted, fontSize: 9, marginTop: 2, textAlign: "center" },
 });

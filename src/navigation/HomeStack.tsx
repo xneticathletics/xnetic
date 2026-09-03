@@ -53,6 +53,7 @@ import CoachAdvanceFormScreen from "../screens/CoachAdvanceFormScreen";
 import AthleticPerformanceScreen from "../screens/AthleticPerformanceScreen";
 import PerformanceCategoryScreen from "../screens/PerformanceCategoryScreen";
 import PerformanceTestDetailScreen from "../screens/PerformanceTestDetailScreen";
+import PerformanceTestFormScreen from "../screens/PerformanceTestFormScreen";
 import WellnessCheckinScreen from "../screens/WellnessCheckinScreen";
 import MembershipFreezeScreen from "../screens/MembershipFreezeScreen";
 import CoachWellnessScreen from "../screens/CoachWellnessScreen";
@@ -152,6 +153,7 @@ export type HomeStackParamList = {
   AthleticPerformance: undefined;
   PerformanceCategory: { category: string };
   PerformanceTestDetail: { testKey: string };
+  PerformanceTestForm: { testId?: string } | undefined;
   WellnessCheckin: undefined;
   MembershipFreeze: { athleteId?: string; athleteName?: string } | undefined;
   CoachWellness: undefined;
@@ -263,6 +265,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="AthleticPerformance" component={AthleticPerformanceScreen} options={{ title: "Performans Ölçümleri" }} />
       <Stack.Screen name="PerformanceCategory" component={PerformanceCategoryScreen} />
       <Stack.Screen name="PerformanceTestDetail" component={PerformanceTestDetailScreen} />
+      <Stack.Screen name="PerformanceTestForm" component={PerformanceTestFormScreen} options={{ title: "Test Ekle" }} />
       <Stack.Screen name="WellnessCheckin" component={WellnessCheckinScreen} options={{ title: "Günlük Check-in" }} />
       <Stack.Screen name="MembershipFreeze" component={MembershipFreezeScreen} options={{ title: "Kayıt Dondurma" }} />
       <Stack.Screen name="CoachWellness" component={CoachWellnessScreen} options={{ title: "Sporcu Check-in'leri" }} />
