@@ -5,14 +5,16 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getFitnessCategory } from "../lib/fitnessExercises";
 import { listCustomExercisesByCategory, type CustomFitnessExercise } from "../lib/api/customFitnessExercises";
+import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessCategory">;
 
-type Row = { key: string; name: string; exerciseId?: string };
+type Row = { key: string; name: string; exerciseId?: string; isGlobal?: boolean; canEdit?: boolean };
 
 export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
+  const { role, clubId } = useAuth();
   const meta = getFitnessCategory(category);
 
   const [customExercises, setCustomExercises] = useState<CustomFitnessExercise[]>([]);
@@ -55,7 +57,13 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
 
   const rows: Row[] = [
     ...meta.exercises.map((e) => ({ key: e.key, name: e.name })),
-    ...customExercises.map((e) => ({ key: `custom:${e.id}`, name: e.name, exerciseId: e.id })),
+    ...customExercises.map((e) => ({
+      key: `custom:${e.id}`,
+      name: e.name,
+      exerciseId: e.id,
+      isGlobal: e.club_id === null,
+      canEdit: e.club_id === null ? role === "super_admin" : e.club_id === clubId,
+    })),
   ];
 
   return (
@@ -79,9 +87,12 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
             style={styles.row}
             onPress={() => navigation.navigate("FitnessExerciseDetail", { exerciseKey: item.key })}
           >
-            <Text style={styles.rowName}>{item.name}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowName}>{item.name}</Text>
+              {item.isGlobal && <Text style={styles.globalBadge}>🌐 Genel (tüm kulüpler)</Text>}
+            </View>
             <View style={styles.rowActions}>
-              {item.exerciseId && (
+              {item.canEdit && (
                 <TouchableOpacity
                   style={styles.editButton}
                   onPress={() => navigation.navigate("FitnessExerciseForm", { exerciseId: item.exerciseId })}
@@ -111,6 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  globalBadge: { color: colors.muted, fontSize: 10, marginTop: 2 },
   rowActions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   editButton: { paddingHorizontal: spacing.sm, paddingVertical: 4 },
   editButtonText: { color: colors.violet, fontSize: 12, fontWeight: "700" },

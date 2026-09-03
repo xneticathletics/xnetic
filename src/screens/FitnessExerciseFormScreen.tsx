@@ -47,7 +47,6 @@ export default function FitnessExerciseFormScreen({ route, navigation }: Props) 
   }, [exerciseId, navigation]);
 
   const handlePickVideo = async () => {
-    if (!clubId) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("İzin gerekli", "Video seçmek için galeri erişim izni vermelisin.", [{ text: "Tamam" }]);

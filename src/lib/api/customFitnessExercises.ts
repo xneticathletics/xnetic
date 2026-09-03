@@ -2,11 +2,12 @@ import { supabase } from "../supabase";
 import * as FileSystem from "expo-file-system/legacy";
 import { decode } from "base64-arraybuffer";
 
-// Antrenörün/admin'in "+ Çalışma Ekle" ile sabit kataloğa eklediği kendi
-// egzersizleri — sabit FITNESS_CATEGORIES kataloğuyla (src/lib/fitnessExercises.ts)
-// birlikte kullanılır, onu değiştirmez, üzerine ekler.
+// Egzersizler artık tamamen veritabanında (fitness_exercises) — club_id
+// NULL olanlar "global" (Süper Admin'in eklediği, TÜM kulüplerin gördüğü)
+// hareketler, club_id dolu olanlar sadece o kulübe özel hareketler.
 export type CustomFitnessExercise = {
   id: string;
+  club_id: string | null;
   category: string;
   name: string;
   bodyweight: boolean;
@@ -23,7 +24,7 @@ export type CustomFitnessExerciseInput = {
   description: string | null;
 };
 
-const FIELDS = "id, category, name, bodyweight, video_url, description, created_at";
+const FIELDS = "id, club_id, category, name, bodyweight, video_url, description, created_at";
 
 export async function listCustomExercisesByCategory(category: string): Promise<CustomFitnessExercise[]> {
   const { data, error } = await supabase
@@ -53,13 +54,26 @@ export async function updateCustomExercise(id: string, input: CustomFitnessExerc
   return data;
 }
 
-// Hareket videosunu kulübün klasörüne yükler — web'deki
-// src/lib/api/fitnessExercises.ts (uploadExerciseVideo) ile aynı
-// "fitness-exercise-videos" bucket'ı, sadece dosya okuma yöntemi RN'e özel
-// (clubLogo.ts'teki uploadClubLogo ile birebir aynı desen).
-export async function uploadExerciseVideo(localUri: string, clubId: string): Promise<string> {
+// "fitness-exercise-videos" bucket'ında da bu değerle senkron (bkz.
+// supabase/migrations/..._fitness_exercises_global_library.sql) — 1GB gibi
+// aşırı büyük dosyalar yüklenemesin diye standart bir üst sınır: kısa bir
+// hareket videosu için (30-60sn, orta kalite) fazlasıyla yeterli.
+export const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;
+
+// Hareket videosunu yükler — web'deki src/lib/api/fitnessExercises.ts
+// (uploadExerciseVideo) ile aynı "fitness-exercise-videos" bucket'ı, sadece
+// dosya okuma yöntemi RN'e özel (clubLogo.ts'teki uploadClubLogo ile birebir
+// aynı desen). clubId null ise (Süper Admin, global hareket ekliyor)
+// "global/" klasörüne yüklenir.
+export async function uploadExerciseVideo(localUri: string, clubId: string | null): Promise<string> {
+  const info = await FileSystem.getInfoAsync(localUri);
+  if (info.exists && info.size > MAX_VIDEO_SIZE_BYTES) {
+    throw new Error(`Video en fazla ${MAX_VIDEO_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+
   const ext = localUri.split(".").pop()?.split("?")[0] || "mp4";
-  const path = `${clubId}/${Date.now()}.${ext}`;
+  const folder = clubId ?? "global";
+  const path = `${folder}/${Date.now()}.${ext}`;
   const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
   const arrayBuffer = decode(base64);
 

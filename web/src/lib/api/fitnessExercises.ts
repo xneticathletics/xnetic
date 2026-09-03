@@ -5,8 +5,11 @@ import { supabase } from "../supabase";
 // src/lib/api/customFitnessExercises.ts ile aynı "fitness_exercises"
 // tablosu/kolonları. Web paneli ayrıca update/delete de sunar (mobilde
 // sadece koç/antrenör ekliyordu, admin panelinde düzenleme/silme de gerekir).
+// club_id null olanlar "global" hareketler (Süper Admin'in eklediği, TÜM
+// kulüplerin gördüğü); club_id dolu olanlar sadece o kulübe özel.
 export type CustomFitnessExercise = {
   id: string;
+  club_id: string | null;
   category: string;
   name: string;
   bodyweight: boolean;
@@ -23,15 +26,26 @@ export type CustomFitnessExerciseInput = {
   description: string | null;
 };
 
-const FIELDS = "id, category, name, bodyweight, video_url, description, created_at";
+const FIELDS = "id, club_id, category, name, bodyweight, video_url, description, created_at";
+
+// "fitness-exercise-videos" bucket'ında da bu değerle senkron (bkz.
+// supabase/migrations/..._fitness_exercises_global_library.sql) — 1GB gibi
+// aşırı büyük dosyalar yüklenemesin diye standart bir üst sınır: kısa bir
+// hareket videosu için (30-60sn, orta kalite) fazlasıyla yeterli.
+export const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;
 
 // Hareket videosunu kulübün klasörüne yükler (club-logos/athlete-photos ile
 // aynı desen) — henüz kaydedilmemiş (yeni) bir egzersiz için de çalışsın diye
 // dosya adı egzersiz id'sine değil, rastgele bir belirtece bağlı; "url
-// yapıştır" alternatifiyle aynı video_url sütununu doldurur.
-export async function uploadExerciseVideo(file: File, clubId: string): Promise<string> {
+// yapıştır" alternatifiyle aynı video_url sütununu doldurur. clubId null ise
+// (global bir hareket için) "global/" klasörüne yüklenir.
+export async function uploadExerciseVideo(file: File, clubId: string | null): Promise<string> {
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    throw new Error(`Video en fazla ${MAX_VIDEO_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
   const ext = file.name.split(".").pop() || "mp4";
-  const path = `${clubId}/${crypto.randomUUID()}.${ext}`;
+  const folder = clubId ?? "global";
+  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("fitness-exercise-videos")
     .upload(path, file, { contentType: file.type || "video/mp4" });

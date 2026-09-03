@@ -100,6 +100,8 @@ export default function FitnessCategoryPage() {
       render: (r) =>
         r.kind === "static" ? (
           <span className="text-muted">Sabit katalog</span>
+        ) : r.exercise.club_id === null ? (
+          <span className="text-muted">🌐 Genel (tüm kulüpler)</span>
         ) : (
           <span className="text-violet">Kulübe özel</span>
         ),
@@ -108,8 +110,11 @@ export default function FitnessCategoryPage() {
       key: "actions",
       label: "",
       className: "text-right",
+      // Genel (club_id null) hareketler sadece Süper Admin'e açık — web
+      // panelinde süper admin girişi olmadığı için burada hiç düzenlenemez;
+      // sadece kulübün KENDİ eklediği (club_id dolu) hareketler için buton var.
       render: (r) =>
-        r.kind === "custom" ? (
+        r.kind === "custom" && r.exercise.club_id !== null ? (
           <div className="flex justify-end gap-2">
             <button onClick={() => setModalState(r.exercise)} className="text-xs font-bold text-teal hover:underline">
               Düzenle
