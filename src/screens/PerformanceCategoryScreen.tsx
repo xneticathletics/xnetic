@@ -67,7 +67,9 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
     equipment: t.equipment,
     testId: t.id,
     sourceLabel: role !== "super_admin" ? undefined : t.club_id === null ? "🌐 Global (Platform)" : `🏢 ${t.clubs?.name ?? "Bir kulüp"}`,
-    canEdit: t.club_id === null ? role === "super_admin" : t.club_id === clubId,
+    // Var olan (global) testleri her antrenör/kulüp admini düzenleyebilir —
+    // sadece YENİ global test eklemek Süper Admin'e özel.
+    canEdit: t.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : t.club_id === clubId,
   }));
 
   return (

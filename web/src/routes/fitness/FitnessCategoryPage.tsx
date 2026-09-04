@@ -106,18 +106,20 @@ export default function FitnessCategoryPage() {
       key: "actions",
       label: "",
       className: "text-right",
-      // Genel (club_id null) hareketler sadece Süper Admin'e açık — web
-      // panelinde süper admin girişi olmadığı için burada hiç düzenlenemez;
-      // sadece kulübün KENDİ eklediği (club_id dolu) hareketler için buton var.
+      // Var olan (global) hareketleri her antrenör/kulüp admini düzenleyebilir
+      // — sadece silme, kulübün KENDİ eklediği (club_id dolu) hareketlerle
+      // sınırlı (global bir hareketi silmek Süper Admin'e özel).
       render: (r) =>
-        r.kind === "custom" && r.exercise.club_id !== null ? (
+        r.kind === "custom" ? (
           <div className="flex justify-end gap-2">
             <button onClick={() => setModalState(r.exercise)} className="text-xs font-bold text-teal hover:underline">
               Düzenle
             </button>
-            <button onClick={() => handleDelete(r.exercise)} className="text-xs font-bold text-coral hover:underline">
-              Sil
-            </button>
+            {r.exercise.club_id !== null && (
+              <button onClick={() => handleDelete(r.exercise)} className="text-xs font-bold text-coral hover:underline">
+                Sil
+              </button>
+            )}
           </div>
         ) : (
           <span className="text-xs text-muted">—</span>
