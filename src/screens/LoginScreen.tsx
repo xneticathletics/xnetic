@@ -96,9 +96,9 @@ export default function LoginScreen({
         {/* Tıklanabilir buton/link DEĞİL — App Store 3.1.3 kuralı, uygulama
             içinde harici bir satın alma yöntemine yönlendiren buton/link
             bulunmasını yasaklıyor. Kulüp kaydı + ödeme artık sadece
-            xnetic.com üzerinden yapılıyor; bu sadece bilgilendirme metni. */}
+            xnetic.net üzerinden yapılıyor; bu sadece bilgilendirme metni. */}
         <Text style={styles.createClubNote}>
-          Yeni kulüp kaydı için xnetic.com adresini ziyaret edin.
+          Yeni kulüp kaydı için xnetic.net adresini ziyaret edin.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

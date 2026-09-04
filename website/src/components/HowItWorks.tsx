@@ -1,5 +1,5 @@
 const STEPS = [
-  { n: "1", title: "Kaydol ve Öde", desc: "Kulübün için bir plan seç, güvenli ödemeni xnetic.com üzerinden tamamla." },
+  { n: "1", title: "Kaydol ve Öde", desc: "Kulübün için bir plan seç, güvenli ödemeni xnetic.net üzerinden tamamla." },
   { n: "2", title: "Kulübünü Kur", desc: "Sporcularını, gruplarını ve antrenörlerini ekle; onlar da kendi hesaplarına giriş yapsın." },
   { n: "3", title: "Yönet ve Büyü", desc: "Web panelinden yönet, antrenörlerin ve velilerin mobil uygulamayla takipte kalsın." },
 ];

@@ -158,7 +158,7 @@ export default function SystemSettingsScreen() {
             onChangeText={setSupportEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            placeholder="destek@xnetic.com"
+            placeholder="destek@xnetic.net"
             placeholderTextColor={colors.muted}
           />
           <Text style={styles.label}>Destek Telefonu</Text>
