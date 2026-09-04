@@ -16,11 +16,11 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-line/80 bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <a href="#top" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
-          <img src="/logo.png" alt="X-NETIC" className="h-12 w-12 rounded-2xl shadow-lg shadow-black/20" />
+          <img src="/logo-mark.png" alt="X-NETIC" className="h-16 w-16 drop-shadow-lg" />
           <span className="text-lg font-extrabold tracking-tight text-ink">X-NETIC</span>
         </a>
 
-        <nav className="hidden items-center gap-7 text-sm font-semibold text-muted md:flex">
+        <nav className="hidden items-center gap-7 text-base font-semibold text-muted md:flex">
           {NAV_LINKS.map((l) => (
             <a key={l.href} href={l.href} className="hover:text-ink">{l.label}</a>
           ))}
@@ -59,7 +59,7 @@ export default function Header() {
                 <a
                   href={l.href}
                   onClick={() => setMenuOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 text-sm font-semibold text-muted hover:bg-surface hover:text-ink"
+                  className="block rounded-lg px-2 py-2.5 text-base font-semibold text-muted hover:bg-surface hover:text-ink"
                 >
                   {l.label}
                 </a>
@@ -69,7 +69,7 @@ export default function Header() {
               <a
                 href={`${APP_URL}/login`}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-2 py-2.5 text-sm font-semibold text-muted hover:bg-surface hover:text-ink"
+                className="block rounded-lg px-2 py-2.5 text-base font-semibold text-muted hover:bg-surface hover:text-ink"
               >
                 Giriş Yap
               </a>
