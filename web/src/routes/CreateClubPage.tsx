@@ -7,6 +7,8 @@ import { getPlatformSettings, type PlatformSettings } from "../lib/api/platformS
 import { createClub, type BillingPeriod } from "../lib/api/clubSignup";
 import { uploadClubLogo } from "../lib/api/clubLogo";
 
+const MARKETING_URL = import.meta.env.VITE_MARKETING_URL as string;
+
 type Step = "plan" | "payment" | "form";
 
 function formatTry(amount: number): string {
@@ -117,9 +119,14 @@ export default function CreateClubPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
       <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8">
-        <button onClick={handleBack} className="mb-4 text-sm font-semibold text-muted hover:text-ink">
-          ‹ Geri
-        </button>
+        <div className="mb-4 flex items-center justify-between">
+          <button onClick={handleBack} className="text-sm font-semibold text-muted hover:text-ink">
+            ‹ Geri
+          </button>
+          <a href={MARKETING_URL} className="text-sm font-extrabold text-ink hover:text-yellow">
+            X-NETIC
+          </a>
+        </div>
 
         <h1 className="mb-1 text-xl font-extrabold text-ink">Kulüp Oluştur</h1>
         <p className="mb-6 text-sm text-muted">X-NETIC'e hoş geldin.</p>

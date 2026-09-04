@@ -56,7 +56,6 @@ export default function Hero() {
               Özellikleri Keşfet
             </a>
           </div>
-          <p className="mt-4 text-xs text-muted">Kredi kartı gerekmez — planını seç, kulübünü dakikalar içinde kur.</p>
         </div>
 
         <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>

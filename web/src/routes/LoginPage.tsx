@@ -3,6 +3,8 @@ import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { inputClass } from "../components/FormField";
 
+const MARKETING_URL = import.meta.env.VITE_MARKETING_URL as string;
+
 export default function LoginPage() {
   const { session, loading, signIn } = useAuth();
   const [email, setEmail] = useState("");
@@ -29,7 +31,9 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8"
       >
-        <h1 className="mb-1 text-xl font-extrabold text-ink">X-NETIC</h1>
+        <a href={MARKETING_URL} className="mb-1 inline-block text-xl font-extrabold text-ink hover:text-yellow">
+          X-NETIC
+        </a>
         <p className="mb-6 text-sm text-muted">Yönetim Paneli Girişi</p>
 
         <label className="mb-3 block">
