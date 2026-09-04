@@ -3,9 +3,9 @@ type Feature = { icon: string; title: string; desc: string };
 const FEATURES: Feature[] = [
   { icon: "🏋️", title: "Fitness & Antrenman", desc: "Kategorilere ayrılmış egzersiz kütüphanesi, kulübe özel hareketler ve sporculara özel antrenman programları." },
   { icon: "📊", title: "Performans Testleri", desc: "Sprint, sıçrama, dayanıklılık gibi test kataloglarıyla ölçüm al, sporcunun gelişimini zaman içinde karşılaştır." },
-  { icon: "🥗", title: "Beslenme", desc: "Besin veritabanı, tarifler ve makale kütüphanesiyle sporcularına ve velilere beslenme rehberliği sun." },
-  { icon: "🗓️", title: "Takvim & Yoklama", desc: "Antrenman ve maç takvimi, tek dokunuşla yoklama alma, devamsızlık ve mazeret takibi." },
   { icon: "💰", title: "Finans & Ödemeler", desc: "Aidat planları, gelir-gider takibi, antrenör hakedişleri ve finansal belgeler tek yerde." },
+  { icon: "🗓️", title: "Takvim & Yoklama", desc: "Antrenman ve maç takvimi, tek dokunuşla yoklama alma, devamsızlık ve mazeret takibi." },
+  { icon: "🥗", title: "Beslenme", desc: "Besin veritabanı, tarifler ve makale kütüphanesiyle sporcularına ve velilere beslenme rehberliği sun." },
   { icon: "🛍️", title: "Kulüp Mağazası", desc: "Forma ve ekipman satışlarını, stok durumunu ve siparişleri kulüp içinden yönet." },
   { icon: "📢", title: "Duyurular & Bildirimler", desc: "Kulüp genelinde ya da gruba özel duyurular; antrenör, veli ve sporculara anında bildirim." },
   { icon: "🔐", title: "Rol Bazlı Erişim", desc: "Kulüp admini, antrenör, veli ve sporcu — herkes sadece kendisini ilgilendiren veriyi görür." },
