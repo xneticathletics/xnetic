@@ -7,6 +7,7 @@ import {
   deleteCustomExercise,
   type CustomFitnessExercise,
 } from "../../lib/api/fitnessExercises";
+import { listHiddenExerciseIds } from "../../lib/api/fitnessExerciseVisibility";
 import ExerciseModal from "./ExerciseModal";
 
 type Row =
@@ -21,6 +22,7 @@ export default function FitnessCategoryPage() {
   const meta = category ? getFitnessCategory(category) : undefined;
 
   const [customExercises, setCustomExercises] = useState<CustomFitnessExercise[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalState, setModalState] = useState<"new" | CustomFitnessExercise | null>(null);
@@ -28,8 +30,11 @@ export default function FitnessCategoryPage() {
   const load = () => {
     if (!category) return;
     setLoading(true);
-    listCustomExercisesByCategory(category)
-      .then(setCustomExercises)
+    Promise.all([listCustomExercisesByCategory(category), listHiddenExerciseIds()])
+      .then(([exercises, hidden]) => {
+        setCustomExercises(exercises);
+        setHiddenIds(hidden);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
@@ -60,7 +65,9 @@ export default function FitnessCategoryPage() {
   const cls = CATEGORY_COLOR_CLASSES[meta.color];
   const rows: Row[] = [
     ...meta.exercises.map((e) => ({ kind: "static" as const, key: e.key, name: e.name, bodyweight: !!e.bodyweight, instructions: e.instructions })),
-    ...customExercises.map((e) => ({ kind: "custom" as const, key: `custom:${e.id}`, name: e.name, bodyweight: e.bodyweight, exercise: e })),
+    ...customExercises
+      .filter((e) => !(e.club_id === null && hiddenIds.has(e.id)))
+      .map((e) => ({ kind: "custom" as const, key: `custom:${e.id}`, name: e.name, bodyweight: e.bodyweight, exercise: e })),
   ];
 
   const columns: Column<Row>[] = [
@@ -139,9 +146,17 @@ export default function FitnessCategoryPage() {
             <div className="mb-1 text-3xl">{meta.icon}</div>
             <h1 className={`text-lg font-extrabold ${cls.text}`}>{meta.label}</h1>
           </div>
-          <button onClick={() => setModalState("new")} className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
-            + Hareket Ekle
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/fitness/exercises/${category}/visibility`}
+              className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-ink hover:border-muted"
+            >
+              🎚 Hareketleri Yönet
+            </Link>
+            <button onClick={() => setModalState("new")} className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
+              + Hareket Ekle
+            </button>
+          </div>
         </div>
       </div>
 

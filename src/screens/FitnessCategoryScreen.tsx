@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getFitnessCategory } from "../lib/fitnessExercises";
 import { listCustomExercisesByCategory, type CustomFitnessExercise } from "../lib/api/customFitnessExercises";
+import { listHiddenExerciseIds } from "../lib/api/fitnessExerciseVisibility";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
@@ -18,6 +19,7 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const meta = getFitnessCategory(category);
 
   const [customExercises, setCustomExercises] = useState<CustomFitnessExercise[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,9 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      setCustomExercises(await listCustomExercisesByCategory(category));
+      const [exercises, hidden] = await Promise.all([listCustomExercisesByCategory(category), listHiddenExerciseIds()]);
+      setCustomExercises(exercises);
+      setHiddenIds(hidden);
     } catch (e: any) {
       setError(e.message ?? "Yüklenemedi");
     } finally {
@@ -59,17 +63,21 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
   // gösterilir — normal kullanıcı için tüm hareketler aynı görünür, kimin
   // eklediği önemli değil. Süper Admin bunu, kulüplerin neler eklediğini
   // görüp beğendiği bir hareketi globale de eklemek için kullanıyor.
+  // Kulübün "Hareketleri Yönet" ekranından gizlediği global hareketler bu
+  // listede hiç görünmez — bkz. FitnessExerciseVisibilityScreen.tsx.
   const rows: Row[] = [
     ...meta.exercises.map((e) => ({ key: e.key, name: e.name })),
-    ...customExercises.map((e) => ({
-      key: `custom:${e.id}`,
-      name: e.name,
-      exerciseId: e.id,
-      sourceLabel: role !== "super_admin" ? undefined : e.club_id === null ? "🌐 Global (Platform)" : `🏢 ${e.clubs?.name ?? "Bir kulüp"}`,
-      // Var olan (global) hareketleri her antrenör/kulüp admini düzenleyebilir
-      // — sadece YENİ global hareket eklemek Süper Admin'e özel.
-      canEdit: e.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : e.club_id === clubId,
-    })),
+    ...customExercises
+      .filter((e) => !(e.club_id === null && hiddenIds.has(e.id)))
+      .map((e) => ({
+        key: `custom:${e.id}`,
+        name: e.name,
+        exerciseId: e.id,
+        sourceLabel: role !== "super_admin" ? undefined : e.club_id === null ? "🌐 Global (Platform)" : `🏢 ${e.clubs?.name ?? "Bir kulüp"}`,
+        // Var olan (global) hareketleri her antrenör/kulüp admini düzenleyebilir
+        // — sadece YENİ global hareket eklemek Süper Admin'e özel.
+        canEdit: e.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : e.club_id === clubId,
+      })),
   ];
 
   return (
@@ -79,6 +87,15 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
         <Text style={[styles.heroTitle, { color: meta.color }]}>{meta.label}</Text>
         <Text style={styles.heroSubtitle}>Bir egzersiz seç</Text>
       </View>
+
+      {role === "club_admin" && (
+        <TouchableOpacity
+          style={[styles.manageButton, { borderColor: meta.color }]}
+          onPress={() => navigation.navigate("FitnessExerciseVisibility", { category })}
+        >
+          <Text style={[styles.manageButtonText, { color: meta.color }]}>🎚 Hareketleri Yönet</Text>
+        </TouchableOpacity>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginBottom: spacing.md }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -122,6 +139,11 @@ const styles = StyleSheet.create({
   heroIcon: { fontSize: 40, marginBottom: spacing.xs },
   heroTitle: { fontSize: 17, fontWeight: "800", textAlign: "center" },
   heroSubtitle: { color: colors.muted, fontSize: 11, marginTop: 4, textAlign: "center" },
+  manageButton: {
+    alignSelf: "flex-start", borderWidth: 1, borderRadius: radius.full,
+    paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md,
+  },
+  manageButtonText: { fontSize: 12, fontWeight: "700" },
   row: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
