@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* X-NETIC marka renkleri — mobil/yönetim paneliyle (web/src/index.css) birebir aynı. */
+@theme {
+  --color-bg: #10122a;
+  --color-surface: #1b1e3f;
+  --color-line: #2c2f58;
+  --color-yellow: #ffc845;
+  --color-teal: #3fd6c6;
+  --color-coral: #ff6b5d;
+  --color-violet: #9b7bff;
+  --color-ink: #f5f5f2;
+  --color-muted: #8b8fb8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) var(--color-bg);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-line);
+  border-radius: 999px;
+  border: 2px solid var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted);
+}
+
+button:not(:disabled),
+[role="button"],
+summary,
+a {
+  cursor: pointer;
+}
