@@ -26,7 +26,16 @@ export default function FitnessProgramsPage() {
         </Link>
       ),
     },
-    { key: "group", label: "Grup", render: (p) => (p.groups ? `${p.groups.name} · ${p.groups.branch}` : "—") },
+    {
+      key: "group",
+      label: "Grup",
+      render: (p) =>
+        p.groups
+          ? `${p.groups.name} · ${p.groups.branch}`
+          : p.fitness_groups
+          ? `🎯 ${p.fitness_groups.name} · ${p.fitness_groups.branch}`
+          : "—",
+    },
     { key: "date", label: "Oluşturulma", render: (p) => new Date(p.created_at).toLocaleDateString("tr-TR") },
     {
       key: "actions",

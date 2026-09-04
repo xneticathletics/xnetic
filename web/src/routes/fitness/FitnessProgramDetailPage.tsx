@@ -61,6 +61,9 @@ export default function FitnessProgramDetailPage() {
         <>
           <h1 className="mb-1 text-xl font-bold text-ink">{program.name}</h1>
           {program.groups && <p className="mb-1 text-sm font-semibold text-violet">{program.groups.name} · {program.groups.branch}</p>}
+          {program.fitness_groups && (
+            <p className="mb-1 text-sm font-semibold text-violet">🎯 {program.fitness_groups.name} · {program.fitness_groups.branch}</p>
+          )}
           <p className="mb-6 text-xs text-muted">{new Date(program.created_at).toLocaleDateString("tr-TR")}</p>
 
           <h2 className="mb-3 text-sm font-bold text-ink">Hareketler</h2>

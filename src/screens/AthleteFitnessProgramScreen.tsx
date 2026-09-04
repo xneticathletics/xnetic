@@ -5,13 +5,14 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { getAthlete } from "../lib/api/athletes";
-import { listProgramsForGroup, type FitnessProgram } from "../lib/api/fitnessPrograms";
+import { listProgramsForGroup, listProgramsForAthleteFitnessGroups, type FitnessProgram } from "../lib/api/fitnessPrograms";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteFitnessProgram">;
 
-// Sporcu/veli tarafında SALT OKUNUR program listesi — sadece o sporcunun
-// kendi grubuna gönderilen programları gösterir (coach/admin tarafındaki
-// FitnessProgramScreen'in TÜM kulübü listeleyen halinden farklı olarak).
+// Sporcu/veli tarafında SALT OKUNUR program listesi — sporcunun kendi
+// grubuna VE üye olduğu fitness gruplarına gönderilen programları birlikte
+// gösterir (coach/admin tarafındaki FitnessProgramScreen'in TÜM kulübü
+// listeleyen halinden farklı olarak).
 export default function AthleteFitnessProgramScreen({ route, navigation }: Props) {
   const { athleteId, athleteName } = route.params;
   const [programs, setPrograms] = useState<FitnessProgram[]>([]);
@@ -23,13 +24,17 @@ export default function AthleteFitnessProgramScreen({ route, navigation }: Props
       let cancelled = false;
       setLoading(true);
       setError(null);
-      getAthlete(athleteId)
-        .then((athlete) => {
-          if (cancelled) return [];
-          if (!athlete?.group_id) return [];
-          return listProgramsForGroup(athlete.group_id);
+      Promise.all([
+        getAthlete(athleteId).then((athlete) => (athlete?.group_id ? listProgramsForGroup(athlete.group_id) : [])),
+        listProgramsForAthleteFitnessGroups(athleteId),
+      ])
+        .then(([groupPrograms, fitnessGroupPrograms]) => {
+          if (cancelled) return;
+          const merged = [...groupPrograms, ...fitnessGroupPrograms].sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          setPrograms(merged);
         })
-        .then((data) => { if (!cancelled) setPrograms(data ?? []); })
         .catch((e) => { if (!cancelled) setError(e.message ?? "Programlar yüklenemedi"); })
         .finally(() => { if (!cancelled) setLoading(false); });
       return () => { cancelled = true; };

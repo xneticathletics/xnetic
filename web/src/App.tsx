@@ -35,6 +35,8 @@ import ShopProductsListPage from "./routes/shop/ShopProductsListPage";
 import ShopOrdersPage from "./routes/shop/ShopOrdersPage";
 import ShopStockPage from "./routes/shop/ShopStockPage";
 import FitnessHubPage from "./routes/fitness/FitnessHubPage";
+import FitnessGroupsPage from "./routes/fitness/FitnessGroupsPage";
+import FitnessGroupFormPage from "./routes/fitness/FitnessGroupFormPage";
 import FitnessExercisesPage from "./routes/fitness/FitnessExercisesPage";
 import FitnessCategoryPage from "./routes/fitness/FitnessCategoryPage";
 import FitnessExerciseVisibilityPage from "./routes/fitness/FitnessExerciseVisibilityPage";
@@ -84,6 +86,9 @@ export default function App() {
               <Route path="/shop/orders" element={<ShopOrdersPage />} />
               <Route path="/shop/stock" element={<ShopStockPage />} />
               <Route path="/fitness" element={<FitnessHubPage />} />
+              <Route path="/fitness/groups" element={<FitnessGroupsPage />} />
+              <Route path="/fitness/groups/new" element={<FitnessGroupFormPage />} />
+              <Route path="/fitness/groups/:id" element={<FitnessGroupFormPage />} />
               <Route path="/fitness/exercises" element={<FitnessExercisesPage />} />
               <Route path="/fitness/exercises/:category" element={<FitnessCategoryPage />} />
               <Route path="/fitness/exercises/:category/visibility" element={<FitnessExerciseVisibilityPage />} />

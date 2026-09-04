@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../lib/fitnessExercises";
 import { listCustomExercisesByCategory } from "../lib/api/customFitnessExercises";
 import { listGroups, type Group } from "../lib/api/groups";
+import { listFitnessGroups, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
 import { publishFitnessProgram, type FitnessProgramItemInput } from "../lib/api/fitnessPrograms";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -30,7 +31,10 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   const [finalizing, setFinalizing] = useState(false);
   const [name, setName] = useState("");
   const [groups, setGroups] = useState<Group[]>([]);
-  const [groupId, setGroupId] = useState<string | null>(null);
+  const [fitnessGroups, setFitnessGroups] = useState<FitnessGroupSummary[]>([]);
+  // "group:<id>" ya da "fitness:<id>" — tek bir seçimde iki farklı hedef
+  // türünü ayırt etmek için önek kullanılıyor.
+  const [targetValue, setTargetValue] = useState<string | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -57,8 +61,8 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   useEffect(() => {
     if (!finalizing) return;
     setLoadingGroups(true);
-    listGroups()
-      .then(setGroups)
+    Promise.all([listGroups(), listFitnessGroups()])
+      .then(([g, fg]) => { setGroups(g); setFitnessGroups(fg); })
       .catch((e) => setError(e.message))
       .finally(() => setLoadingGroups(false));
   }, [finalizing]);
@@ -87,14 +91,22 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   const handlePublish = async () => {
     if (savingRef.current) return;
     if (!name.trim()) return Alert.alert("Eksik bilgi", "Program adı girmelisin.", [{ text: "Tamam" }]);
-    if (!groupId) return Alert.alert("Eksik bilgi", "Bir grup seçmelisin.", [{ text: "Tamam" }]);
+    if (!targetValue) return Alert.alert("Eksik bilgi", "Bir grup ya da fitness grubu seçmelisin.", [{ text: "Tamam" }]);
+
+    const [targetType, targetId] = targetValue.split(":");
 
     savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
       const myUserId = await getCurrentAppUserId();
-      await publishFitnessProgram({ name: name.trim(), group_id: groupId, created_by: myUserId, items });
+      await publishFitnessProgram({
+        name: name.trim(),
+        group_id: targetType === "group" ? targetId : null,
+        fitness_group_id: targetType === "fitness" ? targetId : null,
+        created_by: myUserId,
+        items,
+      });
       Alert.alert("Gönderildi", "Program yayınlandı ve gruptaki herkese bildirim gönderildi.", [{ text: "Tamam" }]);
       navigation.goBack();
     } catch (e: any) {
@@ -190,14 +202,28 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
             {loadingGroups && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.sm }} />}
             <View style={styles.chipGrid}>
               {groups.map((g) => {
-                const active = groupId === g.id;
+                const value = `group:${g.id}`;
+                const active = targetValue === value;
                 return (
                   <TouchableOpacity
-                    key={g.id}
+                    key={value}
                     style={[styles.chip, styles.chipNeutral, active && styles.chipNeutralActive]}
-                    onPress={() => setGroupId(g.id)}
+                    onPress={() => setTargetValue(value)}
                   >
                     <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.name} · {g.branch}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              {fitnessGroups.map((g) => {
+                const value = `fitness:${g.id}`;
+                const active = targetValue === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    style={[styles.chip, styles.chipNeutral, active && styles.chipNeutralActive]}
+                    onPress={() => setTargetValue(value)}
+                  >
+                    <Text style={[styles.chipText, active && styles.chipTextActive]}>🎯 {g.name} · {g.branch}</Text>
                   </TouchableOpacity>
                 );
               })}

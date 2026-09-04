@@ -121,6 +121,9 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
         {program?.groups && (
           <Text style={styles.groupText}>{program.groups.name} · {program.groups.branch}</Text>
         )}
+        {program?.fitness_groups && (
+          <Text style={styles.groupText}>🎯 {program.fitness_groups.name} · {program.fitness_groups.branch}</Text>
+        )}
         {program && (
           <Text style={styles.dateText}>{new Date(program.created_at).toLocaleDateString("tr-TR")}</Text>
         )}

@@ -61,6 +61,8 @@ import FitnessScreen from "../screens/FitnessScreen";
 import FitnessTrainingScreen from "../screens/FitnessTrainingScreen";
 import FitnessProgramScreen from "../screens/FitnessProgramScreen";
 import FitnessProgramBuilderScreen from "../screens/FitnessProgramBuilderScreen";
+import FitnessGroupsScreen from "../screens/FitnessGroupsScreen";
+import FitnessGroupFormScreen from "../screens/FitnessGroupFormScreen";
 import FitnessProgramDetailScreen from "../screens/FitnessProgramDetailScreen";
 import FitnessCategoryScreen from "../screens/FitnessCategoryScreen";
 import FitnessExerciseDetailScreen from "../screens/FitnessExerciseDetailScreen";
@@ -165,6 +167,8 @@ export type HomeStackParamList = {
   FitnessProgramBuilder: undefined;
   FitnessProgramDetail: { programId: string; athleteId?: string; athleteName?: string };
   FitnessCategory: { category: string };
+  FitnessGroups: undefined;
+  FitnessGroupForm: { fitnessGroupId?: string } | undefined;
   FitnessExerciseDetail: { exerciseKey: string };
   FitnessExerciseForm: { exerciseId?: string } | undefined;
   FitnessExerciseVisibility: { category: string };
@@ -278,6 +282,8 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="FitnessProgramBuilder" component={FitnessProgramBuilderScreen} options={{ title: "Program Ekle" }} />
       <Stack.Screen name="FitnessProgramDetail" component={FitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />
       <Stack.Screen name="FitnessCategory" component={FitnessCategoryScreen} />
+      <Stack.Screen name="FitnessGroups" component={FitnessGroupsScreen} options={{ title: "Fitness Grupları" }} />
+      <Stack.Screen name="FitnessGroupForm" component={FitnessGroupFormScreen} options={{ title: "Fitness Grubu" }} />
       <Stack.Screen name="FitnessExerciseDetail" component={FitnessExerciseDetailScreen} />
       <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Çalışma Ekle" }} />
       <Stack.Screen name="FitnessExerciseVisibility" component={FitnessExerciseVisibilityScreen} options={{ title: "Hareketleri Yönet" }} />

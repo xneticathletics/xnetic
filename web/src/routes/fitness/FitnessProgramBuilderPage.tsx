@@ -4,6 +4,7 @@ import FormField, { inputClass } from "../../components/FormField";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../../lib/fitnessExercises";
 import { listCustomExercisesByCategory } from "../../lib/api/fitnessExercises";
 import { listGroups, type Group } from "../../lib/api/groups";
+import { listFitnessGroups, type FitnessGroupSummary } from "../../lib/api/fitnessGroups";
 import { publishFitnessProgram, type FitnessProgramItemInput } from "../../lib/api/fitnessPrograms";
 import { getCurrentAppUserId } from "../../lib/api/currentUser";
 
@@ -24,12 +25,16 @@ export default function FitnessProgramBuilderPage() {
 
   const [name, setName] = useState("");
   const [groups, setGroups] = useState<Group[]>([]);
-  const [groupId, setGroupId] = useState<string | null>(null);
+  const [fitnessGroups, setFitnessGroups] = useState<FitnessGroupSummary[]>([]);
+  // "group:<id>" ya da "fitness:<id>" — tek bir seçim kutusunda iki farklı
+  // hedef türünü ayırt etmek için önek kullanılıyor.
+  const [targetValue, setTargetValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     listGroups().then(setGroups).catch(() => {});
+    listFitnessGroups().then(setFitnessGroups).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -68,14 +73,22 @@ export default function FitnessProgramBuilderPage() {
 
   const handlePublish = async () => {
     if (!name.trim()) return setError("Program adı girmelisin.");
-    if (!groupId) return setError("Bir grup seçmelisin.");
+    if (!targetValue) return setError("Bir grup ya da fitness grubu seçmelisin.");
     if (items.length === 0) return setError("En az bir hareket eklemelisin.");
+
+    const [targetType, targetId] = targetValue.split(":");
 
     setSaving(true);
     setError(null);
     try {
       const myUserId = await getCurrentAppUserId();
-      const program = await publishFitnessProgram({ name: name.trim(), group_id: groupId, created_by: myUserId, items });
+      const program = await publishFitnessProgram({
+        name: name.trim(),
+        group_id: targetType === "group" ? targetId : null,
+        fitness_group_id: targetType === "fitness" ? targetId : null,
+        created_by: myUserId,
+        items,
+      });
       navigate(`/fitness/programs/${program.id}`);
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -174,13 +187,22 @@ export default function FitnessProgramBuilderPage() {
           </FormField>
 
           <FormField label="Hangi Gruba Sergilenecek? *">
-            <select className={inputClass} value={groupId ?? ""} onChange={(e) => setGroupId(e.target.value || null)}>
-              <option value="">Bir grup seç</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name} · {g.branch}
-                </option>
-              ))}
+            <select className={inputClass} value={targetValue} onChange={(e) => setTargetValue(e.target.value)}>
+              <option value="">Bir grup ya da fitness grubu seç</option>
+              <optgroup label="Normal Gruplar">
+                {groups.map((g) => (
+                  <option key={g.id} value={`group:${g.id}`}>
+                    {g.name} · {g.branch}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Fitness Grupları">
+                {fitnessGroups.map((g) => (
+                  <option key={g.id} value={`fitness:${g.id}`}>
+                    🎯 {g.name} · {g.branch}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </FormField>
 

@@ -53,7 +53,11 @@ export default function FitnessProgramScreen({ navigation }: Props) {
             >
               <Text style={styles.cardName}>{item.name}</Text>
               <Text style={styles.cardGroup}>
-                {item.groups ? `${item.groups.name} · ${item.groups.branch}` : "Grup bulunamadı"}
+                {item.groups
+                  ? `${item.groups.name} · ${item.groups.branch}`
+                  : item.fitness_groups
+                  ? `🎯 ${item.fitness_groups.name} · ${item.fitness_groups.branch}`
+                  : "Grup bulunamadı"}
               </Text>
               <Text style={styles.cardDate}>{new Date(item.created_at).toLocaleDateString("tr-TR")}</Text>
             </TouchableOpacity>
