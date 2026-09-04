@@ -9,7 +9,7 @@ export default function Footer({ settings }: { settings: PlatformSettings | null
         <div className="flex flex-col gap-8 sm:flex-row sm:justify-between">
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="X-NETIC" className="h-8 w-8 rounded-lg" />
+              <img src="/logo.png" alt="X-NETIC" className="h-10 w-10 rounded-xl shadow-md shadow-black/20" />
               <span className="text-base font-extrabold text-ink">X-NETIC</span>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-muted">

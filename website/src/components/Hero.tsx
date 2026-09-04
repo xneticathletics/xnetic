@@ -48,7 +48,7 @@ export default function Hero() {
           <div className="rounded-2xl border border-line bg-surface p-5 shadow-2xl shadow-black/20">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="" className="h-7 w-7 rounded-md" />
+                <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg" />
                 <span className="text-sm font-bold text-ink">Yıldız Spor Kulübü</span>
               </div>
               <span className="rounded-full bg-teal/15 px-2 py-1 text-[10px] font-bold text-teal">ÖRNEK GÖRÜNÜM</span>

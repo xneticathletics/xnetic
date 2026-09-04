@@ -15,8 +15,8 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-line/80 bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-        <a href="#top" className="flex items-center gap-2.5" onClick={() => setMenuOpen(false)}>
-          <img src="/logo.png" alt="X-NETIC" className="h-9 w-9 rounded-lg" />
+        <a href="#top" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
+          <img src="/logo.png" alt="X-NETIC" className="h-12 w-12 rounded-2xl shadow-lg shadow-black/20" />
           <span className="text-lg font-extrabold tracking-tight text-ink">X-NETIC</span>
         </a>
 
