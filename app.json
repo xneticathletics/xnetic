@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "X-NETIC Club",
-    "slug": "x-netic-club",
+    "slug": "x-netic",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -11,13 +11,22 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "club.xnetic.app"
+      "bundleIdentifier": "club.xnetic.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "club.xnetic.app"
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "014aab5d-6716-4f3a-804f-2f77d8a904fa"
+      }
+    },
+    "owner": "x-netic-sport-systems"
   }
 }
