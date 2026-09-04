@@ -1,12 +1,13 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Animated, Easing,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Modal, ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "../theme/tokens";
-import { findGuideAnswer } from "../lib/aiGuideKnowledge";
+import { findGuideAnswer, getSuggestedQuestions } from "../lib/aiGuideKnowledge";
+import { useAuth } from "../context/AuthContext";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
 
@@ -15,7 +16,7 @@ const WELCOME_MESSAGE: ChatMessage = {
   role: "assistant",
   text:
     "Merhaba! Ben X-NETIC AI Asistanı. Şu an uygulamayı nasıl kullanacağın konusunda sana rehberlik edebiliyorum — " +
-    'ör. "şifre nasıl sıfırlanır", "yeni sporcu nasıl eklenir", "aidat planı nasıl oluşturulur" gibi sorular sorabilirsin.\n\n' +
+    "aklına bir şey gelmiyorsa sağ üstteki \"💡 Örnek Sorular\"a dokunabilirsin.\n\n" +
     "Kulübünün kendi verilerine dayalı serbest sorular (ör. \"bu ay kaç sporcu geldi\") yakında eklenecek.",
 };
 
@@ -44,10 +45,14 @@ async function getAssistantReply(question: string): Promise<string> {
 
 export default function AIScreen() {
   const insets = useSafeAreaInsets();
+  const { role } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
   const listRef = useRef<FlatList>(null);
+
+  const suggestedQuestions = useMemo(() => getSuggestedQuestions(role), [role]);
 
   const enterAnim = useRef(new Animated.Value(0)).current;
   useFocusEffect(
@@ -63,8 +68,7 @@ export default function AIScreen() {
     transform: [{ scale: enterAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
   };
 
-  const handleSend = async () => {
-    const question = draft.trim();
+  const submitQuestion = async (question: string) => {
     if (!question || sending) return;
     setDraft("");
     setMessages((prev) => [...prev, { id: nextId(), role: "user", text: question }]);
@@ -78,11 +82,23 @@ export default function AIScreen() {
     }
   };
 
+  const handleSend = () => submitQuestion(draft.trim());
+
+  const handlePickSuggestion = (question: string) => {
+    setSuggestionsVisible(false);
+    submitQuestion(question);
+  };
+
   return (
     <Animated.View style={[{ flex: 1 }, enterStyle]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
-          <Text style={styles.title}>🤖 AI Asistan</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>🤖 AI Asistan</Text>
+            <TouchableOpacity style={styles.suggestionsButton} onPress={() => setSuggestionsVisible(true)}>
+              <Text style={styles.suggestionsButtonText}>💡 Örnek Sorular</Text>
+            </TouchableOpacity>
+          </View>
 
           <FlatList
             ref={listRef}
@@ -120,13 +136,65 @@ export default function AIScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={suggestionsVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSuggestionsVisible(false)}
+      >
+        <View style={styles.backdrop}>
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>💡 Örnek Sorular</Text>
+            <Text style={styles.sheetSubtitle}>Birine dokun, direkt soralım.</Text>
+            <ScrollView style={{ marginTop: spacing.sm }} showsVerticalScrollIndicator={false}>
+              {suggestedQuestions.map((entry) => (
+                <TouchableOpacity
+                  key={entry.title}
+                  style={styles.suggestionRow}
+                  onPress={() => handlePickSuggestion(entry.sampleQuestion)}
+                >
+                  <Text style={styles.suggestionRowText}>{entry.sampleQuestion}</Text>
+                  <Text style={styles.suggestionRowChevron}>›</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setSuggestionsVisible(false)}>
+              <Text style={styles.closeButtonText}>Kapat</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg },
-  title: { color: colors.ink, fontSize: 20, fontWeight: "700", marginBottom: spacing.sm },
+  headerRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm,
+  },
+  title: { color: colors.ink, fontSize: 20, fontWeight: "700" },
+  suggestionsButton: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8,
+  },
+  suggestionsButtonText: { color: colors.yellow, fontWeight: "700", fontSize: 12 },
+  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  sheet: {
+    backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
+    padding: spacing.lg, maxHeight: "75%",
+  },
+  sheetTitle: { color: colors.ink, fontSize: 17, fontWeight: "800" },
+  sheetSubtitle: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  suggestionRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm,
+    borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 12,
+  },
+  suggestionRowText: { color: colors.ink, fontSize: 13.5, flex: 1 },
+  suggestionRowChevron: { color: colors.yellow, fontSize: 18, fontWeight: "700" },
+  closeButton: { alignItems: "center", paddingVertical: spacing.md, marginTop: spacing.xs },
+  closeButtonText: { color: colors.muted, fontWeight: "600" },
   bubbleRow: { flexDirection: "row", marginBottom: spacing.sm },
   bubbleRowMine: { justifyContent: "flex-end" },
   bubbleRowTheirs: { justifyContent: "flex-start" },
