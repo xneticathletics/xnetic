@@ -113,6 +113,8 @@ export default function ShopScreen({ navigation }: Props) {
       <FlatList
         data={filteredProducts}
         keyExtractor={(p) => p.id}
+        numColumns={2}
+        columnWrapperStyle={styles.gridRow}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={
@@ -123,25 +125,37 @@ export default function ShopScreen({ navigation }: Props) {
           ) : null
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate("ShopProductDetail", { productId: item.id })}>
-            {item.photo_urls[0] ? (
-              <Image source={{ uri: item.photo_urls[0] }} style={styles.thumb} />
-            ) : (
-              <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                <Text style={{ fontSize: 22 }}>🛍️</Text>
-              </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.rowPrice}>{Number(item.price).toLocaleString("tr-TR")} ₺</Text>
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate("ShopProductDetail", { productId: item.id })}
+          >
+            <View style={styles.cardImageWrap}>
+              {item.photo_urls[0] ? (
+                <Image source={{ uri: item.photo_urls[0] }} style={styles.cardImage} resizeMode="cover" />
+              ) : (
+                <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
+                  <Text style={{ fontSize: 36 }}>🛍️</Text>
+                </View>
+              )}
+              {item.gender && (
+                <View style={styles.genderBadge}>
+                  <Text style={styles.genderBadgeText}>{GENDER_LABEL[item.gender]}</Text>
+                </View>
+              )}
             </View>
-            <Text style={styles.chevron}>›</Text>
+            <View style={styles.cardBody}>
+              <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.cardPrice}>{Number(item.price).toLocaleString("tr-TR")} ₺</Text>
+            </View>
           </TouchableOpacity>
         )}
       />
     </View>
   );
 }
+
+const CARD_GAP = spacing.md;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
@@ -159,15 +173,23 @@ const styles = StyleSheet.create({
   filterChipText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
   filterChipTextActive: { color: colors.bg },
   error: { color: colors.coral, marginBottom: spacing.md },
-  empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
-  row: {
-    flexDirection: "row", alignItems: "center", gap: spacing.sm,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm,
+  empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl, width: "100%" },
+  gridRow: { gap: CARD_GAP, marginBottom: CARD_GAP },
+  card: {
+    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.lg, overflow: "hidden",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3,
   },
-  thumb: { width: 56, height: 56, borderRadius: radius.sm },
-  thumbPlaceholder: { backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
-  rowTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
-  rowPrice: { color: colors.yellow, fontSize: 14, fontWeight: "800", marginTop: 2 },
-  chevron: { color: colors.muted, fontSize: 18, fontWeight: "700" },
+  cardImageWrap: { width: "100%", aspectRatio: 1, backgroundColor: colors.bg },
+  cardImage: { width: "100%", height: "100%" },
+  cardImagePlaceholder: { alignItems: "center", justifyContent: "center" },
+  genderBadge: {
+    position: "absolute", top: spacing.xs, left: spacing.xs,
+    backgroundColor: "rgba(16,18,42,0.75)", borderRadius: radius.full,
+    paddingHorizontal: spacing.sm, paddingVertical: 3,
+  },
+  genderBadgeText: { color: colors.ink, fontSize: 10, fontWeight: "700" },
+  cardBody: { padding: spacing.sm },
+  cardTitle: { color: colors.ink, fontSize: 13, fontWeight: "700", lineHeight: 17, minHeight: 34 },
+  cardPrice: { color: colors.yellow, fontSize: 15, fontWeight: "800", marginTop: 6 },
 });
