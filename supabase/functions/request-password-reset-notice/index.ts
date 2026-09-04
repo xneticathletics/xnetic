@@ -25,6 +25,17 @@ function extractPhoneDigits(input: string): string {
   return digits.slice(0, 11);
 }
 
+// Push gönderimi best-effort: hatası ana akışı bozmamalı, bu yüzden
+// await edilmeden fire-and-forget çağrılıyor.
+function triggerPushNotification(supabaseUrl: string, notificationId: string) {
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${anonKey}`, apikey: anonKey },
+    body: JSON.stringify({ notification_id: notificationId }),
+  }).catch(() => {});
+}
+
 function resolveLoginEmail(identifier: string): string {
   const trimmed = identifier.trim();
   if (!trimmed) throw new Error("Giriş bilgisi boş olamaz.");
@@ -90,7 +101,8 @@ Deno.serve(async (req) => {
           event_type: "password_reset_request",
           payload: { requesterId: matchedUser.id, requesterName: matchedUser.name, identifier },
         }));
-        await admin.from("notifications").insert(rows);
+        const { data: insertedRows } = await admin.from("notifications").insert(rows).select("id");
+        insertedRows?.forEach((row: { id: string }) => triggerPushNotification(SUPABASE_URL, row.id));
       }
     }
 

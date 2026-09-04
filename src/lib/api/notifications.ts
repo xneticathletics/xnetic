@@ -51,13 +51,30 @@ export async function sendNotification(recipientUserId: string, title: string, b
     if (!checkError && data?.muted_notification_types?.includes(eventType)) return;
   }
 
-  const { error } = await supabase.from("notifications").insert({
-    recipient_user_id: recipientUserId,
-    title,
-    body,
-    event_type: eventType ?? null,
-  });
+  const { data: inserted, error } = await supabase
+    .from("notifications")
+    .insert({ recipient_user_id: recipientUserId, title, body, event_type: eventType ?? null })
+    .select("id")
+    .single();
   if (error) throw error;
+
+  triggerPushNotification(inserted.id);
+}
+
+// Push gönderimi best-effort: başarısız olsa da uygulama-içi bildirim akışını
+// bloklamamalı/hataya düşürmemeli, bu yüzden await edilmiyor ve hatası yutuluyor.
+function triggerPushNotification(notificationId: string) {
+  const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
+  const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+  fetch(`${SUPABASE_URL}/functions/v1/send-push-notification`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ notification_id: notificationId }),
+  }).catch(() => {});
 }
 
 export async function listMyNotifications(): Promise<AppNotification[]> {

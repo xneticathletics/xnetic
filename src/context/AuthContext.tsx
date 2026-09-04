@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
 import { resolveLoginEmail } from "../lib/loginIdentifier";
+import { registerForPushNotificationsAsync } from "../lib/push";
 
 export type UserRole =
   | "super_admin"
@@ -80,6 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // Giriş yapıldığında ve (uygulama yeniden açılıp) mevcut oturum geri
+  // yüklendiğinde push token'ı kaydet — session referansı token yenilenince
+  // de değiştiği için sadece kullanıcı id'si değişince tetikleniyor.
+  useEffect(() => {
+    if (session?.user?.id) registerForPushNotificationsAsync();
+  }, [session?.user?.id]);
 
   const claims = useMemo(
     () => (session?.access_token ? decodeJwtPayload(session.access_token) : {}),

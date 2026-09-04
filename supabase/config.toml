@@ -51,3 +51,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/admin-reset-user-password/deno.json"
 entrypoint = "./functions/admin-reset-user-password/index.ts"
+
+[functions.send-push-notification]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-push-notification/deno.json"
+entrypoint = "./functions/send-push-notification/index.ts"
