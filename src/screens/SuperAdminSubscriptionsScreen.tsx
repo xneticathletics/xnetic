@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, TextInput,
 } from "react-native";
@@ -12,6 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 type Props = NativeStackScreenProps<HomeStackParamList, "SuperAdminSubscriptions">;
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "pending_review", label: "Onay Bekliyor" },
   { value: "active", label: "Aktif" },
   { value: "mock_paid", label: "Test Ödemesi" },
   { value: "past_due", label: "Ödeme Gecikti" },
@@ -37,6 +38,13 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
   const [editAmount, setEditAmount] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Onay bekleyen (yeni ödeme bildirimi) kayıtlar en üstte görünsün — süper
+  // adminin her açılışta ilk göreceği şey bunlar olsun.
+  const sortedRows = useMemo(
+    () => [...rows].sort((a, b) => (a.status === "pending_review" ? -1 : 0) - (b.status === "pending_review" ? -1 : 0)),
+    [rows]
+  );
 
   const load = useCallback(() => {
     setError(null);
@@ -94,7 +102,7 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
-        data={rows}
+        data={sortedRows}
         keyExtractor={(r) => r.club_id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz kulüp yok.</Text> : null}
@@ -109,7 +117,7 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{PERIOD_LABELS[item.billing_period] ?? item.billing_period}</Text>
                   </View>
-                  <View style={[styles.badge, styles.badgeStatus]}>
+                  <View style={[styles.badge, item.status === "pending_review" ? styles.badgePending : styles.badgeStatus]}>
                     <Text style={styles.badgeText}>{STATUS_LABELS[item.status] ?? item.status}</Text>
                   </View>
                   <Text style={styles.amountText}>₺{item.amount_try.toLocaleString("tr-TR")}</Text>
@@ -191,6 +199,7 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs, marginTop: spacing.xs, flexWrap: "wrap" },
   badge: { backgroundColor: `${colors.violet}22`, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 4 },
   badgeStatus: { backgroundColor: `${colors.teal}22` },
+  badgePending: { backgroundColor: `${colors.coral}33` },
   badgeText: { color: colors.ink, fontSize: 11, fontWeight: "700" },
   amountText: { color: colors.yellow, fontSize: 12, fontWeight: "800" },
   noSub: { color: colors.coral, fontSize: 11, fontStyle: "italic", marginTop: 4 },

@@ -1,8 +1,22 @@
+import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth, WEB_ALLOWED_ROLES } from "../context/AuthContext";
+import { getMySubscriptionStatus, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
+import SubscriptionPendingPage from "./SubscriptionPendingPage";
 
 export default function ProtectedRoute() {
   const { session, role, loading, signOut } = useAuth();
+  const [subscription, setSubscription] = useState<ClubSubscriptionStatus | null>(null);
+
+  useEffect(() => {
+    if (role !== "club_admin") {
+      setSubscription(null);
+      return;
+    }
+    let cancelled = false;
+    getMySubscriptionStatus().then((s) => { if (!cancelled) setSubscription(s); });
+    return () => { cancelled = true; };
+  }, [role]);
 
   if (loading) {
     return (
@@ -30,6 +44,16 @@ export default function ProtectedRoute() {
           Çıkış Yap
         </button>
       </div>
+    );
+  }
+
+  if (role === "club_admin" && subscription && BLOCKED_SUBSCRIPTION_STATUSES.includes(subscription.status)) {
+    return (
+      <SubscriptionPendingPage
+        status={subscription.status}
+        billingPeriod={subscription.billingPeriod}
+        amountTry={subscription.amountTry}
+      />
     );
   }
 

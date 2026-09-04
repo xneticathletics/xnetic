@@ -82,10 +82,18 @@ export async function listAllSubscriptions(): Promise<SubscriptionRow[]> {
   });
 }
 
+function computePeriodEnd(billingPeriod: string): string {
+  const d = new Date();
+  if (billingPeriod === "yearly") d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
+
 // Bir kulübün aboneliğini günceller (id verilirse) ya da hiç kaydı yoksa
 // yeni bir tane açar (id boşsa). iyzico entegrasyonu hazır olana kadar
 // Süper Admin ödemeyi elle (banka havalesi vb.) takip edip buradan
-// durumu/tutarı işliyor.
+// durumu/tutarı işliyor. Durum "active"e çekilince (onay), dönem bitişi
+// otomatik hesaplanır ve kulüp admin(ler)ine onay bildirimi (+push) gider.
 export async function upsertSubscription(input: {
   id?: string;
   club_id: string;
@@ -93,10 +101,17 @@ export async function upsertSubscription(input: {
   status: string;
   amount_try: number;
 }) {
+  const currentPeriodEnd = input.status === "active" ? computePeriodEnd(input.billing_period) : null;
+
   if (input.id) {
     const { error } = await supabase
       .from("club_subscriptions")
-      .update({ billing_period: input.billing_period, status: input.status, amount_try: input.amount_try })
+      .update({
+        billing_period: input.billing_period,
+        status: input.status,
+        amount_try: input.amount_try,
+        ...(input.status === "active" ? { current_period_end: currentPeriodEnd } : {}),
+      })
       .eq("id", input.id);
     if (error) throw error;
   } else {
@@ -105,8 +120,27 @@ export async function upsertSubscription(input: {
       billing_period: input.billing_period,
       status: input.status,
       amount_try: input.amount_try,
+      current_period_end: currentPeriodEnd,
     });
     if (error) throw error;
+  }
+
+  if (input.status === "active") {
+    const { data: admins } = await supabase
+      .from("users")
+      .select("id")
+      .eq("club_id", input.club_id)
+      .eq("role", "club_admin")
+      .eq("is_active", true);
+    await Promise.all(
+      (admins ?? []).map((a) =>
+        sendNotification(
+          a.id,
+          "Ödemen Onaylandı 🎉",
+          "Kulübünün abonelik ödemesi onaylandı — X-NETIC'i hemen kullanmaya başlayabilirsin."
+        ).catch(() => {})
+      )
+    );
   }
 }
 

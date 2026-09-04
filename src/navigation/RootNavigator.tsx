@@ -13,10 +13,12 @@ import ForcePasswordChangeScreen from "../screens/ForcePasswordChangeScreen";
 import CoachOnboardingScreen from "../screens/CoachOnboardingScreen";
 import ConsentScreen from "../screens/ConsentScreen";
 import MaintenanceScreen from "../screens/MaintenanceScreen";
+import SubscriptionPendingScreen from "../screens/SubscriptionPendingScreen";
 import { getMyOnboardingStatus, getMyMustChangePassword } from "../lib/api/currentUser";
 import { hasAllRequiredConsents } from "../lib/api/consents";
 import { parseRecoveryUrl, startRecoverySession } from "../lib/api/passwordReset";
 import { getPlatformSettings } from "../lib/api/platformSettings";
+import { getMySubscriptionStatus, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
 import RoleTabs from "../navigation/RoleTabs";
 
 const Stack = createNativeStackNavigator();
@@ -53,6 +55,9 @@ export default function RootNavigator() {
   // yönlendirilir — kontrolü diğer gate'lerden (şifre/onboarding/onay) önce yapıyoruz.
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState("");
+  // Sadece Kulüp Admini'nde: kulübün abonelik ödemesi onay bekliyorsa/gecikmişse/
+  // iptal edilmişse App'e hiç girmeden bir bilgilendirme ekranı gösterilir.
+  const [subscription, setSubscription] = useState<ClubSubscriptionStatus | null>(null);
   // Şifre değiştirme işlemi (supabase.auth.updateUser) oturumu tazeliyor,
   // bu da AŞAĞIDAKİ [session, role] efektini TEKRAR tetikleyip sunucudan
   // must_change_password'ü YENİDEN sorguluyordu — bu ikinci sorgu, bizim
@@ -126,6 +131,26 @@ export default function RootNavigator() {
       if (state === "active") checkMaintenance();
     });
     return () => { cancelled = true; subscription.remove(); };
+  }, [session, role]);
+
+  useEffect(() => {
+    if (!session || role !== "club_admin") {
+      setSubscription(null);
+      return;
+    }
+    let cancelled = false;
+    const checkSubscription = () => {
+      getMySubscriptionStatus()
+        .then((s) => { if (!cancelled) setSubscription(s); })
+        .catch(() => {});
+    };
+    checkSubscription();
+    // Süper Admin onayı verdiğinde uygulamanın açık kalıp kalmadığından
+    // bağımsız olarak yakalansın diye, uygulama her öne geldiğinde tekrar kontrol ediyoruz.
+    const subscriptionListener = AppState.addEventListener("change", (state) => {
+      if (state === "active") checkSubscription();
+    });
+    return () => { cancelled = true; subscriptionListener.remove(); };
   }, [session, role]);
 
   useEffect(() => {
@@ -223,6 +248,16 @@ export default function RootNavigator() {
         ) : mustChangePassword === true ? (
           <Stack.Screen name="ForcePasswordChange">
             {() => <ForcePasswordChangeScreen onComplete={handlePasswordChanged} />}
+          </Stack.Screen>
+        ) : role === "club_admin" && subscription && BLOCKED_SUBSCRIPTION_STATUSES.includes(subscription.status) ? (
+          <Stack.Screen name="SubscriptionPending">
+            {() => (
+              <SubscriptionPendingScreen
+                status={subscription.status}
+                billingPeriod={subscription.billingPeriod}
+                amountTry={subscription.amountTry}
+              />
+            )}
           </Stack.Screen>
         ) : onboardingDone === false ? (
           <Stack.Screen name="Onboarding">

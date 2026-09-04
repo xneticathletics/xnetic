@@ -23,6 +23,8 @@ export default function SystemSettingsScreen() {
   const [maintenanceMessage, setMaintenanceMessage] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
+  const [bankAccountName, setBankAccountName] = useState("");
+  const [bankIban, setBankIban] = useState("");
 
   useFocusEffect(
     useCallback(() => {
@@ -38,6 +40,8 @@ export default function SystemSettingsScreen() {
           setMaintenanceMessage(s.maintenanceMessage);
           setSupportEmail(s.supportEmail ?? "");
           setSupportPhone(s.supportPhone ?? "");
+          setBankAccountName(s.bankAccountName ?? "");
+          setBankIban(s.bankIban ?? "");
         })
         .catch((e) => { if (!cancelled) setError(e.message ?? "Ayarlar yüklenemedi"); })
         .finally(() => { if (!cancelled) setLoading(false); });
@@ -68,6 +72,8 @@ export default function SystemSettingsScreen() {
         maintenanceMessage: maintenanceMessage.trim(),
         supportEmail: supportEmail.trim() || null,
         supportPhone: supportPhone.trim() || null,
+        bankAccountName: bankAccountName.trim() || null,
+        bankIban: bankIban.trim() || null,
       });
       Alert.alert("Kaydedildi", "Sistem ayarları güncellendi.", [{ text: "Tamam" }]);
     } catch (e: any) {
@@ -168,6 +174,30 @@ export default function SystemSettingsScreen() {
             onChangeText={setSupportPhone}
             keyboardType="phone-pad"
             placeholder="0212 000 00 00"
+            placeholderTextColor={colors.muted}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Abonelik Ödeme Hesabı (Havale/EFT)</Text>
+          <Text style={styles.hint}>
+            Kulüp Oluştur sayfasında ve abonelik onayı bekleyen kulüp adminlerine bu hesap gösterilir.
+          </Text>
+          <Text style={styles.label}>Hesap Sahibi</Text>
+          <TextInput
+            style={styles.input}
+            value={bankAccountName}
+            onChangeText={setBankAccountName}
+            placeholder="X-NETIC Spor Sistemleri"
+            placeholderTextColor={colors.muted}
+          />
+          <Text style={styles.label}>IBAN</Text>
+          <TextInput
+            style={styles.input}
+            value={bankIban}
+            onChangeText={setBankIban}
+            autoCapitalize="characters"
+            placeholder="TR00 0000 0000 0000 0000 0000 00"
             placeholderTextColor={colors.muted}
           />
         </View>

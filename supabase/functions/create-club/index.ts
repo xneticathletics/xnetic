@@ -7,9 +7,11 @@
 // hesabı yaratmak için var (bkz. supabase/config.toml: verify_jwt=false).
 //
 // NOT: Ödeme doğrulaması henüz burada YAPILMIYOR (iyzico entegrasyonu
-// hazır olunca eklenecek) — şimdilik istemci tarafında "mock" bir ödeme
-// adımından sonra buraya gelinir, billingPeriod sadece kayıt altına
-// alınır (club_subscriptions.status = 'mock_paid').
+// hazır olunca eklenecek) — şimdilik istemci Havale/EFT talimatlarını
+// gösterip "Ödemeyi Yaptım" dedikten sonra buraya gelinir, kayıt
+// club_subscriptions.status = 'pending_review' ile açılır ve Süper
+// Admin'e (kendi banka hesabından parayı kontrol edip) onaylaması için
+// bildirim gider — bkz. SuperAdminSubscriptionsScreen.tsx.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -17,6 +19,17 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Push gönderimi best-effort: hatası ana akışı bozmamalı, bu yüzden
+// await edilmeden fire-and-forget çağrılıyor.
+function triggerPushNotification(supabaseUrl: string, notificationId: string) {
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${anonKey}`, apikey: anonKey },
+    body: JSON.stringify({ notification_id: notificationId }),
+  }).catch(() => {});
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
@@ -93,17 +106,30 @@ Deno.serve(async (req) => {
     });
     if (userError) throw userError;
 
-    // Abonelik kaydı — ileride gerçek iyzico entegrasyonu bu satırı
-    // status/payment_reference alanlarıyla güncelleyecek (status='active'
-    // olunca bu tutar platform gelirine sayılır — bkz. getPlatformStats).
-    // Şimdilik 'mock_paid': gerçek para hareketi yok, gelir hesabına dahil edilmez.
+    // Abonelik kaydı: 'pending_review' — Süper Admin havaleyi görüp
+    // onaylayana kadar bu tutar platform gelirine sayılmaz (bkz.
+    // getPlatformStats, sadece status='active' sayılıyor).
     const amountTry = billingPeriod === "yearly" ? settings.yearly_price_try : settings.monthly_price_try;
     await admin.from("club_subscriptions").insert({
       club_id: club.id,
       billing_period: billingPeriod,
-      status: "mock_paid",
+      status: "pending_review",
       amount_try: amountTry,
     });
+
+    // Süper adminlere "yeni bir kulüp ödeme bildirdi, kontrol et" bildirimi —
+    // push da tetikler (bkz. send-push-notification).
+    const { data: superAdmins } = await admin.from("users").select("id").eq("role", "super_admin").eq("is_active", true);
+    if (superAdmins && superAdmins.length > 0) {
+      const rows = superAdmins.map((a: { id: string }) => ({
+        recipient_user_id: a.id,
+        title: "Yeni Kulüp Ödemesi Bildirdi",
+        body: `${club.name} kulübü ${billingPeriod === "yearly" ? "yıllık" : "aylık"} plan için ödeme yaptığını bildirdi. Abonelikler ekranından kontrol edip onaylayabilirsin.`,
+        event_type: null,
+      }));
+      const { data: insertedRows } = await admin.from("notifications").insert(rows).select("id");
+      insertedRows?.forEach((row: { id: string }) => triggerPushNotification(SUPABASE_URL, row.id));
+    }
 
     return new Response(JSON.stringify({ success: true, clubId: club.id }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },

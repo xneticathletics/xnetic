@@ -181,16 +181,32 @@ export default function CreateClubPage() {
               <div className="text-xs font-bold uppercase text-muted">Seçilen Plan</div>
               <div className="mt-1 text-base font-bold text-ink">{selectedPlan.label} — {selectedPlan.price}</div>
             </div>
+
+            {platformSettings?.bankIban ? (
+              <div className="mb-4 rounded-xl border border-line bg-bg p-4">
+                <div className="text-xs font-bold uppercase text-muted">Ödeme Hesabı (Havale/EFT)</div>
+                {platformSettings.bankAccountName && (
+                  <div className="mt-1 text-sm font-semibold text-ink">{platformSettings.bankAccountName}</div>
+                )}
+                <div className="mt-1 text-base font-bold text-yellow">{platformSettings.bankIban}</div>
+              </div>
+            ) : (
+              <p className="mb-4 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-coral">
+                Ödeme hesabı bilgisi henüz tanımlanmamış — lütfen destek ile iletişime geç.
+              </p>
+            )}
+
             <p className="mb-6 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-muted">
-              Ödeme entegrasyonu yakında eklenecek. Şimdilik bu adım bir test/geliştirme
-              yer tutucusudur — gerçek bir ödeme alınmıyor.
+              Yukarıdaki hesaba plan tutarını gönder. Ödemeni yaptıktan sonra devam edip kulüp
+              bilgilerini gir — X-NETIC ekibi ödemeni kontrol edip onaylayınca hesabın hemen
+              aktif olacak (genelde birkaç saat içinde).
             </p>
             <button
               type="button"
               onClick={() => setStep("form")}
               className="w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg"
             >
-              Ödemeyi Tamamla (Test)
+              Ödemeyi Yaptım, Devam Et
             </button>
           </>
         )}
@@ -246,7 +262,7 @@ export default function CreateClubPage() {
             {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
             <button type="submit" disabled={submitting} className="w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg disabled:opacity-60">
-              {submitting ? "Oluşturuluyor…" : "Kulübü Oluştur ve Başla"}
+              {submitting ? "Oluşturuluyor…" : "Kulübü Oluştur"}
             </button>
           </form>
         )}
