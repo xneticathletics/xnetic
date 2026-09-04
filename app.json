@@ -23,7 +23,7 @@
       "package": "club.xnetic.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFC845"
+        "backgroundColor": "#10122A"
       }
     },
     "plugins": [
