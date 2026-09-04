@@ -35,7 +35,7 @@ export default function LoginScreen({
         keyboardShouldPersistTaps="handled"
       >
         <Image
-          source={require("../assets/xnetic-logo.png")}
+          source={require("../assets/xnetic-logo-yellow.png")}
           style={styles.logo}
           resizeMode="contain"
         />

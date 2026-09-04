@@ -6,7 +6,7 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/xnetic-logo-large.png")}
+        source={require("../assets/xnetic-logo-yellow.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -28,7 +28,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 140,
     height: 140,
-    borderRadius: 24,
     marginBottom: spacing.lg,
   },
   title: {
