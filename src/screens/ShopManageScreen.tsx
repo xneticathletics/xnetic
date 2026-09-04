@@ -109,14 +109,15 @@ export default function ShopManageScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.row, !item.is_active && styles.rowInactive]}
+            activeOpacity={0.85}
             onPress={() => navigation.navigate("ShopProductForm", { productId: item.id })}
             onLongPress={() => handleLongPress(item)}
           >
             {item.photo_urls[0] ? (
-              <Image source={{ uri: item.photo_urls[0] }} style={styles.thumb} />
+              <Image source={{ uri: item.photo_urls[0] }} style={styles.thumb} resizeMode="cover" />
             ) : (
               <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                <Text style={{ fontSize: 18 }}>🛍️</Text>
+                <Text style={{ fontSize: 30 }}>🛍️</Text>
               </View>
             )}
             <View style={{ flex: 1 }}>
@@ -127,15 +128,16 @@ export default function ShopManageScreen({ navigation }: Props) {
                   {[item.category, item.gender && GENDER_LABEL[item.gender]].filter(Boolean).join(" · ")}
                 </Text>
               )}
+              <View style={styles.badgeRow}>
+                <Text style={[styles.badge, item.is_active ? styles.badgeActive : styles.badgeInactive]}>
+                  {item.is_active ? "Aktif" : "Pasif"}
+                </Text>
+                <Text style={[styles.badge, item.totalStock > 0 ? styles.badgeStock : styles.badgeOutOfStock]}>
+                  Stok: {item.totalStock}
+                </Text>
+              </View>
             </View>
-            <View style={{ alignItems: "flex-end", gap: 4 }}>
-              <Text style={[styles.badge, item.is_active ? styles.badgeActive : styles.badgeInactive]}>
-                {item.is_active ? "Aktif" : "Pasif"}
-              </Text>
-              <Text style={[styles.badge, item.totalStock > 0 ? styles.badgeStock : styles.badgeOutOfStock]}>
-                Stok: {item.totalStock}
-              </Text>
-            </View>
+            <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
         )}
       />
@@ -167,19 +169,22 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {
-    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    flexDirection: "row", alignItems: "center", gap: spacing.md,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm,
+    borderRadius: radius.lg, padding: spacing.sm, marginBottom: spacing.sm,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2,
   },
   rowInactive: { opacity: 0.55 },
-  thumb: { width: 48, height: 48, borderRadius: radius.sm },
+  thumb: { width: 84, height: 84, borderRadius: radius.md },
   thumbPlaceholder: { backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
-  rowTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
-  rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  rowTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
+  rowSub: { color: colors.yellow, fontSize: 14, fontWeight: "800", marginTop: 2 },
   rowMeta: { color: colors.violet, fontSize: 11, marginTop: 2 },
+  badgeRow: { flexDirection: "row", gap: 6, marginTop: spacing.xs },
   badge: { fontSize: 10, fontWeight: "700", paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.full, overflow: "hidden" },
   badgeActive: { color: colors.bg, backgroundColor: colors.teal },
   badgeInactive: { color: colors.bg, backgroundColor: colors.muted },
   badgeStock: { color: colors.bg, backgroundColor: colors.violet },
   badgeOutOfStock: { color: colors.bg, backgroundColor: colors.coral },
+  chevron: { color: colors.muted, fontSize: 20, fontWeight: "700" },
 });
