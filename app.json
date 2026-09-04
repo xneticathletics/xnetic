@@ -6,7 +6,10 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "xneticclub",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#10122A"
     },
     "ios": {
@@ -17,7 +20,11 @@
       }
     },
     "android": {
-      "package": "club.xnetic.app"
+      "package": "club.xnetic.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFC845"
+      }
     },
     "plugins": [
       "expo-font"
