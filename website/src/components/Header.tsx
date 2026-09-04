@@ -17,7 +17,7 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <a href="#top" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
           <img src="/logo-mark.png" alt="X-NETIC" className="h-16 w-16 drop-shadow-lg" />
-          <span className="text-lg font-extrabold tracking-tight text-ink">X-NETIC</span>
+          <span className="text-lg font-extrabold tracking-tight text-ink">X-NETIC Spor Sistemleri</span>
         </a>
 
         <nav className="hidden items-center gap-7 text-base font-semibold text-muted md:flex">

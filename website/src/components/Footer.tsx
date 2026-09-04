@@ -10,7 +10,7 @@ export default function Footer({ settings }: { settings: PlatformSettings | null
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
               <img src="/logo-mark.png" alt="X-NETIC" className="h-12 w-12 drop-shadow-md" />
-              <span className="text-base font-extrabold text-ink">X-NETIC</span>
+              <span className="text-base font-extrabold text-ink">X-NETIC Spor Sistemleri</span>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-muted">
               Spor kulüpleri için sporcu takibi, antrenman, performans ve kulüp yönetimini

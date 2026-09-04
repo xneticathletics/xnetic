@@ -14,13 +14,13 @@ const VIEWS = [
     ],
   },
   {
-    title: "Ahmet Yılmaz — U15",
-    badge: "ANTRENMAN PROGRAMI",
+    title: "Zeynep Kaya — U15",
+    badge: "SPORCU PROFİLİ",
     rows: [
-      { label: "Isınma", value: "10dk hafif koşu", color: "text-teal" },
-      { label: "Kuvvet", value: "Squat 4x8, Deadlift 3x6", color: "text-yellow" },
-      { label: "Hız", value: "Sprint 6x40m", color: "text-violet" },
-      { label: "Soğuma", value: "15dk esneklik", color: "text-coral" },
+      { label: "Branş / Kategori", value: "Yüzme — U15", color: "text-teal" },
+      { label: "Kişisel Rekor", value: "50m Serbest — 28.4sn", color: "text-yellow" },
+      { label: "Bu Ay Katılım", value: "%100 devam", color: "text-violet" },
+      { label: "Antrenör Notu", value: "\"Teknik gelişim çok iyi, devam.\"", color: "text-coral" },
     ],
   },
   {
@@ -31,6 +31,16 @@ const VIEWS = [
       { label: "Dikey Sıçrama", value: "38cm → 44cm", color: "text-yellow" },
       { label: "Dayanıklılık (Yo-Yo)", value: "Seviye 14 → 16", color: "text-violet" },
       { label: "Antrenör Notu", value: "\"Sprint çıkışında belirgin gelişim\"", color: "text-coral" },
+    ],
+  },
+  {
+    title: "Mehmet Demir",
+    badge: "ANTRENÖR EKRANI",
+    rows: [
+      { label: "Bugünkü Grup", value: "U15 Yıldızlar — 18:00", color: "text-teal" },
+      { label: "Yoklama", value: "22/24 sporcu işaretlendi", color: "text-yellow" },
+      { label: "Bugünkü Program", value: "Kuvvet + Sprint Antrenmanı", color: "text-violet" },
+      { label: "Veli Bildirimi", value: "3 veliye mesaj gönderildi", color: "text-coral" },
     ],
   },
 ];
