@@ -3,49 +3,13 @@ import { useEffect, useState } from "react";
 const APP_URL = import.meta.env.VITE_APP_URL as string;
 
 const VIEWS = [
-  {
-    title: "Yıldız Spor Kulübü",
-    badge: "GENEL BAKIŞ",
-    rows: [
-      { label: "Bugünkü Antrenman", value: "18:00 — U15 Yıldızlar", color: "text-teal" },
-      { label: "Bu Hafta Yoklama", value: "%94 katılım", color: "text-yellow" },
-      { label: "Performans Testi", value: "20m Sprint — 3 yeni kayıt", color: "text-violet" },
-      { label: "Bekleyen Ödeme", value: "2 veli — hatırlatma gönderildi", color: "text-coral" },
-    ],
-  },
-  {
-    title: "Zeynep Kaya — U15",
-    badge: "SPORCU PROFİLİ",
-    rows: [
-      { label: "Branş / Kategori", value: "Yüzme — U15", color: "text-teal" },
-      { label: "Kişisel Rekor", value: "50m Serbest — 28.4sn", color: "text-yellow" },
-      { label: "Bu Ay Katılım", value: "%100 devam", color: "text-violet" },
-      { label: "Antrenör Notu", value: "\"Teknik gelişim çok iyi, devam.\"", color: "text-coral" },
-    ],
-  },
-  {
-    title: "Performans Gelişimi",
-    badge: "SPORCU TAKİBİ",
-    rows: [
-      { label: "20m Sprint", value: "3.42s → 3.21s (6 ayda)", color: "text-teal" },
-      { label: "Dikey Sıçrama", value: "38cm → 44cm", color: "text-yellow" },
-      { label: "Dayanıklılık (Yo-Yo)", value: "Seviye 14 → 16", color: "text-violet" },
-      { label: "Antrenör Notu", value: "\"Sprint çıkışında belirgin gelişim\"", color: "text-coral" },
-    ],
-  },
-  {
-    title: "Mehmet Demir",
-    badge: "ANTRENÖR EKRANI",
-    rows: [
-      { label: "Bugünkü Grup", value: "U15 Yıldızlar — 18:00", color: "text-teal" },
-      { label: "Yoklama", value: "22/24 sporcu işaretlendi", color: "text-yellow" },
-      { label: "Bugünkü Program", value: "Kuvvet + Sprint Antrenmanı", color: "text-violet" },
-      { label: "Veli Bildirimi", value: "3 veliye mesaj gönderildi", color: "text-coral" },
-    ],
-  },
+  { title: "Demo Spor Kulübü", badge: "GENEL BAKIŞ", image: "/screens/genel-bakis.png" },
+  { title: "Zeynep Kaya — U15", badge: "SPORCU PROFİLİ", image: "/screens/sporcu-profili.png" },
+  { title: "Performans Gelişimi", badge: "PERFORMANS TAKİBİ", image: "/screens/performans-gelisimi.png" },
+  { title: "Mehmet Demir", badge: "ANTRENÖR PROFİLİ", image: "/screens/antrenor-ekrani.png" },
 ];
 
-const ROTATE_MS = 4000;
+const ROTATE_MS = 4500;
 
 export default function Hero() {
   const [active, setActive] = useState(0);
@@ -96,23 +60,18 @@ export default function Hero() {
         </div>
 
         <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-2xl shadow-black/20">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <div className="flex items-center gap-2">
-                <img src="/logo-mark.png" alt="" className="h-8 w-8" />
+                <img src="/logo-mark.png" alt="" className="h-6 w-6" />
                 <span className="text-sm font-bold text-ink">{view.title}</span>
               </div>
               <span className="rounded-full bg-teal/15 px-2 py-1 text-[10px] font-bold text-teal">{view.badge}</span>
             </div>
-            <div key={active} className="space-y-3 animate-[fadein_0.4s_ease]">
-              {view.rows.map((row) => (
-                <div key={row.label} className="rounded-xl border border-line bg-bg px-4 py-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{row.label}</div>
-                  <div className={`mt-1 text-sm font-bold ${row.color}`}>{row.value}</div>
-                </div>
-              ))}
+            <div key={active} className="animate-[fadein_0.4s_ease]">
+              <img src={view.image} alt={`${view.title} — X-NETIC ${view.badge.toLowerCase()}`} className="block w-full" />
             </div>
-            <div className="mt-4 flex justify-center gap-1.5">
+            <div className="flex justify-center gap-1.5 border-t border-line py-3">
               {VIEWS.map((v, i) => (
                 <button
                   key={v.title}
@@ -133,8 +92,8 @@ export default function Hero() {
 
       <style>{`
         @keyframes fadein {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </section>
