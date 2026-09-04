@@ -148,17 +148,27 @@ export default function NutritionFoodsPage() {
     },
     { key: "source", label: "Kaynakça", render: (f) => f.source ?? "—" },
     {
+      key: "origin",
+      label: "Kaynak",
+      render: (f) => (f.club_id !== null ? <span className="text-violet">Kulübe özel</span> : <span className="text-xs text-muted">—</span>),
+    },
+    {
       key: "actions",
       label: "",
       className: "text-right",
+      // Var olan (global) besinleri her kulüp admini düzenleyebilir — silme,
+      // kulübün KENDİ eklediği (club_id dolu) besinlerle sınırlı (bkz.
+      // FitnessCategoryPage.tsx'teki aynı mantık).
       render: (f) => (
         <div className="flex justify-end gap-2">
           <button onClick={() => openEdit(f)} className="text-xs font-bold text-teal hover:underline">
             Düzenle
           </button>
-          <button onClick={() => handleDelete(f)} className="text-xs font-bold text-coral hover:underline">
-            Sil
-          </button>
+          {f.club_id !== null && (
+            <button onClick={() => handleDelete(f)} className="text-xs font-bold text-coral hover:underline">
+              Sil
+            </button>
+          )}
         </div>
       ),
     },

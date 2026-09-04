@@ -3,6 +3,7 @@ import type { FoodCategoryKey } from "../nutritionCategories";
 
 export type NutritionRecipe = {
   id: string;
+  club_id: string | null;
   category: FoodCategoryKey;
   title: string;
   description: string | null;
@@ -10,6 +11,7 @@ export type NutritionRecipe = {
   instructions: string | null;
   source: string | null;
   created_at: string;
+  clubs?: { name: string } | null;
 };
 
 export type NutritionRecipeInput = {
@@ -21,12 +23,12 @@ export type NutritionRecipeInput = {
   source: string | null;
 };
 
-const NUTRITION_RECIPE_FIELDS = "id, category, title, description, ingredients, instructions, source, created_at";
+const NUTRITION_RECIPE_FIELDS = "id, club_id, category, title, description, ingredients, instructions, source, created_at";
 
 export async function listNutritionRecipesByCategory(category: FoodCategoryKey): Promise<NutritionRecipe[]> {
   const { data, error } = await supabase
     .from("nutrition_recipes")
-    .select(NUTRITION_RECIPE_FIELDS)
+    .select(`${NUTRITION_RECIPE_FIELDS}, clubs(name)`)
     .eq("category", category)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -34,7 +36,7 @@ export async function listNutritionRecipesByCategory(category: FoodCategoryKey):
 }
 
 export async function getNutritionRecipe(id: string): Promise<NutritionRecipe> {
-  const { data, error } = await supabase.from("nutrition_recipes").select(NUTRITION_RECIPE_FIELDS).eq("id", id).single();
+  const { data, error } = await supabase.from("nutrition_recipes").select(`${NUTRITION_RECIPE_FIELDS}, clubs(name)`).eq("id", id).single();
   if (error) throw error;
   return data as unknown as NutritionRecipe;
 }

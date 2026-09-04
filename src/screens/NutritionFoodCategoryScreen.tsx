@@ -24,6 +24,14 @@ const FOODS_SECTION_LABEL: Record<string, string> = {
   vitamin: "Önemli Vitaminler",
 };
 
+// Bir satırın global mi (club_id null) yoksa kulübe özel mi olduğuna göre
+// kaynak etiketi (sadece Süper Admin'e) ve düzenleme izni hesaplar — bkz.
+// FitnessCategoryScreen.tsx'teki birebir aynı mantık.
+function sourceLabel(role: string | null, clubId: string | null, clubs: { name: string } | null | undefined): string | undefined {
+  if (role !== "super_admin") return undefined;
+  return clubId === null ? "🌐 Global (Platform)" : `🏢 ${clubs?.name ?? "Bir kulüp"}`;
+}
+
 export default function NutritionFoodCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const { role } = useAuth();
@@ -127,9 +135,11 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
           }
           if (item.kind === "food") {
             const f = item.data;
+            const label = sourceLabel(role, f.club_id, f.clubs);
             return (
               <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("NutritionFoodDetail", { foodId: f.id })}>
                 <Text style={styles.cardName}>{f.name}</Text>
+                {!!label && <Text style={styles.cardSource}>{label}</Text>}
                 {!!f.description && <Text style={styles.cardDesc} numberOfLines={2}>{f.description}</Text>}
                 {!!f.found_in && <Text style={styles.cardFoundIn}>📍 {f.found_in}</Text>}
                 {(f.calories != null || f.protein_g != null || f.carbs_g != null || f.fat_g != null) && (
@@ -144,9 +154,11 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
             );
           }
           const r = item.data;
+          const recipeLabel = sourceLabel(role, r.club_id, r.clubs);
           return (
             <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("NutritionRecipeDetail", { recipeId: r.id })}>
               <Text style={styles.cardName}>🍳 {r.title}</Text>
+              {!!recipeLabel && <Text style={styles.cardSource}>{recipeLabel}</Text>}
               {!!r.description && <Text style={styles.cardDesc} numberOfLines={2}>{r.description}</Text>}
             </TouchableOpacity>
           );
@@ -176,6 +188,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, alignItems: "center",
   },
   cardName: { color: colors.ink, fontSize: 15, fontWeight: "700", textAlign: "center" },
+  cardSource: { color: colors.muted, fontSize: 10, marginTop: 2, textAlign: "center" },
   cardDesc: { color: colors.muted, fontSize: 12, marginTop: 4, textAlign: "center" },
   cardFoundIn: { color: colors.muted, fontSize: 11, marginTop: 4, fontStyle: "italic", textAlign: "center" },
   macroRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6, marginTop: spacing.sm },

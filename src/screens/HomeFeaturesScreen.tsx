@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, Switch, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Switch, ActivityIndicator, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getClubSettings, updateClubSettings } from "../lib/api/clubSettings";
@@ -55,7 +55,7 @@ export default function HomeFeaturesScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.infoBox}>
         Kulübünün kullanmadığı ana başlıkları kapatabilirsin — ör. Beslenme'ye
         ihtiyacın yoksa kapat, ihtiyaç olduğunda tekrar aç. Kapatılan
@@ -85,12 +85,13 @@ export default function HomeFeaturesScreen() {
           </View>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+  container: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl },
   loadingContainer: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
   infoBox: {
     color: colors.muted, fontSize: 12, lineHeight: 18, backgroundColor: colors.surface,

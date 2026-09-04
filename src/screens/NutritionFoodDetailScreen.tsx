@@ -22,7 +22,7 @@ function MacroBox({ label, value }: { label: string; value: number | null }) {
 
 export default function NutritionFoodDetailScreen({ route, navigation }: Props) {
   const { foodId } = route.params;
-  const { role } = useAuth();
+  const { role, clubId: myClubId } = useAuth();
   const [food, setFood] = useState<NutritionFood | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,12 +77,20 @@ export default function NutritionFoodDetailScreen({ route, navigation }: Props) 
   }
 
   const meta = getFoodCategory(food.category);
+  // Var olan (global) besinleri her antrenör/kulüp admini düzenleyebilir —
+  // sadece YENİ global besin eklemek ve global bir besini silmek Süper
+  // Admin'e özel (bkz. FitnessCategoryScreen.tsx'teki aynı mantık).
+  const canEdit = food.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : food.club_id === myClubId;
+  const canDelete = food.club_id === null ? role === "super_admin" : food.club_id === myClubId && role === "club_admin";
+  const sourceLabel =
+    role === "super_admin" ? (food.club_id === null ? "🌐 Global (Platform)" : `🏢 ${food.clubs?.name ?? "Bir kulüp"}`) : undefined;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
       <View style={[styles.categoryBadge, { backgroundColor: meta.soft }]}>
         <Text style={[styles.categoryBadgeText, { color: meta.color }]}>{meta.icon} {meta.label}</Text>
       </View>
+      {!!sourceLabel && <Text style={styles.sourceBadge}>{sourceLabel}</Text>}
 
       <Text style={styles.name}>{food.name}</Text>
       {!!food.description && <Text style={styles.description}>{food.description}</Text>}
@@ -117,17 +125,21 @@ export default function NutritionFoodDetailScreen({ route, navigation }: Props) 
         </View>
       )}
 
-      {role === "club_admin" && (
+      {(canEdit || canDelete) && (
         <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => navigation.navigate("NutritionFoodForm", { foodId: food.id, category: food.category })}
-          >
-            <Text style={styles.editButtonText}>✎ Düzenle</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Sil</Text>
-          </TouchableOpacity>
+          {canEdit && (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => navigation.navigate("NutritionFoodForm", { foodId: food.id, category: food.category })}
+            >
+              <Text style={styles.editButtonText}>✎ Düzenle</Text>
+            </TouchableOpacity>
+          )}
+          {canDelete && (
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Text style={styles.deleteButtonText}>Sil</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </ScrollView>
@@ -140,6 +152,7 @@ const styles = StyleSheet.create({
   error: { color: colors.coral },
   categoryBadge: { alignSelf: "flex-start", borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 4, marginBottom: spacing.sm },
   categoryBadgeText: { fontSize: 11, fontWeight: "700" },
+  sourceBadge: { color: colors.muted, fontSize: 11, marginBottom: spacing.sm },
   name: { color: colors.ink, fontSize: 22, fontWeight: "800", marginBottom: spacing.xs },
   description: { color: colors.muted, fontSize: 14, lineHeight: 20, marginBottom: spacing.lg },
   macroRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.lg },

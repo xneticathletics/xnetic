@@ -3,6 +3,7 @@ import type { FoodCategoryKey } from "../nutritionCategories";
 
 export type NutritionFood = {
   id: string;
+  club_id: string | null;
   category: FoodCategoryKey;
   name: string;
   description: string | null;
@@ -14,6 +15,7 @@ export type NutritionFood = {
   benefit: string | null;
   source: string | null;
   created_at: string;
+  clubs?: { name: string } | null;
 };
 
 export type NutritionFoodInput = {
@@ -30,12 +32,12 @@ export type NutritionFoodInput = {
 };
 
 const NUTRITION_FOOD_FIELDS =
-  "id, category, name, description, found_in, calories, protein_g, carbs_g, fat_g, benefit, source, created_at";
+  "id, club_id, category, name, description, found_in, calories, protein_g, carbs_g, fat_g, benefit, source, created_at";
 
 export async function listNutritionFoodsByCategory(category: FoodCategoryKey): Promise<NutritionFood[]> {
   const { data, error } = await supabase
     .from("nutrition_foods")
-    .select(NUTRITION_FOOD_FIELDS)
+    .select(`${NUTRITION_FOOD_FIELDS}, clubs(name)`)
     .eq("category", category)
     .order("name", { ascending: true });
   if (error) throw error;
@@ -43,7 +45,7 @@ export async function listNutritionFoodsByCategory(category: FoodCategoryKey): P
 }
 
 export async function getNutritionFood(id: string): Promise<NutritionFood> {
-  const { data, error } = await supabase.from("nutrition_foods").select(NUTRITION_FOOD_FIELDS).eq("id", id).single();
+  const { data, error } = await supabase.from("nutrition_foods").select(`${NUTRITION_FOOD_FIELDS}, clubs(name)`).eq("id", id).single();
   if (error) throw error;
   return data as unknown as NutritionFood;
 }

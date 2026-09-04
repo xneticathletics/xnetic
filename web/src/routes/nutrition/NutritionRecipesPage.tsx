@@ -40,6 +40,11 @@ export default function NutritionRecipesPage() {
     },
     { key: "source", label: "Kaynakça", render: (r) => r.source ?? "—" },
     {
+      key: "origin",
+      label: "Kaynak",
+      render: (r) => (r.club_id !== null ? <span className="text-violet">Kulübe özel</span> : <span className="text-xs text-muted">—</span>),
+    },
+    {
       key: "actions",
       label: "",
       className: "text-right",
@@ -48,9 +53,11 @@ export default function NutritionRecipesPage() {
           <Link to={`/nutrition/recipes/${r.id}`} className="text-xs font-bold text-teal hover:underline">
             Düzenle
           </Link>
-          <button onClick={() => handleDelete(r)} className="text-xs font-bold text-coral hover:underline">
-            Sil
-          </button>
+          {r.club_id !== null && (
+            <button onClick={() => handleDelete(r)} className="text-xs font-bold text-coral hover:underline">
+              Sil
+            </button>
+          )}
         </div>
       ),
     },

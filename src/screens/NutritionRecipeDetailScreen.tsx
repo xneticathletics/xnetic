@@ -12,7 +12,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipeDetail">
 
 export default function NutritionRecipeDetailScreen({ route, navigation }: Props) {
   const { recipeId } = route.params;
-  const { role } = useAuth();
+  const { role, clubId: myClubId } = useAuth();
   const [recipe, setRecipe] = useState<NutritionRecipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,12 +67,17 @@ export default function NutritionRecipeDetailScreen({ route, navigation }: Props
   }
 
   const meta = getFoodCategory(recipe.category);
+  const canEdit = recipe.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : recipe.club_id === myClubId;
+  const canDelete = recipe.club_id === null ? role === "super_admin" : recipe.club_id === myClubId && role === "club_admin";
+  const sourceLabel =
+    role === "super_admin" ? (recipe.club_id === null ? "🌐 Global (Platform)" : `🏢 ${recipe.clubs?.name ?? "Bir kulüp"}`) : undefined;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
       <View style={[styles.categoryBadge, { backgroundColor: meta.soft }]}>
         <Text style={[styles.categoryBadgeText, { color: meta.color }]}>{meta.icon} {meta.label}</Text>
       </View>
+      {!!sourceLabel && <Text style={styles.sourceBadge}>{sourceLabel}</Text>}
 
       <Text style={styles.title}>🍳 {recipe.title}</Text>
       {!!recipe.description && <Text style={styles.description}>{recipe.description}</Text>}
@@ -98,17 +103,21 @@ export default function NutritionRecipeDetailScreen({ route, navigation }: Props
         </View>
       )}
 
-      {role === "club_admin" && (
+      {(canEdit || canDelete) && (
         <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => navigation.navigate("NutritionRecipeForm", { recipeId: recipe.id, category: recipe.category })}
-          >
-            <Text style={styles.editButtonText}>✎ Düzenle</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Sil</Text>
-          </TouchableOpacity>
+          {canEdit && (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => navigation.navigate("NutritionRecipeForm", { recipeId: recipe.id, category: recipe.category })}
+            >
+              <Text style={styles.editButtonText}>✎ Düzenle</Text>
+            </TouchableOpacity>
+          )}
+          {canDelete && (
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Text style={styles.deleteButtonText}>Sil</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </ScrollView>
@@ -121,6 +130,7 @@ const styles = StyleSheet.create({
   error: { color: colors.coral },
   categoryBadge: { alignSelf: "flex-start", borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 4, marginBottom: spacing.sm },
   categoryBadgeText: { fontSize: 11, fontWeight: "700" },
+  sourceBadge: { color: colors.muted, fontSize: 11, marginBottom: spacing.sm },
   title: { color: colors.ink, fontSize: 20, fontWeight: "800", marginBottom: spacing.xs },
   description: { color: colors.muted, fontSize: 14, lineHeight: 20, marginBottom: spacing.lg },
   section: { marginBottom: spacing.lg },
