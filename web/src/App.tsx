@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ClubSettingsProvider } from "./context/ClubSettingsContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./routes/LoginPage";
+import CreateClubPage from "./routes/CreateClubPage";
 import AppLayout from "./components/layout/AppLayout";
 import DashboardPage from "./routes/DashboardPage";
 import AthletesListPage from "./routes/athletes/AthletesListPage";
@@ -48,6 +49,7 @@ export default function App() {
         <ClubSettingsProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/kulup-olustur" element={<CreateClubPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>

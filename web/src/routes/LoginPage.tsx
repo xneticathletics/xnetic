@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { inputClass } from "../components/FormField";
 
@@ -65,6 +65,10 @@ export default function LoginPage() {
         >
           {submitting ? "Giriş yapılıyor…" : "Giriş Yap"}
         </button>
+
+        <p className="mt-4 text-center text-xs text-muted">
+          Kulübün yok mu? <Link to="/kulup-olustur" className="font-semibold text-teal hover:underline">Kulüp Oluştur</Link>
+        </p>
       </form>
     </div>
   );

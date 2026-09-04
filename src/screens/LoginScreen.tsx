@@ -8,8 +8,8 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 export default function LoginScreen({
-  onForgotPassword, onCreateClub,
-}: { onForgotPassword: () => void; onCreateClub: () => void }) {
+  onForgotPassword,
+}: { onForgotPassword: () => void }) {
   const { signIn } = useAuth();
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const [email, setEmail] = useState("");
@@ -93,9 +93,13 @@ export default function LoginScreen({
           <Text style={styles.secondaryButtonText}>Şifremi Unuttum</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={onCreateClub}>
-          <Text style={[styles.secondaryButtonText, styles.createClubButtonText]}>Kulüp Oluştur</Text>
-        </TouchableOpacity>
+        {/* Tıklanabilir buton/link DEĞİL — App Store 3.1.3 kuralı, uygulama
+            içinde harici bir satın alma yöntemine yönlendiren buton/link
+            bulunmasını yasaklıyor. Kulüp kaydı + ödeme artık sadece
+            xnetic.com üzerinden yapılıyor; bu sadece bilgilendirme metni. */}
+        <Text style={styles.createClubNote}>
+          Yeni kulüp kaydı için xnetic.com adresini ziyaret edin.
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -151,5 +155,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   secondaryButtonText: { color: colors.ink, fontWeight: "700", fontSize: 15 },
-  createClubButtonText: { color: colors.yellow },
+  createClubNote: { color: colors.muted, fontSize: 12, marginTop: spacing.lg, textAlign: "center" },
 });

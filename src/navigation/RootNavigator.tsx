@@ -12,7 +12,6 @@ import SplashScreen from "../screens/SplashScreen";
 import ForcePasswordChangeScreen from "../screens/ForcePasswordChangeScreen";
 import CoachOnboardingScreen from "../screens/CoachOnboardingScreen";
 import ConsentScreen from "../screens/ConsentScreen";
-import CreateClubScreen from "../screens/CreateClubScreen";
 import MaintenanceScreen from "../screens/MaintenanceScreen";
 import { getMyOnboardingStatus, getMyMustChangePassword } from "../lib/api/currentUser";
 import { hasAllRequiredConsents } from "../lib/api/consents";
@@ -38,7 +37,6 @@ export default function RootNavigator() {
   const { session, loading, role } = useAuth();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showCreateClub, setShowCreateClub] = useState(false);
   // Şifremi Unuttum linkine dokununca uygulama DOĞRUDAN açılır (harici
   // bir web sayfası yok) — bu bayrak true olunca, oturum durumu ne
   // olursa olsun Yeni Şifre Belirle ekranı gösterilir.
@@ -164,13 +162,11 @@ export default function RootNavigator() {
     return () => { cancelled = true; };
   }, [session, role, mustChangePassword, onboardingDone]);
 
-  // Kulüp Oluştur akışı sonunda otomatik giriş yapılınca (ya da normal bir
-  // girişten sonra) bu bayrakları sıfırla — yoksa çıkış yapılıp login'e
-  // dönüldüğünde yanlışlıkla kaldığı adımda açılabilirdi.
+  // Normal bir girişten sonra bu bayrağı sıfırla — yoksa çıkış yapılıp
+  // login'e dönüldüğünde yanlışlıkla kaldığı adımda açılabilirdi.
   useEffect(() => {
     if (session) {
       setShowForgotPassword(false);
-      setShowCreateClub(false);
     }
   }, [session]);
 
@@ -215,18 +211,9 @@ export default function RootNavigator() {
             <Stack.Screen name="ForgotPassword">
               {() => <ForgotPasswordScreen onBack={() => setShowForgotPassword(false)} />}
             </Stack.Screen>
-          ) : showCreateClub ? (
-            <Stack.Screen name="CreateClub">
-              {() => <CreateClubScreen onBack={() => setShowCreateClub(false)} />}
-            </Stack.Screen>
           ) : (
             <Stack.Screen name="Login">
-              {() => (
-                <LoginScreen
-                  onForgotPassword={() => setShowForgotPassword(true)}
-                  onCreateClub={() => setShowCreateClub(true)}
-                />
-              )}
+              {() => <LoginScreen onForgotPassword={() => setShowForgotPassword(true)} />}
             </Stack.Screen>
           )
         ) : maintenanceMode ? (
