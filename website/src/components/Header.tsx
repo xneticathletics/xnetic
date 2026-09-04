@@ -3,6 +3,7 @@ import { useState } from "react";
 const APP_URL = import.meta.env.VITE_APP_URL as string;
 
 const NAV_LINKS = [
+  { href: "#hakkimizda", label: "Hakkımızda" },
   { href: "#ozellikler", label: "Özellikler" },
   { href: "#nasil-calisir", label: "Nasıl Çalışır" },
   { href: "#fiyatlandirma", label: "Fiyatlandırma" },

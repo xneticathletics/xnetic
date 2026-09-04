@@ -22,6 +22,7 @@ export default function Footer({ settings }: { settings: PlatformSettings | null
             <div>
               <div className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">Ürün</div>
               <ul className="space-y-2 text-muted">
+                <li><a href="#hakkimizda" className="hover:text-ink">Hakkımızda</a></li>
                 <li><a href="#ozellikler" className="hover:text-ink">Özellikler</a></li>
                 <li><a href="#fiyatlandirma" className="hover:text-ink">Fiyatlandırma</a></li>
                 <li><a href="#sss" className="hover:text-ink">SSS</a></li>
