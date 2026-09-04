@@ -1,13 +1,54 @@
+import { useEffect, useState } from "react";
+
 const APP_URL = import.meta.env.VITE_APP_URL as string;
 
-const MOCK_ROWS = [
-  { label: "Bugünkü Antrenman", value: "18:00 — U15 Yıldızlar", color: "text-teal" },
-  { label: "Bu Hafta Yoklama", value: "%94 katılım", color: "text-yellow" },
-  { label: "Performans Testi", value: "20m Sprint — 3 yeni kayıt", color: "text-violet" },
-  { label: "Bekleyen Ödeme", value: "2 veli — hatırlatma gönderildi", color: "text-coral" },
+const VIEWS = [
+  {
+    title: "Yıldız Spor Kulübü",
+    badge: "GENEL BAKIŞ",
+    rows: [
+      { label: "Bugünkü Antrenman", value: "18:00 — U15 Yıldızlar", color: "text-teal" },
+      { label: "Bu Hafta Yoklama", value: "%94 katılım", color: "text-yellow" },
+      { label: "Performans Testi", value: "20m Sprint — 3 yeni kayıt", color: "text-violet" },
+      { label: "Bekleyen Ödeme", value: "2 veli — hatırlatma gönderildi", color: "text-coral" },
+    ],
+  },
+  {
+    title: "Ahmet Yılmaz — U15",
+    badge: "ANTRENMAN PROGRAMI",
+    rows: [
+      { label: "Isınma", value: "10dk hafif koşu", color: "text-teal" },
+      { label: "Kuvvet", value: "Squat 4x8, Deadlift 3x6", color: "text-yellow" },
+      { label: "Hız", value: "Sprint 6x40m", color: "text-violet" },
+      { label: "Soğuma", value: "15dk esneklik", color: "text-coral" },
+    ],
+  },
+  {
+    title: "Performans Gelişimi",
+    badge: "SPORCU TAKİBİ",
+    rows: [
+      { label: "20m Sprint", value: "3.42s → 3.21s (6 ayda)", color: "text-teal" },
+      { label: "Dikey Sıçrama", value: "38cm → 44cm", color: "text-yellow" },
+      { label: "Dayanıklılık (Yo-Yo)", value: "Seviye 14 → 16", color: "text-violet" },
+      { label: "Antrenör Notu", value: "\"Sprint çıkışında belirgin gelişim\"", color: "text-coral" },
+    ],
+  },
 ];
 
+const ROTATE_MS = 4000;
+
 export default function Hero() {
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const timer = setInterval(() => setActive((i) => (i + 1) % VIEWS.length), ROTATE_MS);
+    return () => clearInterval(timer);
+  }, [paused]);
+
+  const view = VIEWS[active];
+
   return (
     <section id="top" className="relative overflow-hidden">
       <div
@@ -44,21 +85,32 @@ export default function Hero() {
           <p className="mt-4 text-xs text-muted">Kredi kartı gerekmez — planını seç, kulübünü dakikalar içinde kur.</p>
         </div>
 
-        <div className="relative">
+        <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
           <div className="rounded-2xl border border-line bg-surface p-5 shadow-2xl shadow-black/20">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg" />
-                <span className="text-sm font-bold text-ink">Yıldız Spor Kulübü</span>
+                <img src="/logo-mark.png" alt="" className="h-8 w-8" />
+                <span className="text-sm font-bold text-ink">{view.title}</span>
               </div>
-              <span className="rounded-full bg-teal/15 px-2 py-1 text-[10px] font-bold text-teal">ÖRNEK GÖRÜNÜM</span>
+              <span className="rounded-full bg-teal/15 px-2 py-1 text-[10px] font-bold text-teal">{view.badge}</span>
             </div>
-            <div className="space-y-3">
-              {MOCK_ROWS.map((row) => (
+            <div key={active} className="space-y-3 animate-[fadein_0.4s_ease]">
+              {view.rows.map((row) => (
                 <div key={row.label} className="rounded-xl border border-line bg-bg px-4 py-3">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{row.label}</div>
                   <div className={`mt-1 text-sm font-bold ${row.color}`}>{row.value}</div>
                 </div>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-center gap-1.5">
+              {VIEWS.map((v, i) => (
+                <button
+                  key={v.title}
+                  type="button"
+                  aria-label={`${v.title} görünümünü göster`}
+                  onClick={() => setActive(i)}
+                  className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-yellow" : "w-1.5 bg-line"}`}
+                />
               ))}
             </div>
           </div>
@@ -68,6 +120,13 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadein {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </section>
   );
 }
