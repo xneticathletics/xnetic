@@ -74,7 +74,9 @@ export default function NutritionArticleCategoryScreen({ route, navigation }: Pr
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("NutritionArticleDetail", { articleId: item.id })}>
             <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardSnippet} numberOfLines={2}>{item.body}</Text>
+            <Text style={styles.cardSnippet} numberOfLines={2}>
+              {item.body || (item.pdf_url ? "📄 PDF olarak yayınlandı" : "")}
+            </Text>
           </TouchableOpacity>
         )}
       />

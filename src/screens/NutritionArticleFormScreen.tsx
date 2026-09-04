@@ -1,10 +1,12 @@
 import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { getNutritionArticle, createNutritionArticle, updateNutritionArticle } from "../lib/api/nutritionArticles";
+import { getNutritionArticle, createNutritionArticle, updateNutritionArticle, uploadNutritionArticlePdf } from "../lib/api/nutritionArticles";
 import { getArticleCategory } from "../lib/nutritionCategories";
+import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
@@ -13,11 +15,15 @@ type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleForm">;
 export default function NutritionArticleFormScreen({ route, navigation }: Props) {
   const { articleId, category } = route.params;
   const meta = getArticleCategory(category);
+  const { clubId } = useAuth();
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [source, setSource] = useState("");
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfLocalUri, setPdfLocalUri] = useState<string | null>(null);
+  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(!!articleId);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -33,24 +39,51 @@ export default function NutritionArticleFormScreen({ route, navigation }: Props)
       getNutritionArticle(articleId)
         .then((a) => {
           setTitle(a.title);
-          setBody(a.body);
+          setBody(a.body ?? "");
           setSource(a.source ?? "");
+          setPdfUrl(a.pdf_url);
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [articleId])
   );
 
+  const handlePickPdf = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "application/pdf" });
+    if (result.canceled || !result.assets?.[0]) return;
+    setPdfLocalUri(result.assets[0].uri);
+    setPdfFileName(result.assets[0].name);
+  };
+
+  const handleRemovePdf = () => {
+    setPdfUrl(null);
+    setPdfLocalUri(null);
+    setPdfFileName(null);
+  };
+
   const handleSave = async () => {
     if (savingRef.current) return;
     if (!title.trim()) return Alert.alert("Eksik bilgi", "Başlık zorunludur.", [{ text: "Tamam" }]);
-    if (!body.trim()) return Alert.alert("Eksik bilgi", "İçerik zorunludur.", [{ text: "Tamam" }]);
+    const hasPdf = !!(pdfUrl || pdfLocalUri);
+    if (!body.trim() && !hasPdf) {
+      return Alert.alert("Eksik bilgi", "İçerik metni gir ya da bir PDF yükle.", [{ text: "Tamam" }]);
+    }
 
     savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
-      const input = { category, title: title.trim(), body: body.trim(), source: source.trim() || null };
+      let finalPdfUrl = pdfUrl;
+      if (pdfLocalUri && clubId) {
+        finalPdfUrl = await uploadNutritionArticlePdf(pdfLocalUri, clubId);
+      }
+      const input = {
+        category,
+        title: title.trim(),
+        body: body.trim() || null,
+        pdf_url: finalPdfUrl,
+        source: source.trim() || null,
+      };
       if (articleId) {
         await updateNutritionArticle(articleId, input);
       } else {
@@ -72,6 +105,8 @@ export default function NutritionArticleFormScreen({ route, navigation }: Props)
       </View>
     );
   }
+
+  const displayedPdfName = pdfFileName ?? (pdfUrl ? pdfUrl.split("/").pop() : null);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -96,7 +131,22 @@ export default function NutritionArticleFormScreen({ route, navigation }: Props)
           />
         </Field>
 
-        <Field label="İçerik *">
+        <Field label="PDF (isteğe bağlı)">
+          {displayedPdfName ? (
+            <View style={styles.pdfRow}>
+              <Text style={styles.pdfName} numberOfLines={1}>📄 {displayedPdfName}</Text>
+              <TouchableOpacity onPress={handleRemovePdf}>
+                <Text style={styles.pdfRemove}>Kaldır</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.pdfPickButton} onPress={handlePickPdf}>
+              <Text style={styles.pdfPickButtonText}>📎 PDF Seç</Text>
+            </TouchableOpacity>
+          )}
+        </Field>
+
+        <Field label="İçerik (PDF yoksa zorunlu)">
           <TextInput
             onFocus={handleFocus}
             style={[styles.input, styles.inputMultilineTall]}
@@ -155,6 +205,18 @@ const styles = StyleSheet.create({
   },
   inputMultiline: { minHeight: 64, textAlignVertical: "top" },
   inputMultilineTall: { minHeight: 160, textAlignVertical: "top" },
+  pdfPickButton: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderStyle: "dashed",
+    borderRadius: radius.md, paddingVertical: 14, alignItems: "center",
+  },
+  pdfPickButtonText: { color: colors.violet, fontWeight: "700", fontSize: 14 },
+  pdfRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 12,
+  },
+  pdfName: { color: colors.ink, fontSize: 13, flex: 1, marginRight: spacing.sm },
+  pdfRemove: { color: colors.coral, fontWeight: "700", fontSize: 12 },
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

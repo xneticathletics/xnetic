@@ -36,7 +36,14 @@ export default function NutritionArticlesPage() {
     {
       key: "body",
       label: "İçerik",
-      render: (a) => <span className="line-clamp-2 text-muted">{a.body}</span>,
+      render: (a) =>
+        a.pdf_url ? (
+          <a href={a.pdf_url} target="_blank" rel="noreferrer" className="font-semibold text-violet hover:underline">
+            📄 PDF'i görüntüle
+          </a>
+        ) : (
+          <span className="line-clamp-2 text-muted">{a.body}</span>
+        ),
     },
     { key: "source", label: "Kaynakça", render: (a) => a.source ?? "—" },
     {

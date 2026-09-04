@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform } from "react-native";
+import { WebView } from "react-native-webview";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -9,6 +10,18 @@ import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleDetail">;
+
+const PDF_VIEWER_HEIGHT = 520;
+
+// Android'in WebView'ı PDF'i doğrudan (native olarak) gösteremiyor — Google'ın
+// genel doküman görüntüleyicisine sararak açıyoruz. iOS'ta WKWebView PDF'i
+// zaten native olarak render ediyor, doğrudan URL yeterli.
+function pdfViewerUrl(pdfUrl: string): string {
+  if (Platform.OS === "android") {
+    return `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(pdfUrl)}`;
+  }
+  return pdfUrl;
+}
 
 export default function NutritionArticleDetailScreen({ route, navigation }: Props) {
   const { articleId } = route.params;
@@ -75,7 +88,18 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
       </View>
 
       <Text style={styles.title}>{article.title}</Text>
-      <Text style={styles.body}>{article.body}</Text>
+
+      {!!article.body && <Text style={styles.body}>{article.body}</Text>}
+
+      {!!article.pdf_url && (
+        <View style={styles.pdfContainer}>
+          <WebView source={{ uri: pdfViewerUrl(article.pdf_url) }} style={styles.pdfViewer} startInLoadingState renderLoading={() => (
+            <View style={styles.pdfLoading}>
+              <ActivityIndicator color={colors.yellow} />
+            </View>
+          )} />
+        </View>
+      )}
 
       {!!article.source && (
         <View style={styles.sourceBox}>
@@ -109,6 +133,12 @@ const styles = StyleSheet.create({
   categoryBadgeText: { fontSize: 11, fontWeight: "700" },
   title: { color: colors.ink, fontSize: 20, fontWeight: "800", marginBottom: spacing.md },
   body: { color: colors.ink, fontSize: 14, lineHeight: 21, marginBottom: spacing.lg },
+  pdfContainer: {
+    height: PDF_VIEWER_HEIGHT, borderRadius: radius.md, overflow: "hidden",
+    borderWidth: 1, borderColor: colors.line, marginBottom: spacing.lg, backgroundColor: colors.surface,
+  },
+  pdfViewer: { flex: 1, backgroundColor: colors.surface },
+  pdfLoading: { flex: 1, alignItems: "center", justifyContent: "center" },
   sourceBox: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg,

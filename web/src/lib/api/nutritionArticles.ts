@@ -5,7 +5,8 @@ export type NutritionArticle = {
   id: string;
   category: ArticleCategoryKey;
   title: string;
-  body: string;
+  body: string | null;
+  pdf_url: string | null;
   source: string | null;
   created_at: string;
 };
@@ -13,11 +14,12 @@ export type NutritionArticle = {
 export type NutritionArticleInput = {
   category: ArticleCategoryKey;
   title: string;
-  body: string;
+  body: string | null;
+  pdf_url: string | null;
   source: string | null;
 };
 
-const NUTRITION_ARTICLE_FIELDS = "id, category, title, body, source, created_at";
+const NUTRITION_ARTICLE_FIELDS = "id, category, title, body, pdf_url, source, created_at";
 
 export async function listNutritionArticlesByCategory(category: ArticleCategoryKey): Promise<NutritionArticle[]> {
   const { data, error } = await supabase
@@ -50,4 +52,23 @@ export async function updateNutritionArticle(id: string, input: NutritionArticle
 export async function deleteNutritionArticle(id: string) {
   const { error } = await supabase.from("nutrition_articles").delete().eq("id", id);
   if (error) throw error;
+}
+
+// "nutrition-pdfs" bucket'ında da bu değerle senkron (bkz.
+// supabase/migrations/..._nutrition_articles_pdf_attachment.sql).
+export const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+
+// Rehber PDF'ini yükler — kulübe özel bir yolda tutulur ("<clubId>/<dosya>.pdf"),
+// bkz. mobildeki src/lib/api/nutritionArticles.ts ile aynı bucket/yol deseni
+// (dosya okuma yöntemi web'de doğrudan File nesnesi olduğu için daha basit).
+export async function uploadNutritionArticlePdf(file: File, clubId: string): Promise<string> {
+  if (file.size > MAX_PDF_SIZE_BYTES) {
+    throw new Error(`PDF en fazla ${MAX_PDF_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+  const path = `${clubId}/${Date.now()}.pdf`;
+  const { error } = await supabase.storage.from("nutrition-pdfs").upload(path, file, { contentType: "application/pdf" });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("nutrition-pdfs").getPublicUrl(path);
+  return data.publicUrl;
 }
