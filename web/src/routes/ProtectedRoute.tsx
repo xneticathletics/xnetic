@@ -7,18 +7,25 @@ import SubscriptionPendingPage from "./SubscriptionPendingPage";
 export default function ProtectedRoute() {
   const { session, role, loading, signOut } = useAuth();
   const [subscription, setSubscription] = useState<ClubSubscriptionStatus | null>(null);
+  // İlk sorgu dönene kadar false — bu olmadan sayfa, kontrol bitmeden bir
+  // anlığına normal içeriği (Outlet) render ederdi.
+  const [subscriptionChecked, setSubscriptionChecked] = useState(false);
 
   useEffect(() => {
     if (role !== "club_admin") {
       setSubscription(null);
+      setSubscriptionChecked(true);
       return;
     }
     let cancelled = false;
-    getMySubscriptionStatus().then((s) => { if (!cancelled) setSubscription(s); });
+    setSubscriptionChecked(false);
+    getMySubscriptionStatus()
+      .then((s) => { if (!cancelled) setSubscription(s); })
+      .finally(() => { if (!cancelled) setSubscriptionChecked(true); });
     return () => { cancelled = true; };
   }, [role]);
 
-  if (loading) {
+  if (loading || (role === "club_admin" && !subscriptionChecked)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg text-muted">
         Yükleniyor…

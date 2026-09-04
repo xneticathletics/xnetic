@@ -57,7 +57,10 @@ export default function RootNavigator() {
   const [maintenanceMessage, setMaintenanceMessage] = useState("");
   // Sadece Kulüp Admini'nde: kulübün abonelik ödemesi onay bekliyorsa/gecikmişse/
   // iptal edilmişse App'e hiç girmeden bir bilgilendirme ekranı gösterilir.
+  // subscriptionChecked: ilk sorgu dönene kadar false — bu olmadan
+  // stillChecking, kontrol bitmeden Ana Sayfa'yı bir anlığına render ederdi.
   const [subscription, setSubscription] = useState<ClubSubscriptionStatus | null>(null);
+  const [subscriptionChecked, setSubscriptionChecked] = useState(false);
   // Şifre değiştirme işlemi (supabase.auth.updateUser) oturumu tazeliyor,
   // bu da AŞAĞIDAKİ [session, role] efektini TEKRAR tetikleyip sunucudan
   // must_change_password'ü YENİDEN sorguluyordu — bu ikinci sorgu, bizim
@@ -136,13 +139,15 @@ export default function RootNavigator() {
   useEffect(() => {
     if (!session || role !== "club_admin") {
       setSubscription(null);
+      setSubscriptionChecked(false);
       return;
     }
     let cancelled = false;
     const checkSubscription = () => {
       getMySubscriptionStatus()
         .then((s) => { if (!cancelled) setSubscription(s); })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setSubscriptionChecked(true); });
     };
     checkSubscription();
     // Süper Admin onayı verdiğinde uygulamanın açık kalıp kalmadığından
@@ -216,6 +221,7 @@ export default function RootNavigator() {
     !isRecovering &&
     session && role && (
       mustChangePassword === null ||
+      (mustChangePassword === false && role === "club_admin" && !subscriptionChecked) ||
       (mustChangePassword === false && onboardingDone === null) ||
       (mustChangePassword === false && onboardingDone === true && consentsDone === null)
     );
