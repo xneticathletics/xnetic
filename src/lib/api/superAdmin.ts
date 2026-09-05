@@ -1,5 +1,8 @@
+import * as FileSystem from "expo-file-system/legacy";
+import { decode } from "base64-arraybuffer";
 import { supabase } from "../supabase";
 import { sendNotification } from "./notifications";
+import { MAX_ATTACHMENT_SIZE_BYTES } from "./announcements";
 
 export type ClubSummary = {
   id: string;
@@ -163,10 +166,36 @@ export async function getPlatformStats(): Promise<PlatformStats> {
 // Herhangi bir gerçek kulübün veli/sporcu/antrenör verisine hiç erişimi
 // olmaması gerektiği için (gizlilik/güvenlik) mesajlaşma ve duyuru burada
 // KASITLI olarak sadece club_admin rolüyle sınırlı tutuluyor.
-export async function notifyAllClubAdmins(title: string, body: string): Promise<number> {
+export async function notifyAllClubAdmins(title: string, body: string, attachmentUrl?: string | null): Promise<number> {
   const { data, error } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
   if (error) throw error;
   const admins = data ?? [];
-  await Promise.all(admins.map((a) => sendNotification(a.id, title, body).catch(() => {})));
+  const payload = attachmentUrl ? { attachmentUrl } : undefined;
+  await Promise.all(admins.map((a) => sendNotification(a.id, title, body, undefined, payload).catch(() => {})));
   return admins.length;
+}
+
+// Süper Admin duyurusuna eklenen dosya — club_id'si olmadığı için kulüp-özel
+// announcement-attachments yoluna (<clubId>/...) yazamıyor, bu yüzden
+// "broadcast/" önekiyle ayrı bir yola yazıyor (bkz. migration
+// 20260905070000_broadcast_attachments.sql — is_super_admin() için bucket
+// içinde herhangi bir yola yazma izni var). Aynı 1 MB sınırı geçerli.
+export async function uploadBroadcastAttachment(localUri: string, fileName: string, mimeType: string | null): Promise<string> {
+  const info = await FileSystem.getInfoAsync(localUri);
+  if (info.exists && info.size > MAX_ATTACHMENT_SIZE_BYTES) {
+    throw new Error(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+
+  const ext = fileName.split(".").pop()?.split("?")[0] || "bin";
+  const path = `broadcast/${Date.now()}.${ext}`;
+  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+  const arrayBuffer = decode(base64);
+
+  const { error } = await supabase.storage
+    .from("announcement-attachments")
+    .upload(path, arrayBuffer, { contentType: mimeType ?? "application/octet-stream" });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
+  return data.publicUrl;
 }

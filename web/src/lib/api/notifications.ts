@@ -29,11 +29,37 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "announcement", label: "Yeni Duyuru" },
 ];
 
+// Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç
+// gerekmiyor (sadece bir bildirim satırının birincil anahtarı).
+function generateUuid(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // event_type verilmezse (ör. süper admin duyurusu gibi kategorisiz
 // gönderimler) hiçbir susturma kontrolünden geçmez — sadece aşağıdaki 8
 // kategoriden biri verildiğinde alıcı, o türü susturmuşsa bildirim hiç
 // oluşturulmaz. Mobildeki src/lib/api/notifications.ts ile birebir aynı.
-export async function sendNotification(recipientUserId: string, title: string, body: string, eventType?: NotificationEventType) {
+//
+// ÖNEMLİ: insert sonrası .select() ile satırı geri ÇEKMİYORUZ — bilerek.
+// notifications_select_own RLS politikası sadece ALICININ kendi bildirimini
+// görmesine izin veriyor; Postgres'te bir INSERT ... RETURNING (PostgREST'in
+// .select() zinciri) o SELECT politikasını da uygulamaya çalışıyor, bu
+// yüzden gönderen kendisi değilse (neredeyse her zaman) "new row violates
+// row-level security policy" hatasıyla SESSİZCE başarısız oluyordu (çoğu
+// çağrı noktası .catch(()=>{}) ile hatayı yutuyordu, bu yüzden fark
+// edilmemişti). id'yi insert'ten ÖNCE kendimiz üretip push tetiklemek için
+// kullanıyoruz, RETURNING'e hiç gerek kalmıyor.
+export async function sendNotification(
+  recipientUserId: string,
+  title: string,
+  body: string,
+  eventType?: NotificationEventType,
+  payload?: Record<string, unknown>
+) {
   if (eventType) {
     const { data, error: checkError } = await supabase
       .from("users")
@@ -43,14 +69,13 @@ export async function sendNotification(recipientUserId: string, title: string, b
     if (!checkError && data?.muted_notification_types?.includes(eventType)) return;
   }
 
-  const { data: inserted, error } = await supabase
+  const id = generateUuid();
+  const { error } = await supabase
     .from("notifications")
-    .insert({ recipient_user_id: recipientUserId, title, body, event_type: eventType ?? null })
-    .select("id")
-    .single();
+    .insert({ id, recipient_user_id: recipientUserId, title, body, event_type: eventType ?? null, payload: payload ?? null });
   if (error) throw error;
 
-  triggerPushNotification(inserted.id);
+  triggerPushNotification(id);
 }
 
 // Push gönderimi best-effort: başarısız olsa da uygulama-içi bildirim akışını

@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import { sendNotification } from "./notifications";
+import { MAX_ATTACHMENT_SIZE_BYTES } from "./announcements";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -352,10 +353,29 @@ export async function getPlatformStats(): Promise<PlatformStats> {
 // Herhangi bir gerçek kulübün veli/sporcu/antrenör verisine hiç erişimi
 // olmaması gerektiği için (gizlilik/güvenlik) mesajlaşma ve duyuru burada
 // KASITLI olarak sadece club_admin rolüyle sınırlı tutuluyor.
-export async function notifyAllClubAdmins(title: string, body: string): Promise<number> {
+export async function notifyAllClubAdmins(title: string, body: string, attachmentUrl?: string | null): Promise<number> {
   const { data, error } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
   if (error) throw error;
   const admins = data ?? [];
-  await Promise.all(admins.map((a) => sendNotification(a.id, title, body).catch(() => {})));
+  const payload = attachmentUrl ? { attachmentUrl } : undefined;
+  await Promise.all(admins.map((a) => sendNotification(a.id, title, body, undefined, payload).catch(() => {})));
   return admins.length;
+}
+
+// Süper Admin duyurusuna eklenen dosya — club_id'si olmadığı için kulüp-özel
+// announcement-attachments yoluna (<clubId>/...) yazamıyor, "broadcast/"
+// önekiyle ayrı bir yola yazıyor (bkz. migration
+// 20260905070000_broadcast_attachments.sql). Aynı 1 MB sınırı geçerli.
+export async function uploadBroadcastAttachment(file: File): Promise<string> {
+  if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+    throw new Error(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+  const ext = file.name.split(".").pop() || "bin";
+  const path = `broadcast/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("announcement-attachments")
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+  if (error) throw error;
+  const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
+  return data.publicUrl;
 }

@@ -1,11 +1,33 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet, ActivityIndicator, Image, Linking, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
   listMyNotifications, getMyUnreadNotificationCount, markAllNotificationsRead,
   type AppNotification,
 } from "../lib/api/notifications";
+
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "heic"];
+
+// AnnouncementDetailScreen.tsx'teki AnnouncementAttachment ile aynı desen —
+// görselse doğrudan gösterir, değilse cihazın kendi uygulamasında açması
+// için bir buton gösterir.
+function NotificationAttachment({ url }: { url: string }) {
+  const ext = url.split(".").pop()?.split("?")[0]?.toLowerCase() ?? "";
+  const isImage = IMAGE_EXTENSIONS.includes(ext);
+
+  if (isImage) {
+    return <Image source={{ uri: url }} style={styles.attachmentImage} resizeMode="cover" />;
+  }
+  return (
+    <TouchableOpacity
+      style={styles.attachmentButton}
+      onPress={() => Linking.openURL(url).catch(() => Alert.alert("Açılamadı", "Ek dosya açılamadı.", [{ text: "Tamam" }]))}
+    >
+      <Text style={styles.attachmentButtonText}>📎 Ek Dosyayı Aç</Text>
+    </TouchableOpacity>
+  );
+}
 
 // Ana Sayfa'nın sağ üstünde duran zil — dokununca açılır bir pencere
 // gösterir, hiçbir sayfaya yönlendirme yapmaz. Kapatınca (X ya da
@@ -78,6 +100,7 @@ export default function NotificationBell() {
                   <View style={styles.notifRow}>
                     <Text style={styles.notifTitle}>{item.title}</Text>
                     <Text style={styles.notifBody}>{item.body}</Text>
+                    {!!item.payload?.attachmentUrl && <NotificationAttachment url={item.payload.attachmentUrl} />}
                     <Text style={styles.notifDate}>{formatDate(item.created_at)}</Text>
                   </View>
                 )}
@@ -112,4 +135,7 @@ const styles = StyleSheet.create({
   notifTitle: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   notifBody: { color: colors.muted, fontSize: 12, marginTop: 2, lineHeight: 16 },
   notifDate: { color: colors.muted, fontSize: 10, marginTop: 4 },
+  attachmentImage: { width: "100%", height: 140, borderRadius: radius.md, marginTop: spacing.sm, backgroundColor: colors.bg },
+  attachmentButton: { borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingVertical: 8, alignItems: "center", marginTop: spacing.sm },
+  attachmentButtonText: { color: colors.teal, fontWeight: "700", fontSize: 12 },
 });

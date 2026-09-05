@@ -3,9 +3,11 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { notifyAllClubAdmins } from "../lib/api/superAdmin";
+import { notifyAllClubAdmins, uploadBroadcastAttachment } from "../lib/api/superAdmin";
+import { MAX_ATTACHMENT_SIZE_BYTES } from "../lib/api/announcements";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -18,8 +20,30 @@ export default function SuperAdminAnnounceScreen({ navigation }: Props) {
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [attachmentUri, setAttachmentUri] = useState<string | null>(null);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
+  const [attachmentMimeType, setAttachmentMimeType] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePickAttachment = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    if (asset.size != null && asset.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      Alert.alert("Dosya çok büyük", `Ekler en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`, [{ text: "Tamam" }]);
+      return;
+    }
+    setAttachmentUri(asset.uri);
+    setAttachmentName(asset.name);
+    setAttachmentMimeType(asset.mimeType ?? null);
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentUri(null);
+    setAttachmentName(null);
+    setAttachmentMimeType(null);
+  };
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) {
@@ -28,9 +52,14 @@ export default function SuperAdminAnnounceScreen({ navigation }: Props) {
     setSending(true);
     setError(null);
     try {
-      const count = await notifyAllClubAdmins(title.trim(), body.trim());
+      let attachmentUrl: string | null = null;
+      if (attachmentUri && attachmentName) {
+        attachmentUrl = await uploadBroadcastAttachment(attachmentUri, attachmentName, attachmentMimeType);
+      }
+      const count = await notifyAllClubAdmins(title.trim(), body.trim(), attachmentUrl);
       setTitle("");
       setBody("");
+      handleRemoveAttachment();
       Alert.alert("Gönderildi", `Duyuru ${count} kulüp adminine gönderildi.`, [{ text: "Tamam" }]);
     } catch (e: any) {
       setError(e.message ?? "Gönderilemedi");
@@ -68,6 +97,20 @@ export default function SuperAdminAnnounceScreen({ navigation }: Props) {
           multiline
         />
 
+        <Text style={styles.label}>{`Ek (isteğe bağlı, en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB)`}</Text>
+        {attachmentName ? (
+          <View style={styles.attachmentRow}>
+            <Text style={styles.attachmentText} numberOfLines={1}>📎 {attachmentName}</Text>
+            <TouchableOpacity onPress={handleRemoveAttachment}>
+              <Text style={styles.attachmentRemove}>Kaldır</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.attachmentButton} onPress={handlePickAttachment}>
+            <Text style={styles.attachmentButtonText}>+ Fotoğraf, Video ya da Belge Ekle</Text>
+          </TouchableOpacity>
+        )}
+
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity style={styles.button} onPress={handleSend} disabled={sending}>
@@ -91,6 +134,15 @@ const styles = StyleSheet.create({
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
   inputMultiline: { minHeight: 120, textAlignVertical: "top" },
+  attachmentRow: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10,
+  },
+  attachmentText: { color: colors.ink, fontWeight: "600", fontSize: 13, flex: 1, marginRight: spacing.sm },
+  attachmentRemove: { color: colors.coral, fontSize: 12, fontWeight: "600" },
+  attachmentButton: { borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingVertical: 10, alignItems: "center" },
+  attachmentButtonText: { color: colors.teal, fontWeight: "700", fontSize: 12 },
   errorText: { color: colors.coral, marginTop: spacing.md, textAlign: "center" },
   button: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.xl },
   buttonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
