@@ -41,7 +41,6 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
     { key: "sporcu_takibi", label: "Sporcu Takibi", sub: "Çocuğunun gelişimini takip et", icon: "📊" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { key: "freeze", label: "Kayıt Dondurma", sub: "", icon: "🧊" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
   athlete: [
@@ -81,6 +80,9 @@ export const COORDINATOR_TILES: Tile[] = [
   { key: "antrenman", label: "Antrenman-Maç Takvimi", sub: "", icon: "📅" },
   { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
   { key: "aidat", label: "Finans", sub: "Branşının aidatları", icon: "💰" },
+  { key: "performans", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
+  { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
+  { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
   { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
 ];
 

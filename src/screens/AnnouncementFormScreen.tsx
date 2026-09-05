@@ -1,13 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { createAnnouncement, type AnnouncementTarget } from "../lib/api/announcements";
+import {
+  createAnnouncement, uploadAnnouncementAttachment, MAX_ATTACHMENT_SIZE_BYTES, type AnnouncementTarget,
+} from "../lib/api/announcements";
 import type { Group } from "../lib/api/groups";
 import { listGroups } from "../lib/api/groups";
 import type { Branch } from "../lib/api/branches";
 import { listBranches } from "../lib/api/branches";
 import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
+import { useAuth } from "../context/AuthContext";
 import type { ProfileStackParamList } from "../navigation/ProfileStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
@@ -22,9 +26,13 @@ const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
 ];
 
 export default function AnnouncementFormScreen({ navigation }: Props) {
+  const { clubId } = useAuth();
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [attachmentUri, setAttachmentUri] = useState<string | null>(null);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
+  const [attachmentMimeType, setAttachmentMimeType] = useState<string | null>(null);
   const [targetTypes, setTargetTypes] = useState<AnnouncementTarget[]>([]);
   const [groupPickerVisible, setGroupPickerVisible] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState<Group[]>([]);
@@ -54,6 +62,25 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
 
   const removeGroup = (id: string) => setSelectedGroups((prev) => prev.filter((g) => g.id !== id));
 
+  const handlePickAttachment = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    if (asset.size != null && asset.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      Alert.alert("Dosya çok büyük", `Ekler en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`, [{ text: "Tamam" }]);
+      return;
+    }
+    setAttachmentUri(asset.uri);
+    setAttachmentName(asset.name);
+    setAttachmentMimeType(asset.mimeType ?? null);
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentUri(null);
+    setAttachmentName(null);
+    setAttachmentMimeType(null);
+  };
+
   const handleSave = async () => {
     if (savingRef.current) return;
     if (!title.trim() || !body.trim()) {
@@ -73,11 +100,16 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
     setSaving(true);
     setError(null);
     try {
+      let attachmentUrl: string | null = null;
+      if (attachmentUri && attachmentName && clubId) {
+        attachmentUrl = await uploadAnnouncementAttachment(attachmentUri, clubId, attachmentName, attachmentMimeType);
+      }
       await createAnnouncement({
         title,
         body,
         target_types: targetTypes,
         target_ids: targetTypes.includes("group") ? selectedGroups.map((g) => g.id) : null,
+        attachment_url: attachmentUrl,
       });
       navigation.goBack();
     } catch (e: any) {
@@ -138,6 +170,21 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
             );
           })}
         </View>
+      </Field>
+
+      <Field label={`Ek (isteğe bağlı, en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB)`}>
+        {attachmentName ? (
+          <View style={styles.selectedGroupRow}>
+            <Text style={styles.selectedGroupText} numberOfLines={1}>📎 {attachmentName}</Text>
+            <TouchableOpacity onPress={handleRemoveAttachment}>
+              <Text style={styles.removeGroupText}>Kaldır</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.addGroupButton} onPress={handlePickAttachment}>
+            <Text style={styles.addGroupButtonText}>+ Fotoğraf, Video ya da Belge Ekle</Text>
+          </TouchableOpacity>
+        )}
       </Field>
 
       {targetTypes.includes("group") && (

@@ -7,6 +7,7 @@ import { listNutritionFoodsByCategory, type NutritionFood } from "../lib/api/nut
 import { listNutritionRecipesByCategory, type NutritionRecipe } from "../lib/api/nutritionRecipes";
 import { getFoodCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionFoodCategory">;
@@ -35,6 +36,8 @@ function sourceLabel(role: string | null, clubId: string | null, clubs: { name: 
 export default function NutritionFoodCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const meta = getFoodCategory(category);
   const foodsLabel = FOODS_SECTION_LABEL[category] ?? "Örnek Besinler";
 
@@ -83,14 +86,14 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
   rows.push({
     kind: "sectionHeader",
     title: foodsLabel,
-    onAdd: role === "club_admin" ? () => navigation.navigate("NutritionFoodForm", { foodId: undefined, category }) : undefined,
+    onAdd: role === "club_admin" || isCoordinator ? () => navigation.navigate("NutritionFoodForm", { foodId: undefined, category }) : undefined,
   });
   if (foods.length === 0 && !loading) rows.push({ kind: "empty", text: "Henüz eklenmedi." });
   foods.forEach((f) => rows.push({ kind: "food", data: f }));
   rows.push({
     kind: "sectionHeader",
     title: "Sporcu Tarifleri",
-    onAdd: role === "club_admin" ? () => navigation.navigate("NutritionRecipeForm", { recipeId: undefined, category }) : undefined,
+    onAdd: role === "club_admin" || isCoordinator ? () => navigation.navigate("NutritionRecipeForm", { recipeId: undefined, category }) : undefined,
   });
   if (recipes.length === 0 && !loading) rows.push({ kind: "empty", text: "Henüz tarif eklenmedi." });
   recipes.forEach((r) => rows.push({ kind: "recipe", data: r }));

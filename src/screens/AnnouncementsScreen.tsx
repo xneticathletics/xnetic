@@ -108,6 +108,7 @@ export default function AnnouncementsScreen({ navigation }: Props) {
               </View>
             )}
             <Text style={styles.rowBody} numberOfLines={1}>{item.body}</Text>
+            {!!item.attachment_url && <Text style={styles.rowAttachment}>📎 Ek dosya</Text>}
           </TouchableOpacity>
         )}
       />
@@ -135,4 +136,5 @@ const styles = StyleSheet.create({
   },
   rowTitleInline: { color: colors.yellow, fontSize: 20, fontWeight: "700", flex: 1, marginRight: spacing.sm },
   rowBody: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+  rowAttachment: { color: colors.teal, fontSize: 11, fontWeight: "600", marginTop: 4 },
 });

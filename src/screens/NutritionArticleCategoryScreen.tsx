@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listNutritionArticlesByCategory, type NutritionArticle } from "../lib/api/nutritionArticles";
 import { getArticleCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleCategory">;
@@ -13,6 +14,10 @@ type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleCategor
 export default function NutritionArticleCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const { role } = useAuth();
+  // Branş Koordinatörü, Beslenme/Performans/Fitness sayfalarında Kulüp
+  // Admini gibi yetkili — bkz. BranchSelectContext.tsx.
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const meta = getArticleCategory(category);
 
   const [articles, setArticles] = useState<NutritionArticle[]>([]);
@@ -53,7 +58,7 @@ export default function NutritionArticleCategoryScreen({ route, navigation }: Pr
         <Text style={[styles.heroTitle, { color: meta.color }]}>{meta.label}</Text>
       </View>
 
-      {role === "club_admin" && (
+      {(role === "club_admin" || isCoordinator) && (
         <TouchableOpacity
           style={[styles.addButton, { borderColor: meta.color }]}
           onPress={() => navigation.navigate("NutritionArticleForm", { articleId: undefined, category })}

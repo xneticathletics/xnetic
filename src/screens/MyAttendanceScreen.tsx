@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -7,6 +7,7 @@ import { getMyAthletes } from "../lib/api/myAthletes";
 import { listAthleteAttendance, type AthleteAttendanceRecord } from "../lib/api/attendance";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "MyAttendance">;
 
@@ -19,7 +20,9 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function MyAttendanceScreen({ navigation }: Props) {
   useHomeButton(navigation);
+  const { role } = useAuth();
   const [records, setRecords] = useState<AthleteAttendanceRecord[]>([]);
+  const [athleteId, setAthleteId] = useState<string | null>(null);
   const [athleteName, setAthleteName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +42,10 @@ export default function MyAttendanceScreen({ navigation }: Props) {
             if (!cancelled) setError("Bağlı bir sporcu bulunamadı.");
             return;
           }
-          if (!cancelled) setAthleteName(athletes[0].full_name);
+          if (!cancelled) {
+            setAthleteId(athletes[0].id);
+            setAthleteName(athletes[0].full_name);
+          }
           const data = await listAthleteAttendance(athletes[0].id);
           if (!cancelled) setRecords(data);
         } catch (e: any) {
@@ -61,6 +67,15 @@ export default function MyAttendanceScreen({ navigation }: Props) {
         <Text style={styles.subtitle}>
           {athleteName} · {presentCount}/{records.length} antrenmana katıldı
         </Text>
+      )}
+
+      {role === "parent" && (
+        <TouchableOpacity
+          style={styles.freezeButton}
+          onPress={() => navigation.navigate("MembershipFreeze", { athleteId: athleteId ?? undefined, athleteName: athleteName ?? undefined })}
+        >
+          <Text style={styles.freezeButtonText}>🧊 Kayıt Dondurma</Text>
+        </TouchableOpacity>
       )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
@@ -92,6 +107,11 @@ const styles = StyleSheet.create({
   title: { color: colors.ink, fontSize: 20, fontWeight: "700" },
   subtitle: { color: colors.muted, fontSize: 13, marginTop: 2, marginBottom: spacing.md },
   error: { color: colors.coral, marginTop: spacing.md },
+  freezeButton: {
+    alignSelf: "flex-start", borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface,
+    borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md,
+  },
+  freezeButtonText: { color: colors.teal, fontWeight: "700", fontSize: 12 },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",

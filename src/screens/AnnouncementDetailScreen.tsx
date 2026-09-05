@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Linking, Alert } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth } from "../context/AuthContext";
@@ -89,6 +89,8 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
       <Text style={styles.title}>{announcement.title}</Text>
       <Text style={styles.body}>{announcement.body}</Text>
 
+      {!!announcement.attachment_url && <AnnouncementAttachment url={announcement.attachment_url} />}
+
       {canSeeReaders && (
         <View style={styles.readersSection}>
           <Text style={styles.readersTitle}>Okuyanlar ({readers.length})</Text>
@@ -112,6 +114,29 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
   );
 }
 
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "heic"];
+
+// Ek görsel ise ekranda doğrudan gösterir; değilse (video/belge) cihazın
+// kendi uygulamasında (galeri, doküman görüntüleyici vb.) açması için bir
+// buton gösterir — 1 MB sınırı sayesinde her tür dosya zaten çok küçük.
+function AnnouncementAttachment({ url }: { url: string }) {
+  const ext = url.split(".").pop()?.split("?")[0]?.toLowerCase() ?? "";
+  const isImage = IMAGE_EXTENSIONS.includes(ext);
+
+  if (isImage) {
+    return <Image source={{ uri: url }} style={styles.attachmentImage} resizeMode="cover" />;
+  }
+
+  return (
+    <TouchableOpacity
+      style={styles.attachmentButton}
+      onPress={() => Linking.openURL(url).catch(() => Alert.alert("Açılamadı", "Ek dosya açılamadı.", [{ text: "Tamam" }]))}
+    >
+      <Text style={styles.attachmentButtonText}>📎 Ek Dosyayı Aç</Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
   loadingContainer: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", padding: spacing.lg },
@@ -119,6 +144,12 @@ const styles = StyleSheet.create({
   date: { color: colors.muted, fontSize: 12, marginBottom: spacing.sm },
   title: { color: colors.ink, fontSize: 20, fontWeight: "700", marginBottom: spacing.sm },
   body: { color: colors.ink, fontSize: 15, lineHeight: 22 },
+  attachmentImage: { width: "100%", height: 220, borderRadius: radius.md, marginTop: spacing.md, backgroundColor: colors.surface },
+  attachmentButton: {
+    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md, paddingVertical: 12,
+    alignItems: "center", marginTop: spacing.md,
+  },
+  attachmentButtonText: { color: colors.teal, fontWeight: "700", fontSize: 13 },
   readersSection: { marginTop: spacing.xl, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.md, flex: 1 },
   readersTitle: { color: colors.muted, fontSize: 12, fontWeight: "700", marginBottom: spacing.sm, textTransform: "uppercase" },
   empty: { color: colors.muted, fontSize: 13 },

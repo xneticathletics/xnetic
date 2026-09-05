@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { getNutritionFood, deleteNutritionFood, type NutritionFood } from "../lib/api/nutritionFoods";
 import { getFoodCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionFoodDetail">;
@@ -23,6 +24,8 @@ function MacroBox({ label, value }: { label: string; value: number | null }) {
 export default function NutritionFoodDetailScreen({ route, navigation }: Props) {
   const { foodId } = route.params;
   const { role, clubId: myClubId } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const [food, setFood] = useState<NutritionFood | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +84,7 @@ export default function NutritionFoodDetailScreen({ route, navigation }: Props) 
   // sadece YENİ global besin eklemek ve global bir besini silmek Süper
   // Admin'e özel (bkz. FitnessCategoryScreen.tsx'teki aynı mantık).
   const canEdit = food.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : food.club_id === myClubId;
-  const canDelete = food.club_id === null ? role === "super_admin" : food.club_id === myClubId && role === "club_admin";
+  const canDelete = food.club_id === null ? role === "super_admin" : food.club_id === myClubId && (role === "club_admin" || isCoordinator);
   const sourceLabel =
     role === "super_admin" ? (food.club_id === null ? "🌐 Global (Platform)" : `🏢 ${food.clubs?.name ?? "Bir kulüp"}`) : undefined;
 

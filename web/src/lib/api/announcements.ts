@@ -11,6 +11,7 @@ export type Announcement = {
   title: string;
   body: string;
   created_at: string;
+  attachment_url: string | null;
 };
 
 export type AnnouncementInput = {
@@ -18,15 +19,35 @@ export type AnnouncementInput = {
   target_ids: string[] | null;
   title: string;
   body: string;
+  attachment_url?: string | null;
 };
 
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, title, body, created_at")
+    .select("id, target_types, target_ids, title, body, created_at, attachment_url")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+// Duyuru eki: fotoğraf/video/belge — max 1 MB (bkz. migration
+// 20260905050000_announcement_attachments.sql'deki bucket sınırı, mobildeki
+// src/lib/api/announcements.ts ile birebir aynı sınır).
+export const MAX_ATTACHMENT_SIZE_BYTES = 1 * 1024 * 1024;
+
+export async function uploadAnnouncementAttachment(file: File, clubId: string): Promise<string> {
+  if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+    throw new Error(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+  const ext = file.name.split(".").pop() || "bin";
+  const path = `${clubId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("announcement-attachments")
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+  if (error) throw error;
+  const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
+  return data.publicUrl;
 }
 
 // Duyuru hedeflerine (target_types/target_ids) göre gerçek alıcı kullanıcı

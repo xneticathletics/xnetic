@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listNutritionRecipesByCategory, type NutritionRecipe } from "../lib/api/nutritionRecipes";
 import { getFoodCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipeCategory">;
@@ -21,6 +22,8 @@ function sourceLabel(role: string | null, clubId: string | null, clubs: { name: 
 export default function NutritionRecipeCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const meta = getFoodCategory(category);
 
   const [recipes, setRecipes] = useState<NutritionRecipe[]>([]);
@@ -69,7 +72,7 @@ export default function NutritionRecipeCategoryScreen({ route, navigation }: Pro
               <Text style={styles.heroIcon}>🍳</Text>
               <Text style={[styles.heroTitle, { color: meta.color }]}>{meta.label} Tarifleri</Text>
             </View>
-            {role === "club_admin" && (
+            {(role === "club_admin" || isCoordinator) && (
               <TouchableOpacity
                 style={[styles.addButton, { borderColor: meta.color }]}
                 onPress={() => navigation.navigate("NutritionRecipeForm", { recipeId: undefined, category })}

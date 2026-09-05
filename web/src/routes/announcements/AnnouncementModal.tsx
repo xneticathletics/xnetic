@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
-import { createAnnouncement, type AnnouncementTarget } from "../../lib/api/announcements";
+import {
+  createAnnouncement, uploadAnnouncementAttachment, MAX_ATTACHMENT_SIZE_BYTES, type AnnouncementTarget,
+} from "../../lib/api/announcements";
 import { listGroups, type Group } from "../../lib/api/groups";
+import { useAuth } from "../../context/AuthContext";
 
 const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
   { value: "club", label: "Tüm Kulüp" },
@@ -13,13 +16,26 @@ const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
 ];
 
 export default function AnnouncementModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const { clubId } = useAuth();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [targetTypes, setTargetTypes] = useState<AnnouncementTarget[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePickAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      setError(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+      e.target.value = "";
+      return;
+    }
+    setAttachmentFile(file);
+  };
 
   useEffect(() => {
     listGroups().then(setGroups).catch(() => {});
@@ -41,11 +57,16 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
     setSaving(true);
     setError(null);
     try {
+      let attachmentUrl: string | null = null;
+      if (attachmentFile && clubId) {
+        attachmentUrl = await uploadAnnouncementAttachment(attachmentFile, clubId);
+      }
       await createAnnouncement({
         title: title.trim(),
         body: body.trim(),
         target_types: targetTypes,
         target_ids: targetTypes.includes("group") ? selectedGroupIds : null,
+        attachment_url: attachmentUrl,
       });
       onSaved();
     } catch (e: any) {
@@ -84,6 +105,11 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
             );
           })}
         </div>
+      </FormField>
+
+      <FormField label={`Ek (isteğe bağlı, en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB — fotoğraf, video, belge)`}>
+        <input type="file" onChange={handlePickAttachment} className="text-xs text-muted" />
+        {attachmentFile && <p className="mt-1 text-xs text-teal">📎 {attachmentFile.name}</p>}
       </FormField>
 
       {targetTypes.includes("group") && (

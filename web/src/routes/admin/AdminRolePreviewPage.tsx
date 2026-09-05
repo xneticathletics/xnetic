@@ -22,6 +22,9 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Antrenman-Maç Takvimi", sub: "", icon: "📅" },
     { label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
     { label: "Finans", sub: "Branşının aidatları", icon: "💰" },
+    { label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
+    { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
+    { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
   coach: [
@@ -38,7 +41,6 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Aidat Öde", sub: "", icon: "💰" },
     { label: "Sporcu Takibi", sub: "Çocuğunun gelişimini takip et", icon: "📊" },
     { label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { label: "Kayıt Dondurma", sub: "", icon: "🧊" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
   athlete: [

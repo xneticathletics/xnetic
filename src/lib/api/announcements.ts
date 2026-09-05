@@ -1,3 +1,5 @@
+import * as FileSystem from "expo-file-system/legacy";
+import { decode } from "base64-arraybuffer";
 import { supabase } from "../supabase";
 import { getCurrentAppUserId } from "./currentUser";
 import { sendNotification } from "./notifications";
@@ -11,6 +13,7 @@ export type Announcement = {
   title: string;
   body: string;
   created_at: string;
+  attachment_url: string | null;
 };
 
 export type AnnouncementInput = {
@@ -18,16 +21,47 @@ export type AnnouncementInput = {
   target_ids: string[] | null;
   title: string;
   body: string;
+  attachment_url?: string | null;
 };
 
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, title, body, created_at")
+    .select("id, target_types, target_ids, title, body, created_at, attachment_url")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
   return data ?? [];
+}
+
+// Duyuru eki: fotoğraf/video/belge — max 1 MB (bkz. migration
+// 20260905050000_announcement_attachments.sql'deki bucket sınırı, ikisi
+// senkron tutulmalı). Kulübe özel bir yolda tutulur ("<clubId>/<dosya>").
+export const MAX_ATTACHMENT_SIZE_BYTES = 1 * 1024 * 1024;
+
+export async function uploadAnnouncementAttachment(
+  localUri: string,
+  clubId: string,
+  fileName: string,
+  mimeType: string | null
+): Promise<string> {
+  const info = await FileSystem.getInfoAsync(localUri);
+  if (info.exists && info.size > MAX_ATTACHMENT_SIZE_BYTES) {
+    throw new Error(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+
+  const ext = fileName.split(".").pop()?.split("?")[0] || "bin";
+  const path = `${clubId}/${Date.now()}.${ext}`;
+  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+  const arrayBuffer = decode(base64);
+
+  const { error } = await supabase.storage
+    .from("announcement-attachments")
+    .upload(path, arrayBuffer, { contentType: mimeType ?? "application/octet-stream" });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
+  return data.publicUrl;
 }
 
 // Duyuru hedeflerine (target_types/target_ids) göre gerçek alıcı kullanıcı

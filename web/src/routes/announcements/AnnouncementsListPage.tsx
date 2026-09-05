@@ -10,6 +10,20 @@ const TARGET_LABEL: Record<string, string> = {
   coaches: "Antrenörler",
 };
 
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
+
+function AnnouncementAttachment({ url }: { url: string }) {
+  const ext = url.split(".").pop()?.split("?")[0]?.toLowerCase() ?? "";
+  if (IMAGE_EXTENSIONS.includes(ext)) {
+    return <img src={url} alt="Ek" className="mb-2 max-h-48 rounded-lg border border-line object-cover" />;
+  }
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="mb-2 inline-block text-xs font-bold text-teal hover:underline">
+      📎 Ek Dosyayı Aç
+    </a>
+  );
+}
+
 export default function AnnouncementsListPage() {
   const [items, setItems] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +81,7 @@ export default function AnnouncementsListPage() {
             </div>
             <p className="mb-1 text-lg font-bold text-yellow">{a.title}</p>
             <p className="mb-2 text-sm text-muted">{a.body}</p>
+            {a.attachment_url && <AnnouncementAttachment url={a.attachment_url} />}
             <button onClick={() => toggleReaders(a.id)} className="text-xs font-bold text-teal hover:underline">
               {readersFor === a.id ? "Gizle" : "Kimler Okudu?"}
             </button>

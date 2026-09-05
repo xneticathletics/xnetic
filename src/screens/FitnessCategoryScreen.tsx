@@ -7,6 +7,7 @@ import { getFitnessCategory } from "../lib/fitnessExercises";
 import { listCustomExercisesByCategory, type CustomFitnessExercise } from "../lib/api/customFitnessExercises";
 import { listHiddenExerciseIds } from "../lib/api/fitnessExerciseVisibility";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessCategory">;
@@ -16,6 +17,8 @@ type Row = { key: string; name: string; exerciseId?: string; sourceLabel?: strin
 export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const { role, clubId } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const meta = getFitnessCategory(category);
 
   const [customExercises, setCustomExercises] = useState<CustomFitnessExercise[]>([]);
@@ -88,7 +91,7 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
         <Text style={styles.heroSubtitle}>Bir egzersiz seç</Text>
       </View>
 
-      {role === "club_admin" && (
+      {(role === "club_admin" || isCoordinator) && (
         <TouchableOpacity
           style={[styles.manageButton, { borderColor: meta.color }]}
           onPress={() => navigation.navigate("FitnessExerciseVisibility", { category })}

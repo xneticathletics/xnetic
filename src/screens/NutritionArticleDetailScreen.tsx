@@ -7,6 +7,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { getNutritionArticle, deleteNutritionArticle, type NutritionArticle } from "../lib/api/nutritionArticles";
 import { getArticleCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleDetail">;
@@ -26,6 +27,8 @@ function pdfViewerUrl(pdfUrl: string): string {
 export default function NutritionArticleDetailScreen({ route, navigation }: Props) {
   const { articleId } = route.params;
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const [article, setArticle] = useState<NutritionArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +111,7 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
         </View>
       )}
 
-      {role === "club_admin" && (
+      {(role === "club_admin" || isCoordinator) && (
         <View style={styles.actionsRow}>
           <TouchableOpacity
             style={styles.editButton}

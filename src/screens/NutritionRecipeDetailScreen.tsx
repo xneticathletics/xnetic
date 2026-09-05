@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { getNutritionRecipe, deleteNutritionRecipe, type NutritionRecipe } from "../lib/api/nutritionRecipes";
 import { getFoodCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipeDetail">;
@@ -13,6 +14,8 @@ type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipeDetail">
 export default function NutritionRecipeDetailScreen({ route, navigation }: Props) {
   const { recipeId } = route.params;
   const { role, clubId: myClubId } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
   const [recipe, setRecipe] = useState<NutritionRecipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +71,7 @@ export default function NutritionRecipeDetailScreen({ route, navigation }: Props
 
   const meta = getFoodCategory(recipe.category);
   const canEdit = recipe.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : recipe.club_id === myClubId;
-  const canDelete = recipe.club_id === null ? role === "super_admin" : recipe.club_id === myClubId && role === "club_admin";
+  const canDelete = recipe.club_id === null ? role === "super_admin" : recipe.club_id === myClubId && (role === "club_admin" || isCoordinator);
   const sourceLabel =
     role === "super_admin" ? (recipe.club_id === null ? "🌐 Global (Platform)" : `🏢 ${recipe.clubs?.name ?? "Bir kulüp"}`) : undefined;
 
