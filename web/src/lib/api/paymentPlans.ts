@@ -40,14 +40,37 @@ function monthIndexOf(date: Date): number {
   return date.getFullYear() * 12 + date.getMonth();
 }
 
-// Bir plan için, eksik olan payments kayıtlarını oluşturur. Zaten var olan
-// ayları tekrar eklemez (due_date bazında kontrol eder). Planın
+type PendingPaymentRow = { plan_id: string; athlete_id: string; period: "monthly"; amount: number; due_date: string };
+
+// Bir plan için, eksik olan ayların payments satırlarını HESAPLAR (henüz
+// yazmaz) — due_date bazında, zaten var olan ayları tekrarlamaz. Planın
 // OLUŞTURULDUĞU ay HİÇBİR ZAMAN bir ödeme ayı değildir — ilk ödeme her
-// zaman plan kaydından sonraki ilk aydır. Bu kural plan.created_at'a
-// dayandığı için, topUpPlan İSTER ilk oluşturma anında ister düzenli
-// tazeleme sırasında (topUpAllActivePlans) çağrılsın her zaman geçerlidir
-// — bu sayede sonraki bir tazeleme çağrısı atlanan ayı yanlışlıkla geri
-// eklemez (mobildeki aynı fonksiyonla birebir aynı davranış).
+// zaman plan kaydından sonraki ilk aydır. topUpPlan (tekil) ve
+// topUpAllActivePlans (toplu) bu tek hesaplamayı paylaşır.
+function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>): PendingPaymentRow[] {
+  const nowMonthIndex = monthIndexOf(new Date());
+  const firstAllowedMonthIndex = monthIndexOf(new Date(plan.created_at)) + 1;
+  const startMonthIndex = Math.max(nowMonthIndex, firstAllowedMonthIndex);
+
+  const rows: PendingPaymentRow[] = [];
+  for (let i = 0; i < MONTHS_AHEAD; i++) {
+    const targetMonthIndex = startMonthIndex + i;
+    const targetYear = Math.floor(targetMonthIndex / 12);
+    const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+    const dueDate = computeDueDate(targetYear, normalizedMonth, plan.day_of_month);
+    if (!existingDates.has(dueDate)) {
+      rows.push({ plan_id: plan.id, athlete_id: plan.athlete_id, period: "monthly", amount: plan.amount, due_date: dueDate });
+    }
+  }
+  return rows;
+}
+
+// payments(plan_id, due_date) üzerinde bir eşsizlik kısıtı var (bkz. migration
+// 20260906020000) — bu yüzden düz insert yerine upsert+ignoreDuplicates
+// kullanıyoruz: aynı anda iki tazeleme çağrısı (ör. kullanıcı sayfayı iki kez
+// art arda açtı) çakışsa bile artık ikinci satır sessizce atlanır, kopya
+// oluşmaz (önceden N+1 + düz insert bu yarış durumunda gerçek kopya
+// üretiyordu — bkz. security/performans notu topUpAllActivePlans'ta).
 export async function topUpPlan(plan: PaymentPlan) {
   const { data: existing, error: existingError } = await supabase
     .from("payments")
@@ -55,32 +78,9 @@ export async function topUpPlan(plan: PaymentPlan) {
     .eq("plan_id", plan.id);
   if (existingError) throw existingError;
 
-  const existingDates = new Set((existing ?? []).map((e) => e.due_date));
-  const nowMonthIndex = monthIndexOf(new Date());
-  const firstAllowedMonthIndex = monthIndexOf(new Date(plan.created_at)) + 1;
-  const startMonthIndex = Math.max(nowMonthIndex, firstAllowedMonthIndex);
-
-  const rows: { plan_id: string; athlete_id: string; period: "monthly"; amount: number; due_date: string }[] = [];
-
-  for (let i = 0; i < MONTHS_AHEAD; i++) {
-    const targetMonthIndex = startMonthIndex + i;
-    const targetYear = Math.floor(targetMonthIndex / 12);
-    const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
-    const dueDate = computeDueDate(targetYear, normalizedMonth, plan.day_of_month);
-
-    if (!existingDates.has(dueDate)) {
-      rows.push({
-        plan_id: plan.id,
-        athlete_id: plan.athlete_id,
-        period: "monthly",
-        amount: plan.amount,
-        due_date: dueDate,
-      });
-    }
-  }
-
+  const rows = computeMissingRows(plan, new Set((existing ?? []).map((e) => e.due_date)));
   if (rows.length > 0) {
-    const { error: insertError } = await supabase.from("payments").insert(rows);
+    const { error: insertError } = await supabase.from("payments").upsert(rows, { onConflict: "plan_id,due_date", ignoreDuplicates: true });
     if (insertError) throw insertError;
   }
 }
@@ -95,14 +95,40 @@ export async function createPaymentPlan(input: PaymentPlanInput) {
 // Kulüpteki tüm aktif planları, her sayfa açılışında 3 aylık ufka göre
 // tazeler — bu sayede geçmiş zaman ne olursa olsun her zaman önümüzdeki
 // 3 ay dolu bulunur, elle bir şey yapmaya gerek kalmaz.
+//
+// ÖNEMLİ: önceden plan başına ayrı select+insert yapan bir döngüydü (N+1) —
+// yüzlerce planlı bir kulüpte onlarca saniye sürüp sayfayı "sonsuza kadar
+// yükleniyor" gibi gösteriyordu. Artık TÜM planları ve TÜM mevcut ödemelerini
+// ikişer sorguyla çekip tek bir toplu upsert ile tazeliyor.
 export async function topUpAllActivePlans() {
   const { data: plans, error } = await supabase
     .from("payment_plans")
     .select("id, athlete_id, amount, day_of_month, active, created_at")
     .eq("active", true);
   if (error) throw error;
+  if (!plans || plans.length === 0) return;
 
-  for (const plan of plans ?? []) {
-    await topUpPlan(plan as PaymentPlan);
+  const planIds = plans.map((p) => p.id);
+  const { data: existingPayments, error: existingError } = await supabase
+    .from("payments")
+    .select("plan_id, due_date")
+    .in("plan_id", planIds);
+  if (existingError) throw existingError;
+
+  const existingByPlan = new Map<string, Set<string>>();
+  for (const row of existingPayments ?? []) {
+    if (!row.plan_id) continue;
+    if (!existingByPlan.has(row.plan_id)) existingByPlan.set(row.plan_id, new Set());
+    existingByPlan.get(row.plan_id)!.add(row.due_date);
+  }
+
+  const rows: PendingPaymentRow[] = [];
+  for (const plan of plans as PaymentPlan[]) {
+    rows.push(...computeMissingRows(plan, existingByPlan.get(plan.id) ?? new Set()));
+  }
+
+  if (rows.length > 0) {
+    const { error: insertError } = await supabase.from("payments").upsert(rows, { onConflict: "plan_id,due_date", ignoreDuplicates: true });
+    if (insertError) throw insertError;
   }
 }
