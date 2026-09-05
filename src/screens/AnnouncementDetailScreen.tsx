@@ -7,9 +7,12 @@ import {
   listAnnouncements, markAnnouncementRead, getAnnouncementReaders,
   type Announcement, type AnnouncementReader,
 } from "../lib/api/announcements";
-import type { ProfileStackParamList } from "../navigation/ProfileStack";
-
-type Props = NativeStackScreenProps<ProfileStackParamList, "AnnouncementDetail">;
+// ProfileStack ve AnnouncementsStack'in ikisinden de mount edilebiliyor —
+// bkz. AnnouncementsScreen.tsx'teki aynı gerekçe.
+type AnnouncementsRouteParamList = {
+  AnnouncementDetail: { announcementId: string };
+};
+type Props = NativeStackScreenProps<AnnouncementsRouteParamList, "AnnouncementDetail">;
 
 export default function AnnouncementDetailScreen({ route, navigation }: Props) {
   const { announcementId } = route.params;

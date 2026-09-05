@@ -9,6 +9,7 @@ import AIScreen from "../screens/AIScreen";
 import ProfileStack from "./ProfileStack";
 import ClubSettingsStack from "./ClubSettingsStack";
 import SystemSettingsScreen from "../screens/SystemSettingsScreen";
+import AnnouncementsStack from "./AnnouncementsStack";
 import MessagesStack from "./MessagesStack";
 import { refreshUnreadMessagesCount, subscribeUnreadMessages } from "../lib/unreadMessagesStore";
 
@@ -21,6 +22,7 @@ const TAB_ICONS: Record<string, string> = {
   Profil: "👤",
   "Kulüp Ayarları": "⚙️",
   "Sistem Ayarları": "⚙️",
+  Duyurular: "📣",
 };
 
 function TabIcon({ routeName, focused, badgeCount }: { routeName: string; focused: boolean; badgeCount?: number }) {
@@ -66,15 +68,12 @@ const CENTER_GAP = LOGO_SIZE + 12;
 // Asistan da tıpkı Ana Menü/Profil gibi GERÇEK, bağımsız sekmeler — Ana
 // Menü'nün altına gizlenmiş bir alt sayfa değiller.
 function CustomTabBar({
-  state, descriptors, navigation, role, onReady, unreadMessages,
+  state, descriptors, navigation, onReady, unreadMessages,
 }: BottomTabBarProps & {
-  role: UserRole;
   onReady?: (navigation: BottomTabBarProps["navigation"]) => void;
   unreadMessages: number;
 }) {
   const insets = useSafeAreaInsets();
-  const isClubAdmin = role === "club_admin";
-  const isSuperAdmin = role === "super_admin";
 
   // Tab.Navigator'ın kendi navigation nesnesini, dışarıdaki (Tab.Navigator'ın
   // ÜSTÜNDEKİ) logo bileşenine aktarır — bu sayede ortadaki logo, normal bir
@@ -83,13 +82,14 @@ function CustomTabBar({
     onReady?.(navigation);
   }, [navigation, onReady]);
 
-  // Sol: Ana Menü + Mesajlar (HERKESTE). Sağ: Profil (+ Kulüp Admini'nde
-  // Kulüp Ayarları, Süper Admin'de Sistem Ayarları önünde). AI Asistan
-  // artık normal bir sekme değil — ortadaki logoya dokununca açılıyor, bu
-  // yüzden görünür sıraya hiç dahil edilmiyor (kendisi hâlâ gerçek bir
-  // Tab.Screen, sadece bu satırlarda gizleniyor).
+  // Sol: Ana Menü + Mesajlar (HERKESTE). Sağ: Profil'in önünde herkeste
+  // ikinci bir sekme var artık — Kulüp Admini'nde Kulüp Ayarları, Süper
+  // Admin'de Sistem Ayarları, geri kalan üç rolde (Antrenör/Veli/Sporcu)
+  // Duyurular. AI Asistan artık normal bir sekme değil — ortadaki logoya
+  // dokununca açılıyor, bu yüzden görünür sıraya hiç dahil edilmiyor
+  // (kendisi hâlâ gerçek bir Tab.Screen, sadece bu satırlarda gizleniyor).
   const leftCount = 2;
-  const rightCount = isClubAdmin || isSuperAdmin ? 2 : 1;
+  const rightCount = 2;
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key];
@@ -188,7 +188,6 @@ export default function RoleTabs({ role }: { role: UserRole }) {
         tabBar={(props) => (
           <CustomTabBar
             {...props}
-            role={role}
             unreadMessages={unreadMessages}
             onReady={(nav) => { tabNavRef.current = nav; }}
           />
@@ -203,6 +202,7 @@ export default function RoleTabs({ role }: { role: UserRole }) {
         <Tab.Screen name="AI Asistan" component={AIScreen} />
         {isClubAdmin && <Tab.Screen name="Kulüp Ayarları" component={ClubSettingsStack} />}
         {isSuperAdmin && <Tab.Screen name="Sistem Ayarları" component={SystemSettingsScreen} />}
+        {!isClubAdmin && !isSuperAdmin && <Tab.Screen name="Duyurular" component={AnnouncementsStack} />}
         <Tab.Screen
           name="Profil"
           listeners={({ navigation }) => ({

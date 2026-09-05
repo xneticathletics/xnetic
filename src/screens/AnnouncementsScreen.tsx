@@ -7,10 +7,18 @@ import { useAuth } from "../context/AuthContext";
 import { listAnnouncements, filterAnnouncementsForViewer, type Announcement } from "../lib/api/announcements";
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
-import type { ProfileStackParamList } from "../navigation/ProfileStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
 
-type Props = NativeStackScreenProps<ProfileStackParamList, "Announcements">;
+// Hem ProfileStack (Kulüp Admini/Süper Admin'de, Profil'in içinden) hem
+// AnnouncementsStack (Antrenör/Veli/Sporcu'da, kendi bağımsız "Duyurular"
+// sekmesi) tarafından mount ediliyor — belirli bir üst stack'e bağlı
+// kalmamak için kendi minimal parametre listesini tanımlıyor.
+type AnnouncementsRouteParamList = {
+  Announcements: undefined;
+  AnnouncementDetail: { announcementId: string };
+  AnnouncementForm: undefined;
+};
+type Props = NativeStackScreenProps<AnnouncementsRouteParamList, "Announcements">;
 
 const TARGET_LABEL: Record<string, string> = {
   club: "Tüm Kulüp", group: "Grup", athletes: "Sporcular", parents: "Veliler", coaches: "Antrenörler",
