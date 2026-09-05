@@ -74,6 +74,8 @@ import NutritionFoodsScreen from "../screens/NutritionFoodsScreen";
 import NutritionFoodCategoryScreen from "../screens/NutritionFoodCategoryScreen";
 import NutritionFoodDetailScreen from "../screens/NutritionFoodDetailScreen";
 import NutritionFoodFormScreen from "../screens/NutritionFoodFormScreen";
+import NutritionRecipesScreen from "../screens/NutritionRecipesScreen";
+import NutritionRecipeCategoryScreen from "../screens/NutritionRecipeCategoryScreen";
 import NutritionRecipeDetailScreen from "../screens/NutritionRecipeDetailScreen";
 import NutritionRecipeFormScreen from "../screens/NutritionRecipeFormScreen";
 import NutritionArticlesScreen from "../screens/NutritionArticlesScreen";
@@ -177,6 +179,8 @@ export type HomeStackParamList = {
   NutritionFoodCategory: { category: FoodCategoryKey };
   NutritionFoodDetail: { foodId: string };
   NutritionFoodForm: { foodId: string | undefined; category: FoodCategoryKey };
+  NutritionRecipes: undefined;
+  NutritionRecipeCategory: { category: FoodCategoryKey };
   NutritionRecipeDetail: { recipeId: string };
   NutritionRecipeForm: { recipeId: string | undefined; category: FoodCategoryKey };
   NutritionArticles: undefined;
@@ -292,6 +296,8 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="NutritionFoodCategory" component={NutritionFoodCategoryScreen} />
       <Stack.Screen name="NutritionFoodDetail" component={NutritionFoodDetailScreen} options={{ title: "Besin Detayı" }} />
       <Stack.Screen name="NutritionFoodForm" component={NutritionFoodFormScreen} options={{ title: "Besin" }} />
+      <Stack.Screen name="NutritionRecipes" component={NutritionRecipesScreen} options={{ title: "Sporcu Tarifleri" }} />
+      <Stack.Screen name="NutritionRecipeCategory" component={NutritionRecipeCategoryScreen} />
       <Stack.Screen name="NutritionRecipeDetail" component={NutritionRecipeDetailScreen} options={{ title: "Tarif" }} />
       <Stack.Screen name="NutritionRecipeForm" component={NutritionRecipeFormScreen} options={{ title: "Tarif" }} />
       <Stack.Screen name="NutritionArticles" component={NutritionArticlesScreen} options={{ title: "Beslenme Rehberi" }} />

@@ -40,6 +40,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "antrenman", label: "Antrenman Saatleri", sub: "", icon: "📅" },
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
     { key: "sporcu_takibi", label: "Sporcu Takibi", sub: "Çocuğunun gelişimini takip et", icon: "📊" },
+    { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { key: "freeze", label: "Kayıt Dondurma", sub: "", icon: "🧊" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
@@ -48,6 +49,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "yoklama", label: "Antrenman Katılım Durumu", sub: "", icon: "📋" },
     { key: "wellness", label: "Günlük Check-in", sub: "Uyku, enerji ve ruh hâlini kaydet", icon: "🌡️" },
     { key: "performansim", label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
+    { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
   club_admin: [

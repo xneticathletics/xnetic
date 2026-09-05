@@ -8,8 +8,9 @@ type Props = NativeStackScreenProps<HomeStackParamList, "Nutrition">;
 
 const ACCENTS = [colors.teal, colors.yellow];
 
-const TILES: { key: "NutritionFoods" | "NutritionArticles"; icon: string; title: string; sub: string }[] = [
+const TILES: { key: "NutritionFoods" | "NutritionRecipes" | "NutritionArticles"; icon: string; title: string; sub: string }[] = [
   { key: "NutritionFoods", icon: "🍎", title: "Besinler", sub: "Besin değerleri ve faydaları" },
+  { key: "NutritionRecipes", icon: "🍳", title: "Sporcu Tarifleri", sub: "Pratik ve besleyici tarifler" },
   { key: "NutritionArticles", icon: "📖", title: "Beslenme Rehberi", sub: "Bilimsel kaynaklı yazılar" },
 ];
 
