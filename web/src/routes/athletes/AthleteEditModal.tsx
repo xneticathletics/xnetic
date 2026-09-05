@@ -19,6 +19,7 @@ import {
   type AthleteGroupInfo,
 } from "../../lib/api/athletes";
 import { listGroups, type Group } from "../../lib/api/groups";
+import { listBranches, type Branch } from "../../lib/api/branches";
 import MembershipFreezeSection from "./MembershipFreezeSection";
 
 const emptyForm: AthleteInput = {
@@ -56,6 +57,8 @@ export default function AthleteEditModal({
   onSaved: () => void;
 }) {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
   const [form, setForm] = useState<AthleteInput>(emptyForm);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +75,7 @@ export default function AthleteEditModal({
     const isNew = athleteId === "new";
     Promise.all([
       listGroups(),
+      listBranches(),
       isNew ? Promise.resolve(null) : getAthlete(athleteId),
       listUnlinkedAthleteUsers(),
       listParentUsers(),
@@ -79,13 +83,15 @@ export default function AthleteEditModal({
       isNew ? Promise.resolve(null) : getLinkedParentUser(athleteId),
       isNew ? Promise.resolve([]) : getAthleteExtraGroups(athleteId),
     ])
-      .then(([g, a, au, pu, linkedAthlete, linkedParent, extra]) => {
+      .then(([g, b, a, au, pu, linkedAthlete, linkedParent, extra]) => {
         setGroups(g);
+        setBranches(b);
         setUnlinkedAthleteUsers(au);
         setParentUsers(pu);
         setAthleteLinkedUser(linkedAthlete);
         setParentLinkedUser(linkedParent);
         setExtraGroups(extra);
+        setSelectedBranch(a?.groups?.branch ?? "");
         if (a) {
           setForm({
             full_name: a.full_name,
@@ -187,40 +193,62 @@ export default function AthleteEditModal({
             </FormField>
 
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="Doğum Tarihi">
-                <input
-                  type="date"
+              <FormField label="Branş">
+                <select
                   className={inputClass}
-                  value={form.birth_date ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, birth_date: e.target.value || null }))}
-                />
+                  value={selectedBranch}
+                  onChange={(e) => {
+                    const branch = e.target.value;
+                    setSelectedBranch(branch);
+                    // Seçili grup yeni branşa ait değilse temizle.
+                    setForm((f) => {
+                      const currentGroup = groups.find((g) => g.id === f.group_id);
+                      if (currentGroup && currentGroup.branch !== branch) return { ...f, group_id: null };
+                      return f;
+                    });
+                  }}
+                >
+                  <option value="">Branş seç</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.name}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
               </FormField>
               <FormField label="Grup">
                 <select
                   className={inputClass}
                   value={form.group_id ?? ""}
+                  disabled={!selectedBranch}
                   onChange={(e) => setForm((f) => ({ ...f, group_id: e.target.value || null }))}
                 >
-                  <option value="">Grup atanmadı</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
+                  <option value="">{selectedBranch ? "Grup atanmadı" : "Önce branş seç"}</option>
+                  {groups
+                    .filter((g) => g.branch === selectedBranch)
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
                 </select>
               </FormField>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Sporcu Tipi">
-                <select
-                  className={inputClass}
-                  value={form.athlete_type}
-                  onChange={(e) => setForm((f) => ({ ...f, athlete_type: e.target.value as AthleteInput["athlete_type"] }))}
-                >
-                  <option value="spor_okulu">Spor Okulu</option>
-                  <option value="musabik">🏆 Müsabık</option>
-                </select>
+                <div className={`${inputClass} flex items-center bg-bg text-sm`}>
+                  {(() => {
+                    const group = groups.find((g) => g.id === form.group_id);
+                    if (!group) return <span className="text-muted">Grup seçilince belirlenir</span>;
+                    return group.athlete_type === "musabik" ? (
+                      <span className="font-semibold text-yellow">🏆 Müsabık</span>
+                    ) : (
+                      <span>Spor Okulu</span>
+                    );
+                  })()}
+                </div>
+                <p className="mt-1 text-xs text-muted">Grubun tipine göre otomatik belirlenir.</p>
               </FormField>
               <FormField label="Durum">
                 <select

@@ -13,7 +13,7 @@ import {
 import { listBranches, type Branch } from "../../lib/api/branches";
 import { listVenues, type Venue } from "../../lib/api/venues";
 
-const emptyForm: GroupInput = { name: "", branch: "", venue_id: null };
+const emptyForm: GroupInput = { name: "", branch: "", venue_id: null, athlete_type: "spor_okulu" };
 
 export default function GroupsListPage() {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -44,7 +44,7 @@ export default function GroupsListPage() {
     setEditingId("new");
   };
   const openEdit = (g: Group) => {
-    setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id });
+    setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id, athlete_type: g.athlete_type });
     setEditingId(g.id);
   };
 
@@ -76,6 +76,15 @@ export default function GroupsListPage() {
   const columns: Column<Group>[] = [
     { key: "name", label: "Grup", render: (g) => <span className="font-semibold">{g.name}</span> },
     { key: "branch", label: "Branş", render: (g) => g.branch },
+    {
+      key: "athlete_type",
+      label: "Tip",
+      render: (g) => (
+        <span className={g.athlete_type === "musabik" ? "font-semibold text-yellow" : "text-muted"}>
+          {g.athlete_type === "musabik" ? "🏆 Müsabık" : "Spor Okulu"}
+        </span>
+      ),
+    },
     { key: "venue", label: "Ana Salon", render: (g) => g.venues?.name ?? "—" },
     {
       key: "actions",
@@ -137,6 +146,19 @@ export default function GroupsListPage() {
                 </option>
               ))}
             </select>
+          </FormField>
+          <FormField label="Sporcu Tipi *">
+            <select
+              className={inputClass}
+              value={form.athlete_type}
+              onChange={(e) => setForm((f) => ({ ...f, athlete_type: e.target.value as GroupInput["athlete_type"] }))}
+            >
+              <option value="spor_okulu">Spor Okulu</option>
+              <option value="musabik">🏆 Müsabık</option>
+            </select>
+            <p className="mt-1 text-xs text-muted">
+              Bu gruba eklenen her sporcu otomatik olarak bu tipte işlenir — gruptaki herkes aynı tip olur.
+            </p>
           </FormField>
           <FormField label="Ana Salon (isteğe bağlı)">
             <select

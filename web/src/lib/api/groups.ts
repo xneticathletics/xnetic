@@ -1,10 +1,13 @@
 import { supabase } from "../supabase";
 
+export type GroupAthleteType = "spor_okulu" | "musabik";
+
 export type Group = {
   id: string;
   name: string;
   branch: string;
   venue_id: string | null;
+  athlete_type: GroupAthleteType;
   venues?: { name: string } | null;
 };
 
@@ -12,9 +15,10 @@ export type GroupInput = {
   name: string;
   branch: string;
   venue_id: string | null;
+  athlete_type: GroupAthleteType;
 };
 
-const GROUP_FIELDS = "id, name, branch, venue_id, venues(name)";
+const GROUP_FIELDS = "id, name, branch, venue_id, athlete_type, venues(name)";
 
 export async function listGroups(): Promise<Group[]> {
   const { data, error } = await supabase

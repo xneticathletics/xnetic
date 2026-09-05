@@ -478,27 +478,22 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
       </Field>
 
       <Field label="Sporcu Tipi">
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.typeChip, form.athlete_type === "spor_okulu" && styles.typeChipActive]}
-            onPress={() => set("athlete_type", "spor_okulu")}
-          >
-            <Text style={[styles.typeChipText, form.athlete_type === "spor_okulu" && styles.typeChipTextActive]}>
-              Spor Okulu
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.typeChip, form.athlete_type === "musabik" && styles.typeChipActiveMusabik]}
-            onPress={() => set("athlete_type", "musabik")}
-          >
-            <Text style={[styles.typeChipText, form.athlete_type === "musabik" && styles.typeChipTextActive]}>
-              🏆 Müsabık Sporcu
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {(() => {
+          const group = allGroups.find((g) => g.id === form.group_id);
+          if (!group) {
+            return <Text style={styles.sectionHint}>Grup seçilince otomatik belirlenir.</Text>;
+          }
+          return (
+            <View style={[styles.typeChip, group.athlete_type === "musabik" ? styles.typeChipActiveMusabik : styles.typeChipActive]}>
+              <Text style={[styles.typeChipText, styles.typeChipTextActive]}>
+                {group.athlete_type === "musabik" ? "🏆 Müsabık Sporcu" : "Spor Okulu"}
+              </Text>
+            </View>
+          );
+        })()}
         <Text style={styles.sectionHint}>
-          Yeni sporcular varsayılan olarak Spor Okulu'nda başlar. Kadroya girdiğinde Müsabık
-          Sporcu'ya çevir — sadece Müsabık sporcular Maç modülünde kadroya seçilebilir.
+          Sporcu tipi, seçtiğin gruba göre otomatik belirlenir — sadece Müsabık sporcular Maç
+          modülünde kadroya seçilebilir. Değiştirmek için grubun tipini (Grup Ayarları'ndan) güncelle.
         </Text>
       </Field>
 

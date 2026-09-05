@@ -15,7 +15,7 @@ type Props = {
   route: { params?: { groupId: string | undefined } };
 };
 
-const emptyForm: GroupInput = { name: "", branch: "", venue_id: null };
+const emptyForm: GroupInput = { name: "", branch: "", venue_id: null, athlete_type: "spor_okulu" };
 
 export default function GroupFormScreen({ route, navigation }: Props) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
@@ -43,7 +43,7 @@ export default function GroupFormScreen({ route, navigation }: Props) {
     if (!groupId) return;
     getGroup(groupId)
       .then((g) => {
-        setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id });
+        setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id, athlete_type: g.athlete_type });
         setVenueName(g.venues?.name ?? null);
       })
       .catch((e) => setError(e.message))
@@ -133,6 +133,30 @@ export default function GroupFormScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </Field>
 
+      <Field label="Sporcu Tipi *">
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={[styles.typeChip, form.athlete_type === "spor_okulu" && styles.typeChipActive]}
+            onPress={() => setForm((f) => ({ ...f, athlete_type: "spor_okulu" }))}
+          >
+            <Text style={[styles.typeChipText, form.athlete_type === "spor_okulu" && styles.typeChipTextActive]}>
+              Spor Okulu
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.typeChip, form.athlete_type === "musabik" && styles.typeChipActiveMusabik]}
+            onPress={() => setForm((f) => ({ ...f, athlete_type: "musabik" }))}
+          >
+            <Text style={[styles.typeChipText, form.athlete_type === "musabik" && styles.typeChipTextActive]}>
+              🏆 Müsabık
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.hint}>
+          Bu gruba eklenen her sporcu otomatik olarak bu tipte işlenir — gruptaki herkes aynı tip olur.
+        </Text>
+      </Field>
+
       <Field label="Ana Salon (isteğe bağlı)">
         <TouchableOpacity style={styles.input} onPress={() => setVenuePickerVisible(true)}>
           <Text style={{ color: venueName ? colors.ink : colors.muted }}>{venueName ?? "Salon seç"}</Text>
@@ -188,6 +212,15 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
   label: { color: colors.muted, fontSize: 12, fontWeight: "600", marginBottom: 6 },
   hint: { color: colors.muted, fontSize: 11, marginTop: 4 },
+  row: { flexDirection: "row" },
+  typeChip: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
+    paddingHorizontal: spacing.md, paddingVertical: 8, marginRight: spacing.sm,
+  },
+  typeChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  typeChipActiveMusabik: { backgroundColor: colors.yellow, borderColor: colors.yellow },
+  typeChipText: { color: colors.muted, fontWeight: "600", fontSize: 13 },
+  typeChipTextActive: { color: colors.bg },
   input: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,

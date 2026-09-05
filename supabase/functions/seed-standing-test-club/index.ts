@@ -42,6 +42,22 @@ const LAST_NAMES_100 = [
   "Dinç", "Ergin", "Esen", "Güven", "İnan", "Kartal", "Metin", "Nalbant", "Orhan", "Pamuk",
   "Sezer", "Tuna", "Uygun", "Varol", "Yurt", "Zengin", "Akman", "Baykal", "Coşkun", "Deveci",
 ];
+// İkinci 100 sporcu (sporcu101-200) LAST_NAMES_100'ü tekrar kullanınca
+// (idx % 100) sporcu1 ile sporcu101 birebir aynı isme çıkıyordu — o hatayı
+// keşfedip düzeltirken eklendi. idx 100-199 için bu ikinci liste kullanılır.
+const LAST_NAMES_100_B = [
+  "Karadağ", "Bektaş", "Sağlam", "Çevik", "Yorulmaz", "Yurtsever", "Tokgöz", "Sancak", "Bilir", "Erbil",
+  "Kahraman", "Görgün", "Tuncel", "Şeker", "Odabaşı", "Gürbüz", "Bostancı", "Aybar", "Baysal", "Demirtaş",
+  "Aycan", "Aydemir", "Karabulut", "Karagöz", "Kandemir", "Solmaz", "Yurdakul", "Tozlu", "Yeşil", "Kızılkaya",
+  "Morova", "Tekinalp", "Şentürk", "Bozdağ", "Aslantaş", "Erkoç", "Gökçe", "Bulur", "Sarıkaya", "Kurttepe",
+  "Aktepe", "Yalman", "Baysan", "Çakmak", "Kutluk", "Demirok", "Yeter", "Akgün", "Bayraktar", "Karaman",
+  "Alagöz", "Boztepe", "Çınar", "Doruk", "Elmas", "Fidan", "Gezer", "Hasgül", "İpek", "Kaçar",
+  "Levent", "Mercan", "Nural", "Onbaşı", "Pekcan", "Reis", "Sipahi", "Taşkın", "Ulusoy", "Vardar",
+  "Yorgun", "Zaralı", "Akbulut", "Baştürk", "Ciğerci", "Değirmenci", "Erkal", "Fırat", "Girgin", "Halıcıoğlu",
+  "Işıklı", "Kalkan", "Manav", "Necipoğlu", "Oymak", "Peker", "Sunar", "Tarhan", "Uçkun", "Yener",
+  "Zorlu", "Akalın", "Bulutoğlu", "Cesur", "Duru", "Ergenç", "Feyzioğlu", "Güngör", "Hızlı", "İlhanlı",
+];
+const ALL_LAST_NAMES = [...LAST_NAMES_100, ...LAST_NAMES_100_B]; // idx 0-99 → liste A, 100-199 → liste B
 const COACH_LAST_NAMES = ["Yılmazer", "Kayacan", "Demiröz", "Çelikbaş", "Şahinkaya", "Yıldıztepe", "Aydınlı", "Öztürkmen", "Arslanoğlu", "Doğançay", "Koçyiğit", "Kurtoğlu", "Özdemirci", "Aktaşoğlu", "Polater"];
 
 function pick<T>(arr: T[], i: number): T {
@@ -49,11 +65,11 @@ function pick<T>(arr: T[], i: number): T {
 }
 function athleteName(i: number): string {
   const first = i % 2 === 0 ? pick(MALE_NAMES, i) : pick(FEMALE_NAMES, i);
-  return `${first} ${LAST_NAMES_100[i % LAST_NAMES_100.length]}`;
+  return `${first} ${ALL_LAST_NAMES[i % ALL_LAST_NAMES.length]}`;
 }
 function parentName(i: number): string {
   const first = i % 2 === 0 ? pick(FEMALE_NAMES, i + 7) : pick(MALE_NAMES, i + 7);
-  return `${first} ${LAST_NAMES_100[i % LAST_NAMES_100.length]}`;
+  return `${first} ${ALL_LAST_NAMES[i % ALL_LAST_NAMES.length]}`;
 }
 function coachName(i: number): string {
   const first = i % 2 === 0 ? pick(MALE_NAMES, i + 3) : pick(FEMALE_NAMES, i + 3);
@@ -205,6 +221,30 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: true, added: created.length, from: startIndex + 1, to: startIndex + count, password: PASSWORD }),
         { headers: { ...CORS_HEADERS, "Content-Type": "application/json" }, status: 200 }
       );
+    }
+
+    if (body.step === "fix_names") {
+      // Tek seferlik düzeltme: sporcu101-200 ilk 100 ile AYNI soyisimleri
+      // almıştı (LAST_NAMES_100 100'de bir tekrar ediyordu) — fromN..toN
+      // aralığındaki sporcu/veli isimlerini ALL_LAST_NAMES ile yeniden hesaplar.
+      const fromN = Number(body.fromN);
+      const toN = Number(body.toN);
+      const fixed: string[] = [];
+      for (let n = fromN; n <= toN; n++) {
+        const idx = n - 1;
+        const newAthleteName = athleteName(idx);
+        const newParentName = parentName(idx);
+        const { data: athleteUserRow } = await admin.from("users").select("id").eq("club_id", CLUB_ID).eq("email", `sporcu${n}@${EMAIL_DOMAIN}`).maybeSingle();
+        const { data: parentUserRow } = await admin.from("users").select("id").eq("club_id", CLUB_ID).eq("email", `veli${n}@${EMAIL_DOMAIN}`).maybeSingle();
+        if (!athleteUserRow || !parentUserRow) continue;
+        await admin.from("users").update({ name: newAthleteName }).eq("id", athleteUserRow.id);
+        await admin.from("users").update({ name: newParentName }).eq("id", parentUserRow.id);
+        await admin.from("athletes").update({ full_name: newAthleteName, parent_name: newParentName }).eq("athlete_user_id", athleteUserRow.id);
+        fixed.push(`sporcu${n}`);
+      }
+      return new Response(JSON.stringify({ success: true, fixed: fixed.length }), {
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" }, status: 200,
+      });
     }
 
     if (body.step === "renumber") {
