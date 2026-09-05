@@ -239,18 +239,28 @@ export type PromotableTable = (typeof PROMOTABLE_TABLES)[number]["table"];
 
 export type ClubContentItem = { id: string; name: string; club_id: string; club_name: string };
 
+// 4 tablonun görünen ad kolonu aynı değil — nutrition_recipes'te "name" yok,
+// "title" var (diğer 3 tabloda "name").
+const NAME_COLUMN: Record<PromotableTable, string> = {
+  fitness_exercises: "name",
+  nutrition_foods: "name",
+  nutrition_recipes: "title",
+  performance_test_catalog: "name",
+};
+
 // Bir kulübün eklediği, henüz global olmayan (club_id dolu) içerikleri
 // listeler — Süper Admin bunlardan birini seçip "Globale Yükselt"e basabilir.
 export async function listClubSpecificContent(table: PromotableTable): Promise<ClubContentItem[]> {
+  const nameColumn = NAME_COLUMN[table];
   const { data, error } = await supabase
     .from(table)
-    .select("id, name, club_id, clubs!club_id(name)")
+    .select(`id, ${nameColumn}, club_id, clubs!club_id(name)`)
     .not("club_id", "is", null)
-    .order("name", { ascending: true });
+    .order(nameColumn, { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r: any) => ({
     id: r.id,
-    name: r.name,
+    name: r[nameColumn],
     club_id: r.club_id,
     club_name: r.clubs?.name ?? "—",
   }));
