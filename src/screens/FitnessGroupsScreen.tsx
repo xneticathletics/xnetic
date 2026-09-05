@@ -64,10 +64,12 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
+        style={{ flex: 1 }}
         data={groups}
         keyExtractor={(g) => g.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz fitness grubu yok.</Text> : null}
+        ListFooterComponent={groups.length > 0 ? <Text style={styles.hint}>Silmek için bir gruba uzun bas.</Text> : null}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
@@ -82,7 +84,6 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
       />
-      {groups.length > 0 && <Text style={styles.hint}>Silmek için bir gruba uzun bas.</Text>}
     </View>
   );
 }
