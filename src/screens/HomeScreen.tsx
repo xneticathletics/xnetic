@@ -422,7 +422,7 @@ export default function HomeScreen({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   headerRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.lg },
-  heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.surface },
+  heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.bg },
   heroLogoSmall: { width: 84, height: 84 },
   headerRight: { flex: 1, justifyContent: "space-between" },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
