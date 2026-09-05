@@ -295,7 +295,7 @@ export default function HomeScreen({
     >
       <View style={styles.headerRow}>
         <Image
-          source={clubLogoFailed || !clubId ? require("../assets/xnetic-logo.png") : { uri: getClubLogoUrl(clubId) }}
+          source={clubLogoFailed || !clubId ? require("../assets/xnetic-logo-yellow.png") : { uri: getClubLogoUrl(clubId) }}
           style={[styles.heroLogo, role === "super_admin" && styles.heroLogoSmall]}
           resizeMode="cover"
           onError={() => setClubLogoFailed(true)}
