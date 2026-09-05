@@ -1,13 +1,16 @@
 import { supabase } from "../supabase";
 import { sendNotification } from "./notifications";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
 // Mobildeki src/lib/api/superAdmin.ts ile birebir aynı — Süper Admin'in
 // platform geneli (kulüp bağımsız) yönetim araçları için ortak API katmanı.
 export type ClubSummary = {
   id: string;
   name: string;
   created_at: string;
-  subscription: { billing_period: string; status: string } | null;
+  subscription: { billing_period: string; status: string; amount_try?: number } | null;
 };
 
 export type PlatformStats = {
@@ -127,6 +130,17 @@ export async function upsertSubscription(input: {
     if (error) throw error;
   }
 
+  // Kulüp Detayı sayfasındaki "Geçmiş" listesi buradan besleniyor — durum
+  // her değiştiğinde bir satır düşer (bkz. club_subscription_history
+  // migration'ı: tek süper admin olduğu için "kim yaptı" değil, "kulübün
+  // abonelik durumu zaman içinde nasıl değişti" bilgisini tutuyoruz).
+  await supabase.from("club_subscription_history").insert({
+    club_id: input.club_id,
+    status: input.status,
+    billing_period: input.billing_period,
+    amount_try: input.amount_try,
+  });
+
   if (input.status === "active") {
     const { data: admins } = await supabase
       .from("users")
@@ -144,6 +158,169 @@ export async function upsertSubscription(input: {
       )
     );
   }
+}
+
+// --- Kulüp Detayı sayfası ---------------------------------------------
+
+export async function getClub(clubId: string): Promise<ClubSummary | null> {
+  const [clubResult, subResult] = await Promise.all([
+    supabase.from("clubs").select("id, name, created_at").eq("id", clubId).maybeSingle(),
+    supabase
+      .from("club_subscriptions")
+      .select("billing_period, status, amount_try")
+      .eq("club_id", clubId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (clubResult.error) throw clubResult.error;
+  if (!clubResult.data) return null;
+  return { ...clubResult.data, subscription: subResult.data ?? null };
+}
+
+export type ClubAdmin = { id: string; name: string; phone: string | null };
+
+export async function getClubAdmins(clubId: string): Promise<ClubAdmin[]> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, phone")
+    .eq("club_id", clubId)
+    .eq("role", "club_admin")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export type SubscriptionHistoryEntry = {
+  id: string;
+  status: string;
+  billing_period: string;
+  amount_try: number | null;
+  changed_at: string;
+};
+
+export async function getClubSubscriptionHistory(clubId: string): Promise<SubscriptionHistoryEntry[]> {
+  const { data, error } = await supabase
+    .from("club_subscription_history")
+    .select("id, status, billing_period, amount_try, changed_at")
+    .eq("club_id", clubId)
+    .order("changed_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// "Kulübü Kalıcı Olarak Sil" — delete-club edge function'ını çağırır (bkz.
+// supabase/functions/delete-club). confirmClubName tam eşleşmezse fonksiyon
+// zaten reddediyor, burada ayrıca bir kontrol yapmıyoruz.
+export async function deleteClub(clubId: string, confirmClubName: string): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-club`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+    body: JSON.stringify({ clubId, confirmClubName }),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(json?.error || `İstek başarısız oldu (kod: ${response.status}).`);
+}
+
+// --- İçeriği Globale Yükselt --------------------------------------------
+
+export const PROMOTABLE_TABLES = [
+  { table: "fitness_exercises", label: "Fitness Hareketleri" },
+  { table: "nutrition_foods", label: "Besinler" },
+  { table: "nutrition_recipes", label: "Sporcu Tarifleri" },
+  { table: "performance_test_catalog", label: "Performans Testleri" },
+] as const;
+export type PromotableTable = (typeof PROMOTABLE_TABLES)[number]["table"];
+
+export type ClubContentItem = { id: string; name: string; club_id: string; club_name: string };
+
+// Bir kulübün eklediği, henüz global olmayan (club_id dolu) içerikleri
+// listeler — Süper Admin bunlardan birini seçip "Globale Yükselt"e basabilir.
+export async function listClubSpecificContent(table: PromotableTable): Promise<ClubContentItem[]> {
+  const { data, error } = await supabase
+    .from(table)
+    .select("id, name, club_id, clubs!club_id(name)")
+    .not("club_id", "is", null)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    club_id: r.club_id,
+    club_name: r.clubs?.name ?? "—",
+  }));
+}
+
+// promote-to-global edge function'ını çağırır (bkz.
+// supabase/functions/promote-to-global) — RLS normal client'a bunu
+// yaptırmıyor, servis-rol gerekiyor.
+export async function promoteToGlobal(table: PromotableTable, id: string): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/promote-to-global`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+    body: JSON.stringify({ table, id }),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(json?.error || `İstek başarısız oldu (kod: ${response.status}).`);
+}
+
+// --- Finansal Trend Raporu ------------------------------------------------
+
+export type FinancialTrendMonth = { month: string; revenueTry: number; newClubs: number };
+
+// Son 12 ay için: o ay "active" olan (onaylanan) abonelik tutarlarının
+// toplamı + o ay katılan yeni kulüp sayısı. club_subscription_history
+// bundan sonraki her durum değişikliğini kaydettiği için geçmiş veri bu
+// tarihten itibaren birikecek — geriye dönük veri yok, bu beklenen.
+export async function getFinancialTrend(): Promise<FinancialTrendMonth[]> {
+  const since = new Date();
+  since.setMonth(since.getMonth() - 11);
+  since.setDate(1);
+  since.setHours(0, 0, 0, 0);
+
+  const [historyResult, clubsResult] = await Promise.all([
+    supabase
+      .from("club_subscription_history")
+      .select("amount_try, changed_at")
+      .eq("status", "active")
+      .gte("changed_at", since.toISOString()),
+    supabase.from("clubs").select("created_at").gte("created_at", since.toISOString()),
+  ]);
+  if (historyResult.error) throw historyResult.error;
+  if (clubsResult.error) throw clubsResult.error;
+
+  const months: FinancialTrendMonth[] = [];
+  const cursor = new Date(since);
+  for (let i = 0; i < 12; i++) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+    months.push({ month: key, revenueTry: 0, newClubs: 0 });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  const byKey = new Map(months.map((m) => [m.month, m]));
+  const keyOf = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+
+  (historyResult.data ?? []).forEach((r) => {
+    const m = byKey.get(keyOf(r.changed_at));
+    if (m) m.revenueTry += r.amount_try ?? 0;
+  });
+  (clubsResult.data ?? []).forEach((c) => {
+    const m = byKey.get(keyOf(c.created_at));
+    if (m) m.newClubs += 1;
+  });
+
+  return months;
 }
 
 export async function getPlatformStats(): Promise<PlatformStats> {

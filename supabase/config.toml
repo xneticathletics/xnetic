@@ -52,6 +52,18 @@ verify_jwt = false
 import_map = "./functions/admin-reset-user-password/deno.json"
 entrypoint = "./functions/admin-reset-user-password/index.ts"
 
+[functions.delete-club]
+enabled = true
+verify_jwt = false
+import_map = "./functions/delete-club/deno.json"
+entrypoint = "./functions/delete-club/index.ts"
+
+[functions.promote-to-global]
+enabled = true
+verify_jwt = false
+import_map = "./functions/promote-to-global/deno.json"
+entrypoint = "./functions/promote-to-global/index.ts"
+
 [functions.send-push-notification]
 enabled = true
 verify_jwt = false

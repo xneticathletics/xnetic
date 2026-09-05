@@ -32,6 +32,8 @@ const SUPER_ADMIN_NAV_ITEMS: { to: string; label: string; icon: string; end?: bo
   { to: "/admin", label: "Genel Bakış", icon: "📊", end: true },
   { to: "/admin/clubs", label: "Kulüpler", icon: "🏢" },
   { to: "/admin/subscriptions", label: "Abonelikler", icon: "💳" },
+  { to: "/admin/financial-trend", label: "Finansal Trend", icon: "📈" },
+  { to: "/admin/content-promotion", label: "İçeriği Globale Yükselt", icon: "🌐" },
   { to: "/admin/screens", label: "Ekranlar", icon: "🖥️" },
   { to: "/admin/announce", label: "Duyurular", icon: "📣" },
   { to: "/admin/settings", label: "Sistem Ayarları", icon: "⚙️" },

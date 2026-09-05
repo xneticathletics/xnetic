@@ -13,12 +13,14 @@ export default function DataTable<T>({
   rowKey,
   emptyText,
   loading,
+  onRowClick,
 }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
   emptyText: string;
   loading: boolean;
+  onRowClick?: (row: T) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-line">
@@ -49,7 +51,11 @@ export default function DataTable<T>({
           )}
           {!loading &&
             rows.map((row) => (
-              <tr key={rowKey(row)} className="border-b border-line last:border-0 hover:bg-surface/60">
+              <tr
+                key={rowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={`border-b border-line last:border-0 hover:bg-surface/60 ${onRowClick ? "cursor-pointer" : ""}`}
+              >
                 {columns.map((c) => (
                   <td key={c.key} className={`px-4 py-3 text-ink ${c.className ?? ""}`}>
                     {c.render(row)}

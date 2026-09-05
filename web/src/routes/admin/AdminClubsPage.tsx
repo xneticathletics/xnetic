@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable, { type Column } from "../../components/DataTable";
 import { listAllClubs, type ClubSummary } from "../../lib/api/superAdmin";
 
@@ -12,6 +13,7 @@ const STATUS_LABELS: Record<string, string> = {
 const PERIOD_LABELS: Record<string, string> = { monthly: "Aylık", yearly: "Yıllık" };
 
 export default function AdminClubsPage() {
+  const navigate = useNavigate();
   const [clubs, setClubs] = useState<ClubSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,14 @@ export default function AdminClubsPage() {
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
-      <DataTable columns={columns} rows={clubs} rowKey={(c) => c.id} loading={loading} emptyText="Henüz kulüp yok." />
+      <DataTable
+        columns={columns}
+        rows={clubs}
+        rowKey={(c) => c.id}
+        loading={loading}
+        emptyText="Henüz kulüp yok."
+        onRowClick={(c) => navigate(`/admin/clubs/${c.id}`)}
+      />
     </div>
   );
 }

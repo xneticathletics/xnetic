@@ -13,6 +13,9 @@ import AdminAnnouncePage from "./routes/admin/AdminAnnouncePage";
 import AdminSettingsPage from "./routes/admin/AdminSettingsPage";
 import AdminScreensPage from "./routes/admin/AdminScreensPage";
 import AdminRolePreviewPage from "./routes/admin/AdminRolePreviewPage";
+import AdminClubDetailPage from "./routes/admin/AdminClubDetailPage";
+import AdminFinancialTrendPage from "./routes/admin/AdminFinancialTrendPage";
+import AdminContentPromotionPage from "./routes/admin/AdminContentPromotionPage";
 import AthletesListPage from "./routes/athletes/AthletesListPage";
 import AthleteDetailPage from "./routes/athletes/AthleteDetailPage";
 import GroupsListPage from "./routes/groups/GroupsListPage";
@@ -74,7 +77,10 @@ export default function App() {
               <Route path="/" element={<RoleHome />} />
               <Route path="/admin" element={<AdminOverviewPage />} />
               <Route path="/admin/clubs" element={<AdminClubsPage />} />
+              <Route path="/admin/clubs/:id" element={<AdminClubDetailPage />} />
               <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
+              <Route path="/admin/financial-trend" element={<AdminFinancialTrendPage />} />
+              <Route path="/admin/content-promotion" element={<AdminContentPromotionPage />} />
               <Route path="/admin/announce" element={<AdminAnnouncePage />} />
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
               <Route path="/admin/screens" element={<AdminScreensPage />} />
