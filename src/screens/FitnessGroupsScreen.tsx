@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { useHomeButton } from "../hooks/useHomeButton";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { listFitnessGroups, deleteFitnessGroup, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
 
@@ -11,9 +10,10 @@ type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroups">;
 
 // Normal antrenman/yoklama gruplarından (GroupsListScreen) tamamen bağımsız
 // — bir branştaki tüm müsabık sporculardan serbestçe seçilmiş, sadece
-// fitness programı ataması için kullanılan özel kümeler.
+// fitness programı ataması için kullanılan özel kümeler. Fitness sayfasının
+// (FitnessScreen) alt ekranı olduğu için (Ana Sayfa'dan doğrudan açılmıyor)
+// useHomeButton KULLANILMIYOR — normal geri oku Fitness'a döner.
 export default function FitnessGroupsScreen({ navigation }: Props) {
-  useHomeButton(navigation);
   const [groups, setGroups] = useState<FitnessGroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
