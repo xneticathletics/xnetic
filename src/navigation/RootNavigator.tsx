@@ -181,7 +181,13 @@ export default function RootNavigator() {
       if (!(mustChangePassword === false && onboardingDone === true)) setConsentsDone(null);
       return;
     }
-    if (role !== "parent") {
+    // super_admin'in kulübü yok, kendisine ait sporcu/veli verisi de
+    // işlenmiyor — onay ekranından muaf. Diğer TÜM roller (parent, athlete,
+    // coach, club_admin) artık onay vermek zorunda; önceden sadece parent
+    // gösteriliyordu, bu yüzden antrenör/admin hiç KVKK/gizlilik onayı
+    // vermemiş oluyordu (bkz. security_notification_returning_rls_bug gibi
+    // bu oturumda bulunan diğer sessiz-boşluk hataları).
+    if (role === "super_admin") {
       setConsentsDone(true);
       return;
     }

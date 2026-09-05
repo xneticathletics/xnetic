@@ -10,6 +10,10 @@ export type CreateClubInput = {
   phone: string;
   password: string;
   billingPeriod: BillingPeriod;
+  // KVKK Aydınlatma Metni ve Kullanım Şartları'nın okunup kabul edildiği —
+  // edge function bu true olmadan hesap oluşturmuyor ve kabul anını
+  // user_consents'e kaydediyor (bkz. supabase/functions/create-club).
+  consentAccepted: boolean;
 };
 
 // create-club Edge Function'ını ham fetch ile çağırıyoruz (inviteUser.ts'deki

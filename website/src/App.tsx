@@ -9,6 +9,7 @@ import Pricing from "./components/Pricing";
 import Faq from "./components/Faq";
 import CtaBanner from "./components/CtaBanner";
 import Footer from "./components/Footer";
+import KvkkPage from "./components/KvkkPage";
 import { getPlatformSettings, type PlatformSettings } from "./lib/platformSettings";
 
 export default function App() {
@@ -21,6 +22,13 @@ export default function App() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Tek sayfalık site (router yok) — tek istisna /kvkk. vercel.json zaten
+  // her yolu index.html'e yönlendiriyor, bu yüzden bu basit pathname
+  // kontrolü yeterli, ayrı bir router bağımlılığı eklemeye gerek yok.
+  if (window.location.pathname === "/kvkk") {
+    return <KvkkPage settings={settings} />;
+  }
 
   return (
     <div>

@@ -6,6 +6,7 @@ import { formatPhoneNumber } from "../lib/phoneFormat";
 import { getPlatformSettings, type PlatformSettings } from "../lib/api/platformSettings";
 import { createClub, type BillingPeriod } from "../lib/api/clubSignup";
 import { uploadClubLogo } from "../lib/api/clubLogo";
+import ClubAdminConsentModal from "../components/ClubAdminConsentModal";
 
 const MARKETING_URL = import.meta.env.VITE_MARKETING_URL as string;
 
@@ -48,6 +49,9 @@ export default function CreateClubPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +89,7 @@ export default function CreateClubPage() {
     if (!email.trim()) return setError("E-posta adresini girmelisin.");
     if (password.length < 6) return setError("Şifre en az 6 karakter olmalı.");
     if (password !== passwordConfirm) return setError("Şifreler eşleşmiyor.");
+    if (!consentAccepted) return setError("Devam etmek için KVKK Aydınlatma Metni ve Kullanım Şartları'nı kabul etmelisin.");
 
     setSubmitting(true);
     setError(null);
@@ -96,6 +101,7 @@ export default function CreateClubPage() {
         phone: phone.trim(),
         password,
         billingPeriod,
+        consentAccepted,
       });
       // Hesap oluşturulduktan hemen sonra aynı bilgilerle giriş yapılır —
       // LoginPage'deki yönlendirme, oturum gelince otomatik olarak
@@ -259,12 +265,31 @@ export default function CreateClubPage() {
               <input required type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} placeholder="Şifreni tekrar gir" className={inputClass} autoComplete="new-password" />
             </label>
 
+            <label className="mb-4 flex items-start gap-2 text-xs text-muted">
+              <input
+                type="checkbox"
+                checked={consentAccepted}
+                onChange={(e) => setConsentAccepted(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                <button type="button" onClick={() => setShowConsentModal(true)} className="font-semibold text-teal hover:underline">
+                  KVKK Aydınlatma Metni ve Kullanım Şartları
+                </button>
+                'nı okudum, kabul ediyorum. *
+              </span>
+            </label>
+
             {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
             <button type="submit" disabled={submitting} className="w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg disabled:opacity-60">
               {submitting ? "Oluşturuluyor…" : "Kulübü Oluştur"}
             </button>
           </form>
+        )}
+
+        {showConsentModal && (
+          <ClubAdminConsentModal clubName={clubName} onClose={() => setShowConsentModal(false)} />
         )}
 
         {step === "plan" && (

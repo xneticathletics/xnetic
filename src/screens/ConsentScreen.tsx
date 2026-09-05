@@ -13,7 +13,7 @@ import { getClubName } from "../lib/api/clubSettings";
 // ForcePasswordChangeScreen ile aynı desen: onComplete çağrılana kadar
 // RootNavigator başka bir yere geçit vermez.
 export default function ConsentScreen({ onComplete }: { onComplete: () => void }) {
-  const { signOut } = useAuth();
+  const { signOut, role } = useAuth();
   const [clubName, setClubName] = useState("Kulüp");
   const [accepted, setAccepted] = useState<ConsentType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +78,7 @@ export default function ConsentScreen({ onComplete }: { onComplete: () => void }
     );
   }
 
-  const text = getConsentText(currentType);
+  const text = getConsentText(currentType, role!);
   const stepIndex = REQUIRED_CONSENT_TYPES.indexOf(currentType) + 1;
 
   return (

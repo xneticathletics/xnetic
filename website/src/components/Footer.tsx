@@ -35,6 +35,12 @@ export default function Footer({ settings }: { settings: PlatformSettings | null
                 <li><a href={`${APP_URL}/kulup-olustur`} className="hover:text-ink">Kulüp Oluştur</a></li>
               </ul>
             </div>
+            <div>
+              <div className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">Yasal</div>
+              <ul className="space-y-2 text-muted">
+                <li><a href="/kvkk" className="hover:text-ink">KVKK ve Gizlilik</a></li>
+              </ul>
+            </div>
             {(settings?.supportEmail || settings?.supportPhone) && (
               <div>
                 <div className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">İletişim</div>

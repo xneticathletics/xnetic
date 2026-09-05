@@ -80,13 +80,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { clubName, adminName, email, phone, password, billingPeriod } = body;
+    const { clubName, adminName, email, phone, password, billingPeriod, consentAccepted } = body;
 
     if (!clubName || !String(clubName).trim()) throw new Error("Kulüp adı zorunludur.");
     if (!adminName || !String(adminName).trim()) throw new Error("Ad soyad zorunludur.");
     if (!email || !String(email).trim()) throw new Error("E-posta zorunludur.");
     if (!password || String(password).length < 6) throw new Error("Şifre en az 6 karakter olmalıdır.");
     if (billingPeriod !== "monthly" && billingPeriod !== "yearly") throw new Error("Geçersiz plan seçimi.");
+    if (consentAccepted !== true) throw new Error("KVKK Aydınlatma Metni ve Kullanım Şartları'nı kabul etmelisiniz.");
 
     // Bakım modu ve güncel fiyatlar — Süper Admin'in Sistem Ayarları'ndan
     // yönettiği tek satırlık platform ayarları. İstemci tarafındaki kontrolün
@@ -130,18 +131,31 @@ Deno.serve(async (req) => {
     if (authError) throw authError;
     createdAuthUserId = createdAuth.user.id;
 
-    const { error: userError } = await admin.from("users").insert({
-      auth_user_id: createdAuth.user.id,
-      club_id: club.id,
-      name: String(adminName).trim(),
-      email: normalizedEmail,
-      phone: phone ? String(phone).trim() : null,
-      role: "club_admin",
-      is_active: true,
-      must_change_password: false,
-      onboarding_completed: true,
-    });
+    const { data: createdUser, error: userError } = await admin
+      .from("users")
+      .insert({
+        auth_user_id: createdAuth.user.id,
+        club_id: club.id,
+        name: String(adminName).trim(),
+        email: normalizedEmail,
+        phone: phone ? String(phone).trim() : null,
+        role: "club_admin",
+        is_active: true,
+        must_change_password: false,
+        onboarding_completed: true,
+      })
+      .select("id")
+      .single();
     if (userError) throw userError;
+
+    // Formdaki tek onay kutusu, web/src/lib/consentTexts.ts'teki 4 bölümün
+    // (KVKK, sağlık verisi erişim taahhüdü, foto/video, görev beyanı)
+    // TAMAMINI kapsıyor — mobildeki ConsentScreen.tsx ile aynı 4 consent_type
+    // anahtarı burada da tek seferde kaydediliyor (kulüp admini mobile
+    // uygulamayı da açarsa tekrar sorulmasın diye).
+    await admin.from("user_consents").insert(
+      ["kvkk", "saglik", "foto_video", "sorumluluk"].map((consent_type) => ({ user_id: createdUser.id, consent_type }))
+    );
 
     // Abonelik kaydı: 'pending_review' — Süper Admin havaleyi görüp
     // onaylayana kadar bu tutar platform gelirine sayılmaz (bkz.
