@@ -1,6 +1,6 @@
 import type { PlatformSettings } from "../lib/platformSettings";
 
-// x-netic.com/kvkk — sitenin tek statik alt sayfası. Ziyaretçiye genel bir
+// xnetic.net/kvkk — sitenin tek statik alt sayfası. Ziyaretçiye genel bir
 // KVKK Aydınlatma Metni/Gizlilik Politikası sunar; kulübe kayıtlı gerçek
 // kullanıcılar (veli/sporcu/antrenör/kulüp admini) için DETAYLI ve role
 // göre farklılaşan asıl aydınlatma metinleri uygulama içinde (ilk girişte)
@@ -30,7 +30,7 @@ export default function KvkkPage({ settings }: { settings: PlatformSettings | nu
           <section>
             <h2 className="mb-2 text-base font-bold text-ink">1. Bu Sayfa Neyi Kapsar?</h2>
             <p>
-              Bu sayfa, x-netic.com tanıtım sitesini ziyaret eden herkes için genel bir bilgilendirmedir. Bu site
+              Bu sayfa, xnetic.net tanıtım sitesini ziyaret eden herkes için genel bir bilgilendirmedir. Bu site
               üzerinden herhangi bir form doldurmuyor, kişisel veri girmiyorsunuz — site yalnızca X-NETIC ürününü
               tanıtır ve giriş/kulüp oluşturma sayfalarına yönlendirir.
             </p>
@@ -56,7 +56,7 @@ export default function KvkkPage({ settings }: { settings: PlatformSettings | nu
           <section>
             <h2 className="mb-2 text-base font-bold text-ink">3. Bu Sitede Toplanan Veri</h2>
             <p>
-              x-netic.com şu anda çerez tabanlı takip/analitik araçları veya iletişim formu kullanmamaktadır. Sitede
+              xnetic.net şu anda çerez tabanlı takip/analitik araçları veya iletişim formu kullanmamaktadır. Sitede
               yalnızca teknik olarak gerekli olan (sayfayı görüntülemenizi sağlayan) standart sunucu günlükleri
               tutulabilir.
             </p>
