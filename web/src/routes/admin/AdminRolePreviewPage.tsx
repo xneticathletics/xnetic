@@ -61,8 +61,8 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function AdminRolePreviewPage() {
   const { roleKey } = useParams<{ roleKey: string }>();
-  const tiles = (roleKey && TILES_BY_ROLE_KEY[roleKey]) ?? [];
-  const label = (roleKey && ROLE_LABELS[roleKey]) ?? "Rol";
+  const tiles: Tile[] = roleKey ? TILES_BY_ROLE_KEY[roleKey] ?? [] : [];
+  const label: string = roleKey ? ROLE_LABELS[roleKey] ?? "Rol" : "Rol";
 
   return (
     <div>
