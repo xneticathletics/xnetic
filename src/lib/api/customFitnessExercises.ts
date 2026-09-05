@@ -30,10 +30,16 @@ export type CustomFitnessExerciseInput = {
 
 const FIELDS = "id, club_id, category, name, bodyweight, video_url, description, created_at";
 
+// clubs!club_id: club_hidden_fitness_exercises tablosu (exercise_id VE
+// club_id'ye referans veriyor) fitness_exercises↔clubs arasında dolaylı
+// ikinci bir ilişki yolu oluşturduğu için PostgREST hangi FK'yı
+// kullanacağını açıkça bilmek istiyor — belirtilmezse "more than one
+// relationship was found" hatası atıp sorguyu tamamen reddediyor (hareket
+// listesi sessizce boş kalıyordu).
 export async function listCustomExercisesByCategory(category: string): Promise<CustomFitnessExercise[]> {
   const { data, error } = await supabase
     .from("fitness_exercises")
-    .select(`${FIELDS}, clubs(name)`)
+    .select(`${FIELDS}, clubs!club_id(name)`)
     .eq("category", category)
     .order("name", { ascending: true });
   if (error) throw error;
