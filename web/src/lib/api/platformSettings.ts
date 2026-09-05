@@ -35,3 +35,19 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
     bankIban: data.bank_iban,
   };
 }
+
+// Sadece Süper Admin'e açık (RLS) — Sistem Ayarları sayfasından çağrılır.
+export async function updatePlatformSettings(patch: Partial<PlatformSettings>): Promise<void> {
+  const dbPatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (patch.monthlyPriceTry !== undefined) dbPatch.monthly_price_try = patch.monthlyPriceTry;
+  if (patch.yearlyPriceTry !== undefined) dbPatch.yearly_price_try = patch.yearlyPriceTry;
+  if (patch.maintenanceMode !== undefined) dbPatch.maintenance_mode = patch.maintenanceMode;
+  if (patch.maintenanceMessage !== undefined) dbPatch.maintenance_message = patch.maintenanceMessage;
+  if (patch.supportEmail !== undefined) dbPatch.support_email = patch.supportEmail;
+  if (patch.supportPhone !== undefined) dbPatch.support_phone = patch.supportPhone;
+  if (patch.bankAccountName !== undefined) dbPatch.bank_account_name = patch.bankAccountName;
+  if (patch.bankIban !== undefined) dbPatch.bank_iban = patch.bankIban;
+
+  const { error } = await supabase.from("platform_settings").update(dbPatch).eq("id", true);
+  if (error) throw error;
+}

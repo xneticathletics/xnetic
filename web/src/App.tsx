@@ -1,11 +1,18 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ClubSettingsProvider } from "./context/ClubSettingsContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./routes/LoginPage";
 import CreateClubPage from "./routes/CreateClubPage";
 import AppLayout from "./components/layout/AppLayout";
 import DashboardPage from "./routes/DashboardPage";
+import AdminOverviewPage from "./routes/admin/AdminOverviewPage";
+import AdminClubsPage from "./routes/admin/AdminClubsPage";
+import AdminSubscriptionsPage from "./routes/admin/AdminSubscriptionsPage";
+import AdminAnnouncePage from "./routes/admin/AdminAnnouncePage";
+import AdminSettingsPage from "./routes/admin/AdminSettingsPage";
+import AdminScreensPage from "./routes/admin/AdminScreensPage";
+import AdminRolePreviewPage from "./routes/admin/AdminRolePreviewPage";
 import AthletesListPage from "./routes/athletes/AthletesListPage";
 import AthleteDetailPage from "./routes/athletes/AthleteDetailPage";
 import GroupsListPage from "./routes/groups/GroupsListPage";
@@ -45,6 +52,14 @@ import FitnessProgramBuilderPage from "./routes/fitness/FitnessProgramBuilderPag
 import FitnessProgramDetailPage from "./routes/fitness/FitnessProgramDetailPage";
 import FitnessWellnessPage from "./routes/fitness/FitnessWellnessPage";
 
+// Süper Admin'in kulübü yok — "/" (kulüp özeti) ona hiç uygun değil,
+// kendi platform-geneli Genel Bakış'ına yönlendirilir.
+function RoleHome() {
+  const { role } = useAuth();
+  if (role === "super_admin") return <Navigate to="/admin" replace />;
+  return <DashboardPage />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -56,7 +71,14 @@ export default function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<DashboardPage />} />
+              <Route path="/" element={<RoleHome />} />
+              <Route path="/admin" element={<AdminOverviewPage />} />
+              <Route path="/admin/clubs" element={<AdminClubsPage />} />
+              <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
+              <Route path="/admin/announce" element={<AdminAnnouncePage />} />
+              <Route path="/admin/settings" element={<AdminSettingsPage />} />
+              <Route path="/admin/screens" element={<AdminScreensPage />} />
+              <Route path="/admin/screens/:roleKey" element={<AdminRolePreviewPage />} />
               <Route path="/athletes" element={<AthletesListPage />} />
               <Route path="/athletes/:id" element={<AthleteDetailPage />} />
               <Route path="/groups" element={<GroupsListPage />} />

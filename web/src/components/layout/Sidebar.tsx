@@ -26,13 +26,28 @@ const NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean; tileK
   { to: "/account", label: "Hesabım", icon: "👤" },
 ];
 
+// Süper Admin'in kulübü yok — club_admin'in kulüp-özel menüsünü hiç
+// görmemeli, kendi platform-geneli araçlarına gitmeli.
+const SUPER_ADMIN_NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean }[] = [
+  { to: "/admin", label: "Genel Bakış", icon: "📊", end: true },
+  { to: "/admin/clubs", label: "Kulüpler", icon: "🏢" },
+  { to: "/admin/subscriptions", label: "Abonelikler", icon: "💳" },
+  { to: "/admin/screens", label: "Ekranlar", icon: "🖥️" },
+  { to: "/admin/announce", label: "Duyurular", icon: "📣" },
+  { to: "/admin/settings", label: "Sistem Ayarları", icon: "⚙️" },
+  { to: "/account", label: "Hesabım", icon: "👤" },
+];
+
 // lg altında (telefon/tablet) sabit sidebar yerine, hamburger menüyle
 // açılan bir çekmece (drawer) — AppLayout.tsx'teki mobil üst bar bunu
 // açıp kapatıyor. lg ve üstünde eskisi gibi her zaman görünür/sabit.
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { signOut } = useAuth();
+  const { role, signOut } = useAuth();
   const { settings } = useClubSettings();
-  const visibleItems = NAV_ITEMS.filter((item) => !item.tileKey || !settings.disabled_home_tiles.includes(item.tileKey));
+  const isSuperAdmin = role === "super_admin";
+  const visibleItems = isSuperAdmin
+    ? SUPER_ADMIN_NAV_ITEMS
+    : NAV_ITEMS.filter((item) => !item.tileKey || !settings.disabled_home_tiles.includes(item.tileKey));
 
   return (
     <>
