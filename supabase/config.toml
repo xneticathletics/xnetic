@@ -69,3 +69,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/send-push-notification/deno.json"
 entrypoint = "./functions/send-push-notification/index.ts"
+
+[functions.seed-standing-test-club]
+enabled = true
+verify_jwt = false
+import_map = "./functions/seed-standing-test-club/deno.json"
+entrypoint = "./functions/seed-standing-test-club/index.ts"
