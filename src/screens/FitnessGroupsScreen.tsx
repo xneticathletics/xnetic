@@ -5,6 +5,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { listFitnessGroups, deleteFitnessGroup, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
+import { listMyCoachedGroups } from "../lib/api/groups";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroups">;
 
@@ -14,16 +16,30 @@ type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroups">;
 // (FitnessScreen) alt ekranı olduğu için (Ana Sayfa'dan doğrudan açılmıyor)
 // useHomeButton KULLANILMIYOR — normal geri oku Fitness'a döner.
 export default function FitnessGroupsScreen({ navigation }: Props) {
+  const { role } = useAuth();
+  const isCoach = role === "coach";
   const [groups, setGroups] = useState<FitnessGroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
+  // Antrenör (branş koordinatörü dahil) sadece kendi branşındaki fitness
+  // gruplarını görsün/yönetsin — başka branşların gruplarını ne listede
+  // görmeli ne de açabilmeli. club_admin hâlâ hepsini görür.
+  const load = useCallback(async () => {
     setError(null);
-    return listFitnessGroups()
-      .then(setGroups)
-      .catch((e: any) => setError(e.message ?? "Fitness grupları yüklenemedi"));
-  }, []);
+    try {
+      const all = await listFitnessGroups();
+      if (!isCoach) {
+        setGroups(all);
+        return;
+      }
+      const myGroups = await listMyCoachedGroups();
+      const myBranches = new Set(myGroups.map((g) => g.branch));
+      setGroups(all.filter((g) => myBranches.has(g.branch)));
+    } catch (e: any) {
+      setError(e.message ?? "Fitness grupları yüklenemedi");
+    }
+  }, [isCoach]);
 
   useFocusEffect(
     useCallback(() => {

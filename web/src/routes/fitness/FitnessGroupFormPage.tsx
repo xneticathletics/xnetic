@@ -130,7 +130,10 @@ export default function FitnessGroupFormPage() {
               {athletes.map((a) => (
                 <label key={a.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface">
                   <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleAthlete(a.id)} />
-                  <span className="text-sm text-ink">{a.full_name}</span>
+                  <span className="text-sm text-ink">
+                    {a.full_name}
+                    {a.group_name && <span className="ml-1.5 text-xs text-muted">· {a.group_name}</span>}
+                  </span>
                 </label>
               ))}
             </div>

@@ -5,12 +5,13 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../lib/fitnessExercises";
 import { listCustomExercisesByCategory } from "../lib/api/customFitnessExercises";
-import { listGroups, type Group } from "../lib/api/groups";
+import { listGroups, listMyCoachedGroups, type Group } from "../lib/api/groups";
 import { listFitnessGroups, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
 import { publishFitnessProgram, type FitnessProgramItemInput } from "../lib/api/fitnessPrograms";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramBuilder">;
 
@@ -19,6 +20,8 @@ type ExerciseOption = { key: string; name: string };
 export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const headerHeight = useHeaderHeight();
+  const { role } = useAuth();
+  const isCoach = role === "coach";
 
   const [items, setItems] = useState<FitnessProgramItemInput[]>([]);
 
@@ -58,14 +61,26 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
       .catch(() => setExerciseOptions(staticOptions));
   }, [category]);
 
+  // Antrenör (branş koordinatörü dahil) sadece kendi gruplarına ve kendi
+  // branşındaki fitness gruplarına program gönderebilsin — club_admin
+  // hâlâ kulübün tüm gruplarını görür. getMyCoachedGroupIds zaten
+  // koordinatörü kendi branşının tamamına genişletiyor (bkz. myGroups.ts).
   useEffect(() => {
     if (!finalizing) return;
     setLoadingGroups(true);
-    Promise.all([listGroups(), listFitnessGroups()])
-      .then(([g, fg]) => { setGroups(g); setFitnessGroups(fg); })
+    Promise.all([isCoach ? listMyCoachedGroups() : listGroups(), listFitnessGroups()])
+      .then(([g, fg]) => {
+        setGroups(g);
+        if (isCoach) {
+          const myBranches = new Set(g.map((x) => x.branch));
+          setFitnessGroups(fg.filter((x) => myBranches.has(x.branch)));
+        } else {
+          setFitnessGroups(fg);
+        }
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoadingGroups(false));
-  }, [finalizing]);
+  }, [finalizing, isCoach]);
 
   const selectedExerciseName = exerciseOptions.find((e) => e.key === exerciseKey)?.name ?? null;
 

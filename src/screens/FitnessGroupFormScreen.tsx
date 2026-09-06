@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert,
 } from "react-native";
@@ -8,6 +8,9 @@ import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import BranchPickerModal from "../components/BranchPickerModal";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
+import { getMyCoachedGroupIds } from "../lib/api/myGroups";
+import { listGroups, type Group } from "../lib/api/groups";
+import { useAuth } from "../context/AuthContext";
 import {
   getFitnessGroup, createFitnessGroup, updateFitnessGroup,
   listMusabikAthletesForBranch, type MusabikAthlete,
@@ -21,6 +24,8 @@ type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroupForm">;
 export default function FitnessGroupFormScreen({ route, navigation }: Props) {
   const fitnessGroupId = route.params?.fitnessGroupId;
   const isNew = !fitnessGroupId;
+  const { role } = useAuth();
+  const isCoach = role === "coach";
 
   const [name, setName] = useState("");
   const [branch, setBranch] = useState<string | null>(null);
@@ -32,6 +37,34 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
+  // Antrenör (branş koordinatörü dahil) sadece kendi branşı için fitness
+  // grubu oluşturabilsin — undefined = henüz yüklenmedi. club_admin için
+  // hiç kullanılmıyor (aşağıdaki allowedBranchNames boş kalır, tüm
+  // branşlar gösterilir). MatchFormScreen.tsx'teki aynı desen.
+  const [myGroupIds, setMyGroupIds] = useState<string[] | undefined>(isCoach ? undefined : []);
+
+  useEffect(() => {
+    listGroups().then(setAllGroups).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!isCoach) return;
+    getMyCoachedGroupIds().then(setMyGroupIds).catch(() => setMyGroupIds([]));
+  }, [isCoach]);
+
+  const allowedBranchNames = useMemo(() => {
+    if (!isCoach) return [];
+    const ids = new Set(myGroupIds ?? []);
+    return Array.from(new Set(allGroups.filter((g) => ids.has(g.id)).map((g) => g.branch)));
+  }, [isCoach, myGroupIds, allGroups]);
+
+  // Antrenörün branşı tek ise (pratikte hep öyle) yeni grup oluştururken
+  // elle seçmesine gerek kalmadan otomatik dolduruyoruz.
+  useEffect(() => {
+    if (!isNew || !isCoach || branch || allowedBranchNames.length !== 1) return;
+    setBranch(allowedBranchNames[0]);
+  }, [isNew, isCoach, branch, allowedBranchNames]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,7 +173,10 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
                 <View style={[styles.checkbox, selected && styles.checkboxChecked]}>
                   {selected && <Text style={styles.checkboxMark}>✓</Text>}
                 </View>
-                <Text style={styles.athleteName}>{a.full_name}</Text>
+                <Text style={styles.athleteName}>
+                  {a.full_name}
+                  {a.group_name && <Text style={styles.athleteGroup}> · {a.group_name}</Text>}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -158,6 +194,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
         selectedName={branch}
         onSelect={(b) => setBranch(b.name)}
         onClose={() => setBranchPickerVisible(false)}
+        allowedNames={isCoach ? allowedBranchNames : undefined}
       />
     </ScrollView>
   );
@@ -188,6 +225,7 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   checkboxMark: { color: colors.bg, fontWeight: "800", fontSize: 13 },
   athleteName: { color: colors.ink, fontSize: 14, fontWeight: "600" },
+  athleteGroup: { color: colors.muted, fontSize: 12, fontWeight: "400" },
   errorText: { color: colors.coral, marginTop: spacing.md, textAlign: "center" },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.xl },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

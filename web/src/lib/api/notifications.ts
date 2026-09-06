@@ -15,7 +15,9 @@ export type NotificationEventType =
   | "session_excuse"
   | "payment_claim"
   | "payment_reminder"
-  | "announcement";
+  | "announcement"
+  | "training_session"
+  | "match_scheduled";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -27,6 +29,8 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "payment_claim", label: "Ödeme Bildirimi (Admin'e)" },
   { key: "payment_reminder", label: "Aidat Hatırlatması" },
   { key: "announcement", label: "Yeni Duyuru" },
+  { key: "training_session", label: "Yeni Antrenman" },
+  { key: "match_scheduled", label: "Yeni Maç Programı" },
 ];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç

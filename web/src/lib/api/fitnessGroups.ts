@@ -5,7 +5,7 @@ import { supabase } from "../supabase";
 // programı ataması için kullanılan özel kümeler. Mobildeki
 // src/lib/api/fitnessGroups.ts ile aynı tablolar/kolonlar.
 export type FitnessGroupSummary = { id: string; name: string; branch: string; member_count: number };
-export type MusabikAthlete = { id: string; full_name: string };
+export type MusabikAthlete = { id: string; full_name: string; group_name: string | null };
 export type FitnessGroupDetail = { id: string; name: string; branch: string; athleteIds: string[] };
 
 export async function listFitnessGroups(): Promise<FitnessGroupSummary[]> {
@@ -41,14 +41,17 @@ export async function getFitnessGroup(id: string): Promise<FitnessGroupDetail> {
 export async function listMusabikAthletesForBranch(branch: string): Promise<MusabikAthlete[]> {
   const { data, error } = await supabase
     .from("athletes")
-    .select("id, full_name, groups!group_id(branch)")
+    .select("id, full_name, groups!group_id(name, branch)")
     .eq("athlete_type", "musabik")
     .eq("status", "active");
   if (error) throw error;
   return ((data as any[]) ?? [])
     .filter((a) => a.groups?.branch === branch)
-    .map((a) => ({ id: a.id, full_name: a.full_name }))
-    .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
+    .map((a) => ({ id: a.id, full_name: a.full_name, group_name: a.groups?.name ?? null }))
+    .sort((a, b) => {
+      const groupCompare = (a.group_name ?? "").localeCompare(b.group_name ?? "", "tr");
+      return groupCompare !== 0 ? groupCompare : a.full_name.localeCompare(b.full_name, "tr");
+    });
 }
 
 export async function createFitnessGroup(input: {

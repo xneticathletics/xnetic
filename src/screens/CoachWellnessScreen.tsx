@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { listAthletesInGroups, listAllAthletes, type Athlete } from "../lib/api/athletes";
-import { listGroups, type Group } from "../lib/api/groups";
+import { listGroups, listMyCoachedGroups, type Group } from "../lib/api/groups";
 import { listCheckinsForAthletesOnDate, type AthleteLatestCheckin } from "../lib/api/wellnessCheckins";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -46,11 +46,15 @@ export default function CoachWellnessScreen({ navigation }: Props) {
     try {
       setError(null);
       // club_admin'in kendi koçluk yaptığı grup yoktur — kulüpteki TÜM
-      // sporcuları görür. Antrenör sadece kendi grubundakileri görür.
+      // sporcuları görür. Antrenör sadece kendi grubundakileri görür (branş
+      // koordinatörü kendi branşındaki tüm grupları kapsar, bkz.
+      // getMyCoachedGroupIds). Branş/grup filtre çipleri de aynı şekilde
+      // sadece antrenörün erişebildiği gruplarla sınırlı — aksi halde
+      // antrenör, hiç sonuç vermeyecek başka branşların filtrelerini görürdü.
       // Wellness check-in sadece müsabık sporcular için bir uygulama.
       const [athletes, allGroups] = await Promise.all([
         role === "club_admin" ? listAllAthletes() : listAthletesInGroups(await getMyCoachedGroupIds()),
-        listGroups(),
+        role === "club_admin" ? listGroups() : listMyCoachedGroups(),
       ]);
       const musabikAthletes: Athlete[] = athletes.filter((a) => a.athlete_type === "musabik");
       setGroups(allGroups);

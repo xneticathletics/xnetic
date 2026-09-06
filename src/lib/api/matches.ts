@@ -71,9 +71,58 @@ export async function getMatch(id: string): Promise<MatchRow> {
   return data as unknown as MatchRow;
 }
 
+function formatMatchDate(iso: string) {
+  return new Date(iso).toLocaleDateString("tr-TR");
+}
+
+// Bir müsabaka PROGRAMLANDIĞINDA (sonucu değil, kendisi oluşturulduğunda)
+// grubun antrenörlerine, branş koordinatörüne ve gruptaki aktif sporcuların
+// veli/kendi hesaplarına bildirim gider. notifyMatchResult ile aynı alıcı
+// toplama deseni, farklı başlık/metin.
+async function notifyMatchCreated(match: Pick<MatchRow, "group_id" | "opponent_name" | "match_date" | "start_time" | "location">) {
+  if (!match.group_id) return;
+  try {
+    const [groupResult, assistantCoachesResult, athletesResult] = await Promise.all([
+      supabase.from("groups").select("name, branch, head_coach_id").eq("id", match.group_id).single(),
+      supabase.from("group_coaches").select("coach_id").eq("group_id", match.group_id),
+      supabase.from("athletes").select("parent_user_id, athlete_user_id").eq("group_id", match.group_id).eq("status", "active"),
+    ]);
+    if (groupResult.error || !groupResult.data) return;
+    const group = groupResult.data;
+
+    let coordinatorId: string | null = null;
+    if (group.branch) {
+      const { data: branchRow } = await supabase
+        .from("branches")
+        .select("coordinator_user_id")
+        .eq("name", group.branch)
+        .maybeSingle();
+      coordinatorId = branchRow?.coordinator_user_id ?? null;
+    }
+
+    const recipients = new Set<string>();
+    if (group.head_coach_id) recipients.add(group.head_coach_id);
+    (assistantCoachesResult.data ?? []).forEach((r) => recipients.add(r.coach_id));
+    if (coordinatorId) recipients.add(coordinatorId);
+    (athletesResult.data ?? []).forEach((a) => {
+      if (a.parent_user_id) recipients.add(a.parent_user_id);
+      if (a.athlete_user_id) recipients.add(a.athlete_user_id);
+    });
+    if (recipients.size === 0) return;
+
+    const title = "Yeni Maç Programı";
+    const body = `${group.name}, ${formatMatchDate(match.match_date)} tarihinde ${match.start_time.slice(0, 5)}'de ${match.opponent_name} ile karşılaşacak.${match.location ? ` 📍 ${match.location}` : ""}`;
+
+    await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "match_scheduled").catch(() => {})));
+  } catch {
+    // Bildirim gönderimi maç oluşturmayı asla bloklamamalı.
+  }
+}
+
 export async function createMatch(input: MatchInput) {
   const { data, error } = await supabase.from("matches").insert(input).select().single();
   if (error) throw error;
+  await notifyMatchCreated(data as MatchRow);
   return data;
 }
 
