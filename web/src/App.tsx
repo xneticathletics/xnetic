@@ -16,6 +16,7 @@ import AdminRolePreviewPage from "./routes/admin/AdminRolePreviewPage";
 import AdminClubDetailPage from "./routes/admin/AdminClubDetailPage";
 import AdminFinancialTrendPage from "./routes/admin/AdminFinancialTrendPage";
 import AdminContentPromotionPage from "./routes/admin/AdminContentPromotionPage";
+import AdminFinancePage from "./routes/admin/AdminFinancePage";
 import AthletesListPage from "./routes/athletes/AthletesListPage";
 import AthleteDetailPage from "./routes/athletes/AthleteDetailPage";
 import GroupsListPage from "./routes/groups/GroupsListPage";
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
               <Route path="/admin/financial-trend" element={<AdminFinancialTrendPage />} />
               <Route path="/admin/content-promotion" element={<AdminContentPromotionPage />} />
+              <Route path="/admin/finance" element={<AdminFinancePage />} />
               <Route path="/admin/announce" element={<AdminAnnouncePage />} />
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
               <Route path="/admin/screens" element={<AdminScreensPage />} />
