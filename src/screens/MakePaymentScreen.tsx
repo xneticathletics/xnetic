@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView, Image } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { notifyPaymentClaim, type PaymentClaimMethod } from "../lib/api/payments";
+import {
+  notifyPaymentClaim, uploadPaymentReceipt, submitPaymentReceipt, type PaymentClaimMethod,
+} from "../lib/api/payments";
 import { getClubBankInfo, type ClubBankInfo } from "../lib/api/clubSettings";
 import { useAuth } from "../context/AuthContext";
 import { useHomeButton } from "../hooks/useHomeButton";
@@ -35,17 +38,37 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
   const sendingRef = useRef(false);
   const { copy, copiedKey } = useCopyToast();
 
+  // Sadece Havale/EFT'de anlamlı — dekont/makbuz fotoğrafı isteğe bağlı.
+  const [receiptUri, setReceiptUri] = useState<string | null>(null);
+
   useEffect(() => {
     if (!clubId) { setBankInfoLoading(false); return; }
     getClubBankInfo(clubId).then(setBankInfo).finally(() => setBankInfoLoading(false));
   }, [clubId]);
+
+  const handlePickReceipt = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("İzin gerekli", "Dekont fotoğrafı seçmek için galeri erişim izni vermelisin.", [{ text: "Tamam" }]);
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.7 });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    setReceiptUri(result.assets[0].uri);
+  };
 
   const handleClaim = async (method: PaymentClaimMethod) => {
     if (sendingRef.current) return;
     sendingRef.current = true;
     setSending(true);
     try {
-      await notifyPaymentClaim(paymentId, amount, athleteName, method);
+      let hasReceipt = false;
+      if (method === "havale" && receiptUri) {
+        const receiptUrl = await uploadPaymentReceipt(paymentId, receiptUri);
+        await submitPaymentReceipt(paymentId, receiptUrl);
+        hasReceipt = true;
+      }
+      await notifyPaymentClaim(paymentId, amount, athleteName, method, hasReceipt);
       Alert.alert(
         "Bildirildi",
         "Ödeme bildirimin kulüp yönetimine iletildi. Kontrol edildikten sonra durumun \"Ödendi\" olarak güncellenecek.",
@@ -131,6 +154,22 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
           ) : (
             <Text style={styles.noInfoText}>Kulübün banka bilgisi henüz girilmemiş — yönetimle iletişime geç.</Text>
           )}
+          {receiptUri ? (
+            <View style={styles.receiptPreviewRow}>
+              <Image source={{ uri: receiptUri }} style={styles.receiptThumb} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.receiptAddedText}>Dekont eklendi</Text>
+                <TouchableOpacity onPress={() => setReceiptUri(null)}>
+                  <Text style={styles.receiptRemoveText}>Kaldır</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.receiptButton} onPress={handlePickReceipt} disabled={sending}>
+              <Text style={styles.receiptButtonText}>📎 Dekont Ekle (isteğe bağlı)</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.claimButton} onPress={() => handleClaim("havale")} disabled={sending}>
             {sending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.claimButtonText}>Ödedim, Bildir</Text>}
           </TouchableOpacity>
@@ -202,6 +241,19 @@ const styles = StyleSheet.create({
   },
   copiedLabelText: { color: colors.bg, fontSize: 11, fontWeight: "600" },
   noInfoText: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center", marginBottom: spacing.md },
+  receiptButton: {
+    alignSelf: "stretch", borderWidth: 1, borderColor: colors.line, borderStyle: "dashed",
+    borderRadius: radius.md, paddingVertical: 12, alignItems: "center", marginBottom: spacing.md,
+  },
+  receiptButtonText: { color: colors.muted, fontWeight: "600", fontSize: 13 },
+  receiptPreviewRow: {
+    alignSelf: "stretch", flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    padding: spacing.sm, marginBottom: spacing.md,
+  },
+  receiptThumb: { width: 44, height: 44, borderRadius: radius.sm },
+  receiptAddedText: { color: colors.teal, fontSize: 13, fontWeight: "700" },
+  receiptRemoveText: { color: colors.coral, fontSize: 12, fontWeight: "600", marginTop: 2 },
   claimButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 14, paddingHorizontal: spacing.xl, alignItems: "center" },
   claimButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
   comingSoonIcon: { fontSize: 32, marginBottom: spacing.xs },

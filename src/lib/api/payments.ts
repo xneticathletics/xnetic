@@ -1,3 +1,5 @@
+import * as FileSystem from "expo-file-system/legacy";
+import { decode } from "base64-arraybuffer";
 import { supabase } from "../supabase";
 import { sendNotification } from "./notifications";
 
@@ -19,6 +21,7 @@ export type Payment = {
   due_date: string;
   paid_at: string | null;
   status: PaymentStatus;
+  receipt_url: string | null;
   athletes?: {
     full_name: string;
     parent_name: string | null;
@@ -35,7 +38,7 @@ export type PaymentInput = {
   due_date: string;
 };
 
-const PAYMENT_FIELDS = "id, athlete_id, period, amount, due_date, paid_at, status";
+const PAYMENT_FIELDS = "id, athlete_id, period, amount, due_date, paid_at, status, receipt_url";
 
 export async function listClubPayments(): Promise<Payment[]> {
   const { data, error } = await supabase
@@ -73,7 +76,8 @@ export async function notifyPaymentClaim(
   paymentId: string,
   amount: number,
   athleteName: string,
-  method: PaymentClaimMethod
+  method: PaymentClaimMethod,
+  hasReceipt: boolean = false
 ): Promise<void> {
   const { data: admins, error } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
   if (error) throw error;
@@ -100,11 +104,50 @@ export async function notifyPaymentClaim(
 
   const methodLabel = PAYMENT_METHOD_LABEL[method];
   const title = "Ödeme Bildirimi";
-  const body = `${athleteName} için ${amount.toLocaleString("tr-TR")} ₺ tutarındaki aidatın ${methodLabel} ile ödendiği bildirildi — kontrol edip onaylayabilirsiniz.`;
+  const body =
+    `${athleteName} için ${amount.toLocaleString("tr-TR")} ₺ tutarındaki aidatın ${methodLabel} ile ödendiği bildirildi` +
+    (hasReceipt ? " (dekont eklendi)" : "") +
+    " — kontrol edip onaylayabilirsiniz.";
 
   await Promise.all(
     Array.from(recipients).map((id) => sendNotification(id, title, body, "payment_claim").catch(() => {}))
   );
+}
+
+// "Ödedim, Bildir" akışında isteğe bağlı dekont/makbuz fotoğrafı — bucket
+// private, herkese açık URL yerine ~10 yıllık imzalı URL kullanılıyor
+// (bkz. sessionMedia.ts'teki aynı desen).
+export async function uploadPaymentReceipt(paymentId: string, localUri: string): Promise<string> {
+  const fileExt = localUri.split(".").pop()?.split("?")[0] || "jpg";
+  const path = `${paymentId}/${Date.now()}.${fileExt}`;
+  const contentType = fileExt === "jpg" ? "image/jpeg" : `image/${fileExt}`;
+
+  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+  const arrayBuffer = decode(base64);
+
+  const { error: uploadError } = await supabase.storage
+    .from("payment-receipts")
+    .upload(path, arrayBuffer, { contentType });
+  if (uploadError) throw uploadError;
+
+  const { data: signedData, error: signError } = await supabase.storage
+    .from("payment-receipts")
+    .createSignedUrl(path, 315360000);
+  if (signError || !signedData) throw signError ?? new Error("İmzalı URL oluşturulamadı");
+
+  return signedData.signedUrl;
+}
+
+// payments tablosunda velinin doğrudan UPDATE izni yok (amount/status gibi
+// hassas kolonları da değiştirebilir hale gelmesin diye) — bu yüzden
+// SADECE receipt_url'i, SADECE kendi sporcusunun ödemesinde değiştiren dar
+// bir RPC üzerinden yapılıyor (bkz. migration 20260906220000).
+export async function submitPaymentReceipt(paymentId: string, receiptUrl: string): Promise<void> {
+  const { error } = await supabase.rpc("submit_payment_receipt", {
+    p_payment_id: paymentId,
+    p_receipt_url: receiptUrl,
+  });
+  if (error) throw error;
 }
 
 export async function markPaymentPaid(id: string) {

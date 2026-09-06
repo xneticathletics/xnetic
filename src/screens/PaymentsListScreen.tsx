@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -159,6 +159,11 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
                   {PERIOD_LABEL[item.period]} · {item.amount.toLocaleString("tr-TR")} ₺ · Vade: {item.due_date}
                 </Text>
                 <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
+                {!!item.receipt_url && (
+                  <TouchableOpacity onPress={() => Linking.openURL(item.receipt_url!)}>
+                    <Text style={styles.receiptLink}>📎 Dekontu Gör</Text>
+                  </TouchableOpacity>
+                )}
                 {(item.athletes?.parent_name || item.athletes?.parent_phone) && (
                   <Text style={styles.parentInfo}>
                     {[item.athletes?.parent_name, item.athletes?.parent_phone].filter(Boolean).join(" · ")}
@@ -210,6 +215,7 @@ const styles = StyleSheet.create({
   rowBranch: { color: colors.muted, fontSize: 12, fontWeight: "600" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusLabel: { fontSize: 12, fontWeight: "700", marginTop: 4 },
+  receiptLink: { color: colors.teal, fontSize: 11, fontWeight: "700", marginTop: 4 },
   parentInfo: { color: colors.muted, fontSize: 11, marginTop: 4 },
   actionsCol: { alignItems: "flex-end", gap: 6 },
   payButton: { borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 8 },
