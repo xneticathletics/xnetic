@@ -14,6 +14,8 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
 import { listGroups, type Group } from "../lib/api/groups";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteDetail">;
 
@@ -74,6 +76,17 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   useHomeButton(navigation);
   const { athleteId } = route.params;
   const scrollRef = useRef<ScrollView>(null);
+  const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  // Veli/sporcu bu ekrana kendi "Sporcum" profilini görüntülemek için
+  // gelir — salt okunur: düzenleme/not/sakatlık/dondurma/silme yok, çünkü
+  // athlete_notes ve injuries tablolarının RLS'i zaten sadece admin/koç
+  // SELECT'ine izin veriyor (bkz. security_* bellek notları). Silme ise
+  // ayrıca antrenörler için de kapalı — sadece club_admin ve branş
+  // koordinatörü (isLocked) silebilir.
+  const isStaff = role === "club_admin" || role === "coach";
+  const isCoordinator = role === "coach" && isLocked;
+  const canDelete = role === "club_admin" || isCoordinator;
 
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [notes, setNotes] = useState<AthleteNote[]>([]);
@@ -94,9 +107,16 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       if (!hasLoadedOnceRef.current) setLoading(true);
+      // Veli/sporcu için not/sakatlık/ek-grup/tüm-gruplar sorgularına hiç
+      // gerek yok — RLS zaten bunları admin/koça kapatıyor, gereksiz
+      // isteği baştan atlıyoruz.
       Promise.all([
-        getAthlete(athleteId), listAthleteNotes(athleteId), listInjuries(athleteId),
-        getAthleteExtraGroups(athleteId), listAthleteRecentAttendance(athleteId), listGroups(),
+        getAthlete(athleteId),
+        isStaff ? listAthleteNotes(athleteId) : Promise.resolve([]),
+        isStaff ? listInjuries(athleteId) : Promise.resolve([]),
+        isStaff ? getAthleteExtraGroups(athleteId) : Promise.resolve([]),
+        listAthleteRecentAttendance(athleteId),
+        isStaff ? listGroups() : Promise.resolve([]),
       ])
         .then(([a, n, i, eg, att, g]) => {
           setAthlete(a);
@@ -111,7 +131,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
           setLoading(false);
           hasLoadedOnceRef.current = true;
         });
-    }, [athleteId])
+    }, [athleteId, isStaff])
   );
 
   const infoMissing = useMemo(() => {
@@ -250,8 +270,8 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             </View>
             <TouchableOpacity
               style={[styles.badgeOutline, athlete.athlete_type === "musabik" && styles.badgeOutlineYellow]}
-              onPress={handleTypeToggle}
-              disabled={typeSaving}
+              onPress={isStaff ? handleTypeToggle : undefined}
+              disabled={typeSaving || !isStaff}
             >
               <Text style={[styles.badgeOutlineText, athlete.athlete_type === "musabik" && styles.badgeOutlineYellowText]}>
                 {athlete.athlete_type === "musabik" ? "MÜSABIK" : "SPOR OKULU"}
@@ -281,28 +301,30 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         </View>
       </View>
 
-      <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.actionCard} onPress={handleCallParent} disabled={!athlete.parent_phone}>
-          <View style={[styles.actionIconCircle, { backgroundColor: colors.teal }]}>
-            <Text style={styles.actionIconText}>📞</Text>
-          </View>
-          <Text style={styles.actionLabel}>Veli ara</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionCard} onPress={handleMessage}>
-          <View style={[styles.actionIconCircle, { backgroundColor: colors.violet }]}>
-            <Text style={styles.actionIconText}>💬</Text>
-          </View>
-          <Text style={styles.actionLabel}>Mesaj</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionCard} onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}>
-          <View style={[styles.actionIconCircle, styles.actionIconCircleOutline]}>
-            <Text style={styles.actionIconText}>📋</Text>
-          </View>
-          <Text style={styles.actionLabel}>Yoklama</Text>
-        </TouchableOpacity>
-      </View>
+      {isStaff && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={styles.actionCard} onPress={handleCallParent} disabled={!athlete.parent_phone}>
+            <View style={[styles.actionIconCircle, { backgroundColor: colors.teal }]}>
+              <Text style={styles.actionIconText}>📞</Text>
+            </View>
+            <Text style={styles.actionLabel}>Veli ara</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={handleMessage}>
+            <View style={[styles.actionIconCircle, { backgroundColor: colors.violet }]}>
+              <Text style={styles.actionIconText}>💬</Text>
+            </View>
+            <Text style={styles.actionLabel}>Mesaj</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}>
+            <View style={[styles.actionIconCircle, styles.actionIconCircleOutline]}>
+              <Text style={styles.actionIconText}>📋</Text>
+            </View>
+            <Text style={styles.actionLabel}>Yoklama</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-      {totalMissing > 0 && (
+      {isStaff && totalMissing > 0 && (
         <View style={styles.completionCard}>
           <View style={styles.completionHeaderRow}>
             <Text style={styles.completionTitle}>Profil tamamlanma</Text>
@@ -329,7 +351,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
               onPress={() => setActiveTab(t.key)}
             >
               <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-              {t.missing > 0 && (
+              {isStaff && t.missing > 0 && (
                 <View style={[styles.tabBadge, active && styles.tabBadgeActive]}>
                   <Text style={[styles.tabBadgeText, active && styles.tabBadgeTextActive]}>{t.missing}</Text>
                 </View>
@@ -343,26 +365,26 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         {activeTab === "info" && (
           <>
             <InfoRow label="Kategori" value={athlete.groups?.name} />
-            <InfoRow label="Doğum tarihi" value={athlete.birth_date} onAdd={goToEditForm} />
-            <InfoRow label="Boy (cm)" value={athlete.height_cm} onAdd={goToEditForm} />
-            <InfoRow label="Kilo (kg)" value={athlete.weight_kg} onAdd={goToEditForm} />
-            <InfoRow label="Okul" value={athlete.school} onAdd={goToEditForm} />
-            <InfoRow label="Forma bedeni" value={athlete.jersey_size} onAdd={goToEditForm} />
-            <InfoRow label="Forma numarası" value={athlete.jersey_number} onAdd={goToEditForm} />
+            <InfoRow label="Doğum tarihi" value={athlete.birth_date} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Boy (cm)" value={athlete.height_cm} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Kilo (kg)" value={athlete.weight_kg} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Okul" value={athlete.school} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Forma bedeni" value={athlete.jersey_size} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Forma numarası" value={athlete.jersey_number} onAdd={isStaff ? goToEditForm : undefined} />
           </>
         )}
         {activeTab === "parent" && (
           <>
-            <InfoRow label="Veli Adı Soyadı" value={athlete.parent_name} onAdd={goToEditForm} />
-            <InfoRow label="Veli Telefon" value={athlete.parent_phone} onAdd={goToEditForm} />
+            <InfoRow label="Veli Adı Soyadı" value={athlete.parent_name} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Veli Telefon" value={athlete.parent_phone} onAdd={isStaff ? goToEditForm : undefined} />
           </>
         )}
         {activeTab === "health" && (
           <>
-            <InfoRow label="Kan Grubu" value={athlete.blood_type} onAdd={goToEditForm} />
-            <InfoRow label="Alerjiler" value={athlete.allergies} onAdd={goToEditForm} />
-            <InfoRow label="Kullandığı İlaçlar" value={athlete.medications} onAdd={goToEditForm} />
-            <InfoRow label="Sağlık Notu" value={athlete.health_info} onAdd={goToEditForm} />
+            <InfoRow label="Kan Grubu" value={athlete.blood_type} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Alerjiler" value={athlete.allergies} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Kullandığı İlaçlar" value={athlete.medications} onAdd={isStaff ? goToEditForm : undefined} />
+            <InfoRow label="Sağlık Notu" value={athlete.health_info} onAdd={isStaff ? goToEditForm : undefined} />
           </>
         )}
       </View>
@@ -387,68 +409,74 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      <SectionHeader title={`Koç Notları${notes.length ? ` (${notes.length})` : ""}`} />
-      {notes.length === 0 ? (
-        <Text style={styles.emptyText}>Henüz not yok.</Text>
-      ) : (
-        notes.map((n) => (
-          <View key={n.id} style={styles.noteCard}>
-            <Text style={styles.noteText}>{n.note}</Text>
-            <Text style={styles.noteDate}>{new Date(n.created_at).toLocaleDateString("tr-TR")}</Text>
-          </View>
-        ))
+      {isStaff && (
+        <>
+          <SectionHeader title={`Koç Notları${notes.length ? ` (${notes.length})` : ""}`} />
+          {notes.length === 0 ? (
+            <Text style={styles.emptyText}>Henüz not yok.</Text>
+          ) : (
+            notes.map((n) => (
+              <View key={n.id} style={styles.noteCard}>
+                <Text style={styles.noteText}>{n.note}</Text>
+                <Text style={styles.noteDate}>{new Date(n.created_at).toLocaleDateString("tr-TR")}</Text>
+              </View>
+            ))
+          )}
+
+          <SectionHeader title={`Sakatlık Geçmişi${injuries.length ? ` (${injuries.length})` : ""}`} />
+          {injuries.length === 0 ? (
+            <Text style={styles.emptyText}>Sakatlık kaydı yok.</Text>
+          ) : (
+            injuries.map((inj) => (
+              <View key={inj.id} style={styles.injuryCard}>
+                <Text style={styles.injuryType}>{inj.injury_type}</Text>
+                <Text style={styles.injuryDate}>
+                  {new Date(inj.injury_date).toLocaleDateString("tr-TR")}
+                  {inj.expected_return ? ` — Beklenen dönüş: ${new Date(inj.expected_return).toLocaleDateString("tr-TR")}` : ""}
+                </Text>
+                {!!inj.note && <Text style={styles.injuryNote}>{inj.note}</Text>}
+              </View>
+            ))
+          )}
+
+          <TouchableOpacity style={styles.editButton} onPress={goToEditForm}>
+            <Text style={styles.editButtonText}>Düzenle</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.extraGroupsButton} onPress={() => setExtraGroupModalVisible(true)}>
+            <Text style={styles.extraGroupsButtonText}>Ek Branşlar ve Gruplar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.injuryNavButton} onPress={goToInjuries}>
+            <Text style={styles.injuryNavButtonText}>Sakatlık Geçmişi</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.notesNavButton} onPress={goToNotes}>
+            <Text style={styles.notesNavButtonText}>Koç Notları</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.freezeButton}
+            onPress={() => navigation.navigate("MembershipFreeze", { athleteId: athlete.id, athleteName: athlete.full_name })}
+          >
+            <Text style={styles.freezeButtonText}>Kaydı Dondur</Text>
+          </TouchableOpacity>
+
+          <GroupMultiPickerModal
+            visible={extraGroupModalVisible}
+            selectedIds={extraGroups.map((eg) => eg.group_id)}
+            allowedIds={allGroups.filter((g) => g.id !== athlete.group_id).map((g) => g.id)}
+            onConfirm={handleExtraGroupsConfirm}
+            onClose={() => setExtraGroupModalVisible(false)}
+          />
+        </>
       )}
 
-      <SectionHeader title={`Sakatlık Geçmişi${injuries.length ? ` (${injuries.length})` : ""}`} />
-      {injuries.length === 0 ? (
-        <Text style={styles.emptyText}>Sakatlık kaydı yok.</Text>
-      ) : (
-        injuries.map((inj) => (
-          <View key={inj.id} style={styles.injuryCard}>
-            <Text style={styles.injuryType}>{inj.injury_type}</Text>
-            <Text style={styles.injuryDate}>
-              {new Date(inj.injury_date).toLocaleDateString("tr-TR")}
-              {inj.expected_return ? ` — Beklenen dönüş: ${new Date(inj.expected_return).toLocaleDateString("tr-TR")}` : ""}
-            </Text>
-            {!!inj.note && <Text style={styles.injuryNote}>{inj.note}</Text>}
-          </View>
-        ))
+      {canDelete && (
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Text style={styles.deleteButtonText}>Sporcuyu Sil</Text>
+        </TouchableOpacity>
       )}
-
-      <TouchableOpacity style={styles.editButton} onPress={goToEditForm}>
-        <Text style={styles.editButtonText}>Düzenle</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.extraGroupsButton} onPress={() => setExtraGroupModalVisible(true)}>
-        <Text style={styles.extraGroupsButtonText}>Ek Branşlar ve Gruplar</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.injuryNavButton} onPress={goToInjuries}>
-        <Text style={styles.injuryNavButtonText}>Sakatlık Geçmişi</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.notesNavButton} onPress={goToNotes}>
-        <Text style={styles.notesNavButtonText}>Koç Notları</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.freezeButton}
-        onPress={() => navigation.navigate("MembershipFreeze", { athleteId: athlete.id, athleteName: athlete.full_name })}
-      >
-        <Text style={styles.freezeButtonText}>Kaydı Dondur</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-        <Text style={styles.deleteButtonText}>Sporcuyu Sil</Text>
-      </TouchableOpacity>
-
-      <GroupMultiPickerModal
-        visible={extraGroupModalVisible}
-        selectedIds={extraGroups.map((eg) => eg.group_id)}
-        allowedIds={allGroups.filter((g) => g.id !== athlete.group_id).map((g) => g.id)}
-        onConfirm={handleExtraGroupsConfirm}
-        onClose={() => setExtraGroupModalVisible(false)}
-      />
     </ScrollView>
   );
 }

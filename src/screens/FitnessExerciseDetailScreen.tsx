@@ -13,6 +13,8 @@ import AthletePickerModal from "../components/AthletePickerModal";
 import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessExerciseDetail">;
 
@@ -55,6 +57,10 @@ function formatDate(iso: string) {
 export default function FitnessExerciseDetailScreen({ route, navigation }: Props) {
   const { exerciseKey } = route.params;
   const { handleFocus } = useKeyboardScroll();
+  const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  // Ölçüm geçmişini silme sadece club_admin ve branş koordinatörüne açık.
+  const canDelete = role === "club_admin" || (role === "coach" && isLocked);
 
   const [resolved, setResolved] = useState<Resolved | null | undefined>(undefined);
 
@@ -309,7 +315,7 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
         athlete && !loadingHistory ? <Text style={styles.empty}>Bu sporcu için henüz kayıt yok.</Text> : null
       }
       renderItem={({ item }) => (
-        <TouchableOpacity style={styles.historyRow} onLongPress={() => handleDelete(item)}>
+        <TouchableOpacity style={styles.historyRow} onLongPress={canDelete ? () => handleDelete(item) : undefined}>
           <View>
             <Text style={styles.historyValue}>
               {item.weight_kg != null ? `${item.weight_kg} kg` : "Vücut ağırlığı"}

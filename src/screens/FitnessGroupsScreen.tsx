@@ -7,6 +7,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { listFitnessGroups, deleteFitnessGroup, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
 import { listMyCoachedGroups } from "../lib/api/groups";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroups">;
 
@@ -17,7 +18,11 @@ type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroups">;
 // useHomeButton KULLANILMIYOR — normal geri oku Fitness'a döner.
 export default function FitnessGroupsScreen({ navigation }: Props) {
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
   const isCoach = role === "coach";
+  // Silme sadece club_admin ve branş koordinatörüne açık — sıradan
+  // antrenör bir fitness grubunu artık silemez.
+  const canDelete = role === "club_admin" || (role === "coach" && isLocked);
   const [groups, setGroups] = useState<FitnessGroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,12 +90,12 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
         keyExtractor={(g) => g.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz fitness grubu yok.</Text> : null}
-        ListFooterComponent={groups.length > 0 ? <Text style={styles.hint}>Silmek için bir gruba uzun bas.</Text> : null}
+        ListFooterComponent={groups.length > 0 && canDelete ? <Text style={styles.hint}>Silmek için bir gruba uzun bas.</Text> : null}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
             onPress={() => navigation.navigate("FitnessGroupForm", { fitnessGroupId: item.id })}
-            onLongPress={() => handleDelete(item)}
+            onLongPress={canDelete ? () => handleDelete(item) : undefined}
           >
             <View style={{ flex: 1 }}>
               <Text style={styles.cardName}>🎯 {item.name}</Text>

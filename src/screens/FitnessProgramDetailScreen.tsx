@@ -12,6 +12,7 @@ import {
   type FitnessProgram, type FitnessProgramItem, type FitnessProgramCompletion,
 } from "../lib/api/fitnessPrograms";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramDetail">;
@@ -24,7 +25,10 @@ function formatDateTime(iso: string) {
 
 export default function FitnessProgramDetailScreen({ route, navigation }: Props) {
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
   const canManage = role === "coach" || role === "club_admin";
+  // Silme sadece club_admin ve branş koordinatörüne açık.
+  const canDelete = role === "club_admin" || (role === "coach" && isLocked);
   const { programId, athleteId, athleteName } = route.params;
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
@@ -221,7 +225,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
           </>
         )}
 
-        {canManage && (
+        {canDelete && (
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
             <Text style={styles.deleteButtonText}>Programı Sil</Text>
           </TouchableOpacity>

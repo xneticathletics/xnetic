@@ -13,6 +13,7 @@ import VenuePickerModal from "../components/VenuePickerModal";
 import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
@@ -47,7 +48,10 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const sessionId = route.params?.sessionId;
   const isEdit = !!sessionId;
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
   const isCoach = role === "coach";
+  // Silme sadece club_admin ve branş koordinatörüne açık.
+  const canDelete = role === "club_admin" || (isCoach && isLocked);
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [form, setForm] = useState<TrainingSessionInput>(emptyForm);
@@ -286,7 +290,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
         {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
       </TouchableOpacity>
 
-      {isEdit && (
+      {isEdit && canDelete && (
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
           <Text style={styles.deleteButtonText}>Antrenmanı Sil</Text>
         </TouchableOpacity>

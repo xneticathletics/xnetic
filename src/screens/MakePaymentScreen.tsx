@@ -38,7 +38,7 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
   const handleClaim = async (method: PaymentClaimMethod) => {
     setSending(true);
     try {
-      await notifyPaymentClaim(amount, athleteName, method);
+      await notifyPaymentClaim(paymentId, amount, athleteName, method);
       Alert.alert(
         "Bildirildi",
         "Ödeme bildirimin kulüp yönetimine iletildi. Kontrol edildikten sonra durumun \"Ödendi\" olarak güncellenecek.",

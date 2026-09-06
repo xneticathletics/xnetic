@@ -66,9 +66,11 @@ export async function createPayment(input: PaymentInput) {
 
 // Veli "Ödedim" dediğinde ödemeyi OTOMATİK "Ödendi" yapmıyoruz — havale/EFT
 // ve elden ödeme her zaman gerçek dünyada bir doğrulama gerektirir. Bunun
-// yerine kulüp admin(ler)ine bir bildirim gönderip, admin kendi ekranından
-// kontrol edip markPaymentPaid() ile onaylayana kadar durum "Bekliyor" kalır.
+// yerine kulüp admin(ler)ine, sporcunun grubunun baş antrenörüne ve branş
+// koordinatörüne bir bildirim gönderip, biri kendi ekranından kontrol edip
+// markPaymentPaid() ile onaylayana kadar durum "Bekliyor" kalır.
 export async function notifyPaymentClaim(
+  paymentId: string,
   amount: number,
   athleteName: string,
   method: PaymentClaimMethod
@@ -76,12 +78,32 @@ export async function notifyPaymentClaim(
   const { data: admins, error } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
   if (error) throw error;
 
+  const recipients = new Set<string>((admins ?? []).map((a) => a.id));
+
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("athletes(groups!group_id(branch, head_coach_id))")
+    .eq("id", paymentId)
+    .maybeSingle();
+  const group = (payment as any)?.athletes?.groups;
+  if (group) {
+    if (group.head_coach_id) recipients.add(group.head_coach_id);
+    if (group.branch) {
+      const { data: branchRow } = await supabase
+        .from("branches")
+        .select("coordinator_user_id")
+        .eq("name", group.branch)
+        .maybeSingle();
+      if (branchRow?.coordinator_user_id) recipients.add(branchRow.coordinator_user_id);
+    }
+  }
+
   const methodLabel = PAYMENT_METHOD_LABEL[method];
   const title = "Ödeme Bildirimi";
   const body = `${athleteName} için ${amount.toLocaleString("tr-TR")} ₺ tutarındaki aidatın ${methodLabel} ile ödendiği bildirildi — kontrol edip onaylayabilirsiniz.`;
 
   await Promise.all(
-    (admins ?? []).map((a) => sendNotification(a.id, title, body, "payment_claim").catch(() => {}))
+    Array.from(recipients).map((id) => sendNotification(id, title, body, "payment_claim").catch(() => {}))
   );
 }
 

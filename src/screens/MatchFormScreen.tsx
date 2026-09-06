@@ -19,6 +19,7 @@ import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 
 // "SS:DD" formatında, saat 00-23 ve dakika 00-59 aralığında mı kontrol eder
@@ -48,7 +49,10 @@ export default function MatchFormScreen({ route, navigation }: Props) {
   const isEdit = !!matchId;
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
   const isCoach = role === "coach";
+  // Silme sadece club_admin ve branş koordinatörüne açık.
+  const canDelete = role === "club_admin" || (isCoach && isLocked);
 
   const [form, setForm] = useState<MatchInput>(emptyForm);
   const [groupName, setGroupName] = useState<string | null>(null);
@@ -354,7 +358,7 @@ export default function MatchFormScreen({ route, navigation }: Props) {
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
 
-        {isEdit && (
+        {isEdit && canDelete && (
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
             <Text style={styles.deleteButtonText}>Müsabakayı Sil</Text>
           </TouchableOpacity>

@@ -47,6 +47,14 @@ export default function MembershipFreezeScreen({ route, navigation }: Props) {
 
   const { role } = useAuth();
   const { handleFocus } = useKeyboardScroll();
+  // Dondurma kaydını silme: club_admin her zaman silebilir; veli/sporcu
+  // kendi kaydını silebilir (own_delete RLS zaten buna izin veriyor).
+  // Antrenör (koordinatör dahil) — sporcu detayından (isAdminEntry) geldiği
+  // durumda — artık silme seçeneği görmüyor; membership_freezes tablosunda
+  // zaten koç/koordinatöre özel bir DELETE RLS politikası hiç olmadığından
+  // (sadece admin_all ve own_delete var) bu buton antrenör için önceden de
+  // "Silinemedi" hatasıyla sessizce başarısız oluyordu — artık hiç gösterilmiyor.
+  const canDeleteFreeze = role === "club_admin" || !isAdminEntry;
 
   const [athleteId, setAthleteId] = useState<string | null>(route.params?.athleteId ?? null);
   const [athleteName, setAthleteName] = useState<string | null>(route.params?.athleteName ?? null);
@@ -245,7 +253,11 @@ export default function MembershipFreezeScreen({ route, navigation }: Props) {
           <>
             <Text style={styles.historyLabel}>Geçmiş Dondurmalar</Text>
             {history.map((f) => (
-              <TouchableOpacity key={f.id} style={styles.historyRow} onLongPress={() => handleDelete(f)}>
+              <TouchableOpacity
+                key={f.id}
+                style={styles.historyRow}
+                onLongPress={canDeleteFreeze ? () => handleDelete(f) : undefined}
+              >
                 <Text style={styles.historyRange}>{formatDate(f.start_date)} - {formatDate(f.end_date)}</Text>
                 <Text style={styles.historyBy}>{f.requested_by_role === "admin" ? "Admin" : "Veli"}</Text>
               </TouchableOpacity>

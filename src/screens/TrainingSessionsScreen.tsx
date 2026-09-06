@@ -379,7 +379,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
               </Text>
             </TouchableOpacity>
           )}
-          {isPast && (
+          {isPast && !isCoach && (
             <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item)}>
               <Text style={styles.deleteButtonText}>🗑 Sil</Text>
             </TouchableOpacity>
