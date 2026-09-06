@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -180,6 +180,27 @@ export default function ProfileScreen({
           </View>
           <Text style={styles.settingsTitle}>Şifre İşlemleri</Text>
           <Text style={styles.settingsSub}>Şifreni değiştir</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.settingsGrid}>
+        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("NotificationPreferences")}>
+          <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
+            <Text style={styles.settingsIcon}>🔔</Text>
+          </View>
+          <Text style={styles.settingsTitle}>Bildirim Tercihleri</Text>
+          <Text style={styles.settingsSub}>Almak istemediklerin</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingsTile}
+          onPress={() => Linking.openURL("mailto:destek@xnetic.net?subject=X-NETIC%20Destek%20Talebi")}
+        >
+          <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
+            <Text style={styles.settingsIcon}>💬</Text>
+          </View>
+          <Text style={styles.settingsTitle}>Yardım / Destek</Text>
+          <Text style={styles.settingsSub}>destek@xnetic.net</Text>
         </TouchableOpacity>
       </View>
 

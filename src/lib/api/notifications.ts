@@ -147,6 +147,31 @@ export async function markAllNotificationsRead() {
   if (error) throw error;
 }
 
+// Profil > Bildirim Tercihleri'nde — kişinin KENDİ hangi bildirim
+// türlerini almak istemediğini seçmesi için (admin'in web'den rol bazında
+// yönettiği topluca ayarın aksine, bu sadece kendi hesabını etkiler).
+export async function getMyMutedNotificationTypes(): Promise<NotificationEventType[]> {
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return [];
+  const { data, error } = await supabase
+    .from("users")
+    .select("muted_notification_types")
+    .eq("auth_user_id", authData.user.id)
+    .single();
+  if (error) throw error;
+  return (data?.muted_notification_types as NotificationEventType[]) ?? [];
+}
+
+export async function updateMyMutedNotificationTypes(types: NotificationEventType[]): Promise<void> {
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) throw new Error("Oturum bulunamadı.");
+  const { error } = await supabase
+    .from("users")
+    .update({ muted_notification_types: types })
+    .eq("auth_user_id", authData.user.id);
+  if (error) throw error;
+}
+
 export type PendingPasswordResetRequest = { notificationId: string; requesterId: string };
 
 // Kulüp Ayarları → Kullanıcılar ekranında, henüz cevaplanmamış (okunmamış)
