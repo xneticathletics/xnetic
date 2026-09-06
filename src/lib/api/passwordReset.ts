@@ -4,13 +4,26 @@ import { supabase } from "../supabase";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 
-// "Şifremi Unuttum" ekranından çağrılır — Supabase, bu e-postaya bir
-// sıfırlama linki gönderir. Link, DOĞRUDAN bu uygulamayı açar (bir web
-// sayfası barındırmıyoruz — önceki denemede bu güvenilir çalışmamıştı).
+// "Şifremi Unuttum" ekranından çağrılır. Eskiden doğrudan
+// supabase.auth.resetPasswordForEmail() kullanıyordu — Supabase'in
+// test-amaçlı, ağır hız sınırlı ve kulübün kendi alan adından gelmeyen
+// varsayılan e-posta gönderimine bağımlıydı. Artık kendi edge function'ımız
+// (send-password-reset-email) linki üretip Resend ile xnetic.net'ten,
+// Türkçe/markalı bir e-postayla gönderiyor. Link yine DOĞRUDAN bu
+// uygulamayı açar (bir web sayfası barındırmıyoruz).
 export async function requestPasswordReset(email: string) {
   const redirectTo = Linking.createURL("reset-password");
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-  if (error) throw error;
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-password-reset-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ email, redirectTo }),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(json?.error || "Gönderilemedi");
 }
 
 // Sıfırlama linkindeki "#access_token=...&refresh_token=...&type=recovery"
