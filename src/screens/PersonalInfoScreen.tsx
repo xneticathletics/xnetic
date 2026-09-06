@@ -10,14 +10,13 @@ import { useAuth, type UserRole } from "../context/AuthContext";
 import {
   getCurrentUserName, getCurrentUserPhone, getCurrentUserPhoto, getCurrentAppUserId, updateMyProfile, uploadMyPhoto,
 } from "../lib/api/currentUser";
+import { getCurrentLoginIdentifier, updateLoginIdentifier } from "../lib/api/accountIdentity";
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { uploadAthletePhoto } from "../lib/api/athletes";
 import { getCoach, updateCoach } from "../lib/api/coaches";
-import { supabase } from "../lib/supabase";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { formatPhoneNumber } from "../lib/phoneFormat";
-import { translatePasswordError } from "../lib/passwordErrors";
 import BirthDateInput from "../components/BirthDateInput";
 // Veli'nin kendi fotoğraf yükleme hakkı yok (Profil ekranındaki kuralla
 // aynı) — Sporcu kendi athletes kaydını, diğerleri kendi users kaydını günceller.
@@ -32,7 +31,7 @@ const EDUCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "doktora", label: "Doktora" },
 ];
 
-export default function ProfileSettingsScreen() {
+export default function PersonalInfoScreen() {
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const { role } = useAuth();
   const canUploadPhoto = CAN_UPLOAD_PHOTO[role as UserRole];
@@ -61,23 +60,24 @@ export default function ProfileSettingsScreen() {
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [newPassword, setNewPassword] = useState("");
-  const [newPassword2, setNewPassword2] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
-  // handleSave ile ayrı bir "saving" state'i kullandığı için kendi kilidi
-  // gerekiyor — aynı sebep: hızlı çift dokunuşta handleChangePassword iki
-  // kez çalışabiliyordu.
-  const changingPasswordRef = useRef(false);
+  // Giriş bilgisi (telefon/kullanıcı adı/e-posta) — Kişisel Bilgiler'deki
+  // "Telefon" alanından AYRI: o sadece iletişim amaçlı, bu ise gerçekten
+  // uygulamaya girerken kullanılan kimlik. Bkz. accountIdentity.ts.
+  const [currentIdentifier, setCurrentIdentifier] = useState<string | null>(null);
+  const [newIdentifier, setNewIdentifier] = useState("");
+  const [savingIdentifier, setSavingIdentifier] = useState(false);
+  const savingIdentifierRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       (async () => {
         try {
-          const [n, p] = await Promise.all([getCurrentUserName(), getCurrentUserPhone()]);
+          const [n, p, loginId] = await Promise.all([getCurrentUserName(), getCurrentUserPhone(), getCurrentLoginIdentifier()]);
           if (cancelled) return;
           setName(n ?? "");
           setPhone(p ?? "");
+          setCurrentIdentifier(loginId);
 
           if (role === "athlete") {
             const athletes = await getMyAthletes();
@@ -171,29 +171,25 @@ export default function ProfileSettingsScreen() {
     }
   };
 
-  const handleChangePassword = async () => {
-    if (changingPasswordRef.current) return;
-    if (newPassword.length < 6) {
-      Alert.alert("Eksik bilgi", "Şifre en az 6 karakter olmalı.", [{ text: "Tamam" }]);
+  const handleUpdateIdentifier = async () => {
+    if (savingIdentifierRef.current) return;
+    if (!newIdentifier.trim()) {
+      Alert.alert("Eksik bilgi", "Yeni telefon, kullanıcı adı ya da e-posta gir.", [{ text: "Tamam" }]);
       return;
     }
-    if (newPassword !== newPassword2) {
-      Alert.alert("Eksik bilgi", "Şifreler eşleşmiyor.", [{ text: "Tamam" }]);
-      return;
-    }
-    changingPasswordRef.current = true;
-    setChangingPassword(true);
+    savingIdentifierRef.current = true;
+    setSavingIdentifier(true);
     try {
-      const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
-      if (pwError) throw pwError;
-      setNewPassword("");
-      setNewPassword2("");
-      Alert.alert("Kaydedildi", "Şifren değiştirildi.", [{ text: "Tamam" }]);
+      await updateLoginIdentifier(newIdentifier.trim());
+      const loginId = await getCurrentLoginIdentifier();
+      setCurrentIdentifier(loginId);
+      setNewIdentifier("");
+      Alert.alert("Kaydedildi", "Artık bu bilgiyle giriş yapabilirsin.", [{ text: "Tamam" }]);
     } catch (e: any) {
-      Alert.alert("Hata", translatePasswordError(e.message ?? ""), [{ text: "Tamam" }]);
+      Alert.alert("Hata", e.message ?? "Güncellenemedi", [{ text: "Tamam" }]);
     } finally {
-      changingPasswordRef.current = false;
-      setChangingPassword(false);
+      savingIdentifierRef.current = false;
+      setSavingIdentifier(false);
     }
   };
 
@@ -326,36 +322,33 @@ export default function ProfileSettingsScreen() {
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
 
-        <SectionHeader title="Şifre Değiştir" />
+        <SectionHeader title="Giriş Bilgisi" />
+        <Text style={styles.identifierHint}>
+          Uygulamaya girerken kullandığın telefon, kullanıcı adı ya da e-postayı buradan değiştirebilirsin.
+        </Text>
 
-        <Field label="Yeni Şifre">
+        <View style={styles.currentIdentifierBox}>
+          <Text style={styles.currentIdentifierLabel}>Şu an bununla giriş yapıyorsun</Text>
+          <Text style={styles.currentIdentifierValue}>{currentIdentifier ?? "—"}</Text>
+        </View>
+
+        <Field label="Yeni Telefon, Kullanıcı Adı ya da E-posta">
           <TextInput
-          onFocus={handleFocus}
+            onFocus={handleFocus}
             style={styles.input}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            secureTextEntry
-            placeholder="En az 6 karakter"
+            value={newIdentifier}
+            onChangeText={setNewIdentifier}
+            autoCapitalize="none"
+            placeholder="05XX XXX XX XX, kullaniciadi ya da e-posta"
             placeholderTextColor={colors.muted}
           />
         </Field>
 
-        <Field label="Yeni Şifre (Tekrar)">
-          <TextInput
-          onFocus={handleFocus}
-            style={styles.input}
-            value={newPassword2}
-            onChangeText={setNewPassword2}
-            secureTextEntry
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
-
-        <TouchableOpacity style={styles.passwordButton} onPress={handleChangePassword} disabled={changingPassword}>
-          {changingPassword ? (
-            <ActivityIndicator color={colors.teal} />
+        <TouchableOpacity style={styles.identifierButton} onPress={handleUpdateIdentifier} disabled={savingIdentifier}>
+          {savingIdentifier ? (
+            <ActivityIndicator color={colors.violet} />
           ) : (
-            <Text style={styles.passwordButtonText}>Şifreyi Değiştir</Text>
+            <Text style={styles.identifierButtonText}>Giriş Bilgisini Güncelle</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -420,9 +413,16 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
-  passwordButton: {
-    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md,
+  identifierHint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.md },
+  currentIdentifierBox: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    padding: spacing.md, marginBottom: spacing.md,
+  },
+  currentIdentifierLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
+  currentIdentifierValue: { color: colors.ink, fontSize: 15, fontWeight: "700", marginTop: 4 },
+  identifierButton: {
+    borderWidth: 1, borderColor: colors.violet, borderRadius: radius.md,
     paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl,
   },
-  passwordButtonText: { color: colors.teal, fontWeight: "700", fontSize: 15 },
+  identifierButtonText: { color: colors.violet, fontWeight: "700", fontSize: 15 },
 });

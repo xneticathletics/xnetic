@@ -1,7 +1,7 @@
 // Supabase Auth'un şifre değiştirme/belirleme işlemlerinden dönen
 // İngilizce/teknik hata mesajlarını, kullanıcının anlayacağı Türkçe
 // uyarılara çevirir. ForcePasswordChangeScreen, ResetPasswordScreen ve
-// ProfileSettingsScreen (şifre değiştirme) tarafından ortak kullanılır.
+// ChangePasswordScreen tarafından ortak kullanılır.
 export function translatePasswordError(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("should be different from the old password") || lower.includes("same as the old password")) {

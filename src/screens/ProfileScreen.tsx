@@ -150,7 +150,9 @@ export default function ProfileScreen({
         )}
       </View>
 
-      {role !== "super_admin" && (
+      {/* Sporcu ve veli, Ana Sayfa'da zaten duyuru önizlemesi + tam listeye
+          erişebiliyor — Profil'de bunu tekrarlamaya gerek yok. */}
+      {role !== "super_admin" && role !== "parent" && role !== "athlete" && (
         <TouchableOpacity style={styles.announcementsCard} onPress={() => navigation.navigate("Announcements")}>
           <View style={styles.announcementsIconBadge}>
             <Text style={styles.announcementsIcon}>📣</Text>
@@ -163,16 +165,23 @@ export default function ProfileScreen({
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.settingsCard} onPress={() => navigation.navigate("ProfileSettings")}>
-        <View style={styles.settingsIconBadge}>
-          <Text style={styles.settingsIcon}>👤</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.settingsTitle}>Profil Ayarları</Text>
-          <Text style={styles.settingsSub}>Ad, telefon gibi kişisel bilgilerin</Text>
-        </View>
-        <Text style={styles.chevron}>›</Text>
-      </TouchableOpacity>
+      <View style={styles.settingsGrid}>
+        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("PersonalInfo")}>
+          <View style={styles.settingsIconBadge}>
+            <Text style={styles.settingsIcon}>👤</Text>
+          </View>
+          <Text style={styles.settingsTitle}>Kişisel Bilgiler</Text>
+          <Text style={styles.settingsSub}>Ad, telefon, giriş bilgisi</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ChangePassword")}>
+          <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
+            <Text style={styles.settingsIcon}>🔒</Text>
+          </View>
+          <Text style={styles.settingsTitle}>Şifre İşlemleri</Text>
+          <Text style={styles.settingsSub}>Şifreni değiştir</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={{ flex: 1 }} />
 
@@ -238,18 +247,18 @@ const styles = StyleSheet.create({
   announcementsIcon: { fontSize: 22 },
   announcementsTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
   announcementsSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
-  settingsCard: {
-    flexDirection: "row", alignItems: "center", gap: spacing.md,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.sm,
+  settingsGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
+  settingsTile: {
+    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.lg, padding: spacing.md,
   },
   settingsIconBadge: {
-    width: 48, height: 48, borderRadius: radius.md,
-    backgroundColor: colors.tealSoft, alignItems: "center", justifyContent: "center",
+    width: 40, height: 40, borderRadius: radius.md, marginBottom: spacing.sm,
+    backgroundColor: colors.yellowSoft, alignItems: "center", justifyContent: "center",
   },
-  settingsIcon: { fontSize: 22 },
-  settingsTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
-  settingsSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  settingsIcon: { fontSize: 19 },
+  settingsTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  settingsSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   chevron: { color: colors.yellow, fontSize: 24, fontWeight: "700" },
   button: {
     backgroundColor: colors.surface,
