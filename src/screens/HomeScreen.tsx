@@ -65,6 +65,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
   super_admin: [
     { key: "kulupler", label: "Kulüpler", sub: "", icon: "🏢" },
     { key: "abonelik", label: "Abonelikler", sub: "", icon: "💳" },
+    { key: "sa_finans", label: "Finans", sub: "X-NETIC'in kendi gelir/gideri", icon: "💰" },
     { key: "ekranlar", label: "Ekranlar", sub: "Rol önizlemeleri", icon: "🖥️" },
     { key: "sa_duyurular", label: "Duyurular", sub: "Kulüp adminlerine gönder", icon: "📣" },
     { key: "fitness_kutuphane", label: "Egzersiz Kütüphanesi", sub: "Tüm kulüplerde görünen ortak hareketler", icon: "📚" },
@@ -143,6 +144,8 @@ async function handleTilePress(
     navigation.navigate("SuperAdminScreens");
   } else if (key === "sa_duyurular") {
     navigation.navigate("SuperAdminAnnounce");
+  } else if (key === "sa_finans") {
+    navigation.navigate("SuperAdminFinance");
   } else if (key === "fitness_kutuphane") {
     navigation.navigate("FitnessTraining");
   } else if (key === "performans_kutuphane") {
