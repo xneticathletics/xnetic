@@ -28,6 +28,24 @@ const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
   geldi: colors.teal, gelmedi: colors.coral, gec_kaldi: colors.yellow, raporlu: colors.violet, izinli: colors.violet,
 };
 
+// Veli/sporcunun "Sporcum" ekranında gördüğü, eskiden ayrı bir "Sporcu
+// Takibi" karosu/hub'ı üzerinden erişilen 4 takip kısayolu — artık
+// doğrudan profille aynı ekranda, tek bir yerde. Antrenör/admin
+// (AthleteTrackingHubScreen zaten sadece antrenör/veli/sporcu görüntülemesi
+// için var) bu bölümü görmez, kendi düzenleme araçları var.
+const TRACKING_TILES: {
+  key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram";
+  icon: string;
+  title: string;
+  sub: string;
+  accent: string;
+}[] = [
+  { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet, dayanıklılık", accent: colors.teal },
+  { key: "AthleteFitnessView", icon: "🏋️", title: "Çalışma", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
+  { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk", accent: colors.violet },
+  { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı program", accent: colors.yellow },
+];
+
 type TabKey = "info" | "parent" | "health";
 
 function calcAge(birthDate: string | null): number | null {
@@ -301,6 +319,32 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         </View>
       </View>
 
+      {!isStaff && (
+        <View style={styles.trackingSection}>
+          <View style={styles.trackingHeaderRow}>
+            <Text style={styles.trackingTitle}>Sporcu Takibi</Text>
+            <Text style={styles.trackingSubtitle}>Gelişimini takip et</Text>
+          </View>
+          <View style={styles.trackingGrid}>
+            {TRACKING_TILES.map((t) => (
+              <TouchableOpacity
+                key={t.key}
+                style={styles.trackingTile}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate(t.key, { athleteId: athlete.id, athleteName: athlete.full_name })}
+              >
+                <View style={[styles.trackingAccentBar, { backgroundColor: t.accent }]} />
+                <View style={[styles.trackingIconBadge, { backgroundColor: `${t.accent}22` }]}>
+                  <Text style={styles.trackingIconText}>{t.icon}</Text>
+                </View>
+                <Text style={styles.trackingTileTitle}>{t.title}</Text>
+                <Text style={styles.trackingTileSub}>{t.sub}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
       {isStaff && (
         <View style={styles.actionsRow}>
           <TouchableOpacity style={styles.actionCard} onPress={handleCallParent} disabled={!athlete.parent_phone}>
@@ -528,6 +572,23 @@ const styles = StyleSheet.create({
   },
   statValue: { color: colors.ink, fontSize: 16, fontWeight: "800" },
   statLabel: { color: colors.muted, fontSize: 10, fontWeight: "700", marginTop: 2 },
+  trackingSection: { marginBottom: spacing.lg },
+  trackingHeaderRow: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", marginBottom: spacing.sm },
+  trackingTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" },
+  trackingSubtitle: { color: colors.muted, fontSize: 11 },
+  trackingGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  trackingTile: {
+    width: "47%", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.lg, padding: spacing.md, paddingTop: spacing.md + 4, overflow: "hidden",
+  },
+  trackingAccentBar: { position: "absolute", top: 0, left: 0, right: 0, height: 4 },
+  trackingIconBadge: {
+    width: 40, height: 40, borderRadius: radius.md, alignItems: "center", justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
+  trackingIconText: { fontSize: 20 },
+  trackingTileTitle: { color: colors.ink, fontSize: 14, fontWeight: "800", marginBottom: 2 },
+  trackingTileSub: { color: colors.muted, fontSize: 11, lineHeight: 15 },
   actionsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   actionCard: {
     flex: 1, alignItems: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,

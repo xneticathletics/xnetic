@@ -88,7 +88,6 @@ import SuperAdminReportScreen from "../screens/SuperAdminReportScreen";
 import SuperAdminScreensScreen from "../screens/SuperAdminScreensScreen";
 import SuperAdminRolePreviewScreen from "../screens/SuperAdminRolePreviewScreen";
 import SuperAdminAnnounceScreen from "../screens/SuperAdminAnnounceScreen";
-import AthleteTrackingListScreen from "../screens/AthleteTrackingListScreen";
 import MyAthleteListScreen from "../screens/MyAthleteListScreen";
 import AthleteTrackingHubScreen from "../screens/AthleteTrackingHubScreen";
 import AthletePerformanceViewScreen from "../screens/AthletePerformanceViewScreen";
@@ -194,7 +193,6 @@ export type HomeStackParamList = {
   SuperAdminScreens: undefined;
   SuperAdminRolePreview: { role: UserRole; label: string; coordinator: boolean };
   SuperAdminAnnounce: undefined;
-  AthleteTrackingList: undefined;
   MyAthleteList: undefined;
   AthleteTrackingHub: { athleteId: string; athleteName: string };
   AthletePerformanceView: { athleteId: string; athleteName: string };
@@ -312,7 +310,6 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="SuperAdminScreens" component={SuperAdminScreensScreen} options={{ title: "Ekranlar" }} />
       <Stack.Screen name="SuperAdminRolePreview" component={SuperAdminRolePreviewScreen} options={{ title: "Rol Önizlemesi" }} />
       <Stack.Screen name="SuperAdminAnnounce" component={SuperAdminAnnounceScreen} options={{ title: "Duyurular" }} />
-      <Stack.Screen name="AthleteTrackingList" component={AthleteTrackingListScreen} options={{ title: "Sporcu Takibi" }} />
       <Stack.Screen name="MyAthleteList" component={MyAthleteListScreen} options={{ title: "Sporcum" }} />
       <Stack.Screen name="AthleteTrackingHub" component={AthleteTrackingHubScreen} />
       <Stack.Screen name="AthletePerformanceView" component={AthletePerformanceViewScreen} />

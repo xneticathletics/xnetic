@@ -40,7 +40,6 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "yoklama", label: "Yoklama Durumu", sub: "", icon: "📋" },
     { key: "antrenman", label: "Antrenman Saatleri", sub: "", icon: "📅" },
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
-    { key: "sporcu_takibi", label: "Sporcu Takibi", sub: "Çocuğunun gelişimini takip et", icon: "📊" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
@@ -94,15 +93,6 @@ async function handleTilePress(
 ) {
   const isPlanner = role === "coach" || role === "club_admin";
 
-  if (key === "sporcu_takibi") {
-    const athletes = await getMyAthletes();
-    if (athletes.length === 1) {
-      navigation.navigate("AthleteTrackingHub", { athleteId: athletes[0].id, athleteName: athletes[0].full_name });
-    } else {
-      navigation.navigate("AthleteTrackingList");
-    }
-    return;
-  }
   if (key === "sporcum") {
     const athletes = await getMyAthletes();
     if (athletes.length === 1) {
