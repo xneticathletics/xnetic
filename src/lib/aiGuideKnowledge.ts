@@ -1,6 +1,6 @@
 import type { UserRole } from "../context/AuthContext";
 
-// AI Asistan'ın "rehber" tarafı — gerçek bir dil modeli olmadan, anahtar
+// Asistan'ın "rehber" tarafı — gerçek bir dil modeli olmadan, anahtar
 // kelime eşleştirmesiyle çalışan basit ama GERÇEK/doğru bir yardım
 // sistemi. Ücretsiz, anahtar gerekmiyor, bugün çalışıyor. Serbest
 // soru-cevap (kendi verilerine dayalı esnek sorular) ise gerçek bir LLM
@@ -44,6 +44,24 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
       "5. Kaydet'e bas.",
   },
   {
+    keywords: ["ek branş", "ikinci branş", "başka gruba da ekle", "birden fazla branş"],
+    title: "Bir sporcuyu ikinci bir branşa/gruba ekleme",
+    sampleQuestion: "Bir sporcuyu ikinci bir branşa nasıl eklerim?",
+    roles: ["club_admin", "coach"],
+    answer:
+      "Sporcu Yönetimi'nden sporcunun profiline gir, altındaki \"Ek Branşlar ve Gruplar\" butonuna bas — " +
+      "sporcuyu, ana branşına ek olarak başka bir branş/gruba da bağlayabilirsin.",
+  },
+  {
+    keywords: ["sporcu tipi", "müsabık mı spor okulu mu", "spor okulu grubu"],
+    title: "Sporcu tipini (müsabık / spor okulu) ayarlama",
+    sampleQuestion: "Bir sporcunun tipini müsabık ya da spor okulu yapmak için ne yapmalıyım?",
+    roles: ["club_admin"],
+    answer:
+      "Sporcu tipi artık gruptan miras alınıyor — Kulüp Yapısı → Gruplar'da bir grubun tipini (Müsabık/Spor Okulu) ayarla, " +
+      "o gruptaki tüm sporcular otomatik olarak aynı tipte olur. Tek tek sporcu üzerinden değiştirilemez.",
+  },
+  {
     keywords: ["antrenör ekle", "antrenör davet", "koç ekle", "koç davet"],
     title: "Yeni antrenör ekleme",
     sampleQuestion: "Yeni bir antrenör nasıl eklerim?",
@@ -65,6 +83,14 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
       "\"Sporcu Giriş Hesabı\" bölümünden \"yeni hesap oluştur\"a bas.\n" +
       "• Antrenör: Antrenörler ekranındaki \"+ Antrenör Ekle\"ye bas.\n" +
       "Her iki yolda da telefon/kullanıcı adı girip \"Oluştur\"a basınca bir geçici şifre üretilir, bunu kişiye elden/mesajla iletmen gerekir.",
+  },
+
+  {
+    keywords: ["antrenör izni", "antrenörün izin günleri", "izinli antrenör", "antrenör izinli"],
+    title: "Bir antrenörün izin günlerini kaydetme",
+    sampleQuestion: "Bir antrenörün izin günlerini nereden kaydederim?",
+    roles: ["club_admin"],
+    answer: "Antrenörler'den ilgili antrenörün profiline gir, \"İzin İşlemleri\"ne bas — başlangıç/bitiş tarihi girip izin kaydı oluşturabilirsin.",
   },
 
   // --- Kulüp Admini: kulüp yapısı ve ayarlar ---
@@ -227,11 +253,20 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
     answer: "Ana Sayfa → Kayıt Dondurma'ya gir. En az 1, en fazla 3 aylık bir dondurma talebi oluşturabilirsin.",
   },
   {
+    keywords: ["sporcunun kaydını dondur", "sporcuyu dondur", "kayıt dondurma oluştur"],
+    title: "Bir sporcunun kaydını dondurma",
+    sampleQuestion: "Bir sporcunun kaydını nasıl dondururum?",
+    roles: ["club_admin", "coach"],
+    answer:
+      "Sporcu Yönetimi'nden sporcunun profiline gir, Kayıt Dondurma bölümünden yeni bir dondurma oluştur (1-3 ay arası) — " +
+      "oluşturunca admin, grubun antrenörü ve veli/sporcu hesabına bildirim gider.",
+  },
+  {
     keywords: ["çocuğumun gelişimi", "sporcu takibi", "performansını gör", "gelişimini takip"],
     title: "Çocuğunun gelişimini takip etme",
     sampleQuestion: "Çocuğumun gelişimini nereden takip ederim?",
     roles: ["parent"],
-    answer: "Ana Sayfa → Sporcu Takibi'ne gir — çocuğunun performans testi sonuçlarını ve fitness programını görebilirsin.",
+    answer: "Ana Sayfa → Sporcum'a gir — çocuğunun profilini, performans testi sonuçlarını ve fitness programını görebilirsin.",
   },
   {
     keywords: ["yoklama durumu", "katılım durumu", "devamsızlığımı gör", "çocuğum geldi mi"],
@@ -294,20 +329,60 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
     sampleQuestion: "Bildirim ayarlarımı nereden değiştiririm?",
     answer:
       "Ekranın üstündeki zil ikonuna dokun — tüm bildirimlerini listeler.\n" +
-      "Profil ekranından, hangi bildirim türlerini almak istemediğini de seçebilirsin.",
+      "Profil → Bildirim Tercihleri'nden, hangi bildirim türlerini almak istemediğini de seçebilirsin.",
   },
   {
-    keywords: ["profilimi güncelle", "bilgilerimi değiştir", "telefonumu değiştir"],
+    keywords: ["profilimi güncelle", "bilgilerimi değiştir", "telefonumu değiştir", "adımı soyadımı değiştir", "fotoğrafımı değiştir"],
     title: "Profil bilgilerini güncelleme",
     sampleQuestion: "Profil bilgilerimi nasıl güncellerim?",
-    answer: "Alt menüdeki Profil sekmesine gir — ad soyad, telefon gibi bilgilerini ve şifreni oradan güncelleyebilirsin.",
+    answer: "Alt menüdeki Profil sekmesinden Kişisel Bilgiler'e gir — fotoğraf, ad soyad ve telefon gibi bilgilerini oradan güncelleyebilirsin.",
+  },
+  {
+    keywords: ["giriş bilgimi değiştir", "giriş yöntemimi değiştir", "kullanıcı adımı değiştir", "email adresimi değiştir", "e-postamı değiştir"],
+    title: "Giriş bilgini (telefon/e-posta/kullanıcı adı) değiştirme",
+    sampleQuestion: "Giriş yaparken kullandığım telefon/kullanıcı adımı nasıl değiştiririm?",
+    answer:
+      "Profil → Giriş ve Şifre İşlemleri'ne gir, üstteki Giriş Bilgisi bölümünden yeni telefon numaranı, kullanıcı adını ya da e-postanı girip kaydet.\n" +
+      "Bir sonraki girişte artık yeni bilgiyle giriş yaparsın.",
+  },
+  {
+    keywords: ["şifremi değiştir", "kendi şifremi güncelle", "yeni şifre belirle"],
+    title: "Kendi şifreni değiştirme",
+    sampleQuestion: "Kendi şifremi nasıl değiştiririm?",
+    answer:
+      "Profil → Giriş ve Şifre İşlemleri'ne gir, Şifre Değiştir bölümünde mevcut şifreni ve yeni şifreni girip kaydet.\n" +
+      "Güvenlik için mevcut şifreni bilmen gerekir — bilmiyorsan \"Şifremi Unuttum\" akışını kullanman gerekir.",
+  },
+  {
+    keywords: ["yardım al", "destek iste", "kulübe soru sor", "teknik destek", "sorun bildir"],
+    title: "Yardım/Destek'ten kulübe ulaşma",
+    sampleQuestion: "Bir sorun yaşarsam nereden yardım isterim?",
+    answer:
+      "Profil → Yardım/Destek'e gir, mesajını yaz ve \"Mail Gönder\"e bas — mail uygulaman, kulübün destek adresine önceden doldurulmuş bir maille açılır.",
+  },
+  {
+    keywords: ["mağazadan ürün al", "ürün sipariş ver", "kulüp ürünü satın al", "mağazadan sipariş"],
+    title: "Mağazadan ürün sipariş etme",
+    sampleQuestion: "Mağazadan bir ürünü nasıl sipariş ederim?",
+    roles: ["parent", "athlete"],
+    answer:
+      "Ana Sayfa → Mağaza'ya gir, bir ürüne dokun. Varsa renk/beden seç, ödeme yöntemini (Havale/EFT ya da Elden) seç ve \"Sipariş Ver\"e bas.\n" +
+      "Siparişinin durumunu Mağaza ekranındaki \"📦 Siparişlerim\"den takip edebilirsin.",
+  },
+  {
+    keywords: ["beslenme tarifi", "yemek tarifi", "hangi besinleri yemeliyim", "beslenme önerisi"],
+    title: "Beslenme önerilerini görme",
+    sampleQuestion: "Beslenme önerilerini nereden görürüm?",
+    roles: ["parent", "athlete"],
+    answer: "Ana Sayfa → Beslenme'ye gir — antrenörünün kulübün için hazırladığı besin listelerini ve rehber yazılarını/PDF'lerini buradan görebilirsin.",
   },
 ];
 
-export function findGuideAnswer(question: string): GuideEntry | null {
+export function findGuideAnswer(question: string, role: UserRole | null): GuideEntry | null {
   const q = question.toLowerCase().trim();
   if (!q) return null;
-  return GUIDE_ENTRIES.find((entry) => entry.keywords.some((k) => q.includes(k))) ?? null;
+  const visibleToRole = GUIDE_ENTRIES.filter((entry) => !entry.roles || (role && entry.roles.includes(role)));
+  return visibleToRole.find((entry) => entry.keywords.some((k) => q.includes(k))) ?? null;
 }
 
 export function getSuggestedQuestions(role: UserRole | null): GuideEntry[] {

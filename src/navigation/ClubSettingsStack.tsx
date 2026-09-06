@@ -39,7 +39,7 @@ export type ClubSettingsStackParamList = {
 
 const Stack = createNativeStackNavigator<ClubSettingsStackParamList>();
 
-// "Kulüp Ayarları" — Ana Menü'nün altında bir alt sayfa değil, AI Asistan/
+// "Kulüp Ayarları" — Ana Menü'nün altında bir alt sayfa değil, Asistan/
 // Profil gibi kendi başına, ayrı bir üst seviye sekme. Bu yüzden kendi
 // bağımsız stack'i var; kökü (ClubSettingsHome) tıpkı Ana Sayfa/Profil
 // kökleri gibi headerShown:false — üstte "Ana Sayfa" düğmesi göstermiyor.

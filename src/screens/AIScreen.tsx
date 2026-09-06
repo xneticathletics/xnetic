@@ -7,7 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "../theme/tokens";
 import { findGuideAnswer, getSuggestedQuestions } from "../lib/aiGuideKnowledge";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, type UserRole } from "../context/AuthContext";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
 
@@ -15,7 +15,8 @@ const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
   role: "assistant",
   text:
-    "Merhaba! Ben X-NETIC AI Asistanı. Şu an uygulamayı nasıl kullanacağın konusunda sana rehberlik edebiliyorum — " +
+    "Merhaba! Ben X-NETIC Asistanı. Gerçek bir yapay zeka değilim — şu an uygulamayı nasıl kullanacağın konusunda " +
+    "hazır cevaplarla sana rehberlik edebiliyorum — " +
     "aklına bir şey gelmiyorsa sağ üstteki \"💡 Örnek Sorular\"a dokunabilirsin.\n\n" +
     "Kulübünün kendi verilerine dayalı serbest sorular (ör. \"bu ay kaç sporcu geldi\") yakında eklenecek.",
 };
@@ -30,8 +31,8 @@ function nextId() {
 // yerel, anahtar kelime tabanlı bir rehber kullanıyor (ücretsiz, anahtar
 // gerektirmiyor). API anahtarı eklenince bu fonksiyonun içi bir edge
 // function çağrısına dönüşecek, ekranın geri kalanı değişmeyecek.
-async function getAssistantReply(question: string): Promise<string> {
-  const match = findGuideAnswer(question);
+async function getAssistantReply(question: string, role: UserRole | null): Promise<string> {
+  const match = findGuideAnswer(question, role);
   if (match) {
     return `**${match.title}**\n\n${match.answer}`;
   }
@@ -74,7 +75,7 @@ export default function AIScreen() {
     setMessages((prev) => [...prev, { id: nextId(), role: "user", text: question }]);
     setSending(true);
     try {
-      const reply = await getAssistantReply(question);
+      const reply = await getAssistantReply(question, role);
       setMessages((prev) => [...prev, { id: nextId(), role: "assistant", text: reply }]);
     } finally {
       setSending(false);
@@ -94,7 +95,7 @@ export default function AIScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
           <View style={styles.headerRow}>
-            <Text style={styles.title}>🤖 AI Asistan</Text>
+            <Text style={styles.title}>🤖 Asistan</Text>
             <TouchableOpacity style={styles.suggestionsButton} onPress={() => setSuggestionsVisible(true)}>
               <Text style={styles.suggestionsButtonText}>💡 Örnek Sorular</Text>
             </TouchableOpacity>
@@ -119,7 +120,7 @@ export default function AIScreen() {
             }}
           />
 
-          {sending && <Text style={styles.typingHint}>AI Asistan yazıyor…</Text>}
+          {sending && <Text style={styles.typingHint}>Asistan yazıyor…</Text>}
 
           <View style={styles.inputRow}>
             <TextInput
