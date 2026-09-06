@@ -151,40 +151,28 @@ export default function ChangePasswordScreen() {
           Şifreni değiştirmek için önce mevcut şifreni doğrulaman gerekiyor.
         </Text>
 
-        <Field label="Mevcut Şifre">
-          <TextInput
-            onFocus={handleFocus}
-            style={styles.input}
-            value={oldPassword}
-            onChangeText={setOldPassword}
-            secureTextEntry
-            placeholder="Mevcut şifren"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
+        <PasswordField
+          label="Mevcut Şifre"
+          value={oldPassword}
+          onChangeText={setOldPassword}
+          onFocus={handleFocus}
+          placeholder="Mevcut şifren"
+        />
 
-        <Field label="Yeni Şifre">
-          <TextInput
-            onFocus={handleFocus}
-            style={styles.input}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            secureTextEntry
-            placeholder="En az 6 karakter"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
+        <PasswordField
+          label="Yeni Şifre"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          onFocus={handleFocus}
+          placeholder="En az 6 karakter"
+        />
 
-        <Field label="Yeni Şifre (Tekrar)">
-          <TextInput
-            onFocus={handleFocus}
-            style={styles.input}
-            value={newPassword2}
-            onChangeText={setNewPassword2}
-            secureTextEntry
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
+        <PasswordField
+          label="Yeni Şifre (Tekrar)"
+          value={newPassword2}
+          onChangeText={setNewPassword2}
+          onFocus={handleFocus}
+        />
 
         <TouchableOpacity style={styles.button} onPress={handleChangePassword} disabled={changing}>
           {changing ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Şifreyi Değiştir</Text>}
@@ -212,6 +200,43 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// Şifre alanları için: göster/gizle (👁️) ve tek dokunuşla komple temizleme
+// (✕) — kullanıcı yazdığını kontrol edip yanlış girişi tek tuşla silebilsin.
+function PasswordField({
+  label, value, onChangeText, onFocus, placeholder,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  onFocus: (event: any) => void;
+  placeholder?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <Field label={label}>
+      <View style={styles.passwordWrapper}>
+        <TextInput
+          onFocus={onFocus}
+          style={styles.passwordInput}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={!visible}
+          placeholder={placeholder}
+          placeholderTextColor={colors.muted}
+        />
+        {value.length > 0 && (
+          <TouchableOpacity style={styles.passwordIconButton} onPress={() => onChangeText("")}>
+            <Text style={styles.passwordIconText}>✕</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.passwordIconButton} onPress={() => setVisible((v) => !v)}>
+          <Text style={styles.passwordIconText}>{visible ? "🙈" : "👁️"}</Text>
+        </TouchableOpacity>
+      </View>
+    </Field>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   hint: { color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: spacing.md },
@@ -223,6 +248,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
+  passwordWrapper: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    paddingLeft: spacing.md, paddingRight: spacing.xs,
+  },
+  passwordInput: { flex: 1, color: colors.ink, paddingVertical: 12 },
+  passwordIconButton: { paddingHorizontal: 8, paddingVertical: 8 },
+  passwordIconText: { fontSize: 16 },
   currentIdentifierBox: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     padding: spacing.md, marginBottom: spacing.md,
