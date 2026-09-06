@@ -3,12 +3,28 @@ import { AppState, Keyboard, Text, TextInput, View } from "react-native";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as Sentry from "@sentry/react-native";
 import { AuthProvider } from "./src/context/AuthContext";
 import { BranchSelectProvider } from "./src/context/BranchSelectContext";
 import { ClubSettingsProvider } from "./src/context/ClubSettingsContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import { colors } from "./src/theme/tokens";
+
+// Geliştirme sırasında kendi hatalarımız Sentry'yi kirletmesin diye sadece
+// gerçek (production/preview) build'lerde etkin — dev modda __DEV__ true.
+// Kaynak haritası (source map) otomatik yüklemesi henüz kurulu değil
+// (organization/project slug + SENTRY_AUTH_TOKEN gerektiriyor) — şimdilik
+// hata YAKALAMA çalışıyor, Sentry panelindeki stack trace'ler minified
+// olacak. Kişisel veri gönderimini bilerek KAPALI tutuyoruz (sendDefaultPii
+// varsayılanı zaten false) — KVKK incelemesi tamamlanmadan IP/kullanıcı
+// bilgisi gibi ek veri toplamaya başlamıyoruz.
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !__DEV__,
+  environment: __DEV__ ? "development" : "production",
+  tracesSampleRate: 0.2,
+});
 
 // Daha modern bir görünüm için tüm uygulamaya tek bir değişken (variable)
 // font uyguluyoruz. RN 0.81 + React 19'da Text artık defaultProps okumayan
@@ -51,7 +67,7 @@ function patchDefaultFont(fontFamily: string) {
   };
 }
 
-export default function App() {
+function App() {
   const [fontsLoaded] = useFonts({
     Inter: require("./src/assets/fonts/Inter-Variable.ttf"),
   });
@@ -89,3 +105,5 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+export default Sentry.wrap(App);

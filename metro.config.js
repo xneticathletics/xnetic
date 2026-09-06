@@ -1,7 +1,7 @@
 const path = require("path");
-const { getDefaultConfig } = require("expo/metro-config");
+const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 
-const config = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 
 // web/ klasörü ayrı bir Vite projesi (X-NETIC web yönetim paneli) —
 // kendi node_modules'ı çok kalabalık, Metro'nun onu izlemesine gerek yok.

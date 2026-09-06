@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import * as Sentry from "@sentry/react-native";
 import { colors, radius, spacing } from "../theme/tokens";
 
 type Props = { children: React.ReactNode };
@@ -20,6 +21,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: unknown, info: { componentStack: string }) {
     console.error("[ErrorBoundary] Yakalanan render hatası:", error, info.componentStack);
+    Sentry.captureException(error, { contexts: { react: { componentStack: info.componentStack } } });
   }
 
   handleRetry = () => this.setState({ hasError: false });

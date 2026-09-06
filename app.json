@@ -43,7 +43,8 @@
           "calendarPermission": "Antrenman ve müsabaka programını telefonunun takvimine ekleyebilmen için takvimine erişim gerekiyor.",
           "remindersPermission": "X-NETIC hatırlatıcılarına erişmiyor."
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "extra": {
       "eas": {
