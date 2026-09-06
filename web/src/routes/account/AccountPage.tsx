@@ -43,6 +43,7 @@ export default function AccountPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -89,19 +90,34 @@ export default function AccountPage() {
   };
 
   const handleChangePassword = async () => {
+    if (!oldPassword) {
+      setPasswordError("Mevcut şifreni girmelisin.");
+      return;
+    }
     if (newPassword.length < 6) {
-      setPasswordError("Şifre en az 6 karakter olmalı.");
+      setPasswordError("Yeni şifre en az 6 karakter olmalı.");
       return;
     }
     if (newPassword !== newPassword2) {
-      setPasswordError("Şifreler eşleşmiyor.");
+      setPasswordError("Yeni şifreler eşleşmiyor.");
       return;
     }
     setChangingPassword(true);
     setPasswordError(null);
     try {
+      // supabase.auth.updateUser({password}) mevcut şifreyi hiç sormuyor —
+      // önce mevcut şifreyle yeniden giriş yaparak (re-authenticate)
+      // doğruluyoruz, yanlışsa şifre hiç değiştirilmiyor. Mobildeki
+      // ChangePasswordScreen.tsx ile aynı yaklaşım.
+      const email = session?.user?.email;
+      if (!email) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
+
+      const { error: reAuthError } = await supabase.auth.signInWithPassword({ email, password: oldPassword });
+      if (reAuthError) throw new Error("Mevcut şifren yanlış.");
+
       const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
       if (pwError) throw pwError;
+      setOldPassword("");
       setNewPassword("");
       setNewPassword2("");
       alert("Şifren değiştirildi.");
@@ -176,6 +192,16 @@ export default function AccountPage() {
       </SettingsCard>
 
       <SettingsCard title="Şifre Değiştir">
+        <FormField label="Mevcut Şifre">
+          <input
+            type="password"
+            className={inputClass}
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            placeholder="Mevcut şifren"
+          />
+        </FormField>
+
         <FormField label="Yeni Şifre">
           <input
             type="password"
