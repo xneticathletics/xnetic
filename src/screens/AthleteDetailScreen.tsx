@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  getAthlete, setAthleteType, getAthleteExtraGroups, deleteAthlete,
+  getAthlete, setAthleteType, getAthleteExtraGroups, setAthleteExtraGroups, deleteAthlete,
   type Athlete, type AthleteType, type AthleteGroupInfo,
 } from "../lib/api/athletes";
 import { listAthleteNotes, type AthleteNote } from "../lib/api/athleteNotes";
@@ -12,6 +12,8 @@ import { listInjuries, type Injury } from "../lib/api/injuries";
 import { listAthleteRecentAttendance, type AthleteRecentAttendance, type AttendanceStatus } from "../lib/api/attendance";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
+import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
+import { listGroups, type Group } from "../lib/api/groups";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteDetail">;
 
@@ -77,6 +79,8 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   const [notes, setNotes] = useState<AthleteNote[]>([]);
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [extraGroups, setExtraGroups] = useState<AthleteGroupInfo[]>([]);
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
+  const [extraGroupModalVisible, setExtraGroupModalVisible] = useState(false);
   const [attendance, setAttendance] = useState<AthleteRecentAttendance[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("info");
   const [loading, setLoading] = useState(true);
@@ -92,14 +96,15 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
       if (!hasLoadedOnceRef.current) setLoading(true);
       Promise.all([
         getAthlete(athleteId), listAthleteNotes(athleteId), listInjuries(athleteId),
-        getAthleteExtraGroups(athleteId), listAthleteRecentAttendance(athleteId),
+        getAthleteExtraGroups(athleteId), listAthleteRecentAttendance(athleteId), listGroups(),
       ])
-        .then(([a, n, i, eg, att]) => {
+        .then(([a, n, i, eg, att, g]) => {
           setAthlete(a);
           setNotes(n);
           setInjuries(i);
           setExtraGroups(eg);
           setAttendance(att);
+          setAllGroups(g);
         })
         .catch((e) => setError(e.message))
         .finally(() => {
@@ -171,6 +176,18 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
     athlete && navigation.navigate("AthleteInjuries", { athleteId: athlete.id, athleteName: athlete.full_name });
   const goToNotes = () =>
     athlete && navigation.navigate("AthleteNotes", { athleteId: athlete.id, athleteName: athlete.full_name });
+  const handleExtraGroupsConfirm = async (selected: Group[]) => {
+    if (!athlete) return;
+    try {
+      await setAthleteExtraGroups(athlete.id, selected.map((g) => g.id));
+      setExtraGroups(
+        selected.map((g) => ({ group_id: g.id, group_name: g.name, branch: g.branch }))
+      );
+      setExtraGroupModalVisible(false);
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);
+    }
+  };
   const handleDelete = () => {
     if (!athlete) return;
     Alert.alert(
@@ -402,6 +419,10 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         <Text style={styles.editButtonText}>Düzenle</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.extraGroupsButton} onPress={() => setExtraGroupModalVisible(true)}>
+        <Text style={styles.extraGroupsButtonText}>Ek Branşlar ve Gruplar</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.injuryNavButton} onPress={goToInjuries}>
         <Text style={styles.injuryNavButtonText}>Sakatlık Geçmişi</Text>
       </TouchableOpacity>
@@ -420,6 +441,14 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
       <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
         <Text style={styles.deleteButtonText}>Sporcuyu Sil</Text>
       </TouchableOpacity>
+
+      <GroupMultiPickerModal
+        visible={extraGroupModalVisible}
+        selectedIds={extraGroups.map((eg) => eg.group_id)}
+        allowedIds={allGroups.filter((g) => g.id !== athlete.group_id).map((g) => g.id)}
+        onConfirm={handleExtraGroupsConfirm}
+        onClose={() => setExtraGroupModalVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -548,6 +577,11 @@ const styles = StyleSheet.create({
     alignItems: "center", marginBottom: spacing.sm,
   },
   injuryNavButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
+  extraGroupsButton: {
+    borderWidth: 1, borderColor: colors.violet, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginBottom: spacing.sm,
+  },
+  extraGroupsButtonText: { color: colors.violet, fontWeight: "700", fontSize: 14 },
   notesNavButton: {
     backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16,
     alignItems: "center", marginBottom: spacing.sm,

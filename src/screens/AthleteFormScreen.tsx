@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Image,
   KeyboardAvoidingView, Platform, Modal, FlatList,
@@ -11,8 +11,7 @@ import {
   getAthlete, createAthlete, updateAthlete, uploadAthletePhoto,
   getLinkedUser, linkAthleteAccount, listUnlinkedAthleteUsers,
   getLinkedParentUser, linkParentAccount, listParentUsers,
-  getAthleteExtraGroups, setAthleteExtraGroups,
-  type AthleteInput, type AthleteStatus, type LinkedUser, type AthleteGroupInfo,
+  type AthleteInput, type AthleteStatus, type LinkedUser,
 } from "../lib/api/athletes";
 import { createPaymentPlan } from "../lib/api/paymentPlans";
 import type { Group } from "../lib/api/groups";
@@ -81,9 +80,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [athleteLinkedUser, setAthleteLinkedUser] = useState<LinkedUser | null>(null);
   const [parentLinkedUser, setParentLinkedUser] = useState<LinkedUser | null>(null);
-  const [extraGroups, setExtraGroups] = useState<AthleteGroupInfo[]>([]);
-  const [extraGroupPickerVisible, setExtraGroupPickerVisible] = useState(false);
-  const [extraGroupSaving, setExtraGroupSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   // handleSave içinde setJustSaved(true) çağrısının hemen ardından aynı
   // senkron adımda navigation.goBack() çağrılıyor — ama state güncellemesi
@@ -176,39 +172,7 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
       .finally(() => setLoading(false));
     getLinkedUser(athleteId).then(setAthleteLinkedUser).catch(() => {});
     getLinkedParentUser(athleteId).then(setParentLinkedUser).catch(() => {});
-    getAthleteExtraGroups(athleteId).then(setExtraGroups).catch(() => {});
   }, [athleteId]);
-
-  const toggleExtraGroup = async (g: Group) => {
-    if (!athleteId) return;
-    const exists = extraGroups.some((eg) => eg.group_id === g.id);
-    const next = exists
-      ? extraGroups.filter((eg) => eg.group_id !== g.id)
-      : [...extraGroups, { group_id: g.id, group_name: g.name, branch: g.branch }];
-    setExtraGroupSaving(true);
-    try {
-      await setAthleteExtraGroups(athleteId, next.map((eg) => eg.group_id));
-      setExtraGroups(next);
-    } catch (e: any) {
-      Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);
-    } finally {
-      setExtraGroupSaving(false);
-    }
-  };
-
-  // Ek grup seçimini tek büyük yığın yerine branş branş, düzenli
-  // bölümler halinde göstermek için — her branş kendi başlığı ve grup
-  // kutucukları satırıyla ayrı ayrı listeleniyor.
-  const otherGroupsByBranch = useMemo(() => {
-    const map = new Map<string, Group[]>();
-    allGroups
-      .filter((g) => g.id !== form.group_id)
-      .forEach((g) => {
-        if (!map.has(g.branch)) map.set(g.branch, []);
-        map.get(g.branch)!.push(g);
-      });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "tr"));
-  }, [allGroups, form.group_id]);
 
   const set = <K extends keyof AthleteInput>(key: K, value: AthleteInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -563,44 +527,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         pickerEmptyText='Bağlanmamış Sporcu hesabı yok. Yukarıdan "veya yeni hesap oluştur" ile açabilirsin.'
       />
 
-      {isEdit && (
-        <>
-          <View style={styles.sectionDivider}>
-            <Text style={styles.sectionLabel}>Ek Branşlar / Gruplar</Text>
-            <Text style={styles.sectionHint}>
-              Yukarıdaki "Grup" ana (birincil) kaydı — bu sporcu ayrıca başka
-              branş/gruplara da kayıtlı olabilir (ör. hem Voleybol hem Yüzme).
-            </Text>
-          </View>
-
-          {otherGroupsByBranch.map(([branch, groups]) => (
-            <View key={branch} style={styles.extraBranchBlock}>
-              <Text style={styles.extraBranchLabel}>{branch}</Text>
-              <View style={styles.extraGroupChipsRow}>
-                {groups.map((g) => {
-                  const active = extraGroups.some((eg) => eg.group_id === g.id);
-                  return (
-                    <TouchableOpacity
-                      key={g.id}
-                      style={[styles.extraGroupChip, active && styles.extraGroupChipActive]}
-                      onPress={() => toggleExtraGroup(g)}
-                      disabled={extraGroupSaving}
-                    >
-                      <Text style={[styles.extraGroupChipText, active && styles.extraGroupChipTextActive]}>
-                        {active ? "✓ " : ""}{g.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          ))}
-          {otherGroupsByBranch.length === 0 && (
-            <Text style={styles.sectionHint}>Başka grup bulunmuyor.</Text>
-          )}
-        </>
-      )}
-
       {!isEdit && (
         <>
           <View style={styles.sectionDivider}>
@@ -766,22 +692,6 @@ const styles = StyleSheet.create({
   sectionDivider: { marginTop: spacing.sm, marginBottom: spacing.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.md },
   sectionLabel: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   sectionHint: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  extraBranchBlock: {
-    marginBottom: spacing.md, paddingBottom: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.line,
-  },
-  extraBranchLabel: {
-    color: colors.yellow, fontSize: 12, fontWeight: "700",
-    textTransform: "uppercase", letterSpacing: 0.4, marginBottom: spacing.xs,
-  },
-  extraGroupChipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  extraGroupChip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.md, paddingVertical: 8,
-  },
-  extraGroupChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
-  extraGroupChipText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
-  extraGroupChipTextActive: { color: colors.bg },
   error: { color: colors.coral, marginBottom: spacing.md },
   footer: {
     paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.lg,
