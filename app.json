@@ -44,7 +44,14 @@
           "remindersPermission": "X-NETIC hatırlatıcılarına erişmiyor."
         }
       ],
-      "@sentry/react-native"
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "xnetic",
+          "project": "react-native"
+        }
+      ]
     ],
     "extra": {
       "eas": {
