@@ -29,6 +29,14 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
   const { role } = useAuth();
   const { isLocked } = useBranchSelect();
   const isCoordinator = role === "coach" && isLocked;
+  const canEdit = role === "club_admin" || isCoordinator;
+  // nutrition_articles'ın club_id kolonu yok — her yazı TÜM kulüpler
+  // arasında paylaşımlı. Bir kulübün admin/koordinatörü silme yetkisi
+  // verilirse başka kulüplerin de gördüğü bir yazıyı kalıcı silebilirdi
+  // (bkz. NutritionFoodDetailScreen/NutritionRecipeDetailScreen'deki
+  // club_id===null durumunda aynı sebeple sadece süper admine izin veren
+  // desen). Bu yüzden silme SADECE süper admine açık.
+  const canDelete = role === "super_admin";
   const [article, setArticle] = useState<NutritionArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,17 +119,21 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
         </View>
       )}
 
-      {(role === "club_admin" || isCoordinator) && (
+      {(canEdit || canDelete) && (
         <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => navigation.navigate("NutritionArticleForm", { articleId: article.id, category: article.category })}
-          >
-            <Text style={styles.editButtonText}>✎ Düzenle</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Sil</Text>
-          </TouchableOpacity>
+          {canEdit && (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => navigation.navigate("NutritionArticleForm", { articleId: article.id, category: article.category })}
+            >
+              <Text style={styles.editButtonText}>✎ Düzenle</Text>
+            </TouchableOpacity>
+          )}
+          {canDelete && (
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Text style={styles.deleteButtonText}>Sil</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </ScrollView>

@@ -3,8 +3,14 @@ import { Link } from "react-router-dom";
 import DataTable, { type Column } from "../../components/DataTable";
 import { listNutritionArticlesByCategory, deleteNutritionArticle, type NutritionArticle } from "../../lib/api/nutritionArticles";
 import { ARTICLE_CATEGORIES, CATEGORY_COLOR_CLASSES, type ArticleCategoryKey } from "../../lib/nutritionCategories";
+import { useAuth } from "../../context/AuthContext";
 
 export default function NutritionArticlesPage() {
+  const { role } = useAuth();
+  // nutrition_articles'ın club_id kolonu yok — her yazı tüm kulüpler
+  // arasında paylaşımlı, bu yüzden silme sadece süper admine açık (bkz.
+  // mobildeki NutritionArticleDetailScreen.tsx'teki aynı gerekçe).
+  const canDelete = role === "super_admin";
   const [activeCategory, setActiveCategory] = useState<ArticleCategoryKey>(ARTICLE_CATEGORIES[0].key);
   const [articles, setArticles] = useState<NutritionArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,9 +61,11 @@ export default function NutritionArticlesPage() {
           <Link to={`/nutrition/articles/${a.id}`} className="text-xs font-bold text-teal hover:underline">
             Düzenle
           </Link>
-          <button onClick={() => handleDelete(a)} className="text-xs font-bold text-coral hover:underline">
-            Sil
-          </button>
+          {canDelete && (
+            <button onClick={() => handleDelete(a)} className="text-xs font-bold text-coral hover:underline">
+              Sil
+            </button>
+          )}
         </div>
       ),
     },
