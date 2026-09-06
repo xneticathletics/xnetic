@@ -9,6 +9,7 @@ import AnnouncementFormScreen from "../screens/AnnouncementFormScreen";
 import PersonalInfoScreen from "../screens/PersonalInfoScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import NotificationPreferencesScreen from "../screens/NotificationPreferencesScreen";
+import SupportScreen from "../screens/SupportScreen";
 
 export type ProfileStackParamList = {
   Profile: undefined;
@@ -18,6 +19,7 @@ export type ProfileStackParamList = {
   PersonalInfo: undefined;
   ChangePassword: undefined;
   NotificationPreferences: undefined;
+  Support: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -38,8 +40,9 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: "Duyuru" }} />
       <Stack.Screen name="AnnouncementForm" component={AnnouncementFormScreen} options={{ title: "Yeni Duyuru" }} />
       <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} options={{ title: "Kişisel Bilgiler" }} />
-      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: "Şifre İşlemleri" }} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: "Giriş ve Şifre İşlemleri" }} />
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ title: "Bildirim Tercihleri" }} />
+      <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Yardım / Destek" }} />
     </Stack.Navigator>
   );
 }

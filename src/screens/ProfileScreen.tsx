@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert, Linking } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -171,15 +171,15 @@ export default function ProfileScreen({
             <Text style={styles.settingsIcon}>👤</Text>
           </View>
           <Text style={styles.settingsTitle}>Kişisel Bilgiler</Text>
-          <Text style={styles.settingsSub}>Ad, telefon, giriş bilgisi</Text>
+          <Text style={styles.settingsSub}>Ad, telefon, fotoğraf</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ChangePassword")}>
           <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
             <Text style={styles.settingsIcon}>🔒</Text>
           </View>
-          <Text style={styles.settingsTitle}>Şifre İşlemleri</Text>
-          <Text style={styles.settingsSub}>Şifreni değiştir</Text>
+          <Text style={styles.settingsTitle}>Giriş ve Şifre İşlemleri</Text>
+          <Text style={styles.settingsSub}>Giriş bilgisi, şifre</Text>
         </TouchableOpacity>
       </View>
 
@@ -192,10 +192,7 @@ export default function ProfileScreen({
           <Text style={styles.settingsSub}>Almak istemediklerin</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.settingsTile}
-          onPress={() => Linking.openURL("mailto:destek@xnetic.net?subject=X-NETIC%20Destek%20Talebi")}
-        >
+        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Support")}>
           <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
             <Text style={styles.settingsIcon}>💬</Text>
           </View>

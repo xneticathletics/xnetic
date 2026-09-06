@@ -4,13 +4,13 @@ import {
   KeyboardAvoidingView, Platform, ScrollView, Image,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useHeaderHeight } from "@react-navigation/elements";
 import * as ImagePicker from "expo-image-picker";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth, type UserRole } from "../context/AuthContext";
 import {
   getCurrentUserName, getCurrentUserPhone, getCurrentUserPhoto, getCurrentAppUserId, updateMyProfile, uploadMyPhoto,
 } from "../lib/api/currentUser";
-import { getCurrentLoginIdentifier, updateLoginIdentifier } from "../lib/api/accountIdentity";
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { uploadAthletePhoto } from "../lib/api/athletes";
 import { getCoach, updateCoach } from "../lib/api/coaches";
@@ -33,6 +33,7 @@ const EDUCATION_OPTIONS: { value: string; label: string }[] = [
 
 export default function PersonalInfoScreen() {
   const { scrollRef, handleFocus } = useKeyboardScroll();
+  const headerHeight = useHeaderHeight();
   const { role } = useAuth();
   const canUploadPhoto = CAN_UPLOAD_PHOTO[role as UserRole];
 
@@ -60,24 +61,15 @@ export default function PersonalInfoScreen() {
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Giriş bilgisi (telefon/kullanıcı adı/e-posta) — Kişisel Bilgiler'deki
-  // "Telefon" alanından AYRI: o sadece iletişim amaçlı, bu ise gerçekten
-  // uygulamaya girerken kullanılan kimlik. Bkz. accountIdentity.ts.
-  const [currentIdentifier, setCurrentIdentifier] = useState<string | null>(null);
-  const [newIdentifier, setNewIdentifier] = useState("");
-  const [savingIdentifier, setSavingIdentifier] = useState(false);
-  const savingIdentifierRef = useRef(false);
-
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       (async () => {
         try {
-          const [n, p, loginId] = await Promise.all([getCurrentUserName(), getCurrentUserPhone(), getCurrentLoginIdentifier()]);
+          const [n, p] = await Promise.all([getCurrentUserName(), getCurrentUserPhone()]);
           if (cancelled) return;
           setName(n ?? "");
           setPhone(p ?? "");
-          setCurrentIdentifier(loginId);
 
           if (role === "athlete") {
             const athletes = await getMyAthletes();
@@ -171,28 +163,6 @@ export default function PersonalInfoScreen() {
     }
   };
 
-  const handleUpdateIdentifier = async () => {
-    if (savingIdentifierRef.current) return;
-    if (!newIdentifier.trim()) {
-      Alert.alert("Eksik bilgi", "Yeni telefon, kullanıcı adı ya da e-posta gir.", [{ text: "Tamam" }]);
-      return;
-    }
-    savingIdentifierRef.current = true;
-    setSavingIdentifier(true);
-    try {
-      await updateLoginIdentifier(newIdentifier.trim());
-      const loginId = await getCurrentLoginIdentifier();
-      setCurrentIdentifier(loginId);
-      setNewIdentifier("");
-      Alert.alert("Kaydedildi", "Artık bu bilgiyle giriş yapabilirsin.", [{ text: "Tamam" }]);
-    } catch (e: any) {
-      Alert.alert("Hata", e.message ?? "Güncellenemedi", [{ text: "Tamam" }]);
-    } finally {
-      savingIdentifierRef.current = false;
-      setSavingIdentifier(false);
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -204,7 +174,11 @@ export default function PersonalInfoScreen() {
   const initial = (name || "?")[0]?.toUpperCase() ?? "?";
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={headerHeight}
+    >
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
         <View style={styles.photoSection}>
           <TouchableOpacity
@@ -321,36 +295,6 @@ export default function PersonalInfoScreen() {
         <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
-
-        <SectionHeader title="Giriş Bilgisi" />
-        <Text style={styles.identifierHint}>
-          Uygulamaya girerken kullandığın telefon, kullanıcı adı ya da e-postayı buradan değiştirebilirsin.
-        </Text>
-
-        <View style={styles.currentIdentifierBox}>
-          <Text style={styles.currentIdentifierLabel}>Şu an bununla giriş yapıyorsun</Text>
-          <Text style={styles.currentIdentifierValue}>{currentIdentifier ?? "—"}</Text>
-        </View>
-
-        <Field label="Yeni Telefon, Kullanıcı Adı ya da E-posta">
-          <TextInput
-            onFocus={handleFocus}
-            style={styles.input}
-            value={newIdentifier}
-            onChangeText={setNewIdentifier}
-            autoCapitalize="none"
-            placeholder="05XX XXX XX XX, kullaniciadi ya da e-posta"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
-
-        <TouchableOpacity style={styles.identifierButton} onPress={handleUpdateIdentifier} disabled={savingIdentifier}>
-          {savingIdentifier ? (
-            <ActivityIndicator color={colors.violet} />
-          ) : (
-            <Text style={styles.identifierButtonText}>Giriş Bilgisini Güncelle</Text>
-          )}
-        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -411,18 +355,9 @@ const styles = StyleSheet.create({
   chipText: { color: colors.muted, fontWeight: "600", fontSize: 13 },
   chipTextActive: { color: colors.bg },
   error: { color: colors.coral, marginBottom: spacing.md },
-  saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },
+  saveButton: {
+    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16,
+    alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl,
+  },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
-  identifierHint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.md },
-  currentIdentifierBox: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
-    padding: spacing.md, marginBottom: spacing.md,
-  },
-  currentIdentifierLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
-  currentIdentifierValue: { color: colors.ink, fontSize: 15, fontWeight: "700", marginTop: 4 },
-  identifierButton: {
-    borderWidth: 1, borderColor: colors.violet, borderRadius: radius.md,
-    paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl,
-  },
-  identifierButtonText: { color: colors.violet, fontWeight: "700", fontSize: 15 },
 });

@@ -1,15 +1,28 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { colors, radius, spacing } from "../theme/tokens";
 import { supabase } from "../lib/supabase";
+import { getCurrentLoginIdentifier, updateLoginIdentifier } from "../lib/api/accountIdentity";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { translatePasswordError } from "../lib/passwordErrors";
 
 export default function ChangePasswordScreen() {
   const { scrollRef, handleFocus } = useKeyboardScroll();
+  const headerHeight = useHeaderHeight();
+
+  // Giriş bilgisi (telefon/kullanıcı adı/e-posta) — Kişisel Bilgiler'deki
+  // "Telefon" alanından AYRI: o sadece iletişim amaçlı, bu ise gerçekten
+  // uygulamaya girerken kullanılan kimlik. Bkz. accountIdentity.ts.
+  const [currentIdentifier, setCurrentIdentifier] = useState<string | null>(null);
+  const [newIdentifier, setNewIdentifier] = useState("");
+  const [savingIdentifier, setSavingIdentifier] = useState(false);
+  const savingIdentifierRef = useRef(false);
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
@@ -19,6 +32,38 @@ export default function ChangePasswordScreen() {
   // engelleyemiyor — hızlı çift dokunuşta handleChangePassword iki kez
   // çalışabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const changingRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      getCurrentLoginIdentifier()
+        .then((id) => { if (!cancelled) setCurrentIdentifier(id); })
+        .catch(() => {});
+      return () => { cancelled = true; };
+    }, [])
+  );
+
+  const handleUpdateIdentifier = async () => {
+    if (savingIdentifierRef.current) return;
+    if (!newIdentifier.trim()) {
+      Alert.alert("Eksik bilgi", "Yeni telefon, kullanıcı adı ya da e-posta gir.", [{ text: "Tamam" }]);
+      return;
+    }
+    savingIdentifierRef.current = true;
+    setSavingIdentifier(true);
+    try {
+      await updateLoginIdentifier(newIdentifier.trim());
+      const loginId = await getCurrentLoginIdentifier();
+      setCurrentIdentifier(loginId);
+      setNewIdentifier("");
+      Alert.alert("Kaydedildi", "Artık bu bilgiyle giriş yapabilirsin.", [{ text: "Tamam" }]);
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "Güncellenemedi", [{ text: "Tamam" }]);
+    } finally {
+      savingIdentifierRef.current = false;
+      setSavingIdentifier(false);
+    }
+  };
 
   const handleChangePassword = async () => {
     if (changingRef.current) return;
@@ -65,8 +110,43 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={headerHeight}
+    >
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
+        <SectionHeader title="Giriş Bilgisi" />
+        <Text style={styles.hint}>
+          Uygulamaya girerken kullandığın telefon, kullanıcı adı ya da e-postayı buradan değiştirebilirsin.
+        </Text>
+
+        <View style={styles.currentIdentifierBox}>
+          <Text style={styles.currentIdentifierLabel}>Şu an bununla giriş yapıyorsun</Text>
+          <Text style={styles.currentIdentifierValue}>{currentIdentifier ?? "—"}</Text>
+        </View>
+
+        <Field label="Yeni Telefon, Kullanıcı Adı ya da E-posta">
+          <TextInput
+            onFocus={handleFocus}
+            style={styles.input}
+            value={newIdentifier}
+            onChangeText={setNewIdentifier}
+            autoCapitalize="none"
+            placeholder="05XX XXX XX XX, kullaniciadi ya da e-posta"
+            placeholderTextColor={colors.muted}
+          />
+        </Field>
+
+        <TouchableOpacity style={styles.identifierButton} onPress={handleUpdateIdentifier} disabled={savingIdentifier}>
+          {savingIdentifier ? (
+            <ActivityIndicator color={colors.violet} />
+          ) : (
+            <Text style={styles.identifierButtonText}>Giriş Bilgisini Güncelle</Text>
+          )}
+        </TouchableOpacity>
+
+        <SectionHeader title="Şifre Değiştir" />
         <Text style={styles.hint}>
           Şifreni değiştirmek için önce mevcut şifreni doğrulaman gerekiyor.
         </Text>
@@ -114,6 +194,15 @@ export default function ChangePasswordScreen() {
   );
 }
 
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <View style={styles.sectionHeaderRow}>
+      <View style={styles.sectionHeaderBar} />
+      <Text style={styles.sectionHeaderText}>{title}</Text>
+    </View>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
@@ -125,12 +214,26 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  hint: { color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: spacing.lg },
+  hint: { color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: spacing.md },
+  sectionHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.sm },
+  sectionHeaderBar: { width: 3, height: 12, borderRadius: 2, backgroundColor: colors.yellow },
+  sectionHeaderText: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
   label: { color: colors.muted, fontSize: 12, fontWeight: "600", marginBottom: 6 },
   input: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
-  button: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },
+  currentIdentifierBox: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    padding: spacing.md, marginBottom: spacing.md,
+  },
+  currentIdentifierLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
+  currentIdentifierValue: { color: colors.ink, fontSize: 15, fontWeight: "700", marginTop: 4 },
+  identifierButton: {
+    borderWidth: 1, borderColor: colors.violet, borderRadius: radius.md,
+    paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl,
+  },
+  identifierButtonText: { color: colors.violet, fontWeight: "700", fontSize: 15 },
+  button: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
   buttonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
 });
