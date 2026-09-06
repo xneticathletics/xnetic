@@ -77,9 +77,13 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
         name: e.name,
         exerciseId: e.id,
         sourceLabel: role !== "super_admin" ? undefined : e.club_id === null ? "🌐 Global (Platform)" : `🏢 ${e.clubs?.name ?? "Bir kulüp"}`,
-        // Var olan (global) hareketleri her antrenör/kulüp admini düzenleyebilir
-        // — sadece YENİ global hareket eklemek Süper Admin'e özel.
-        canEdit: e.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : e.club_id === clubId,
+        // Düzenleme sadece club_admin, branş koordinatörü ve (global
+        // hareketler için) süper admine açık — sıradan antrenör artık
+        // hareket düzenleyemez.
+        canEdit:
+          e.club_id === null
+            ? role === "club_admin" || isCoordinator || role === "super_admin"
+            : e.club_id === clubId && (role === "club_admin" || isCoordinator),
       })),
   ];
 

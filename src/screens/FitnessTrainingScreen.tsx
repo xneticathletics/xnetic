@@ -4,17 +4,27 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES } from "../lib/fitnessExercises";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessTraining">;
 
 export default function FitnessTrainingScreen({ navigation }: Props) {
+  const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isCoordinator = role === "coach" && isLocked;
+  // Yeni hareket ekleme sadece club_admin ve branş koordinatörüne açık.
+  const canAdd = role === "club_admin" || isCoordinator;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("FitnessExerciseForm")}>
-          <Text style={styles.addButtonText}>+ Çalışma Ekle</Text>
-        </TouchableOpacity>
-      </View>
+      {canAdd && (
+        <View style={styles.headerRow}>
+          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("FitnessExerciseForm")}>
+            <Text style={styles.addButtonText}>+ Çalışma Ekle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <Text style={styles.subtitle}>Bir bölge seç, egzersizi seç, sporcunun kaldırdığı ağırlığı/tekrarı kaydet.</Text>
 
       <View style={styles.grid}>

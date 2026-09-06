@@ -70,7 +70,12 @@ export default function NutritionRecipeDetailScreen({ route, navigation }: Props
   }
 
   const meta = getFoodCategory(recipe.category);
-  const canEdit = recipe.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : recipe.club_id === myClubId;
+  // Düzenleme sadece club_admin, branş koordinatörü ve (global tarifler
+  // için) süper admine açık — sıradan antrenör artık tarif düzenleyemez.
+  const canEdit =
+    recipe.club_id === null
+      ? role === "club_admin" || isCoordinator || role === "super_admin"
+      : recipe.club_id === myClubId && (role === "club_admin" || isCoordinator);
   const canDelete = recipe.club_id === null ? role === "super_admin" : recipe.club_id === myClubId && (role === "club_admin" || isCoordinator);
   const sourceLabel =
     role === "super_admin" ? (recipe.club_id === null ? "🌐 Global (Platform)" : `🏢 ${recipe.clubs?.name ?? "Bir kulüp"}`) : undefined;

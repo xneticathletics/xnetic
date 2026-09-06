@@ -80,10 +80,12 @@ export default function NutritionFoodDetailScreen({ route, navigation }: Props) 
   }
 
   const meta = getFoodCategory(food.category);
-  // Var olan (global) besinleri her antrenör/kulüp admini düzenleyebilir —
-  // sadece YENİ global besin eklemek ve global bir besini silmek Süper
-  // Admin'e özel (bkz. FitnessCategoryScreen.tsx'teki aynı mantık).
-  const canEdit = food.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : food.club_id === myClubId;
+  // Düzenleme sadece club_admin, branş koordinatörü ve (global besinler
+  // için) süper admine açık — sıradan antrenör artık besin düzenleyemez.
+  const canEdit =
+    food.club_id === null
+      ? role === "club_admin" || isCoordinator || role === "super_admin"
+      : food.club_id === myClubId && (role === "club_admin" || isCoordinator);
   const canDelete = food.club_id === null ? role === "super_admin" : food.club_id === myClubId && (role === "club_admin" || isCoordinator);
   const sourceLabel =
     role === "super_admin" ? (food.club_id === null ? "🌐 Global (Platform)" : `🏢 ${food.clubs?.name ?? "Bir kulüp"}`) : undefined;
