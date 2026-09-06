@@ -4,7 +4,15 @@
 // normalize etmek için ortak nokta.
 export function extractPhoneDigits(input: string): string {
   let digits = input.replace(/\D/g, "");
-  if (digits.length > 0 && !digits.startsWith("0")) digits = `0${digits}`;
+  // "+90"/"90" ülke koduyla girilmiş numaraları (ör. rehberden kopyalanan
+  // "+905321234567") doğru şekilde yerel "0..." formatına çevir — aksi
+  // halde "90"nın başına bir "0" daha eklenip numara bozulur ve bu
+  // numarayla açılmış hesaba giriş yapılamaz hâle gelirdi.
+  if (digits.length === 12 && digits.startsWith("90")) {
+    digits = `0${digits.slice(2)}`;
+  } else if (digits.length > 0 && !digits.startsWith("0")) {
+    digits = `0${digits}`;
+  }
   return digits.slice(0, 11);
 }
 
