@@ -28,7 +28,22 @@
     },
     "plugins": [
       "expo-font",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Sporcu, profil ve ürün fotoğrafı yükleyebilmen için galerine erişim gerekiyor.",
+          "cameraPermission": "X-NETIC kamerana erişmiyor.",
+          "microphonePermission": "X-NETIC mikrofonuna erişmiyor."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Antrenman ve müsabaka programını telefonunun takvimine ekleyebilmen için takvimine erişim gerekiyor.",
+          "remindersPermission": "X-NETIC hatırlatıcılarına erişmiyor."
+        }
+      ]
     ],
     "extra": {
       "eas": {

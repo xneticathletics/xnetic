@@ -7,6 +7,7 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { BranchSelectProvider } from "./src/context/BranchSelectContext";
 import { ClubSettingsProvider } from "./src/context/ClubSettingsContext";
 import RootNavigator from "./src/navigation/RootNavigator";
+import ErrorBoundary from "./src/components/ErrorBoundary";
 import { colors } from "./src/theme/tokens";
 
 // Daha modern bir görünüm için tüm uygulamaya tek bir değişken (variable)
@@ -75,14 +76,16 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <BranchSelectProvider>
-          <ClubSettingsProvider>
-            <StatusBar style="light" />
-            <RootNavigator />
-          </ClubSettingsProvider>
-        </BranchSelectProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <BranchSelectProvider>
+            <ClubSettingsProvider>
+              <StatusBar style="light" />
+              <RootNavigator />
+            </ClubSettingsProvider>
+          </BranchSelectProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
