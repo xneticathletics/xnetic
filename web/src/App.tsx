@@ -29,6 +29,7 @@ import CoachesListPage from "./routes/coaches/CoachesListPage";
 import CoachDetailPage from "./routes/coaches/CoachDetailPage";
 import CoachAssignmentsPage from "./routes/coaches/CoachAssignmentsPage";
 import AnnouncementsListPage from "./routes/announcements/AnnouncementsListPage";
+import MessagesPage from "./routes/messages/MessagesPage";
 import ClubSettingsPage from "./routes/settings/ClubSettingsPage";
 import AccountPage from "./routes/account/AccountPage";
 import UsersListPage from "./routes/users/UsersListPage";
@@ -125,6 +126,7 @@ export default function App() {
               <Route path="/fitness/programs/:id" element={<FitnessProgramDetailPage />} />
               <Route path="/fitness/wellness" element={<FitnessWellnessPage />} />
               <Route path="/announcements" element={<AnnouncementsListPage />} />
+              <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<ClubSettingsPage />} />
               <Route path="/account" element={<AccountPage />} />
             </Route>

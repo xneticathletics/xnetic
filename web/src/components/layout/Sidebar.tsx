@@ -10,6 +10,7 @@ import { useClubSettings } from "../../context/ClubSettingsContext";
 const NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean; tileKey?: string }[] = [
   { to: "/", label: "Kulüp Özeti", icon: "📊", end: true },
   { to: "/announcements", label: "Duyurular", icon: "📣" },
+  { to: "/messages", label: "Mesajlar", icon: "💬" },
   { to: "/athletes", label: "Sporcular", icon: "👥", tileKey: "sporcu" },
   { to: "/coaches", label: "Antrenörler", icon: "🧑‍🏫", tileKey: "antrenorler" },
   { to: "/groups", label: "Gruplar", icon: "🏷️", tileKey: "sporcu" },
@@ -36,6 +37,7 @@ const SUPER_ADMIN_NAV_ITEMS: { to: string; label: string; icon: string; end?: bo
   { to: "/admin/content-promotion", label: "İçeriği Globale Yükselt", icon: "🌐" },
   { to: "/admin/screens", label: "Ekranlar", icon: "🖥️" },
   { to: "/admin/announce", label: "Duyurular", icon: "📣" },
+  { to: "/messages", label: "Mesajlar", icon: "💬" },
   { to: "/admin/settings", label: "Sistem Ayarları", icon: "⚙️" },
   { to: "/account", label: "Hesabım", icon: "👤" },
 ];
