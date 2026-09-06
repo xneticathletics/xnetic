@@ -38,7 +38,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
   parent: [
     { key: "sporcum", label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
     { key: "yoklama", label: "Yoklama Durumu", sub: "", icon: "📋" },
-    { key: "antrenman", label: "Antrenman Saatleri", sub: "", icon: "📅" },
+    { key: "antrenman", label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },

@@ -36,10 +36,10 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
   parent: [
+    { label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
     { label: "Yoklama Durumu", sub: "", icon: "📋" },
-    { label: "Antrenman Saatleri", sub: "", icon: "📅" },
+    { label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { label: "Aidat Öde", sub: "", icon: "💰" },
-    { label: "Sporcu Takibi", sub: "Çocuğunun gelişimini takip et", icon: "📊" },
     { label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
