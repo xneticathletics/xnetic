@@ -119,3 +119,20 @@ export async function listPendingPasswordResetRequests(): Promise<PendingPasswor
     .filter((n) => n.payload?.requesterId)
     .map((n) => ({ notificationId: n.id, requesterId: n.payload.requesterId as string }));
 }
+
+export type PendingAccountDeletionRequest = { notificationId: string; requesterId: string };
+
+// Mobildeki ProfileScreen'in "Hesabımı Sil" talebi — web'de henüz ayrı bir
+// işleme ekranı yok (bkz. mobil UsersListScreen), bu sadece API paritesi
+// için burada.
+export async function listPendingAccountDeletionRequests(): Promise<PendingAccountDeletionRequest[]> {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, payload")
+    .eq("event_type", "account_deletion_request")
+    .is("read_at", null);
+  if (error) throw error;
+  return ((data as any[]) ?? [])
+    .filter((n) => n.payload?.requesterId)
+    .map((n) => ({ notificationId: n.id, requesterId: n.payload.requesterId as string }));
+}

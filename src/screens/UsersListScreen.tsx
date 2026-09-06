@@ -3,9 +3,11 @@ import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Activi
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listClubUsers, type ClubUser } from "../lib/api/clubUsers";
+import { listClubUsers, deactivateUser, type ClubUser } from "../lib/api/clubUsers";
 import { resetUserPassword } from "../lib/api/passwordReset";
-import { listPendingPasswordResetRequests, markNotificationRead } from "../lib/api/notifications";
+import {
+  listPendingPasswordResetRequests, listPendingAccountDeletionRequests, markNotificationRead,
+} from "../lib/api/notifications";
 import { useCopyToast } from "../hooks/useCopyToast";
 import type { ClubSettingsStackParamList } from "../navigation/ClubSettingsStack";
 import type { UserRole } from "../context/AuthContext";
@@ -34,7 +36,10 @@ export default function UsersListScreen({}: Props) {
   // Sıfırla'ya basınca ilgili bildirim(ler)i okundu işaretlemek için —
   // aynı kullanıcı için birden fazla okunmamış talep olabilir diye id listesi.
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, string[]>>({});
+  const [pendingDeletionByUserId, setPendingDeletionByUserId] = useState<Record<string, string[]>>({});
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
   const resettingRef = useRef(false);
+  const deactivatingRef = useRef(false);
   const { copy, copiedKey } = useCopyToast();
 
   const hasLoadedOnceRef = useRef(false);
@@ -42,13 +47,20 @@ export default function UsersListScreen({}: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [u, pending] = await Promise.all([listClubUsers(), listPendingPasswordResetRequests()]);
+      const [u, pending, pendingDeletion] = await Promise.all([
+        listClubUsers(), listPendingPasswordResetRequests(), listPendingAccountDeletionRequests(),
+      ]);
       setUsers(u);
       const byUser: Record<string, string[]> = {};
       pending.forEach((p) => {
         (byUser[p.requesterId] ??= []).push(p.notificationId);
       });
       setPendingByUserId(byUser);
+      const byDeletionUser: Record<string, string[]> = {};
+      pendingDeletion.forEach((p) => {
+        (byDeletionUser[p.requesterId] ??= []).push(p.notificationId);
+      });
+      setPendingDeletionByUserId(byDeletionUser);
     } catch (e: any) {
       setError(e.message ?? "Kullanıcılar yüklenemedi");
     } finally {
@@ -75,7 +87,10 @@ export default function UsersListScreen({}: Props) {
   // normal bölümüne kaysın istemiyoruz — admin yeni şifreyi kopyalayana
   // kadar kart üstte, yerinde kalsın. O yüzden "üstte göster" koşulu hem
   // bekleyen talebi hem de henüz kapatılmamış bir sonucu kapsıyor.
-  const isPinned = useCallback((u: ClubUser) => !!pendingByUserId[u.id]?.length || !!results[u.id], [pendingByUserId, results]);
+  const isPinned = useCallback(
+    (u: ClubUser) => !!pendingByUserId[u.id]?.length || !!pendingDeletionByUserId[u.id]?.length || !!results[u.id],
+    [pendingByUserId, pendingDeletionByUserId, results]
+  );
 
   const pendingUsers = useMemo(() => filteredUsers.filter(isPinned), [filteredUsers, isPinned]);
 
@@ -131,6 +146,38 @@ export default function UsersListScreen({}: Props) {
     );
   };
 
+  const handleDeactivate = (user: ClubUser) => {
+    Alert.alert(
+      "Hesabı devre dışı bırak",
+      `${user.name} hesap silme talebinde bulundu. Hesabını devre dışı bırakmak istediğine emin misin? Bu, girişini tamamen kapatır. Kalıcı veri silme işlemini KVKK sürecine göre ayrıca yapman gerekir.`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Devre Dışı Bırak",
+          style: "destructive",
+          onPress: async () => {
+            if (deactivatingRef.current) return;
+            deactivatingRef.current = true;
+            setDeactivatingId(user.id);
+            try {
+              await deactivateUser(user.id);
+              const pendingIds = pendingDeletionByUserId[user.id];
+              if (pendingIds?.length) {
+                await Promise.all(pendingIds.map((id) => markNotificationRead(id).catch(() => {})));
+              }
+              await load();
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Devre dışı bırakılamadı", [{ text: "Tamam" }]);
+            } finally {
+              deactivatingRef.current = false;
+              setDeactivatingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const dismissResult = (userId: string) => {
     setResults((r) => {
       const next = { ...r };
@@ -144,6 +191,7 @@ export default function UsersListScreen({}: Props) {
       <View style={styles.cardRow}>
         <View style={{ flex: 1, minWidth: 0 }}>
           {!!pendingByUserId[u.id]?.length && <Text style={styles.pendingTag}>🔔 Şifre sıfırlama talep etti</Text>}
+          {!!pendingDeletionByUserId[u.id]?.length && <Text style={styles.pendingTag}>🗑 Hesap silme talep etti</Text>}
           <Text style={styles.cardName} numberOfLines={1}>{u.name}</Text>
           {!!u.phone && <Text style={styles.cardPhone}>{u.phone}</Text>}
         </View>
@@ -159,6 +207,20 @@ export default function UsersListScreen({}: Props) {
           )}
         </TouchableOpacity>
       </View>
+
+      {!!pendingDeletionByUserId[u.id]?.length && (
+        <TouchableOpacity
+          style={styles.deactivateButton}
+          onPress={() => handleDeactivate(u)}
+          disabled={deactivatingId === u.id}
+        >
+          {deactivatingId === u.id ? (
+            <ActivityIndicator color={colors.bg} size="small" />
+          ) : (
+            <Text style={styles.deactivateButtonText}>Hesabı Devre Dışı Bırak</Text>
+          )}
+        </TouchableOpacity>
+      )}
 
       {!!results[u.id] && (
         <View style={styles.resultBox}>
@@ -209,7 +271,7 @@ export default function UsersListScreen({}: Props) {
           <View style={{ marginBottom: spacing.md }}>
             <View style={styles.roleHeaderRow}>
               <View style={[styles.roleHeaderBar, { backgroundColor: colors.coral }]} />
-              <Text style={styles.roleHeaderText}>Sıfırlama Talep Edenler</Text>
+              <Text style={styles.roleHeaderText}>Bekleyen Talepler</Text>
             </View>
             {pendingUsers.map((u) => renderUserCard(u, true))}
           </View>
@@ -251,6 +313,11 @@ const styles = StyleSheet.create({
   cardPhone: { color: colors.muted, fontSize: 12, marginTop: 2 },
   resetButton: { backgroundColor: colors.coral, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 10 },
   resetButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  deactivateButton: {
+    backgroundColor: colors.coral, borderRadius: radius.sm, paddingVertical: 10,
+    alignItems: "center", marginTop: spacing.sm,
+  },
+  deactivateButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
   resultBox: {
     backgroundColor: colors.tealSoft, borderWidth: 1, borderColor: colors.teal,
     borderRadius: radius.md, padding: spacing.md, marginTop: spacing.sm,

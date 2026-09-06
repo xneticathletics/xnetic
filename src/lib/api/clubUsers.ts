@@ -22,3 +22,13 @@ export async function listClubUsers(): Promise<ClubUser[]> {
   if (error) throw error;
   return (data as ClubUser[]) ?? [];
 }
+
+// Bir hesap silme talebini işleme almak için — kalıcı silme değil,
+// erişimi tamamen kapatır (custom_access_token_hook is_active=false gören
+// bir hesabın rol/kulüp claim'lerini boşaltıyor, bkz. güvenlik denetimi
+// notları). Kalıcı veri silme/anonimleştirme KVKK sürecine göre ayrıca
+// ele alınmalı, bu fonksiyonun kapsamında değil.
+export async function deactivateUser(userId: string): Promise<void> {
+  const { error } = await supabase.from("users").update({ is_active: false }).eq("id", userId);
+  if (error) throw error;
+}

@@ -11,6 +11,7 @@ import { getCurrentUserName, getCurrentUserPhoto, uploadMyPhoto } from "../lib/a
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { uploadAthletePhoto, updateAthlete } from "../lib/api/athletes";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { requestAccountDeletion } from "../lib/api/accountDeletion";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   club_admin: "Kulüp Yöneticisi",
@@ -48,6 +49,7 @@ export default function ProfileScreen({
   const [uploading, setUploading] = useState(false);
 
   const canUpload = CAN_UPLOAD_PHOTO[role];
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,6 +110,35 @@ export default function ProfileScreen({
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDeleteAccountRequest = () => {
+    if (role === "super_admin") {
+      Alert.alert("Kullanılamıyor", "Süper admin hesabı için bu özellik kullanılamıyor.", [{ text: "Tamam" }]);
+      return;
+    }
+    Alert.alert(
+      "Hesabını silmek istiyor musun?",
+      "Bu talebini kulüp yönetimine ileteceğiz — incelendikten sonra hesabın ve kişisel verilerin KVKK sürecine uygun şekilde kapatılacak. Bu işlem geri alınamaz.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Talep Gönder",
+          style: "destructive",
+          onPress: async () => {
+            setRequestingDeletion(true);
+            try {
+              await requestAccountDeletion(role);
+              Alert.alert("Talebin İletildi", "Hesap silme talebin kulüp yönetimine iletildi.", [{ text: "Tamam" }]);
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Talep gönderilemedi", [{ text: "Tamam" }]);
+            } finally {
+              setRequestingDeletion(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const initial = (userName ?? ROLE_LABEL[role])[0]?.toUpperCase() ?? "?";
@@ -206,6 +237,14 @@ export default function ProfileScreen({
       <TouchableOpacity style={styles.button} onPress={signOut}>
         <Text style={styles.buttonText}>Çıkış Yap</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.deleteAccountLink}
+        onPress={handleDeleteAccountRequest}
+        disabled={requestingDeletion}
+      >
+        <Text style={styles.deleteAccountLinkText}>Hesabımı Sil</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -288,4 +327,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   buttonText: { color: colors.coral, fontWeight: "700" },
+  deleteAccountLink: { alignItems: "center", paddingVertical: spacing.sm },
+  deleteAccountLinkText: { color: colors.muted, fontSize: 12, fontWeight: "600", textDecorationLine: "underline" },
 });

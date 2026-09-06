@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -28,6 +28,11 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
   const [bankInfo, setBankInfo] = useState<ClubBankInfo | null>(null);
   const [bankInfoLoading, setBankInfoLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  // React state güncellemesi ekrana yansıyana kadar disabled={sending} bir
+  // sonraki dokunuşu engelleyemiyor (ChangePasswordScreen.tsx'te aynı bug
+  // bulunup düzeltilmişti) — hızlı çift dokunuşta admine aynı bildirim iki
+  // kez gidebiliyordu, senkron ref ile kilitliyoruz.
+  const sendingRef = useRef(false);
   const { copy, copiedKey } = useCopyToast();
 
   useEffect(() => {
@@ -36,6 +41,8 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
   }, [clubId]);
 
   const handleClaim = async (method: PaymentClaimMethod) => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       await notifyPaymentClaim(paymentId, amount, athleteName, method);
@@ -47,6 +54,7 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Bildirilemedi", [{ text: "Tamam" }]);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };

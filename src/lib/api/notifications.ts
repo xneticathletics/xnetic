@@ -68,11 +68,16 @@ function generateUuid(): string {
 // başarısız oluyordu (çoğu çağrı noktası .catch(()=>{}) ile hatayı
 // yutuyordu, bu yüzden fark edilmemişti). id'yi insert'ten ÖNCE kendimiz
 // üretip push tetiklemek için kullanıyoruz, RETURNING'e hiç gerek kalmıyor.
+// "password_reset_request" ve "account_deletion_request" bilerek
+// NotificationEventType'ın DIŞINDA — bunlar susturulamıyor/topluca
+// okundu-işaretlenemiyor (bkz. markAllNotificationsRead), bu yüzden
+// NOTIFICATION_EVENT_TYPES listesine hiç girmiyorlar. sendNotification
+// yine de bu iki özel değeri kabul etmeli diye burada ayrıca union'a ekleniyor.
 export async function sendNotification(
   recipientUserId: string,
   title: string,
   body: string,
-  eventType?: NotificationEventType,
+  eventType?: NotificationEventType | "password_reset_request" | "account_deletion_request",
   payload?: Record<string, unknown>
 ) {
   if (eventType) {
@@ -133,17 +138,18 @@ export async function markNotificationRead(id: string) {
   if (error) throw error;
 }
 
-// Şifre sıfırlama talepleri (event_type: "password_reset_request") kasıtlı
-// olarak buradan MUAF — Kullanıcılar ekranı bunları "okunmadı/bekliyor"
-// bilgisine göre üstte gösteriyor; zile dokunmak "gördüm" anlamına
-// gelmemeli, sadece admin gerçekten şifreyi sıfırlayınca çözülmüş sayılır
-// (bkz. UsersListScreen.tsx handleReset → markNotificationRead).
+// Şifre sıfırlama VE hesap silme talepleri (event_type: "password_reset_request"
+// / "account_deletion_request") kasıtlı olarak buradan MUAF — Kullanıcılar
+// ekranı bunları "okunmadı/bekliyor" bilgisine göre üstte gösteriyor; zile
+// dokunmak "gördüm" anlamına gelmemeli, sadece admin gerçekten işleme
+// alınca çözülmüş sayılır (bkz. UsersListScreen.tsx handleReset/handleDeactivate
+// → markNotificationRead).
 export async function markAllNotificationsRead() {
   const { error } = await supabase
     .from("notifications")
     .update({ read_at: new Date().toISOString() })
     .is("read_at", null)
-    .or("event_type.is.null,event_type.neq.password_reset_request");
+    .or("event_type.is.null,event_type.not.in.(password_reset_request,account_deletion_request)");
   if (error) throw error;
 }
 
@@ -182,6 +188,24 @@ export async function listPendingPasswordResetRequests(): Promise<PendingPasswor
     .from("notifications")
     .select("id, payload")
     .eq("event_type", "password_reset_request")
+    .is("read_at", null);
+  if (error) throw error;
+  return ((data as any[]) ?? [])
+    .filter((n) => n.payload?.requesterId)
+    .map((n) => ({ notificationId: n.id, requesterId: n.payload.requesterId as string }));
+}
+
+export type PendingAccountDeletionRequest = { notificationId: string; requesterId: string };
+
+// password_reset_request ile aynı desen — hesap silme talepleri de
+// susturulamıyor ve zil'den "tümünü okundu" ile kaybolmuyor (bkz.
+// markAllNotificationsRead), Kullanıcılar ekranında admin gerçekten
+// işleme alana kadar üstte kalıyor.
+export async function listPendingAccountDeletionRequests(): Promise<PendingAccountDeletionRequest[]> {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, payload")
+    .eq("event_type", "account_deletion_request")
     .is("read_at", null);
   if (error) throw error;
   return ((data as any[]) ?? [])
