@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Doğrulama</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #10122A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  #status {
+    color: #9CA3AF;
+    font-size: 13px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="cf-turnstile"
+       data-sitekey="0x4AAAAAAEqiHSj1HJUkLV8K"
+       data-theme="dark"
+       data-callback="onTurnstileSuccess"
+       data-expired-callback="onTurnstileExpired"
+       data-error-callback="onTurnstileError">
+  </div>
+  <div id="status">Doğrulanıyor…</div>
+</div>
+<script>
+  // React Native WebView'in beklediği köprü: window.ReactNativeWebView
+  // sadece uygulama içinde (bir WebView'de yüklendiğinde) mevcut olur —
+  // normal bir tarayıcıda açılırsa bu fonksiyonlar sessizce hiçbir şey
+  // yapmaz, sayfa çökmez.
+  function postToApp(payload) {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+    }
+  }
+  function onTurnstileSuccess(token) {
+    document.getElementById("status").textContent = "Doğrulandı ✓";
+    postToApp({ type: "success", token: token });
+  }
+  function onTurnstileExpired() {
+    document.getElementById("status").textContent = "Süresi doldu, tekrar deneniyor…";
+    postToApp({ type: "expired" });
+  }
+  function onTurnstileError() {
+    document.getElementById("status").textContent = "Doğrulama başarısız.";
+    postToApp({ type: "error" });
+  }
+</script>
+</body>
+</html>

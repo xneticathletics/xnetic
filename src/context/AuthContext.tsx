@@ -17,7 +17,7 @@ type AuthState = {
   role: UserRole | null;
   clubId: string | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: (claims.app_role as UserRole) ?? null,
     clubId: (claims.club_id as string) ?? null,
     loading,
-    signIn: async (email, password) => {
+    signIn: async (email, password, captchaToken) => {
       if (!email.trim() || !password) {
         return { error: "Giriş bilgisi ve şifre alanlarını doldurmalısınız." };
       }
@@ -109,7 +109,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e: any) {
         return { error: e.message ?? "Geçersiz giriş bilgisi." };
       }
-      const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
       return { error: error ? translateAuthError(error.message) : null };
     },
     signOut: async () => {

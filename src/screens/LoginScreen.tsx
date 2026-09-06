@@ -6,6 +6,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import CaptchaModal from "../components/CaptchaModal";
 
 export default function LoginScreen({
   onForgotPassword,
@@ -17,11 +18,23 @@ export default function LoginScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [captchaVisible, setCaptchaVisible] = useState(false);
 
-  const handleSubmit = async () => {
+  // Doğrulamayı ÖNCE yapıyoruz — kullanıcı boş alanla gönderirse CAPTCHA'yı
+  // hiç göstermeden hatayı gösteriyoruz, gereksiz bir adım eklememek için.
+  const handleSubmit = () => {
     setError(null);
+    if (!email.trim() || !password) {
+      setError("Giriş bilgisi ve şifre alanlarını doldurmalısınız.");
+      return;
+    }
+    setCaptchaVisible(true);
+  };
+
+  const handleCaptchaSuccess = async (captchaToken: string) => {
+    setCaptchaVisible(false);
     setSubmitting(true);
-    const { error: signInError } = await signIn(email.trim(), password);
+    const { error: signInError } = await signIn(email.trim(), password, captchaToken);
     setSubmitting(false);
     if (signInError) setError(signInError);
   };
@@ -101,6 +114,12 @@ export default function LoginScreen({
           Yeni kulüp kaydı için xnetic.net adresini ziyaret edin.
         </Text>
       </ScrollView>
+
+      <CaptchaModal
+        visible={captchaVisible}
+        onSuccess={handleCaptchaSuccess}
+        onCancel={() => setCaptchaVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }

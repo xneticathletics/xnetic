@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import { getCurrentLoginIdentifier, updateLoginIdentifier } from "../lib/api/accountIdentity";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { translatePasswordError } from "../lib/passwordErrors";
+import CaptchaModal from "../components/CaptchaModal";
 
 export default function ChangePasswordScreen() {
   const { scrollRef, handleFocus } = useKeyboardScroll();
@@ -32,6 +33,7 @@ export default function ChangePasswordScreen() {
   // engelleyemiyor — hızlı çift dokunuşta handleChangePassword iki kez
   // çalışabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const changingRef = useRef(false);
+  const [captchaVisible, setCaptchaVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,7 +67,10 @@ export default function ChangePasswordScreen() {
     }
   };
 
-  const handleChangePassword = async () => {
+  // Doğrulama başarılıysa CAPTCHA'yı gösteriyoruz — asıl re-authenticate +
+  // şifre değiştirme işi handleCaptchaSuccess'te, token elimize geçtikten
+  // sonra yapılıyor.
+  const handleChangePassword = () => {
     if (changingRef.current) return;
     if (!oldPassword) {
       Alert.alert("Eksik bilgi", "Mevcut şifreni girmelisin.", [{ text: "Tamam" }]);
@@ -79,6 +84,11 @@ export default function ChangePasswordScreen() {
       Alert.alert("Eksik bilgi", "Yeni şifreler eşleşmiyor.", [{ text: "Tamam" }]);
       return;
     }
+    setCaptchaVisible(true);
+  };
+
+  const handleCaptchaSuccess = async (captchaToken: string) => {
+    setCaptchaVisible(false);
     changingRef.current = true;
     setChanging(true);
     try {
@@ -91,7 +101,9 @@ export default function ChangePasswordScreen() {
       const email = userData?.user?.email;
       if (userError || !email) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
 
-      const { error: reAuthError } = await supabase.auth.signInWithPassword({ email, password: oldPassword });
+      const { error: reAuthError } = await supabase.auth.signInWithPassword({
+        email, password: oldPassword, options: { captchaToken },
+      });
       if (reAuthError) throw new Error("Mevcut şifren yanlış.");
 
       const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
@@ -178,6 +190,12 @@ export default function ChangePasswordScreen() {
           {changing ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Şifreyi Değiştir</Text>}
         </TouchableOpacity>
       </ScrollView>
+
+      <CaptchaModal
+        visible={captchaVisible}
+        onSuccess={handleCaptchaSuccess}
+        onCancel={() => setCaptchaVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
