@@ -42,6 +42,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [loadingList, setLoadingList] = useState(true);
+  const [loadingContacts, setLoadingContacts] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +60,11 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (composing && role) {
-      listMyContacts(role).then(setContacts).catch((e) => setError(e.message));
+      setLoadingContacts(true);
+      listMyContacts(role)
+        .then(setContacts)
+        .catch((e) => setError(e.message))
+        .finally(() => setLoadingContacts(false));
     }
   }, [composing, role]);
 
@@ -140,7 +145,9 @@ export default function MessagesPage() {
               className="mx-3 mb-2 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
             />
             <div className="flex-1 overflow-y-auto px-3 pb-3">
-              {filteredContacts.length === 0 ? (
+              {loadingContacts ? (
+                <p className="mt-6 text-center text-sm text-muted">Yükleniyor…</p>
+              ) : filteredContacts.length === 0 ? (
                 <p className="mt-6 text-center text-sm text-muted">
                   {contactQuery ? "Eşleşen kişi bulunamadı." : "Mesajlaşabileceğin kimse yok."}
                 </p>
