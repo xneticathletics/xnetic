@@ -57,14 +57,19 @@ export default function SuperAdminClubsScreen({ navigation }: Props) {
             <Text style={styles.cardName}>{item.name}</Text>
             <Text style={styles.cardDate}>Katılım: {formatDate(item.created_at)}</Text>
             {item.subscription ? (
-              <View style={styles.badgeRow}>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{PERIOD_LABELS[item.subscription.billing_period] ?? item.subscription.billing_period}</Text>
+              <>
+                <View style={styles.badgeRow}>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{PERIOD_LABELS[item.subscription.billing_period] ?? item.subscription.billing_period}</Text>
+                  </View>
+                  <View style={[styles.badge, styles.badgeStatus]}>
+                    <Text style={styles.badgeText}>{STATUS_LABELS[item.subscription.status] ?? item.subscription.status}</Text>
+                  </View>
                 </View>
-                <View style={[styles.badge, styles.badgeStatus]}>
-                  <Text style={styles.badgeText}>{STATUS_LABELS[item.subscription.status] ?? item.subscription.status}</Text>
-                </View>
-              </View>
+                {item.subscription.current_period_end && (
+                  <Text style={styles.cardDate}>Abonelik Bitiş: {formatDate(item.subscription.current_period_end)}</Text>
+                )}
+              </>
             ) : (
               <Text style={styles.noSub}>Abonelik kaydı yok</Text>
             )}

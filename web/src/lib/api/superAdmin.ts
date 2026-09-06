@@ -11,7 +11,7 @@ export type ClubSummary = {
   id: string;
   name: string;
   created_at: string;
-  subscription: { billing_period: string; status: string; amount_try?: number } | null;
+  subscription: { billing_period: string; status: string; amount_try?: number; current_period_end: string | null } | null;
 };
 
 export type PlatformStats = {
@@ -30,12 +30,15 @@ export type PlatformStats = {
 export async function listAllClubs(): Promise<ClubSummary[]> {
   const [clubsResult, subsResult] = await Promise.all([
     supabase.from("clubs").select("id, name, created_at").order("created_at", { ascending: false }),
-    supabase.from("club_subscriptions").select("club_id, billing_period, status").order("created_at", { ascending: false }),
+    supabase
+      .from("club_subscriptions")
+      .select("club_id, billing_period, status, current_period_end")
+      .order("created_at", { ascending: false }),
   ]);
   if (clubsResult.error) throw clubsResult.error;
   if (subsResult.error) throw subsResult.error;
 
-  const subByClub = new Map<string, { billing_period: string; status: string }>();
+  const subByClub = new Map<string, { billing_period: string; status: string; current_period_end: string | null }>();
   (subsResult.data ?? []).forEach((s) => {
     if (!subByClub.has(s.club_id)) subByClub.set(s.club_id, s);
   });
@@ -168,7 +171,7 @@ export async function getClub(clubId: string): Promise<ClubSummary | null> {
     supabase.from("clubs").select("id, name, created_at").eq("id", clubId).maybeSingle(),
     supabase
       .from("club_subscriptions")
-      .select("billing_period, status, amount_try")
+      .select("billing_period, status, amount_try, current_period_end")
       .eq("club_id", clubId)
       .order("created_at", { ascending: false })
       .limit(1)

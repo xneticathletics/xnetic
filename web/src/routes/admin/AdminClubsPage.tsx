@@ -43,6 +43,16 @@ export default function AdminClubsPage() {
           <span className="italic text-muted">Abonelik kaydı yok</span>
         ),
     },
+    {
+      key: "period_end",
+      label: "Abonelik Bitiş",
+      render: (c) =>
+        c.subscription?.current_period_end ? (
+          new Date(c.subscription.current_period_end).toLocaleDateString("tr-TR")
+        ) : (
+          <span className="text-muted">—</span>
+        ),
+    },
   ];
 
   return (
