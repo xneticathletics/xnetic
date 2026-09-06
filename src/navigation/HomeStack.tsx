@@ -257,7 +257,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="CoachLeave" component={CoachLeaveScreen} options={{ title: "İzin İşlemleri" }} />
       <Stack.Screen name="CoachBranch" component={CoachBranchScreen} options={{ title: "Branş ve Belge İşlemleri" }} />
       <Stack.Screen name="BranchSelect" component={BranchSelectScreen} options={{ title: "Branş Seç" }} />
-      <Stack.Screen name="MySchedule" component={MyScheduleScreen} options={{ title: "Antrenman Programı" }} />
+      <Stack.Screen name="MySchedule" component={MyScheduleScreen} options={{ title: "Takvim" }} />
       <Stack.Screen name="MySessionDetail" component={MySessionDetailScreen} options={{ title: "Antrenman Detayı" }} />
       <Stack.Screen name="MyAttendance" component={MyAttendanceScreen} options={{ title: "Antrenman Katılım Durumu" }} />
       <Stack.Screen name="MyPayments" component={MyPaymentsScreen} options={{ title: "Aidat" }} />

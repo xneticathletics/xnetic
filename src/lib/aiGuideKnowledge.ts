@@ -261,7 +261,7 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
     title: "Kendi antrenman programını görme",
     sampleQuestion: "Antrenman programımı nereden görürüm?",
     roles: ["athlete"],
-    answer: "Ana Sayfa → Antrenman Programı'na gir — antrenörünün sana ya da grubuna atadığı fitness programını görürsün.",
+    answer: "Ana Sayfa → Performansım → Program'a gir — antrenörünün sana ya da grubuna atadığı fitness programını görürsün.",
   },
 
   // --- Herkes ortak ---

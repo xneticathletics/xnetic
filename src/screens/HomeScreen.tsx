@@ -44,7 +44,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   ],
   athlete: [
-    { key: "antrenman", label: "Antrenman Programı", sub: "", icon: "📅" },
+    { key: "antrenman", label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
     { key: "yoklama", label: "Antrenman Katılım Durumu", sub: "", icon: "📋" },
     { key: "wellness", label: "Günlük Check-in", sub: "Uyku, enerji ve ruh hâlini kaydet", icon: "🌡️" },
     { key: "performansim", label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },

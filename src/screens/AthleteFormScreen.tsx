@@ -514,7 +514,7 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         title="Sporcu Giriş Hesabı"
         hint={
           "Bu sporcunun kendi telefonu ya da kullanıcı adıyla giriş yapıp kendi " +
-          "Antrenman Programı / Yoklama Durumu'nu görebilmesi için buradan bağla."
+          "Takvim / Yoklama Durumu'nu görebilmesi için buradan bağla."
         }
         inviteRole="athlete"
         defaultName={form.full_name}
