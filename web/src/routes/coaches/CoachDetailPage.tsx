@@ -11,8 +11,13 @@ import {
   type CoachBranchInfo,
 } from "../../lib/api/coaches";
 import { listBranches, type Branch } from "../../lib/api/branches";
+import { listCoachLeaves, createCoachLeave, deleteCoachLeave, type CoachLeave } from "../../lib/api/coachLeaves";
 import CoachEditModal from "./CoachEditModal";
 import CoachPersonalInfoModal from "./CoachPersonalInfoModal";
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("tr-TR");
+}
 
 const EDUCATION_LABELS: Record<string, string> = {
   lise: "Lise",
@@ -38,28 +43,69 @@ export default function CoachDetailPage() {
   const [branches, setBranches] = useState<CoachBranchInfo[]>([]);
   const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [groups, setGroups] = useState<{ id: string; name: string; branch: string }[]>([]);
+  const [leaves, setLeaves] = useState<CoachLeave[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [editingBranches, setEditingBranches] = useState(false);
   const [editingPersonal, setEditingPersonal] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", reason: "" });
+  const [savingLeave, setSavingLeave] = useState(false);
 
   const load = () => {
     if (!id) return;
     setLoading(true);
     setError(null);
-    Promise.all([getCoach(id), getAllCoachBranches(), getCoachGroups(id), listBranches()])
-      .then(([c, allCoachBranches, g, b]) => {
+    Promise.all([getCoach(id), getAllCoachBranches(), getCoachGroups(id), listBranches(), listCoachLeaves(id)])
+      .then(([c, allCoachBranches, g, b, l]) => {
         setCoach(c);
         setBranches(allCoachBranches[id] ?? []);
         setGroups(g);
         setAllBranches(b);
+        setLeaves(l);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [id]);
+
+  const handleAddLeave = async () => {
+    if (!id || !leaveForm.start_date || !leaveForm.end_date) {
+      alert("Başlangıç ve bitiş tarihi seçmelisin.");
+      return;
+    }
+    if (leaveForm.end_date < leaveForm.start_date) {
+      alert("Bitiş tarihi başlangıçtan önce olamaz.");
+      return;
+    }
+    setSavingLeave(true);
+    try {
+      await createCoachLeave({
+        coach_id: id,
+        start_date: leaveForm.start_date,
+        end_date: leaveForm.end_date,
+        reason: leaveForm.reason.trim() || null,
+      });
+      setLeaveForm({ start_date: "", end_date: "", reason: "" });
+      setLeaves(await listCoachLeaves(id));
+    } catch (e: any) {
+      alert(e.message ?? "Kaydedilemedi");
+    } finally {
+      setSavingLeave(false);
+    }
+  };
+
+  const handleDeleteLeave = async (leave: CoachLeave) => {
+    if (!id) return;
+    if (!confirm("Bu izin kaydını silmek istediğine emin misin?")) return;
+    try {
+      await deleteCoachLeave(leave.id);
+      setLeaves(await listCoachLeaves(id));
+    } catch (e: any) {
+      alert(e.message ?? "Silinemedi");
+    }
+  };
 
   const handleDeactivate = async () => {
     if (!coach) return;
@@ -179,6 +225,63 @@ export default function CoachDetailPage() {
                 <div key={g.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
                   <span className="text-sm font-semibold text-ink">{g.name}</span>
                   <span className="text-xs text-muted">{g.branch}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <h2 className="mb-3 mt-6 text-sm font-bold text-ink">İzin İşlemleri</h2>
+          <div className="mb-3 rounded-xl border border-line bg-surface p-4">
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <div>
+                <label className="mb-1 block text-[10px] font-bold text-muted">Başlangıç</label>
+                <input
+                  type="date"
+                  value={leaveForm.start_date}
+                  onChange={(e) => setLeaveForm((f) => ({ ...f, start_date: e.target.value }))}
+                  className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-bold text-muted">Bitiş</label>
+                <input
+                  type="date"
+                  value={leaveForm.end_date}
+                  onChange={(e) => setLeaveForm((f) => ({ ...f, end_date: e.target.value }))}
+                  className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
+                />
+              </div>
+            </div>
+            <input
+              type="text"
+              value={leaveForm.reason}
+              onChange={(e) => setLeaveForm((f) => ({ ...f, reason: e.target.value }))}
+              placeholder="Neden (isteğe bağlı)"
+              className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
+            />
+            <button
+              onClick={handleAddLeave}
+              disabled={savingLeave}
+              className="w-full rounded-lg bg-violet px-4 py-2 text-sm font-bold text-bg disabled:opacity-60"
+            >
+              {savingLeave ? "Kaydediliyor…" : "+ İzin Ekle"}
+            </button>
+          </div>
+          <div className="rounded-xl border border-line bg-surface p-4">
+            {leaves.length === 0 ? (
+              <p className="text-sm text-muted">Henüz izin kaydı yok.</p>
+            ) : (
+              leaves.map((l) => (
+                <div key={l.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      {formatDate(l.start_date)} – {formatDate(l.end_date)}
+                    </p>
+                    {l.reason && <p className="text-xs text-muted">{l.reason}</p>}
+                  </div>
+                  <button onClick={() => handleDeleteLeave(l)} className="text-xs font-bold text-coral hover:underline">
+                    Sil
+                  </button>
                 </div>
               ))
             )}

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import { createSession, updateSession, deleteSession, type TrainingSession, type TrainingSessionInput } from "../../lib/api/trainingSessions";
+import { listSessionMedia, uploadSessionPhoto, type SessionMedia } from "../../lib/api/sessionMedia";
 import type { Group } from "../../lib/api/groups";
 import type { Venue } from "../../lib/api/venues";
 
@@ -36,9 +37,30 @@ export default function SessionModal({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [media, setMedia] = useState<SessionMedia[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (session) listSessionMedia(session.id).then(setMedia).catch(() => {});
+  }, [session]);
 
   const set = <K extends keyof TrainingSessionInput>(key: K, value: TrainingSessionInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const handleUploadPhoto = async (file: File) => {
+    if (!session) return;
+    setUploading(true);
+    try {
+      await uploadSessionPhoto(session.id, file);
+      setMedia(await listSessionMedia(session.id));
+    } catch (e: any) {
+      alert(e.message ?? "Fotoğraf yüklenemedi");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     if (!form.group_id || !form.session_date || !form.start_time || !form.end_time) {
@@ -122,6 +144,28 @@ export default function SessionModal({
           onChange={(e) => set("notes", e.target.value || null)}
         />
       </FormField>
+
+      {isEdit && session && (
+        <FormField label="Antrenman Fotoğrafları">
+          <div className="mb-2 grid grid-cols-4 gap-2">
+            {media.map((m) => (
+              <a key={m.id} href={m.media_url} target="_blank" rel="noreferrer">
+                <img src={m.media_url} alt="" className="aspect-square w-full rounded-md object-cover" />
+              </a>
+            ))}
+          </div>
+          {media.length === 0 && <p className="mb-2 text-xs text-muted">Henüz fotoğraf eklenmemiş.</p>}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => e.target.files?.[0] && handleUploadPhoto(e.target.files[0])}
+            disabled={uploading}
+            className="w-full text-xs text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-yellow file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-bg"
+          />
+          {uploading && <p className="mt-1 text-xs text-muted">Yükleniyor…</p>}
+        </FormField>
+      )}
 
       {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}
 

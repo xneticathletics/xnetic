@@ -5,6 +5,7 @@ import { listClubUsers, type ClubUser } from "../../lib/api/clubUsers";
 import { resetUserPassword } from "../../lib/api/passwordReset";
 import { listPendingPasswordResetRequests, markNotificationRead } from "../../lib/api/notifications";
 import { getUserIdsForRoleBucket } from "../../lib/api/notificationRolePrefs";
+import { inviteUser, type InviteRole } from "../../lib/api/inviteUser";
 import type { UserRole } from "../../context/AuthContext";
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -15,6 +16,107 @@ const ROLE_LABEL: Record<UserRole, string> = {
   super_admin: "Süper Admin",
 };
 
+const INVITE_ROLE_OPTIONS: { value: InviteRole; label: string }[] = [
+  { value: "parent", label: "Veli" },
+  { value: "athlete", label: "Sporcu" },
+  { value: "coach", label: "Antrenör" },
+];
+
+function InviteUserModal({ onClose, onInvited }: { onClose: () => void; onInvited: () => void }) {
+  const [identifier, setIdentifier] = useState("");
+  const [role, setRole] = useState<InviteRole | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ identifier: string; tempPassword: string } | null>(null);
+
+  const handleInvite = async () => {
+    if (!identifier.trim() || !role) {
+      setError("Telefon/kullanıcı adı ve rol zorunludur.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await inviteUser({ identifier: identifier.trim(), role });
+      setResult({ identifier: res.identifier, tempPassword: res.tempPassword });
+      setIdentifier("");
+      setRole(null);
+      onInvited();
+    } catch (e: any) {
+      setError(e.message ?? "Hesap oluşturulamadı");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal title="Kullanıcı Ekle" onClose={onClose}>
+      <p className="mb-4 rounded-lg border border-line bg-bg p-3 text-xs text-muted">
+        Telefon numarası, kullanıcı adı ya da e-posta ve rol girip hesap oluşturuyorsun — bir geçici şifre üretilir.
+        Bu şifreyi kişiye kendin (WhatsApp, SMS, telefonla vb.) iletmen gerekiyor. Kişi ilk girişte kendi şifresini
+        belirlemek zorunda kalır.
+      </p>
+
+      {result ? (
+        <div className="rounded-lg border border-teal bg-teal/10 p-4">
+          <p className="mb-2 text-sm font-bold text-ink">✓ Hesap Oluşturuldu</p>
+          <p className="mb-2 text-sm text-ink">Giriş Bilgisi: {result.identifier}</p>
+          <p className="mb-2 select-all rounded-md bg-bg px-3 py-3 text-center text-lg font-extrabold tracking-widest text-ink">
+            {result.tempPassword}
+          </p>
+          <p className="mb-4 text-xs text-muted">
+            Bu geçici şifreyi kişiye ilet — bir daha görüntülenmeyecek.
+          </p>
+          <button onClick={onClose} className="w-full rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
+            Kapat
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-3">
+            <label className="mb-1 block text-xs font-bold text-muted">Telefon veya Kullanıcı Adı *</label>
+            <input
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="05XX XXX XX XX ya da kullaniciadi"
+              className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="mb-1 block text-xs font-bold text-muted">Rol *</label>
+            <div className="flex flex-wrap gap-2">
+              {INVITE_ROLE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRole(opt.value)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+                    role === opt.value ? "border-yellow bg-yellow text-bg" : "border-line text-muted"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}
+
+          <button
+            onClick={handleInvite}
+            disabled={saving}
+            className="w-full rounded-lg bg-yellow px-4 py-2.5 text-sm font-bold text-bg disabled:opacity-60"
+          >
+            {saving ? "Oluşturuluyor…" : "Hesap Oluştur"}
+          </button>
+        </>
+      )}
+    </Modal>
+  );
+}
+
 export default function UsersListPage() {
   const [users, setUsers] = useState<ClubUser[]>([]);
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, string[]>>({});
@@ -24,6 +126,7 @@ export default function UsersListPage() {
   const [query, setQuery] = useState("");
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [result, setResult] = useState<{ name: string; tempPassword: string } | null>(null);
+  const [inviting, setInviting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -119,13 +222,21 @@ export default function UsersListPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">Kullanıcılar</h1>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Kullanıcı ara..."
-          className="w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Kullanıcı ara..."
+            className="w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
+          />
+          <button
+            onClick={() => setInviting(true)}
+            className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg"
+          >
+            + Kullanıcı Ekle
+          </button>
+        </div>
       </div>
 
       <p className="mb-4 text-xs text-muted">
@@ -150,6 +261,8 @@ export default function UsersListPage() {
           <p className="text-xs text-muted">Bu şifreyi kişiye ilet — bir daha görüntülenmeyecek. İlk girişte değiştirmesi zorunlu.</p>
         </Modal>
       )}
+
+      {inviting && <InviteUserModal onClose={() => setInviting(false)} onInvited={load} />}
     </div>
   );
 }

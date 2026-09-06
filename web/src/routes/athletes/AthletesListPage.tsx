@@ -5,6 +5,7 @@ import { inputClass } from "../../components/FormField";
 import { listAllAthletes, deleteAthlete, type Athlete, type AthleteType } from "../../lib/api/athletes";
 import { listBranches, type Branch } from "../../lib/api/branches";
 import AthleteEditModal from "./AthleteEditModal";
+import AthleteBulkImportModal from "./AthleteBulkImportModal";
 
 export default function AthletesListPage() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -15,6 +16,7 @@ export default function AthletesListPage() {
   const [branchFilter, setBranchFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState<AthleteType | "">("");
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -107,9 +109,14 @@ export default function AthletesListPage() {
           <h1 className="text-xl font-bold text-ink">Sporcular</h1>
           <p className="text-sm text-muted">{filtered.length} sporcu</p>
         </div>
-        <button onClick={() => setEditingId("new")} className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
-          + Sporcu Ekle
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setImporting(true)} className="rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal">
+            📥 Excelden Aktar
+          </button>
+          <button onClick={() => setEditingId("new")} className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg">
+            + Sporcu Ekle
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3">
@@ -154,6 +161,17 @@ export default function AthletesListPage() {
           onClose={() => setEditingId(null)}
           onSaved={() => {
             setEditingId(null);
+            load();
+          }}
+        />
+      )}
+
+      {importing && (
+        <AthleteBulkImportModal
+          branches={branches}
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            setImporting(false);
             load();
           }}
         />

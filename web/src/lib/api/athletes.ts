@@ -79,6 +79,25 @@ export async function createAthlete(input: AthleteInput) {
   return data;
 }
 
+export type BulkAthleteRow = {
+  full_name: string;
+  branch: string | null;
+};
+
+export async function bulkCreateAthletes(rows: BulkAthleteRow[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const { error } = await supabase.from("athletes").insert(
+    rows.map((r) => ({
+      full_name: r.full_name,
+      branch: r.branch,
+      status: "active" as AthleteStatus,
+      athlete_type: "spor_okulu" as AthleteType,
+    }))
+  );
+  if (error) throw error;
+  return rows.length;
+}
+
 export async function updateAthlete(id: string, input: Partial<AthleteInput>) {
   const { data, error } = await supabase.from("athletes").update(input).eq("id", id).select().single();
   if (error) throw error;

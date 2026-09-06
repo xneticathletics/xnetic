@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getAthlete, deleteAthlete, type Athlete } from "../../lib/api/athletes";
 import { listAthleteRecentAttendance, type AthleteRecentAttendance, type AttendanceStatus } from "../../lib/api/attendance";
+import { listAthleteNotes, createAthleteNote, type AthleteNote } from "../../lib/api/athleteNotes";
+import { listInjuries, createInjury, type Injury } from "../../lib/api/injuries";
 import AthleteEditModal from "./AthleteEditModal";
 
 const STATUS_LABEL: Record<string, string> = { active: "Aktif", passive: "Pasif" };
@@ -59,21 +61,68 @@ export default function AthleteDetailPage() {
 
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [attendance, setAttendance] = useState<AthleteRecentAttendance[]>([]);
+  const [notes, setNotes] = useState<AthleteNote[]>([]);
+  const [injuries, setInjuries] = useState<Injury[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [newNote, setNewNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [addingInjury, setAddingInjury] = useState(false);
+  const [injuryForm, setInjuryForm] = useState({ injury_type: "", injury_date: "", expected_return: "", note: "" });
+  const [savingInjury, setSavingInjury] = useState(false);
 
   const load = () => {
     if (!id) return;
     setLoading(true);
     setError(null);
-    Promise.all([getAthlete(id), listAthleteRecentAttendance(id)])
-      .then(([a, att]) => {
+    Promise.all([getAthlete(id), listAthleteRecentAttendance(id), listAthleteNotes(id), listInjuries(id)])
+      .then(([a, att, n, inj]) => {
         setAthlete(a);
         setAttendance(att);
+        setNotes(n);
+        setInjuries(inj);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  const handleAddNote = async () => {
+    if (!id || !newNote.trim()) return;
+    setSavingNote(true);
+    try {
+      await createAthleteNote(id, newNote.trim());
+      setNewNote("");
+      setNotes(await listAthleteNotes(id));
+    } catch (e: any) {
+      alert(e.message ?? "Not eklenemedi");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleAddInjury = async () => {
+    if (!id || !injuryForm.injury_type.trim() || !injuryForm.injury_date) {
+      alert("Sakatlık türü ve tarihi zorunludur.");
+      return;
+    }
+    setSavingInjury(true);
+    try {
+      await createInjury({
+        athlete_id: id,
+        injury_type: injuryForm.injury_type.trim(),
+        injury_date: injuryForm.injury_date,
+        expected_return: injuryForm.expected_return || null,
+        note: injuryForm.note.trim() || null,
+      });
+      setInjuryForm({ injury_type: "", injury_date: "", expected_return: "", note: "" });
+      setAddingInjury(false);
+      setInjuries(await listInjuries(id));
+    } catch (e: any) {
+      alert(e.message ?? "Sakatlık kaydı eklenemedi");
+    } finally {
+      setSavingInjury(false);
+    }
   };
 
   useEffect(load, [id]);
@@ -212,6 +261,115 @@ export default function AthleteDetailPage() {
                   <span className={`text-xs font-bold ${ATTENDANCE_COLOR[s.status]}`}>
                     {ATTENDANCE_LABEL[s.status]} · {formatDate(s.session_date)}
                   </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-ink">Sakatlık Geçmişi</h2>
+            <button
+              onClick={() => setAddingInjury((v) => !v)}
+              className="rounded-lg border border-coral px-3 py-1 text-xs font-bold text-coral"
+            >
+              {addingInjury ? "Vazgeç" : "+ Ekle"}
+            </button>
+          </div>
+
+          {addingInjury && (
+            <div className="mb-3 rounded-xl border border-coral bg-surface p-4">
+              <input
+                type="text"
+                value={injuryForm.injury_type}
+                onChange={(e) => setInjuryForm((f) => ({ ...f, injury_type: e.target.value }))}
+                placeholder="Sakatlık türü *"
+                className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-coral"
+              />
+              <div className="mb-2 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold text-muted">Tarih *</label>
+                  <input
+                    type="date"
+                    value={injuryForm.injury_date}
+                    onChange={(e) => setInjuryForm((f) => ({ ...f, injury_date: e.target.value }))}
+                    className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-coral"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold text-muted">Beklenen Dönüş</label>
+                  <input
+                    type="date"
+                    value={injuryForm.expected_return}
+                    onChange={(e) => setInjuryForm((f) => ({ ...f, expected_return: e.target.value }))}
+                    className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-coral"
+                  />
+                </div>
+              </div>
+              <textarea
+                value={injuryForm.note}
+                onChange={(e) => setInjuryForm((f) => ({ ...f, note: e.target.value }))}
+                placeholder="Not (opsiyonel)"
+                rows={2}
+                className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-coral"
+              />
+              <button
+                onClick={handleAddInjury}
+                disabled={savingInjury}
+                className="w-full rounded-lg bg-coral px-4 py-2 text-sm font-bold text-bg disabled:opacity-60"
+              >
+                {savingInjury ? "Kaydediliyor…" : "Kaydet"}
+              </button>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-line bg-surface p-4">
+            {injuries.length === 0 ? (
+              <p className="text-sm text-muted">Sakatlık kaydı yok.</p>
+            ) : (
+              injuries.map((inj) => (
+                <div key={inj.id} className="border-b border-line py-2 last:border-0">
+                  <p className="text-sm font-bold text-ink">{inj.injury_type}</p>
+                  <p className="text-xs text-muted">
+                    {formatDate(inj.injury_date)}
+                    {inj.expected_return ? ` — Beklenen dönüş: ${formatDate(inj.expected_return)}` : ""}
+                  </p>
+                  {inj.note && <p className="mt-1 text-xs text-ink">{inj.note}</p>}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-sm font-bold text-ink">Koç Notları</h2>
+          <div className="mb-3 rounded-xl border border-line bg-surface p-4">
+            <textarea
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="Yeni not yaz…"
+              rows={2}
+              className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
+            />
+            <button
+              onClick={handleAddNote}
+              disabled={savingNote || !newNote.trim()}
+              className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg disabled:opacity-60"
+            >
+              {savingNote ? "Kaydediliyor…" : "Not Ekle"}
+            </button>
+          </div>
+          <div className="rounded-xl border border-line bg-surface p-4">
+            {notes.length === 0 ? (
+              <p className="text-sm text-muted">Henüz not yok.</p>
+            ) : (
+              notes.map((n) => (
+                <div key={n.id} className="border-b border-line py-2 last:border-0">
+                  <p className="text-sm text-ink">{n.note}</p>
+                  <p className="mt-1 text-xs text-muted">{formatDate(n.created_at)}</p>
                 </div>
               ))
             )}
