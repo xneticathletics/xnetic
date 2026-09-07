@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { inputClass } from "../components/FormField";
+import CaptchaWidget from "../components/CaptchaWidget";
 
 const MARKETING_URL = import.meta.env.VITE_MARKETING_URL as string;
 
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   if (!loading && session) {
     return <Navigate to="/" replace />;
@@ -20,7 +22,7 @@ export default function LoginPage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password, captchaToken ?? undefined);
     if (error) setError(error);
     setSubmitting(false);
   };
@@ -60,11 +62,15 @@ export default function LoginPage() {
           />
         </label>
 
+        <div className="mb-4">
+          <CaptchaWidget onToken={setCaptchaToken} />
+        </div>
+
         {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !captchaToken}
           className="w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg disabled:opacity-60"
         >
           {submitting ? "Giriş yapılıyor…" : "Giriş Yap"}

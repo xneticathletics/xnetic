@@ -7,6 +7,7 @@ import { getPlatformSettings, type PlatformSettings } from "../lib/api/platformS
 import { createClub, type BillingPeriod } from "../lib/api/clubSignup";
 import { uploadClubLogo } from "../lib/api/clubLogo";
 import ClubAdminConsentModal from "../components/ClubAdminConsentModal";
+import CaptchaWidget from "../components/CaptchaWidget";
 
 const MARKETING_URL = import.meta.env.VITE_MARKETING_URL as string;
 
@@ -54,6 +55,7 @@ export default function CreateClubPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   if (!loading && session) {
     return <Navigate to="/" replace />;
@@ -106,7 +108,7 @@ export default function CreateClubPage() {
       // Hesap oluşturulduktan hemen sonra aynı bilgilerle giriş yapılır —
       // LoginPage'deki yönlendirme, oturum gelince otomatik olarak
       // Ana Sayfa'ya geçirir.
-      const { error: signInError } = await signIn(email.trim(), password);
+      const { error: signInError } = await signIn(email.trim(), password, captchaToken ?? undefined);
       if (signInError) throw new Error(signInError);
 
       if (logoFile) {
@@ -280,9 +282,13 @@ export default function CreateClubPage() {
               </span>
             </label>
 
+            <div className="mb-4">
+              <CaptchaWidget onToken={setCaptchaToken} />
+            </div>
+
             {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
-            <button type="submit" disabled={submitting} className="w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg disabled:opacity-60">
+            <button type="submit" disabled={submitting || !captchaToken} className="w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg disabled:opacity-60">
               {submitting ? "Oluşturuluyor…" : "Kulübü Oluştur"}
             </button>
           </form>

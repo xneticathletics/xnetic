@@ -11,6 +11,7 @@ import {
 } from "../../lib/api/currentUser";
 import { formatPhoneNumber } from "../../lib/phoneFormat";
 import { translatePasswordError } from "../../lib/passwordErrors";
+import CaptchaWidget from "../../components/CaptchaWidget";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   club_admin: "Kulüp Yöneticisi",
@@ -48,6 +49,7 @@ export default function AccountPage() {
   const [newPassword2, setNewPassword2] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([getCurrentUserName(), getCurrentUserPhone(), getCurrentUserPhoto()])
@@ -112,7 +114,11 @@ export default function AccountPage() {
       const email = session?.user?.email;
       if (!email) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
 
-      const { error: reAuthError } = await supabase.auth.signInWithPassword({ email, password: oldPassword });
+      const { error: reAuthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: oldPassword,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
       if (reAuthError) throw new Error("Mevcut şifren yanlış.");
 
       const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
@@ -216,11 +222,13 @@ export default function AccountPage() {
           <input type="password" className={inputClass} value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} />
         </FormField>
 
+        <CaptchaWidget onToken={setCaptchaToken} />
+
         {passwordError && <p className="text-sm font-semibold text-coral">{passwordError}</p>}
 
         <button
           onClick={handleChangePassword}
-          disabled={changingPassword}
+          disabled={changingPassword || !captchaToken}
           className="w-full rounded-lg border border-teal py-2.5 text-sm font-bold text-teal disabled:opacity-60"
         >
           {changingPassword ? "…" : "Şifreyi Değiştir"}
