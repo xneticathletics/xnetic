@@ -21,6 +21,46 @@ const FAQS: { q: string; a: string }[] = [
     q: "Mobil uygulama hangi cihazlarda çalışıyor?",
     a: "iOS ve Android üzerinde çalışır. Kulüp yönetimi ise bu web panelinden yapılır.",
   },
+  {
+    q: "Sporcu ya da antrenör sayısına göre ek ücret var mı?",
+    a: "Hayır — fiyat sabit, kulübün büyüklüğü fark etmeksizin sınırsız sporcu, antrenör ve veli ekleyebilirsin.",
+  },
+  {
+    q: "Mevcut sporcu listemi Excel'den nasıl aktarırım?",
+    a: "Sporcu Yönetimi'ndeki toplu aktarma özelliğiyle Excel/CSV dosyandan tüm sporcularını tek seferde içeri aktarabilirsin — tek tek elle girmene gerek yok.",
+  },
+  {
+    q: "Aidatları kredi kartıyla tahsil edebiliyor muyum?",
+    a: "Şu an Havale/EFT ve elden ödeme destekleniyor; kartla online ödeme (iyzico entegrasyonu) yakında ekleniyor.",
+  },
+  {
+    q: "Birden fazla branşımız var, hepsini tek hesaptan mı yönetiyoruz?",
+    a: "Evet — sınırsız branş, grup ve salon tanımlayabilir, hepsini tek kulüp hesabından yönetebilirsin.",
+  },
+  {
+    q: "Bazı antrenörlere diğerlerinden daha fazla yetki verebilir miyim?",
+    a: "Evet — bir antrenörü branş koordinatörü yaparak, o branşın sporcu/grup/finans yönetim yetkisini ona devredebilirsin.",
+  },
+  {
+    q: "Kulübümüzün logosunu ve adını uygulamaya ekleyebilir miyiz?",
+    a: "Evet — Kulüp Ayarları'ndan logonu ve kulüp adını yükleyebilirsin, giriş ekranında ve Ana Sayfa'da hemen görünür.",
+  },
+  {
+    q: "Sporcularımızın sağlık/sakatlık bilgilerini kimler görebiliyor?",
+    a: "Sadece yetkili personel (kulüp admini, branş koordinatörü ve ilgili antrenör) — bu bilgiler veli ve sporcu hesaplarına gösterilmez.",
+  },
+  {
+    q: "İnternet bağlantısı olmadan kullanılabiliyor mu?",
+    a: "Hayır, uygulama ve web paneli internet bağlantısı gerektirir — tüm veriler anlık olarak sunucudan senkronize edilir.",
+  },
+  {
+    q: "Teknik bir sorun yaşarsak ya da yardıma ihtiyacımız olursa ne yapmalıyız?",
+    a: "Uygulama içindeki Profil → Yardım/Destek ekranından ya da destek@xnetic.net adresinden bize ulaşabilirsin.",
+  },
+  {
+    q: "KVKK'ya uygun mu, velilerden ayrıca onay almamız gerekiyor mu?",
+    a: "Evet — uygulama, ilk girişte her kullanıcıdan (veli, antrenör, admin) KVKK aydınlatma metni ve açık rıza onayı alır, ayrıca kağıt üzerinde bir şey yapmana gerek kalmaz.",
+  },
 ];
 
 export default function Faq() {
