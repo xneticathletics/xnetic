@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listAthletePayments, markPaymentPaid, isOverdue, type Payment } from "../lib/api/payments";
+import { listAthletePayments, markPaymentPaid, isOverdue, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
 
@@ -75,6 +75,11 @@ export default function AthletePaymentsScreen({ route, navigation }: Props) {
           <Text style={styles.rowAmount}>{item.amount.toLocaleString("tr-TR")} ₺</Text>
           <Text style={styles.rowSub}>{PERIOD_LABEL[item.period]} · Vade: {item.due_date}</Text>
           <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
+          {item.status === "pending" && !!item.method && (
+            <Text style={styles.claimText}>
+              💬 Veli {PAYMENT_METHOD_DB_LABEL[item.method]} ile ödediğini bildirdi
+            </Text>
+          )}
           {item.status === "paid" && (
             <TouchableOpacity
               onPress={() =>
@@ -85,6 +90,7 @@ export default function AthletePaymentsScreen({ route, navigation }: Props) {
                   dueDate: item.due_date,
                   paidAt: item.paid_at,
                   athleteName,
+                  method: item.method,
                 })
               }
             >
@@ -153,6 +159,7 @@ const styles = StyleSheet.create({
   rowAmount: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusLabel: { fontSize: 12, fontWeight: "700", marginTop: 4 },
+  claimText: { color: colors.yellow, fontSize: 11, fontWeight: "600", marginTop: 4 },
   receiptLink: { color: colors.teal, fontSize: 11, fontWeight: "700", marginTop: 4 },
   payButton: { borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 8 },
   payButtonText: { color: colors.teal, fontWeight: "700", fontSize: 11 },

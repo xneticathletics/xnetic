@@ -86,6 +86,7 @@ export default function MyPaymentsScreen({ navigation }: Props) {
                   dueDate: item.due_date,
                   paidAt: item.paid_at,
                   athleteName: athleteName ?? "Sporcu",
+                  method: item.method,
                 })
               }
             >

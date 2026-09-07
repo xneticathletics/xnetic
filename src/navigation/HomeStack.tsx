@@ -161,6 +161,7 @@ export type HomeStackParamList = {
     paidAt: string | null;
     athleteName: string;
     parentName?: string | null;
+    method?: "bank_transfer" | "cash" | "credit_card" | "qr" | null;
   };
   ExpenseForm: undefined;
   IncomeForm: undefined;

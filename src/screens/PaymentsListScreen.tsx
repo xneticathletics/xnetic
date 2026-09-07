@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listClubPayments, markPaymentPaid, isOverdue, getCurrentMonthRange, type Payment } from "../lib/api/payments";
+import { listClubPayments, markPaymentPaid, isOverdue, getCurrentMonthRange, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
 import { topUpAllActivePlans } from "../lib/api/paymentPlans";
 import { sendNotification } from "../lib/api/notifications";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -159,6 +159,11 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
                   {PERIOD_LABEL[item.period]} · {item.amount.toLocaleString("tr-TR")} ₺ · Vade: {item.due_date}
                 </Text>
                 <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
+                {item.status === "pending" && !!item.method && (
+                  <Text style={styles.claimText}>
+                    💬 Veli {PAYMENT_METHOD_DB_LABEL[item.method]} ile ödediğini bildirdi
+                  </Text>
+                )}
                 {!!item.receipt_url && (
                   <TouchableOpacity onPress={() => Linking.openURL(item.receipt_url!)}>
                     <Text style={styles.receiptLink}>📎 Dekontu Gör</Text>
@@ -175,6 +180,7 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
                         paidAt: item.paid_at,
                         athleteName: item.athletes?.full_name ?? "Sporcu",
                         parentName: item.athletes?.parent_name,
+                        method: item.method,
                       })
                     }
                   >
@@ -232,6 +238,7 @@ const styles = StyleSheet.create({
   rowBranch: { color: colors.muted, fontSize: 12, fontWeight: "600" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusLabel: { fontSize: 12, fontWeight: "700", marginTop: 4 },
+  claimText: { color: colors.yellow, fontSize: 11, fontWeight: "600", marginTop: 4 },
   receiptLink: { color: colors.teal, fontSize: 11, fontWeight: "700", marginTop: 4 },
   parentInfo: { color: colors.muted, fontSize: 11, marginTop: 4 },
   actionsCol: { alignItems: "flex-end", gap: 6 },

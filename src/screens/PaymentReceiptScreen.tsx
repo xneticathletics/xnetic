@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getClubName } from "../lib/api/clubSettings";
+import { PAYMENT_METHOD_DB_LABEL } from "../lib/api/payments";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
@@ -23,7 +24,7 @@ function receiptNumber(paymentId: string): string {
 }
 
 export default function PaymentReceiptScreen({ route }: Props) {
-  const { paymentId, amount, period, dueDate, paidAt, athleteName, parentName } = route.params;
+  const { paymentId, amount, period, dueDate, paidAt, athleteName, parentName, method } = route.params;
   const { clubId } = useAuth();
   const [clubName, setClubName] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ export default function PaymentReceiptScreen({ route }: Props) {
       `Tutar: ${amount.toLocaleString("tr-TR")} ₺`,
       `Vade Tarihi: ${dueDate}`,
       `Ödeme Tarihi: ${formatDate(paidAt)}`,
+      ...(method ? [`Ödeme Yöntemi: ${PAYMENT_METHOD_DB_LABEL[method]}`] : []),
       `Makbuz No: ${receiptNumber(paymentId)}`,
     ];
     Share.share({ message: lines.join("\n") }).catch(() => {});
@@ -61,6 +63,7 @@ export default function PaymentReceiptScreen({ route }: Props) {
         <Row label="Dönem" value={PERIOD_LABEL[period] ?? period} />
         <Row label="Vade Tarihi" value={dueDate} />
         <Row label="Ödeme Tarihi" value={formatDate(paidAt)} />
+        {!!method && <Row label="Ödeme Yöntemi" value={PAYMENT_METHOD_DB_LABEL[method]} />}
         <Row label="Makbuz No" value={receiptNumber(paymentId)} />
 
         <View style={styles.divider} />

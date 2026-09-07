@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  notifyPaymentClaim, uploadPaymentReceipt, submitPaymentReceipt, type PaymentClaimMethod,
+  notifyPaymentClaim, uploadPaymentReceipt, submitPaymentReceipt, claimPaymentMethod, type PaymentClaimMethod,
 } from "../lib/api/payments";
 import { getClubBankInfo, type ClubBankInfo } from "../lib/api/clubSettings";
 import { useAuth } from "../context/AuthContext";
@@ -63,6 +63,7 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
     setSending(true);
     try {
       let hasReceipt = false;
+      await claimPaymentMethod(paymentId, method);
       if (method === "havale" && receiptUri) {
         const receiptUrl = await uploadPaymentReceipt(paymentId, receiptUri);
         await submitPaymentReceipt(paymentId, receiptUrl);

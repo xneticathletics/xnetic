@@ -22,6 +22,7 @@ export type Payment = {
   paid_at: string | null;
   status: PaymentStatus;
   receipt_url: string | null;
+  method: "bank_transfer" | "cash" | "credit_card" | "qr" | null;
   athletes?: {
     full_name: string;
     parent_name: string | null;
@@ -38,7 +39,14 @@ export type PaymentInput = {
   due_date: string;
 };
 
-const PAYMENT_FIELDS = "id, athlete_id, period, amount, due_date, paid_at, status, receipt_url";
+const PAYMENT_FIELDS = "id, athlete_id, period, amount, due_date, paid_at, status, receipt_url, method";
+
+export const PAYMENT_METHOD_DB_LABEL: Record<string, string> = {
+  bank_transfer: "Havale/EFT",
+  cash: "Elden",
+  credit_card: "Kredi Kartı",
+  qr: "QR",
+};
 
 export async function listClubPayments(): Promise<Payment[]> {
   const { data, error } = await supabase
@@ -146,6 +154,17 @@ export async function submitPaymentReceipt(paymentId: string, receiptUrl: string
   const { error } = await supabase.rpc("submit_payment_receipt", {
     p_payment_id: paymentId,
     p_receipt_url: receiptUrl,
+  });
+  if (error) throw error;
+}
+
+// Veli "Ödedim, Bildir" derken hangi yöntemi seçtiğini kaydeder — admin
+// Finans ekranında "Bekliyor" satırının altında "Veli Elden/Havale ile
+// ödediğini bildirdi" gösterebilmek için (bkz. migration 20260907030000).
+export async function claimPaymentMethod(paymentId: string, method: PaymentClaimMethod): Promise<void> {
+  const { error } = await supabase.rpc("claim_payment_method", {
+    p_payment_id: paymentId,
+    p_method: method,
   });
   if (error) throw error;
 }
