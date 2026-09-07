@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listClubPayments, type Payment } from "../lib/api/payments";
+import { listClubPayments, isEarlyPayment, type Payment } from "../lib/api/payments";
 import { listExpenses, deleteExpense, type Expense } from "../lib/api/expenses";
 import { listExtraIncome, deleteExtraIncome, type ExtraIncome } from "../lib/api/extraIncome";
 import { listCoachPayments, type CoachPayment } from "../lib/api/coachPayments";
@@ -323,6 +323,7 @@ export default function FinancialDocumentsScreen({ navigation }: Props) {
                 <Text style={styles.rowSub}>
                   {PERIOD_LABEL[p.period]} · Vade: {formatDate(p.due_date)} · Ödeme: {formatDate(p.paid_at)}
                 </Text>
+                {isEarlyPayment(p) && <Text style={styles.earlyBadge}>🔵 Erken Ödendi</Text>}
               </View>
               <Text style={styles.rowAmount}>+{formatTL(p.amount)}</Text>
             </View>
@@ -388,6 +389,7 @@ const styles = StyleSheet.create({
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "600" },
   rowBranch: { color: colors.muted, fontSize: 12, fontWeight: "600" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  earlyBadge: { color: colors.violet, fontSize: 11, fontWeight: "700", marginTop: 2 },
   rowAmount: { color: colors.teal, fontSize: 14, fontWeight: "700", marginLeft: spacing.sm },
   expenseAmount: { color: colors.coral, fontSize: 14, fontWeight: "700", marginLeft: spacing.sm },
 });

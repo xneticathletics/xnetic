@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listClubPayments, markPaymentPaid, isOverdue, getCurrentMonthRange, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
+import { listClubPayments, markPaymentPaid, isOverdue, isEarlyPayment, getCurrentMonthRange, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
 import { topUpAllActivePlans } from "../lib/api/paymentPlans";
 import { sendNotification } from "../lib/api/notifications";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -44,16 +44,27 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
       await topUpAllActivePlans();
       const all = await listClubPayments();
       const graceDays = settings.payment_overdue_grace_days;
-      // "Tahsil Edilen" ve "Bekleyen" listeleri, Finans ana ekranındaki
-      // özet kartla AYNI ay penceresini (bu ayın 1'i - son günü) kullanır
-      // — aksi halde aidat planı önümüzdeki aylar için de kayıt
+      // "Bekleyen" listesi Finans ana ekranındaki özet kartla AYNI ay
+      // penceresini (bu ayın 1'i - son günü, due_date'e göre) kullanır —
+      // aksi halde aidat planı önümüzdeki aylar için de kayıt
       // oluşturduğundan "Bekleyen" listesi 3 ay birden gösterirdi.
       // "Vadesi Geçmiş" bilerek ay sınırı olmadan TÜM gecikmiş ödemeleri
-      // gösterir (bkz. getMonthlyFinanceSummary'deki not).
+      // gösterir. "Tahsil Edilen" ise due_date değil paid_at'e (bu ay
+      // FİİLEN ödenmiş mi) göre filtrelenir — aksi halde gelecek bir ayın
+      // aidatı erken ödendiğinde (ya da geçmiş bir ayınki geç ödendiğinde)
+      // bu listede hiç görünmüyordu (bkz. getMonthlyFinanceSummary'deki
+      // aynı düzeltme notu — ikisi TUTARLI olmalı).
       const { start, end } = getCurrentMonthRange();
+      const now = new Date();
+      const currentMonthIndex = now.getFullYear() * 12 + now.getMonth();
+      const isPaidThisMonth = (p: Payment) => {
+        if (!p.paid_at) return false;
+        const paidDate = new Date(p.paid_at);
+        return paidDate.getFullYear() * 12 + paidDate.getMonth() === currentMonthIndex;
+      };
       const filtered =
         filter === "paid"
-          ? all.filter((p) => p.status === "paid" && p.due_date >= start && p.due_date <= end)
+          ? all.filter((p) => p.status === "paid" && isPaidThisMonth(p))
           : filter === "overdue"
           ? all.filter((p) => isOverdue(p, graceDays))
           : all.filter((p) => p.status === "pending" && !isOverdue(p, graceDays) && p.due_date >= start && p.due_date <= end);
@@ -159,6 +170,7 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
                   {PERIOD_LABEL[item.period]} · {item.amount.toLocaleString("tr-TR")} ₺ · Vade: {item.due_date}
                 </Text>
                 <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
+                {isEarlyPayment(item) && <Text style={styles.earlyBadge}>🔵 Erken Ödendi</Text>}
                 {item.status === "pending" && !!item.method && (
                   <Text style={styles.claimText}>
                     💬 Veli {PAYMENT_METHOD_DB_LABEL[item.method]} ile ödediğini bildirdi
@@ -238,6 +250,7 @@ const styles = StyleSheet.create({
   rowBranch: { color: colors.muted, fontSize: 12, fontWeight: "600" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusLabel: { fontSize: 12, fontWeight: "700", marginTop: 4 },
+  earlyBadge: { color: colors.violet, fontSize: 11, fontWeight: "700", marginTop: 4 },
   claimText: { color: colors.yellow, fontSize: 11, fontWeight: "600", marginTop: 4 },
   receiptLink: { color: colors.teal, fontSize: 11, fontWeight: "700", marginTop: 4 },
   parentInfo: { color: colors.muted, fontSize: 11, marginTop: 4 },

@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listAthletePayments, markPaymentPaid, isOverdue, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
+import { listAthletePayments, markPaymentPaid, isOverdue, isEarlyPayment, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
 
@@ -75,6 +75,7 @@ export default function AthletePaymentsScreen({ route, navigation }: Props) {
           <Text style={styles.rowAmount}>{item.amount.toLocaleString("tr-TR")} ₺</Text>
           <Text style={styles.rowSub}>{PERIOD_LABEL[item.period]} · Vade: {item.due_date}</Text>
           <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
+          {isEarlyPayment(item) && <Text style={styles.earlyBadge}>🔵 Erken Ödendi</Text>}
           {item.status === "pending" && !!item.method && (
             <Text style={styles.claimText}>
               💬 Veli {PAYMENT_METHOD_DB_LABEL[item.method]} ile ödediğini bildirdi
@@ -159,6 +160,7 @@ const styles = StyleSheet.create({
   rowAmount: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusLabel: { fontSize: 12, fontWeight: "700", marginTop: 4 },
+  earlyBadge: { color: colors.violet, fontSize: 11, fontWeight: "700", marginTop: 4 },
   claimText: { color: colors.yellow, fontSize: 11, fontWeight: "600", marginTop: 4 },
   receiptLink: { color: colors.teal, fontSize: 11, fontWeight: "700", marginTop: 4 },
   payButton: { borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 8 },

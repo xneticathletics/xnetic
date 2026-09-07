@@ -180,6 +180,18 @@ export async function markPaymentPaid(id: string) {
   if (error) throw error;
 }
 
+// Bir ödeme, vade ayından ÖNCE ödenmişse "erken ödendi" sayılır — ör.
+// Eylül'de hem Eylül hem Ekim aidatı ödenirse, Ekim'in vadesi (Ekim) ödeme
+// tarihinden (Eylül) sonra olduğu için Ekim satırı erken ödendi işaretlenir.
+export function isEarlyPayment(payment: Payment): boolean {
+  if (payment.status !== "paid" || !payment.paid_at) return false;
+  const paidDate = new Date(payment.paid_at);
+  const dueDate = new Date(payment.due_date);
+  const paidMonthIndex = paidDate.getFullYear() * 12 + paidDate.getMonth();
+  const dueMonthIndex = dueDate.getFullYear() * 12 + dueDate.getMonth();
+  return dueMonthIndex > paidMonthIndex;
+}
+
 // DB'de otomatik "overdue" güncellemesi yapan bir zamanlanmış görev henüz yok
 // (Faz 2 kapsamı) — bu yüzden vadesi geçmiş "pending" ödemeleri arayüzde
 // istemci tarafında hesaplayıp gösteriyoruz. graceDays: vade tarihinden
@@ -224,33 +236,42 @@ export function getCurrentMonthRange(): { start: string; end: string } {
   return { start, end };
 }
 
-// Tahsil edilen (bu ay ödenmiş), bekleyen (bu ay vadeli, henüz gecikmemiş)
-// ve vadesi geçmiş (AY SINIRI OLMAKSIZIN, geçmiş aylardan kalanlar dahil
-// TÜM gecikmiş ödemeler) tutarlarını döner. "expected" bu üçünün basit
-// toplamıdır — Finans ekranındaki üstteki toplam rakamın, alttaki 3
-// kutunun toplamıyla HER ZAMAN birebir tutması için bilerek böyle
-// hesaplanır (aksi halde "Vadesi Geçmiş" geçen aylardan tutar
-// içerdiğinde üstteki toplamla alttaki kutular tutmuyordu).
+// Tahsil edilen (bu ay FİİLEN ödenmiş — paid_at'e göre), bekleyen (bu ay
+// vadeli, henüz gecikmemiş) ve vadesi geçmiş (AY SINIRI OLMAKSIZIN, geçmiş
+// aylardan kalanlar dahil TÜM gecikmiş ödemeler) tutarlarını döner.
+// "expected" bu üçünün basit toplamıdır.
+//
+// ÖNEMLİ: "Tahsil Edilen" bilerek due_date değil paid_at'e göre hesaplanır.
+// Önceden due_date kullanılıyordu — bu, biri Eylül'de Ekim ayının aidatını
+// erken ödediğinde (due_date=Ekim, paid_at=Eylül) o parayı HİÇBİR AYIN
+// "Tahsil Edilen"ine yazmıyordu (Eylül sorgusu due_date filtresiyle
+// bulamıyor, Ekim geldiğinde de artık "pending" değil "paid" olduğu için
+// o ayın sorgusuna hiç girmiyordu — para sessizce kayboluyordu). Aynı
+// sorun geç ödenen (due_date geçmiş ayda, bu ay ödenen) kayıtlarda da
+// vardı. paid_at kullanmak "bu ay gerçekten ne kadar para girdi"
+// sorusunu doğru cevaplıyor; pending/overdue hâlâ due_date'e bakıyor
+// çünkü onlar HENÜZ ödenmemiş kayıtlar için "hangi aya ait" sorusuna cevap veriyor.
 // graceDays: Gelişmiş Ayarlar'daki tolerans günü.
 export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
   const { start, end } = getCurrentMonthRange();
+  const now = new Date();
+  const startOfMonthTs = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
+  const startOfNextMonthTs = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0).toISOString();
 
-  const [thisMonthResult, allPendingResult] = await Promise.all([
+  const [collectedResult, thisMonthDueResult, allPendingResult] = await Promise.all([
+    supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs),
     supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end),
     supabase.from("payments").select("amount, status, due_date").eq("status", "pending"),
   ]);
-  if (thisMonthResult.error) throw thisMonthResult.error;
+  if (collectedResult.error) throw collectedResult.error;
+  if (thisMonthDueResult.error) throw thisMonthDueResult.error;
   if (allPendingResult.error) throw allPendingResult.error;
 
-  let collected = 0;
+  const collected = (collectedResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+
   let pending = 0;
-  (thisMonthResult.data ?? []).forEach((p) => {
-    const amount = Number(p.amount);
-    if (p.status === "paid") {
-      collected += amount;
-    } else if (!isOverdue(p as Payment, graceDays)) {
-      pending += amount;
-    }
+  (thisMonthDueResult.data ?? []).forEach((p) => {
+    if (p.status !== "paid" && !isOverdue(p as Payment, graceDays)) pending += Number(p.amount);
   });
 
   let overdue = 0;

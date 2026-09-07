@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getMyAthletes } from "../lib/api/myAthletes";
-import { listAthletePayments, isOverdue, type Payment } from "../lib/api/payments";
+import { listAthletePayments, isOverdue, isEarlyPayment, type Payment } from "../lib/api/payments";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useClubSettings } from "../context/ClubSettingsContext";
@@ -77,6 +77,7 @@ export default function MyPaymentsScreen({ navigation }: Props) {
         <View key={item.id} style={styles.row}>
           <View style={{ flex: 1 }}>
             <View style={styles.paidRowTop}>{content}</View>
+            {isEarlyPayment(item) && <Text style={styles.earlyBadge}>🔵 Erken Ödendi</Text>}
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate("PaymentReceipt", {
@@ -159,6 +160,7 @@ const styles = StyleSheet.create({
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusBadge: { fontWeight: "700", fontSize: 13 },
   paidRowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  earlyBadge: { color: colors.violet, fontSize: 11, fontWeight: "700", marginTop: 4 },
   receiptLink: { color: colors.teal, fontSize: 12, fontWeight: "700", marginTop: 6 },
   note: { color: colors.muted, fontSize: 11, textAlign: "center", marginTop: spacing.md },
 });
