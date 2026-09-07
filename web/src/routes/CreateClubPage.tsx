@@ -17,6 +17,16 @@ function formatTry(amount: number): string {
   return amount.toLocaleString("tr-TR", { maximumFractionDigits: 0 });
 }
 
+// wa.me formatı: ülke koduyla, başında "+" ya da "0" olmadan sadece rakam.
+// platform_settings.support_phone serbest formatta girilebildiği için
+// (0XXX... ya da +90XXX...) normalize ediyoruz.
+function toWhatsappDigits(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = `90${digits.slice(1)}`;
+  else if (!digits.startsWith("90")) digits = `90${digits}`;
+  return digits;
+}
+
 // Kulüp kaydı + ödeme sadece web'den yapılıyor — mobil uygulama App Store
 // kurallarına (3.1.3: uygulama içinden harici ödeme yöntemine yönlendirme
 // yasağı) takılmamak için bu akışı hiç içermiyor, sadece giriş desteklerler.
@@ -190,25 +200,29 @@ export default function CreateClubPage() {
               <div className="mt-1 text-base font-bold text-ink">{selectedPlan.label} — {selectedPlan.price}</div>
             </div>
 
-            {platformSettings?.bankIban ? (
-              <div className="mb-4 rounded-xl border border-line bg-bg p-4">
-                <div className="text-xs font-bold uppercase text-muted">Ödeme Hesabı (Havale/EFT)</div>
-                {platformSettings.bankAccountName && (
-                  <div className="mt-1 text-sm font-semibold text-ink">{platformSettings.bankAccountName}</div>
-                )}
-                <div className="mt-1 text-base font-bold text-yellow">{platformSettings.bankIban}</div>
-              </div>
+            <p className="mb-4 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-muted">
+              Ödemeni tamamlamak için bizimle iletişime geç — plan ve tutarı birlikte netleştirelim.
+              Ödemeni yaptıktan sonra devam edip kulüp bilgilerini gir; X-NETIC ekibi ödemeni kontrol
+              edip onaylayınca hesabın hemen aktif olacak (genelde birkaç saat içinde).
+            </p>
+
+            {platformSettings?.supportPhone ? (
+              <a
+                href={`https://wa.me/${toWhatsappDigits(platformSettings.supportPhone)}?text=${encodeURIComponent(
+                  `Merhaba, X-NETIC'te ${selectedPlan.label.toLowerCase()} plan (${selectedPlan.price}) için ödeme yapmak istiyorum.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg border border-teal py-2.5 text-sm font-bold text-teal"
+              >
+                💬 WhatsApp'tan İletişime Geç
+              </a>
             ) : (
-              <p className="mb-4 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-coral">
-                Ödeme hesabı bilgisi henüz tanımlanmamış — lütfen destek ile iletişime geç.
+              <p className="mb-6 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-coral">
+                Şu an için lütfen {platformSettings?.supportEmail ?? "destek@xnetic.net"} üzerinden iletişime geç.
               </p>
             )}
 
-            <p className="mb-6 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-muted">
-              Yukarıdaki hesaba plan tutarını gönder. Ödemeni yaptıktan sonra devam edip kulüp
-              bilgilerini gir — X-NETIC ekibi ödemeni kontrol edip onaylayınca hesabın hemen
-              aktif olacak (genelde birkaç saat içinde).
-            </p>
             <button
               type="button"
               onClick={() => setStep("form")}
