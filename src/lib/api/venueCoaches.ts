@@ -20,6 +20,16 @@ export async function getMyAuthorizedVenueIds(): Promise<string[]> {
   return (data ?? []).map((r) => r.venue_id);
 }
 
+// Antrenörler listesinde her satırda ayrı sorgu yapmamak için (N+1'i
+// önleme) — tüm kulübün coach_id -> venue_id[] eşlemesini TEK sorguda döner.
+export async function getAllCoachVenueIds(): Promise<Record<string, string[]>> {
+  const { data, error } = await supabase.from("venue_coaches").select("coach_id, venue_id");
+  if (error) throw error;
+  const map: Record<string, string[]> = {};
+  (data ?? []).forEach((r) => { (map[r.coach_id] ??= []).push(r.venue_id); });
+  return map;
+}
+
 export async function setCoachVenue(coachId: string, venueId: string, enabled: boolean): Promise<void> {
   if (enabled) {
     const { error } = await supabase.from("venue_coaches").insert({ coach_id: coachId, venue_id: venueId });

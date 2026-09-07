@@ -6,6 +6,7 @@ import { colors, radius, spacing, accentRotation, accentSoftRotation } from "../
 import { listCoachesWithGroups, getAllCoachBranches, type CoachWithGroups, type CoachBranchInfo } from "../lib/api/coaches";
 import { listGroups, type Group } from "../lib/api/groups";
 import { listVenues, type Venue } from "../lib/api/venues";
+import { getAllCoachVenueIds } from "../lib/api/venueCoaches";
 import { listBranches, type Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
@@ -22,6 +23,7 @@ export default function CoachesListScreen({ navigation }: Props) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [coachVenueIds, setCoachVenueIds] = useState<Record<string, string[]>>({});
   const [venueFilter, setVenueFilter] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,14 +36,15 @@ export default function CoachesListScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [c, cb, b, v, g] = await Promise.all([
-        listCoachesWithGroups(), getAllCoachBranches(), listBranches(), listVenues(), listGroups(),
+      const [c, cb, b, v, g, cv] = await Promise.all([
+        listCoachesWithGroups(), getAllCoachBranches(), listBranches(), listVenues(), listGroups(), getAllCoachVenueIds(),
       ]);
       setCoaches(c);
       setCoachBranches(cb);
       setBranches(b);
       setVenues(v);
       setGroups(g);
+      setCoachVenueIds(cv);
     } catch (e: any) {
       setError(e.message ?? "Antrenörler yüklenemedi");
     } finally {
@@ -192,6 +195,7 @@ export default function CoachesListScreen({ navigation }: Props) {
         renderItem={({ item, index }) => {
           const myBranches = coachBranches[item.id] ?? [];
           const isCoordinator = coordinatorCoachIds.has(item.id);
+          const hasVenueAuthority = (coachVenueIds[item.id]?.length ?? 0) > 0;
           const accent = accentRotation[index % accentRotation.length];
           const accentSoft = accentSoftRotation[index % accentSoftRotation.length];
           return (
@@ -211,6 +215,11 @@ export default function CoachesListScreen({ navigation }: Props) {
                   {isCoordinator && (
                     <View style={styles.coordinatorBadge}>
                       <Text style={styles.coordinatorBadgeText}>★ KOORDİNATÖR</Text>
+                    </View>
+                  )}
+                  {hasVenueAuthority && (
+                    <View style={styles.venueAuthorityBadge}>
+                      <Text style={styles.venueAuthorityBadgeText}>🏟 SALON YETKİLİSİ</Text>
                     </View>
                   )}
                   <View style={styles.groupBadge}>
@@ -288,6 +297,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.yellow, borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 3,
   },
   coordinatorBadgeText: { color: colors.bg, fontSize: 9, fontWeight: "800" },
+  venueAuthorityBadge: {
+    backgroundColor: colors.violet, borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  venueAuthorityBadgeText: { color: colors.bg, fontSize: 9, fontWeight: "800" },
   cardName: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   branchLevelLine: { color: colors.teal, fontSize: 10, fontWeight: "600", marginTop: 2 },
   noBranchText: { color: colors.muted, fontSize: 10, marginTop: 2 },
