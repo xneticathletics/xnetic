@@ -23,8 +23,13 @@ export function getNotificationTarget(
   const isPlanner = PLANNER_ROLES.includes(role);
 
   switch (eventType) {
-    case "payment_claim":
-      return { tab: "Ana Menü", screen: "PaymentsList", params: { filter: "pending" } };
+    case "payment_claim": {
+      const athleteId = payload?.athleteId as string | undefined;
+      const athleteName = payload?.athleteName as string | undefined;
+      return athleteId
+        ? { tab: "Ana Menü", screen: "AthletePayments", params: { athleteId, athleteName: athleteName ?? "Sporcu" } }
+        : { tab: "Ana Menü", screen: "PaymentsList", params: { filter: "pending" } };
+    }
     case "payment_reminder":
       return { tab: "Ana Menü", screen: "MyPayments" };
     case "absence":

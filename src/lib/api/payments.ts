@@ -94,9 +94,10 @@ export async function notifyPaymentClaim(
 
   const { data: payment } = await supabase
     .from("payments")
-    .select("athletes(groups!group_id(branch, head_coach_id))")
+    .select("athlete_id, athletes(groups!group_id(branch, head_coach_id))")
     .eq("id", paymentId)
     .maybeSingle();
+  const athleteId = (payment as any)?.athlete_id as string | undefined;
   const group = (payment as any)?.athletes?.groups;
   if (group) {
     if (group.head_coach_id) recipients.add(group.head_coach_id);
@@ -118,7 +119,9 @@ export async function notifyPaymentClaim(
     " — kontrol edip onaylayabilirsiniz.";
 
   await Promise.all(
-    Array.from(recipients).map((id) => sendNotification(id, title, body, "payment_claim").catch(() => {}))
+    Array.from(recipients).map((id) =>
+      sendNotification(id, title, body, "payment_claim", { athleteId, athleteName }).catch(() => {})
+    )
   );
 }
 

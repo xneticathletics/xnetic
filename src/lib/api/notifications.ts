@@ -7,7 +7,7 @@ export type AppNotification = {
   created_at: string;
   read_at: string | null;
   event_type: string | null;
-  payload: { attachmentUrl?: string; announcementId?: string; athleteId?: string } | null;
+  payload: { attachmentUrl?: string; announcementId?: string; athleteId?: string; athleteName?: string } | null;
 };
 
 // Admin, web panel Kullanıcılar sayfasından bir kişinin hangi bildirim
