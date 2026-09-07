@@ -84,21 +84,6 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
     <View style={styles.container}>
       {!collapseChrome && (
         <>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.incomeButton} onPress={() => navigation.navigate("IncomeForm")}>
-              <Text style={styles.incomeButtonText}>+ Gelir</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.expenseButton} onPress={() => navigation.navigate("ExpenseForm")}>
-              <Text style={styles.expenseButtonText}>+ Gider</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.coachPaymentsButton} onPress={() => navigation.navigate("CoachPayments")}>
-              <Text style={styles.coachPaymentsButtonText}>Antrenör Ödemeleri</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("PaymentForm", {})}>
-              <Text style={styles.addButtonText}>+ Aidat Planı</Text>
-            </TouchableOpacity>
-          </View>
-
           {summary && (
             <View style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>Toplam Aidat Durumu</Text>
@@ -128,6 +113,21 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
               </View>
             </View>
           )}
+
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.incomeButton} onPress={() => navigation.navigate("IncomeForm")}>
+              <Text style={styles.incomeButtonText}>+ Gelir</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.expenseButton} onPress={() => navigation.navigate("ExpenseForm")}>
+              <Text style={styles.expenseButtonText}>+ Gider</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.coachPaymentsButton} onPress={() => navigation.navigate("CoachPayments")}>
+              <Text style={styles.coachPaymentsButtonText}>Antrenör Ödemeleri</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("PaymentForm", {})}>
+              <Text style={styles.addButtonText}>+ Aidat Planı</Text>
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={styles.docsButton} onPress={() => navigation.navigate("FinancialDocuments")}>
             <Text style={styles.docsButtonText}>📄 Finansal Dökümanlarımı Listele</Text>
@@ -232,7 +232,7 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
   title: { color: colors.ink, fontSize: 20, fontWeight: "700", marginBottom: spacing.sm },
-  headerActions: { flexDirection: "row", gap: 4, marginBottom: spacing.md },
+  headerActions: { flexDirection: "row", gap: 4, marginBottom: spacing.sm },
   addButton: { flex: 1, backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: 2, paddingVertical: 8, alignItems: "center", justifyContent: "center" },
   addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 10, textAlign: "center" },
   incomeButton: { flex: 1, borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: 2, paddingVertical: 8, alignItems: "center", justifyContent: "center" },
@@ -243,15 +243,15 @@ const styles = StyleSheet.create({
   coachPaymentsButtonText: { color: colors.violet, fontWeight: "700", fontSize: 10, textAlign: "center" },
   summaryCard: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md,
+    borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.sm,
   },
   docsButton: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 14, marginBottom: spacing.md,
+    borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 9, marginBottom: spacing.sm,
   },
-  docsButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
-  docsButtonArrow: { color: colors.muted, fontSize: 18, fontWeight: "700" },
+  docsButtonText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
+  docsButtonArrow: { color: colors.muted, fontSize: 15, fontWeight: "700" },
   summaryLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
   summaryExpected: { color: colors.yellow, fontSize: 26, fontWeight: "800", marginTop: 4, marginBottom: spacing.md },
   summaryRow: { flexDirection: "row", gap: spacing.sm },
