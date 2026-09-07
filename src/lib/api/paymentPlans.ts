@@ -82,6 +82,39 @@ export async function topUpPlan(plan: PaymentPlan) {
   }
 }
 
+// Kulübün TEK, sabit bir aidat ücreti — club_settings.standard_fee_try.
+// Set edilmemişse (null) kulüp hâlâ eski, sporcu bazında serbest tutar
+// modelini kullanıyor demektir; bu özelliği hiç kullanmayan kulüpler
+// etkilenmez.
+export async function getStandardFee(clubId: string): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("club_settings")
+    .select("standard_fee_try")
+    .eq("club_id", clubId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.standard_fee_try ?? null;
+}
+
+export type StandardFeeUpdateResult = { plansUpdated: number; paymentsUpdated: number };
+
+// Admin sabit ücreti değiştirdiğinde: (1) club_settings'e kaydedilir,
+// (2) TÜM aktif aidat planlarının tutarı güncellenir (bundan sonra
+// oluşacak her ay bu tutarla üretilir), (3) BULUNULAN AY HARİÇ, henüz
+// ödenmemiş gelecek aylardaki mevcut payments satırları da yeni tutara
+// çekilir. Geçmiş/bulunulan ay kayıtlarına ve zaten ödenmiş kayıtlara
+// dokunulmaz. Potansiyel olarak yüzlerce kaydı etkileyen bir toplu işlem
+// olduğu için TEK bir atomic RPC'de (bkz. migration 20260907011500) —
+// yarım kalmış bir güncelleme durumunda kalmasını istemiyoruz.
+export async function updateStandardFee(clubId: string, newFee: number): Promise<StandardFeeUpdateResult> {
+  const { data, error } = await supabase
+    .rpc("update_standard_fee", { p_club_id: clubId, p_new_fee: newFee })
+    .single();
+  if (error) throw error;
+  const row = data as { plans_updated: number; payments_updated: number };
+  return { plansUpdated: row.plans_updated, paymentsUpdated: row.payments_updated };
+}
+
 export async function createPaymentPlan(input: PaymentPlanInput) {
   const { data, error } = await supabase.from("payment_plans").insert(input).select().single();
   if (error) throw error;

@@ -11,6 +11,7 @@ import { useClubSettings } from "../context/ClubSettingsContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PaymentGroups">;
 
@@ -18,6 +19,7 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const { selectedBranch: globalBranch, isLocked } = useBranchSelect();
   const { settings } = useClubSettings();
+  const { role } = useAuth();
 
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -131,6 +133,13 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
             <Text style={styles.docsButtonText}>📄 Finansal Dökümanlarımı Listele</Text>
             <Text style={styles.docsButtonArrow}>›</Text>
           </TouchableOpacity>
+
+          {role === "club_admin" && (
+            <TouchableOpacity style={styles.docsButton} onPress={() => navigation.navigate("StandardFee")}>
+              <Text style={styles.docsButtonText}>⚙️ Sabit Aidat Ücreti</Text>
+              <Text style={styles.docsButtonArrow}>›</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
 

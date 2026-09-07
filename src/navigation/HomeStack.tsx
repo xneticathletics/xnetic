@@ -41,6 +41,7 @@ import MyAttendanceScreen from "../screens/MyAttendanceScreen";
 import MyPaymentsScreen from "../screens/MyPaymentsScreen";
 import PaymentsListScreen from "../screens/PaymentsListScreen";
 import PaymentFormScreen from "../screens/PaymentFormScreen";
+import StandardFeeScreen from "../screens/StandardFeeScreen";
 import PaymentGroupsScreen from "../screens/PaymentGroupsScreen";
 import PaymentAthletesScreen from "../screens/PaymentAthletesScreen";
 import AthletePaymentsScreen from "../screens/AthletePaymentsScreen";
@@ -147,6 +148,7 @@ export type HomeStackParamList = {
   MyPayments: undefined;
   PaymentsList: { filter: "paid" | "pending" | "overdue" };
   PaymentForm: { athleteId?: string; athleteName?: string } | undefined;
+  StandardFee: undefined;
   PaymentGroups: undefined;
   PaymentAthletes: { groupId: string; groupName: string };
   AthletePayments: { athleteId: string; athleteName: string };
@@ -265,6 +267,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="MyPayments" component={MyPaymentsScreen} options={{ title: "Aidat" }} />
       <Stack.Screen name="PaymentsList" component={PaymentsListScreen} />
       <Stack.Screen name="PaymentForm" component={PaymentFormScreen} options={{ title: "Yeni Aidat Planı" }} />
+      <Stack.Screen name="StandardFee" component={StandardFeeScreen} options={{ title: "Sabit Aidat Ücreti" }} />
       <Stack.Screen name="PaymentGroups" component={PaymentGroupsScreen} options={{ title: "Finans" }} />
       <Stack.Screen name="PaymentAthletes" component={PaymentAthletesScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="AthletePayments" component={AthletePaymentsScreen} options={{ title: "Aidat Geçmişi" }} />
