@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, "DayScheduleDetail">;
 // burada yapılan tamamlama/silme işlemleri geri dönüşte otomatik yansır.
 export default function DayScheduleDetailScreen({ route, navigation }: Props) {
   const {
-    date, staffing, isCoach, individualBranchNames, branchByGroupId,
+    date, staffing, canManageSchedule, individualBranchNames, branchByGroupId,
     attendanceWindowBeforeMinutes, attendanceWindowAfterMinutes, completionWindowBeforeMinutes,
   } = route.params;
   const [sessions, setSessions] = useState<TrainingSession[]>(route.params.sessions);
@@ -76,7 +76,7 @@ export default function DayScheduleDetailScreen({ route, navigation }: Props) {
             item={item}
             navigation={navigation}
             staffing={staffing}
-            isCoach={isCoach}
+            canManageSchedule={canManageSchedule}
             individualBranchNames={individualBranchSet}
             branchByGroupId={branchByGroupId}
             attendanceWindowBeforeMinutes={attendanceWindowBeforeMinutes}

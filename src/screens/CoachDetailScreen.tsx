@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Linking, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -9,6 +9,10 @@ import {
 } from "../lib/api/coaches";
 import { listAthletesInGroups } from "../lib/api/athletes";
 import { listSessionsForGroups, type TrainingSession } from "../lib/api/trainingSessions";
+import { listVenues, type Venue } from "../lib/api/venues";
+import { getCoachVenueIds, setCoachVenue } from "../lib/api/venueCoaches";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachDetail">;
@@ -53,12 +57,21 @@ function InfoRow({
 
 export default function CoachDetailScreen({ route, navigation }: Props) {
   const { coachId } = route.params;
+  const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  // Salon Yetkisi ataması sadece admin + (herhangi bir branşın) koordinatörü
+  // içindir — RLS (venue_coaches_write) zaten aynı kısıtı uyguluyor, burada
+  // sadece butonu gereksiz yere göstermemek için.
+  const canManageVenueAuthority = role === "club_admin" || (role === "coach" && isLocked);
 
   const [coach, setCoach] = useState<Coach | null>(null);
   const [branches, setBranches] = useState<CoachBranchInfo[]>([]);
   const [groups, setGroups] = useState<{ id: string; name: string; branch: string }[]>([]);
   const [athleteCounts, setAthleteCounts] = useState<Record<string, number>>({});
   const [lastSession, setLastSession] = useState<TrainingSession | null>(null);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
+  const [venueTogglingId, setVenueTogglingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("branch");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,10 +87,14 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
       setError(null);
       (async () => {
         try {
-          const [c, b, g] = await Promise.all([getCoach(coachId), getCoachBranches(coachId), getCoachGroups(coachId)]);
+          const [c, b, g, v, authorizedVenues] = await Promise.all([
+            getCoach(coachId), getCoachBranches(coachId), getCoachGroups(coachId), listVenues(), getCoachVenueIds(coachId),
+          ]);
           setCoach(c);
           setBranches(b);
           setGroups(g);
+          setVenues(v);
+          setAuthorizedVenueIds(authorizedVenues);
 
           const groupIds = g.map((x) => x.id);
           if (groupIds.length > 0) {
@@ -136,6 +153,19 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
       { screen: "Chat", params: { userId: coach.id, userName: coach.name } }
     );
   };
+  const handleToggleVenue = async (venueId: string, currentlyOn: boolean) => {
+    if (venueTogglingId) return;
+    setVenueTogglingId(venueId);
+    try {
+      await setCoachVenue(coachId, venueId, !currentlyOn);
+      setAuthorizedVenueIds((prev) => (currentlyOn ? prev.filter((id) => id !== venueId) : [...prev, venueId]));
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "Güncellenemedi", [{ text: "Tamam" }]);
+    } finally {
+      setVenueTogglingId(null);
+    }
+  };
+
   const goToAssignments = () => coach && navigation.navigate("CoachGroups", { coachId: coach.id, coachName: coach.name });
   const goToEditForm = () => coach && navigation.navigate("CoachForm", { coachId: coach.id });
   const goToLeave = () => coach && navigation.navigate("CoachLeave", { coachId: coach.id, coachName: coach.name });
@@ -303,6 +333,37 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
         )}
       </View>
 
+      {venues.length > 0 && (
+        <>
+          <SectionHeader title="Salon Yetkisi" />
+          <View style={styles.card}>
+            <Text style={styles.venueHint}>
+              İşaretli salon(lar) için bu antrenör, kendi branşındaki tüm gruplar adına antrenman planı oluşturabilir.
+            </Text>
+            {venues.map((v, i) => {
+              const on = authorizedVenueIds.includes(v.id);
+              return (
+                <TouchableOpacity
+                  key={v.id}
+                  style={[styles.venueRow, i === venues.length - 1 && { borderBottomWidth: 0 }]}
+                  onPress={() => canManageVenueAuthority && handleToggleVenue(v.id, on)}
+                  disabled={!canManageVenueAuthority || venueTogglingId === v.id}
+                >
+                  <Text style={styles.venueRowName}>{v.name}</Text>
+                  {venueTogglingId === v.id ? (
+                    <ActivityIndicator size="small" color={colors.yellow} />
+                  ) : (
+                    <View style={[styles.venueCheckbox, on && styles.venueCheckboxOn]}>
+                      {on && <Text style={styles.venueCheckboxTick}>✓</Text>}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </>
+      )}
+
       {lastSession && (
         <>
           <SectionHeader title="Son Antrenman" />
@@ -423,6 +484,18 @@ const styles = StyleSheet.create({
   },
   groupRowName: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   groupRowCount: { color: colors.muted, fontSize: 12 },
+  venueHint: { color: colors.muted, fontSize: 11, lineHeight: 16, marginBottom: spacing.sm },
+  venueRow: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line,
+  },
+  venueRowName: { color: colors.ink, fontSize: 13, fontWeight: "600" },
+  venueCheckbox: {
+    width: 22, height: 22, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line,
+    alignItems: "center", justifyContent: "center",
+  },
+  venueCheckboxOn: { backgroundColor: colors.yellow, borderColor: colors.yellow },
+  venueCheckboxTick: { color: colors.bg, fontWeight: "800", fontSize: 13 },
   lastSessionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   lastSessionText: { color: colors.ink, fontSize: 13, fontWeight: "600", flex: 1, marginRight: spacing.sm },
   lastSessionDate: { color: colors.muted, fontSize: 12 },

@@ -13,6 +13,8 @@ import { syncScheduleToDeviceCalendar } from "../lib/calendarSync";
 import { listGroups, type Group } from "../lib/api/groups";
 import { listBranches, type Branch } from "../lib/api/branches";
 import { getGroupStaffingMap, type GroupStaffing } from "../lib/api/coaches";
+import { getMyAuthorizedVenueIds } from "../lib/api/venueCoaches";
+import { generateSessionsFromTemplates } from "../lib/api/trainingSchedule";
 import DayAgendaItem, { type DayItem } from "../components/DayAgendaItem";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -72,6 +74,12 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [staffing, setStaffing] = useState<Record<string, GroupStaffing>>({});
+  const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
+  // Antrenman EKLEME/SİLME yetkisi: admin, branş koordinatörü ya da en az
+  // bir salonun yetkilisi olan antrenör. Sıradan (etiketsiz) bir antrenör
+  // artık antrenman ekleyemez/silemez — sadece yoklama/tamamlama gibi
+  // mevcut UPDATE işlemlerine devam eder.
+  const canManageSchedule = !isCoach || authorizedVenueIds.length > 0;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,9 +105,19 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [groups, branchList] = await Promise.all([listGroups(), listBranches()]);
+      const [groups, branchList, myVenueIds] = await Promise.all([listGroups(), listBranches(), getMyAuthorizedVenueIds()]);
       setAllGroups(groups);
       setBranches(branchList);
+      setAuthorizedVenueIds(myVenueIds);
+
+      // Ekran her açıldığında aktif haftalık program şablonlarının önümüzdeki
+      // ufkunu tazeler (aidattaki topUpAllActivePlans ile aynı yerde/mantıkta)
+      // — sıradan (etiketsiz) bir antrenör için RLS zaten insert'i reddeder,
+      // bu yüzden sadece yönetme yetkisi olanlarda çağrılır, hata sessizce yutulur.
+      const canManage = !isCoach || myVenueIds.length > 0;
+      if (canManage) {
+        await generateSessionsFromTemplates().catch(() => {});
+      }
 
       let fetched: TrainingSession[];
       let fetchedMatches: MatchRow[];
@@ -288,12 +306,14 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate("TrainingSessionForm", { sessionId: undefined })}
-        >
-          <Text style={styles.addButtonText} numberOfLines={1}>+Antrenman</Text>
-        </TouchableOpacity>
+        {canManageSchedule && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate("TrainingSessionForm", { sessionId: undefined })}
+          >
+            <Text style={styles.addButtonText} numberOfLines={1}>+Antrenman</Text>
+          </TouchableOpacity>
+        )}
         {!isCoach && (
           <TouchableOpacity
             style={styles.addMatchButton}
@@ -316,6 +336,15 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           )}
         </TouchableOpacity>
       </View>
+
+      {canManageSchedule && (
+        <TouchableOpacity
+          style={styles.weeklyScheduleButton}
+          onPress={() => navigation.navigate("WeeklySchedule")}
+        >
+          <Text style={styles.weeklyScheduleButtonText}>📅 Haftalık Program</Text>
+        </TouchableOpacity>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.md }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -410,7 +439,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
                 sessions: daySessions,
                 matches: dayMatches,
                 staffing,
-                isCoach,
+                canManageSchedule,
                 individualBranchNames: Array.from(individualBranchNames),
                 branchByGroupId,
                 attendanceWindowBeforeMinutes: settings.attendance_window_before_minutes,
@@ -493,7 +522,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
             item={item}
             navigation={navigation}
             staffing={staffing}
-            isCoach={isCoach}
+            canManageSchedule={canManageSchedule}
             individualBranchNames={individualBranchNames}
             branchByGroupId={branchByGroupId}
             attendanceWindowBeforeMinutes={settings.attendance_window_before_minutes}
@@ -522,6 +551,11 @@ const styles = StyleSheet.create({
   resultsButtonText: { color: colors.violet, fontWeight: "700", fontSize: 10.5 },
   syncButton: { flex: 1, backgroundColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center" },
   syncButtonText: { color: colors.bg, fontWeight: "700", fontSize: 10.5 },
+  weeklyScheduleButton: {
+    alignSelf: "flex-start", borderWidth: 1, borderColor: colors.violet, borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm, paddingVertical: 6, marginBottom: spacing.xs,
+  },
+  weeklyScheduleButtonText: { color: colors.violet, fontWeight: "700", fontSize: 11 },
   error: { color: colors.coral, marginBottom: spacing.sm },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.lg },
 

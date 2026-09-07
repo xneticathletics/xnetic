@@ -8,11 +8,15 @@ export default function VenuePickerModal({
   selectedId,
   onSelect,
   onClose,
+  allowedIds,
 }: {
   visible: boolean;
   selectedId: string | null;
   onSelect: (venue: Venue) => void;
   onClose: () => void;
+  // Verilirse, listeyi yalnızca bu id'lerdeki salonlarla sınırlar (ör. bir
+  // salon yetkilisinin sadece kendi yetkili olduğu salon(lar)ı görmesi için).
+  allowedIds?: string[];
 }) {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,10 +26,10 @@ export default function VenuePickerModal({
     if (!visible) return;
     setLoading(true);
     listVenues()
-      .then(setVenues)
+      .then((all) => setVenues(allowedIds ? all.filter((v) => allowedIds.includes(v.id)) : all))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [visible]);
+  }, [visible, allowedIds]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>

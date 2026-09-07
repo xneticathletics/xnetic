@@ -19,6 +19,7 @@ import InjuryFormScreen from "../screens/InjuryFormScreen";
 import AthleteNotesScreen from "../screens/AthleteNotesScreen";
 import TrainingSessionsScreen from "../screens/TrainingSessionsScreen";
 import DayScheduleDetailScreen from "../screens/DayScheduleDetailScreen";
+import WeeklyScheduleScreen from "../screens/WeeklyScheduleScreen";
 import TodayAttendanceScreen from "../screens/TodayAttendanceScreen";
 import TrainingSessionFormScreen from "../screens/TrainingSessionFormScreen";
 import AttendanceScreen from "../screens/AttendanceScreen";
@@ -127,12 +128,13 @@ export type HomeStackParamList = {
   InjuryForm: { athleteId: string; athleteName: string };
   AthleteNotes: { athleteId: string; athleteName: string };
   TrainingSessions: undefined;
+  WeeklySchedule: undefined;
   DayScheduleDetail: {
     date: string;
     sessions: import("../lib/api/trainingSessions").TrainingSession[];
     matches: import("../lib/api/matches").MatchRow[];
     staffing: Record<string, import("../lib/api/coaches").GroupStaffing>;
-    isCoach: boolean;
+    canManageSchedule: boolean;
     individualBranchNames: string[];
     branchByGroupId: Record<string, string>;
     attendanceWindowBeforeMinutes: number;
@@ -269,6 +271,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="AthleteNotes" component={AthleteNotesScreen} options={{ title: "Koç Notları" }} />
       <Stack.Screen name="TrainingSessions" component={TrainingSessionsScreen} options={{ title: "Antrenman ve Müsabaka Takvimi" }} />
       <Stack.Screen name="DayScheduleDetail" component={DayScheduleDetailScreen} options={{ title: "Gün Detayı" }} />
+      <Stack.Screen name="WeeklySchedule" component={WeeklyScheduleScreen} options={{ title: "Haftalık Program" }} />
       <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Yoklama Al" }} />
       <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Yoklama Al" }} />

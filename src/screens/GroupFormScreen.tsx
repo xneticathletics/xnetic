@@ -15,7 +15,7 @@ type Props = {
   route: { params?: { groupId: string | undefined } };
 };
 
-const emptyForm: GroupInput = { name: "", branch: "", venue_id: null, athlete_type: "spor_okulu" };
+const emptyForm: GroupInput = { name: "", branch: "", venue_id: null, athlete_type: "spor_okulu", fixed_schedule: false };
 
 export default function GroupFormScreen({ route, navigation }: Props) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
@@ -43,7 +43,7 @@ export default function GroupFormScreen({ route, navigation }: Props) {
     if (!groupId) return;
     getGroup(groupId)
       .then((g) => {
-        setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id, athlete_type: g.athlete_type });
+        setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id, athlete_type: g.athlete_type, fixed_schedule: g.fixed_schedule });
         setVenueName(g.venues?.name ?? null);
       })
       .catch((e) => setError(e.message))
@@ -154,6 +154,20 @@ export default function GroupFormScreen({ route, navigation }: Props) {
         </View>
         <Text style={styles.hint}>
           Bu gruba eklenen her sporcu otomatik olarak bu tipte işlenir — gruptaki herkes aynı tip olur.
+        </Text>
+      </Field>
+
+      <Field label="Sabit Haftalık Program">
+        <TouchableOpacity
+          style={[styles.typeChip, form.fixed_schedule && styles.typeChipActive, { alignSelf: "flex-start" }]}
+          onPress={() => setForm((f) => ({ ...f, fixed_schedule: !f.fixed_schedule }))}
+        >
+          <Text style={[styles.typeChipText, form.fixed_schedule && styles.typeChipTextActive]}>
+            {form.fixed_schedule ? "✓ Açık" : "Kapalı"}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.hint}>
+          Açılırsa bu grubun antrenmanları haftalık bir şablondan (branş koordinatörü/salon yetkilisi tarafından) otomatik üretilebilir — Takvim'deki Haftalık Program ekranında görünür.
         </Text>
       </Field>
 

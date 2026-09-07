@@ -14,7 +14,8 @@ import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
-import { getMyCoachedGroupIds } from "../lib/api/myGroups";
+import { getMyCoachedGroupIds, getMyBranchGroupIds } from "../lib/api/myGroups";
+import { getMyAuthorizedVenueIds } from "../lib/api/venueCoaches";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 // "SS:DD" formatında, saat 00-23 ve dakika 00-59 aralığında mı kontrol eder
@@ -50,8 +51,6 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const { role } = useAuth();
   const { isLocked } = useBranchSelect();
   const isCoach = role === "coach";
-  // Silme sadece club_admin ve branş koordinatörüne açık.
-  const canDelete = role === "club_admin" || (isCoach && isLocked);
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [form, setForm] = useState<TrainingSessionInput>(emptyForm);
@@ -61,7 +60,20 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const [venuePickerVisible, setVenuePickerVisible] = useState(false);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [myGroupIds, setMyGroupIds] = useState<string[] | undefined>(undefined);
+  const [myBranchGroupIds, setMyBranchGroupIds] = useState<string[]>([]);
+  const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
   const [allGroups, setAllGroups] = useState<Group[]>([]);
+
+  // Bir "salon yetkilisi" (koordinatör olmayan ama en az bir salon
+  // etiketi olan antrenör) — koçluğunu yapmadığı gruplar dahil, kendi
+  // branşındaki tüm gruplar için antrenman ekleyebilir, ama SADECE kendi
+  // yetkili olduğu salon(lar)a kilitli.
+  const isVenueAuthorityCoach = isCoach && !isLocked && authorizedVenueIds.length > 0;
+  // Silme: admin, branş koordinatörü, ya da SEÇİLİ salonun yetkilisi.
+  const canDelete =
+    role === "club_admin" ||
+    (isCoach && isLocked) ||
+    (isCoach && !!form.venue_id && authorizedVenueIds.includes(form.venue_id));
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -80,7 +92,15 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   useEffect(() => {
     if (!isCoach) return;
     getMyCoachedGroupIds().then(setMyGroupIds).catch(() => setMyGroupIds([]));
+    getMyAuthorizedVenueIds().then(setAuthorizedVenueIds).catch(() => setAuthorizedVenueIds([]));
   }, [isCoach]);
+
+  // Salon yetkilisi (koordinatör değilse), kendi koçluğunu yapmadığı
+  // gruplar dahil kendi branşındaki TÜM grupları görebilmeli.
+  useEffect(() => {
+    if (!isVenueAuthorityCoach) { setMyBranchGroupIds([]); return; }
+    getMyBranchGroupIds().then(setMyBranchGroupIds).catch(() => setMyBranchGroupIds([]));
+  }, [isVenueAuthorityCoach]);
 
   // Salon seçilince Grup seçiciyi o salona atanmış gruplarla sınırlamak
   // için tüm grupları (venue_id bilgisiyle) bir kere çekiyoruz.
@@ -135,14 +155,18 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const venueGroupIds = form.venue_id
     ? allGroups.filter((g) => g.venue_id === form.venue_id).map((g) => g.id)
     : undefined;
-  const groupAllowedIds =
-    isCoach && venueGroupIds
-      ? (myGroupIds ?? []).filter((id) => venueGroupIds.includes(id))
-      : isCoach
-      ? myGroupIds
-      : venueGroupIds && venueGroupIds.length > 0
-      ? venueGroupIds
-      : undefined;
+  // Salon yetkilisi: kendi branşındaki TÜM gruplar seçilebilir, salonun
+  // birincil ataması ("Ana Salon") ile filtrelenmez — aynı salonu farklı
+  // günlerde birden çok farklı grup paylaşabilir.
+  const groupAllowedIds = isVenueAuthorityCoach
+    ? Array.from(new Set([...(myGroupIds ?? []), ...myBranchGroupIds]))
+    : isCoach && venueGroupIds
+    ? (myGroupIds ?? []).filter((id) => venueGroupIds.includes(id))
+    : isCoach
+    ? myGroupIds
+    : venueGroupIds && venueGroupIds.length > 0
+    ? venueGroupIds
+    : undefined;
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -306,6 +330,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
       <VenuePickerModal
         visible={venuePickerVisible}
         selectedId={form.venue_id}
+        allowedIds={isVenueAuthorityCoach ? authorizedVenueIds : undefined}
         onSelect={handleVenueSelect}
         onClose={() => setVenuePickerVisible(false)}
       />

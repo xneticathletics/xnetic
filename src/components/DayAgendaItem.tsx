@@ -18,7 +18,7 @@ export default function DayAgendaItem({
   item,
   navigation,
   staffing,
-  isCoach,
+  canManageSchedule,
   individualBranchNames,
   branchByGroupId,
   attendanceWindowBeforeMinutes,
@@ -30,7 +30,9 @@ export default function DayAgendaItem({
   item: DayItem;
   navigation: NativeStackNavigationProp<HomeStackParamList, any>;
   staffing: Record<string, GroupStaffing>;
-  isCoach: boolean;
+  // Antrenmanı silme yetkisi: admin, branş koordinatörü ya da salon
+  // yetkilisi — sıradan (etiketsiz) antrenör artık silemez.
+  canManageSchedule: boolean;
   individualBranchNames: Set<string>;
   branchByGroupId: Record<string, string>;
   attendanceWindowBeforeMinutes: number;
@@ -161,7 +163,7 @@ export default function DayAgendaItem({
             </Text>
           </TouchableOpacity>
         )}
-        {isPast && !isCoach && (
+        {isPast && canManageSchedule && (
           <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(session)}>
             <Text style={styles.deleteButtonText}>🗑 Sil</Text>
           </TouchableOpacity>

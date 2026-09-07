@@ -37,3 +37,31 @@ export async function getMyCoachedGroupIds(): Promise<string[]> {
 
   return Array.from(ids);
 }
+
+// Salon yetkilisi (bkz. venue_coaches) etiketi verilmiş bir antrenörün,
+// koçluğunu yapmadığı gruplar dahil, KENDİ BRANŞINDAKİ tüm grupları görüp
+// o salon için antrenman planlayabilmesi için — getMyCoachedGroupIds'ten
+// FARKLI olarak koordinatörlük ya da atanmışlık gerektirmez, sadece
+// coach_branches'taki "hangi branştayım" bilgisine bakar.
+export async function getMyBranchGroupIds(): Promise<string[]> {
+  const userId = await getCurrentAppUserId();
+  if (!userId) return [];
+
+  const { data: coachBranches, error } = await supabase
+    .from("coach_branches")
+    .select("branches(name)")
+    .eq("coach_id", userId);
+  if (error) throw error;
+
+  const branchNames = (coachBranches ?? [])
+    .map((r: any) => r.branches?.name as string | undefined)
+    .filter((n): n is string => !!n);
+  if (branchNames.length === 0) return [];
+
+  const { data: groups, error: groupsError } = await supabase
+    .from("groups")
+    .select("id")
+    .in("branch", branchNames);
+  if (groupsError) throw groupsError;
+  return (groups ?? []).map((g) => g.id);
+}

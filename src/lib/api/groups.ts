@@ -9,6 +9,7 @@ export type Group = {
   branch: string;
   venue_id: string | null;
   athlete_type: GroupAthleteType;
+  fixed_schedule: boolean;
   venues?: { name: string } | null;
 };
 
@@ -17,9 +18,10 @@ export type GroupInput = {
   branch: string;
   venue_id: string | null;
   athlete_type: GroupAthleteType;
+  fixed_schedule: boolean;
 };
 
-const GROUP_FIELDS = "id, name, branch, venue_id, athlete_type, venues(name)";
+const GROUP_FIELDS = "id, name, branch, venue_id, athlete_type, fixed_schedule, venues(name)";
 
 // RLS sayesinde yalnızca giriş yapan kullanıcının kulübüne ait gruplar döner —
 // club_id filtresi ayrıca yazılmasına gerek yok.
