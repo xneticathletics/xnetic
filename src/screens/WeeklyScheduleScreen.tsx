@@ -50,6 +50,9 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [addFormGroupId, setAddFormGroupId] = useState<string | null>(null);
+  // Çok grup olunca liste karmaşıklaşmasın diye her grup başta kapalı —
+  // sadece isim+branş görünür, dokununca gün/saat detayları açılır.
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [newRow, setNewRow] = useState<NewRowState>(emptyNewRow);
   const [savingRow, setSavingRow] = useState(false);
   const [venuePickerVisible, setVenuePickerVisible] = useState(false);
@@ -214,11 +217,28 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
         renderItem={({ item: group }) => {
           const rows = templatesByGroup[group.id] ?? [];
           const isAdding = addFormGroupId === group.id;
+          const isExpanded = expandedGroupId === group.id;
+          const activeCount = rows.filter((t) => t.active).length;
           return (
             <View style={styles.groupCard}>
-              <Text style={styles.groupName}>{group.name}</Text>
-              <Text style={styles.groupBranch}>{group.branch}</Text>
+              <TouchableOpacity
+                style={styles.groupHeader}
+                onPress={() => {
+                  setExpandedGroupId((prev) => (prev === group.id ? null : group.id));
+                  setAddFormGroupId(null);
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.groupName}>{group.name}</Text>
+                  <Text style={styles.groupBranch}>
+                    {group.branch}{rows.length > 0 ? ` · ${activeCount} gün` : ""}
+                  </Text>
+                </View>
+                <Text style={styles.groupChevron}>{isExpanded ? "▾" : "▸"}</Text>
+              </TouchableOpacity>
 
+              {isExpanded && (
+                <View style={{ marginTop: spacing.sm }}>
               {rows.map((t) => (
                 <View key={t.id} style={styles.templateRow}>
                   <View style={{ flex: 1 }}>
@@ -292,6 +312,8 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
                   <Text style={styles.addRowButtonText}>+ Gün Ekle</Text>
                 </TouchableOpacity>
               )}
+                </View>
+              )}
             </View>
           );
         }}
@@ -324,8 +346,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md,
   },
+  groupHeader: { flexDirection: "row", alignItems: "center" },
   groupName: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  groupBranch: { color: colors.muted, fontSize: 12, marginTop: 2, marginBottom: spacing.sm },
+  groupBranch: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  groupChevron: { color: colors.muted, fontSize: 16, fontWeight: "700", marginLeft: spacing.sm },
   templateRow: {
     flexDirection: "row", alignItems: "center", gap: spacing.sm,
     borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: spacing.sm,
