@@ -1,11 +1,15 @@
 import React, { useCallback, useState } from "react";
 import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet, ActivityIndicator, Image, Linking, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
   listMyNotifications, getMyUnreadNotificationCount, markAllNotificationsRead,
   type AppNotification,
 } from "../lib/api/notifications";
+import { getNotificationTarget } from "../lib/notificationNavigation";
+import { useAuth } from "../context/AuthContext";
+import type { HomeStackParamList } from "../navigation/HomeStack";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "heic"];
 
@@ -30,9 +34,16 @@ function NotificationAttachment({ url }: { url: string }) {
 }
 
 // Ana Sayfa'nın sağ üstünde duran zil — dokununca açılır bir pencere
-// gösterir, hiçbir sayfaya yönlendirme yapmaz. Kapatınca (X ya da
-// dışarı dokunarak) sadece pencere kapanır.
-export default function NotificationBell() {
+// gösterir. Bir bildirime dokununca (event_type'a göre) ilgili ekrana
+// yönlendirir; hangi ekranın "ilgili" olduğu getNotificationTarget'ta
+// merkezi olarak tanımlı (push bildirimine dokunma — bkz.
+// NotificationResponseHandler.tsx — aynı haritayı paylaşır).
+export default function NotificationBell({
+  navigation,
+}: {
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Home">;
+}) {
+  const { role } = useAuth();
   const [visible, setVisible] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -67,6 +78,18 @@ export default function NotificationBell() {
       " " + d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   };
 
+  const handlePressNotification = (n: AppNotification) => {
+    if (!role) return;
+    const target = getNotificationTarget(n.event_type, n.payload, role);
+    if (!target) return;
+    setVisible(false);
+    if (target.tab === "Ana Menü") {
+      navigation.navigate(target.screen as any, target.params as any);
+    } else {
+      (navigation.getParent()?.navigate as any)(target.tab, { screen: target.screen, params: target.params });
+    }
+  };
+
   return (
     <>
       <TouchableOpacity style={styles.bellButton} onPress={openModal}>
@@ -96,14 +119,21 @@ export default function NotificationBell() {
                 keyExtractor={(n) => n.id}
                 style={{ maxHeight: 420 }}
                 ListEmptyComponent={<Text style={styles.empty}>Henüz bildirim yok.</Text>}
-                renderItem={({ item }) => (
-                  <View style={styles.notifRow}>
-                    <Text style={styles.notifTitle}>{item.title}</Text>
-                    <Text style={styles.notifBody}>{item.body}</Text>
-                    {!!item.payload?.attachmentUrl && <NotificationAttachment url={item.payload.attachmentUrl} />}
-                    <Text style={styles.notifDate}>{formatDate(item.created_at)}</Text>
-                  </View>
-                )}
+                renderItem={({ item }) => {
+                  const target = role ? getNotificationTarget(item.event_type, item.payload, role) : null;
+                  const Wrapper = target ? TouchableOpacity : View;
+                  return (
+                    <Wrapper style={styles.notifRow} onPress={target ? () => handlePressNotification(item) : undefined}>
+                      <View style={styles.notifTitleRow}>
+                        <Text style={styles.notifTitle}>{item.title}</Text>
+                        {!!target && <Text style={styles.notifChevron}>›</Text>}
+                      </View>
+                      <Text style={styles.notifBody}>{item.body}</Text>
+                      {!!item.payload?.attachmentUrl && <NotificationAttachment url={item.payload.attachmentUrl} />}
+                      <Text style={styles.notifDate}>{formatDate(item.created_at)}</Text>
+                    </Wrapper>
+                  );
+                }}
               />
             )}
           </TouchableOpacity>
@@ -132,7 +162,9 @@ const styles = StyleSheet.create({
   closeText: { color: colors.yellow, fontWeight: "700", fontSize: 13 },
   empty: { color: colors.muted, textAlign: "center", paddingVertical: spacing.lg },
   notifRow: { borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: spacing.sm },
-  notifTitle: { color: colors.ink, fontSize: 13, fontWeight: "700" },
+  notifTitleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  notifTitle: { color: colors.ink, fontSize: 13, fontWeight: "700", flex: 1 },
+  notifChevron: { color: colors.yellow, fontSize: 16, fontWeight: "700", marginLeft: spacing.sm },
   notifBody: { color: colors.muted, fontSize: 12, marginTop: 2, lineHeight: 16 },
   notifDate: { color: colors.muted, fontSize: 10, marginTop: 4 },
   attachmentImage: { width: "100%", height: 140, borderRadius: radius.md, marginTop: spacing.sm, backgroundColor: colors.bg },

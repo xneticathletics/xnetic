@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import { navigationRef } from "./navigationRef";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Linking from "expo-linking";
 import { useAuth } from "../context/AuthContext";
@@ -237,7 +238,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isRecovering ? (
           <Stack.Screen name="ResetPassword">

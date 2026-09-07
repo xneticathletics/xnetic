@@ -9,6 +9,7 @@ import { BranchSelectProvider } from "./src/context/BranchSelectContext";
 import { ClubSettingsProvider } from "./src/context/ClubSettingsContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
+import NotificationResponseHandler from "./src/components/NotificationResponseHandler";
 import { colors } from "./src/theme/tokens";
 
 // Geliştirme sırasında kendi hatalarımız Sentry'yi kirletmesin diye sadece
@@ -97,6 +98,7 @@ function App() {
           <BranchSelectProvider>
             <ClubSettingsProvider>
               <StatusBar style="light" />
+              <NotificationResponseHandler />
               <RootNavigator />
             </ClubSettingsProvider>
           </BranchSelectProvider>

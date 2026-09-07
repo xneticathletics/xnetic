@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     const { data: notif, error: notifError } = await admin
       .from("notifications")
-      .select("recipient_user_id, title, body")
+      .select("recipient_user_id, title, body, event_type, payload")
       .eq("id", notification_id)
       .single();
     if (notifError || !notif) throw new Error("Bildirim bulunamadı.");
@@ -46,11 +46,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // data: mobil taraf bildirime dokunulduğunda (uygulama arka planda/
+    // kapalıyken) hangi ekrana yönlendireceğini buradan okuyor (bkz.
+    // src/components/NotificationResponseHandler.tsx + getNotificationTarget).
     const messages = tokens.map((t) => ({
       to: t.expo_push_token,
       title: notif.title,
       body: notif.body,
       sound: "default",
+      data: { eventType: notif.event_type, payload: notif.payload },
     }));
 
     const expoRes = await fetch("https://exp.host/--/api/v2/push/send", {

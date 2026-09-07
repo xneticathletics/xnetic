@@ -311,7 +311,7 @@ export default function HomeScreen({
               </Text>
               {!!clubName && <Text style={styles.clubNameText}>{clubName}</Text>}
             </View>
-            <NotificationBell />
+            <NotificationBell navigation={navigation} />
           </View>
 
           {role === "club_admin" && (activeAthleteCount !== null || branchCount !== null || coachCount !== null) && (

@@ -119,7 +119,11 @@ async function notifyAnnouncementRecipients(announcement: Announcement) {
   const recipientIds = await resolveAnnouncementRecipients(announcement);
   if (recipientIds.length === 0) return;
   const title = "📣 Yeni Duyuru";
-  await Promise.all(recipientIds.map((uid) => sendNotification(uid, title, announcement.title, "announcement").catch(() => {})));
+  await Promise.all(
+    recipientIds.map((uid) =>
+      sendNotification(uid, title, announcement.title, "announcement", { announcementId: announcement.id }).catch(() => {})
+    )
+  );
 }
 
 export async function createAnnouncement(input: AnnouncementInput) {

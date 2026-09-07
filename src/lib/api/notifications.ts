@@ -6,7 +6,8 @@ export type AppNotification = {
   body: string;
   created_at: string;
   read_at: string | null;
-  payload: { attachmentUrl?: string } | null;
+  event_type: string | null;
+  payload: { attachmentUrl?: string; announcementId?: string; athleteId?: string } | null;
 };
 
 // Admin, web panel Kullanıcılar sayfasından bir kişinin hangi bildirim
@@ -117,7 +118,7 @@ function triggerPushNotification(notificationId: string) {
 export async function listMyNotifications(): Promise<AppNotification[]> {
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, title, body, created_at, read_at, payload")
+    .select("id, title, body, created_at, read_at, event_type, payload")
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw error;

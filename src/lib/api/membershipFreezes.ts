@@ -84,7 +84,9 @@ async function notifyFreezeCreated(athleteId: string, freeze: MembershipFreeze) 
   const body = `${athlete.full_name} için ${formatDate(freeze.start_date)} - ${formatDate(freeze.end_date)} arası kayıt dondurma talebi oluşturuldu.`;
 
   await Promise.all(
-    Array.from(recipients).map((uid) => sendNotification(uid, title, body, "membership_freeze").catch(() => {}))
+    Array.from(recipients).map((uid) =>
+      sendNotification(uid, title, body, "membership_freeze", { athleteId }).catch(() => {})
+    )
   );
 }
 
