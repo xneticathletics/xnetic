@@ -290,6 +290,22 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     else setViewMonth((m) => m + 1);
   };
 
+  // "+Antrenman" artık doğrudan tek bir antrenman formuna açmıyor — önce
+  // günlük (tek antrenman) mi yoksa haftalık (şablondan otomatik üretim)
+  // mi planlanacağını soruyor. Haftalık Program artık ayrı bir kutu değil,
+  // bu seçimin bir seçeneği.
+  const handleAddPress = () => {
+    Alert.alert(
+      "Antrenman Planla",
+      "Nasıl planlamak istersin?",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        { text: "📅 Haftalık Antrenman Planlama", onPress: () => navigation.navigate("WeeklySchedule") },
+        { text: "🗓 Günlük Antrenman Planlama", onPress: () => navigation.navigate("TrainingSessionForm", { sessionId: undefined }) },
+      ]
+    );
+  };
+
   const handleCalendarSync = async () => {
     setSyncing(true);
     try {
@@ -307,10 +323,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.header}>
         {canManageSchedule && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigation.navigate("TrainingSessionForm", { sessionId: undefined })}
-          >
+          <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
             <Text style={styles.addButtonText} numberOfLines={1}>+Antrenman</Text>
           </TouchableOpacity>
         )}
@@ -336,15 +349,6 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           )}
         </TouchableOpacity>
       </View>
-
-      {canManageSchedule && (
-        <TouchableOpacity
-          style={styles.weeklyScheduleButton}
-          onPress={() => navigation.navigate("WeeklySchedule")}
-        >
-          <Text style={styles.weeklyScheduleButtonText}>📅 Haftalık Program</Text>
-        </TouchableOpacity>
-      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.md }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -551,11 +555,6 @@ const styles = StyleSheet.create({
   resultsButtonText: { color: colors.violet, fontWeight: "700", fontSize: 10.5 },
   syncButton: { flex: 1, backgroundColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center" },
   syncButtonText: { color: colors.bg, fontWeight: "700", fontSize: 10.5 },
-  weeklyScheduleButton: {
-    alignSelf: "flex-start", borderWidth: 1, borderColor: colors.violet, borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm, paddingVertical: 6, marginBottom: spacing.xs,
-  },
-  weeklyScheduleButtonText: { color: colors.violet, fontWeight: "700", fontSize: 11 },
   error: { color: colors.coral, marginBottom: spacing.sm },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.lg },
 

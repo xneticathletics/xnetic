@@ -202,7 +202,7 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{coach.name}</Text>
           <Text style={styles.roleLabel}>Antrenör</Text>
-          {branches.length > 0 && (
+          {(branches.length > 0 || authorizedVenueIds.length > 0) && (
             <View style={{ marginTop: spacing.sm }}>
               {branches.map((b) => {
                 const branchGroups = groups.filter((g) => g.branch === b.branch_name);
@@ -217,6 +217,16 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
                   </View>
                 );
               })}
+              {authorizedVenueIds.length > 0 && (
+                <View style={styles.branchBlock}>
+                  <View style={[styles.branchTag, styles.venueAuthorityTag]}>
+                    <Text style={styles.branchTagText}>🏟 SALON YETKİLİSİ</Text>
+                  </View>
+                  <Text style={styles.groupsLine} numberOfLines={2}>
+                    {venues.filter((v) => authorizedVenueIds.includes(v.id)).map((v) => v.name).join(", ")}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -428,6 +438,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm, paddingVertical: 4,
   },
   branchTagText: { color: colors.bg, fontSize: 10, fontWeight: "800" },
+  venueAuthorityTag: { backgroundColor: colors.violet },
   groupsLine: { color: colors.muted, fontSize: 12, marginTop: 4 },
   actionsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   actionCard: {
