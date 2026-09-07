@@ -45,6 +45,7 @@ import StandardFeeScreen from "../screens/StandardFeeScreen";
 import PaymentGroupsScreen from "../screens/PaymentGroupsScreen";
 import PaymentAthletesScreen from "../screens/PaymentAthletesScreen";
 import AthletePaymentsScreen from "../screens/AthletePaymentsScreen";
+import PaymentReceiptScreen from "../screens/PaymentReceiptScreen";
 import ExpenseFormScreen from "../screens/ExpenseFormScreen";
 import IncomeFormScreen from "../screens/IncomeFormScreen";
 import FinancialDocumentsScreen from "../screens/FinancialDocumentsScreen";
@@ -152,6 +153,15 @@ export type HomeStackParamList = {
   PaymentGroups: undefined;
   PaymentAthletes: { groupId: string; groupName: string };
   AthletePayments: { athleteId: string; athleteName: string };
+  PaymentReceipt: {
+    paymentId: string;
+    amount: number;
+    period: "weekly" | "monthly" | "yearly";
+    dueDate: string;
+    paidAt: string | null;
+    athleteName: string;
+    parentName?: string | null;
+  };
   ExpenseForm: undefined;
   IncomeForm: undefined;
   FinancialDocuments: undefined;
@@ -271,6 +281,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="PaymentGroups" component={PaymentGroupsScreen} options={{ title: "Finans" }} />
       <Stack.Screen name="PaymentAthletes" component={PaymentAthletesScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="AthletePayments" component={AthletePaymentsScreen} options={{ title: "Aidat Geçmişi" }} />
+      <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} options={{ title: "Makbuz" }} />
       <Stack.Screen name="ExpenseForm" component={ExpenseFormScreen} options={{ title: "Yeni Gider" }} />
       <Stack.Screen name="IncomeForm" component={IncomeFormScreen} options={{ title: "Yeni Gelir" }} />
       <Stack.Screen name="FinancialDocuments" component={FinancialDocumentsScreen} options={{ title: "Finansal Dökümanlarım" }} />

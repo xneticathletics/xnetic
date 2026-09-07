@@ -73,7 +73,27 @@ export default function MyPaymentsScreen({ navigation }: Props) {
       </>
     );
     if (!unpaid) {
-      return <View key={item.id} style={styles.row}>{content}</View>;
+      return (
+        <View key={item.id} style={styles.row}>
+          <View style={{ flex: 1 }}>
+            <View style={styles.paidRowTop}>{content}</View>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("PaymentReceipt", {
+                  paymentId: item.id,
+                  amount: item.amount,
+                  period: item.period,
+                  dueDate: item.due_date,
+                  paidAt: item.paid_at,
+                  athleteName: athleteName ?? "Sporcu",
+                })
+              }
+            >
+              <Text style={styles.receiptLink}>🧾 Makbuz Görüntüle</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
     }
     return (
       <TouchableOpacity
@@ -137,5 +157,7 @@ const styles = StyleSheet.create({
   rowAmount: { color: colors.ink, fontWeight: "700", fontSize: 15 },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusBadge: { fontWeight: "700", fontSize: 13 },
+  paidRowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  receiptLink: { color: colors.teal, fontSize: 12, fontWeight: "700", marginTop: 6 },
   note: { color: colors.muted, fontSize: 11, textAlign: "center", marginTop: spacing.md },
 });

@@ -75,6 +75,22 @@ export default function AthletePaymentsScreen({ route, navigation }: Props) {
           <Text style={styles.rowAmount}>{item.amount.toLocaleString("tr-TR")} ₺</Text>
           <Text style={styles.rowSub}>{PERIOD_LABEL[item.period]} · Vade: {item.due_date}</Text>
           <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
+          {item.status === "paid" && (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("PaymentReceipt", {
+                  paymentId: item.id,
+                  amount: item.amount,
+                  period: item.period,
+                  dueDate: item.due_date,
+                  paidAt: item.paid_at,
+                  athleteName,
+                })
+              }
+            >
+              <Text style={styles.receiptLink}>🧾 Makbuz Görüntüle</Text>
+            </TouchableOpacity>
+          )}
         </View>
         {item.status !== "paid" && (
           <TouchableOpacity style={styles.payButton} onPress={() => handleMarkPaid(item.id, item.amount)}>
@@ -137,6 +153,7 @@ const styles = StyleSheet.create({
   rowAmount: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   statusLabel: { fontSize: 12, fontWeight: "700", marginTop: 4 },
+  receiptLink: { color: colors.teal, fontSize: 11, fontWeight: "700", marginTop: 4 },
   payButton: { borderWidth: 1, borderColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 8 },
   payButtonText: { color: colors.teal, fontWeight: "700", fontSize: 11 },
 });

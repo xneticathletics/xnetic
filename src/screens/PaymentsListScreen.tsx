@@ -164,6 +164,23 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
                     <Text style={styles.receiptLink}>📎 Dekontu Gör</Text>
                   </TouchableOpacity>
                 )}
+                {item.status === "paid" && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("PaymentReceipt", {
+                        paymentId: item.id,
+                        amount: item.amount,
+                        period: item.period,
+                        dueDate: item.due_date,
+                        paidAt: item.paid_at,
+                        athleteName: item.athletes?.full_name ?? "Sporcu",
+                        parentName: item.athletes?.parent_name,
+                      })
+                    }
+                  >
+                    <Text style={styles.receiptLink}>🧾 Makbuz Görüntüle</Text>
+                  </TouchableOpacity>
+                )}
                 {(item.athletes?.parent_name || item.athletes?.parent_phone) && (
                   <Text style={styles.parentInfo}>
                     {[item.athletes?.parent_name, item.athletes?.parent_phone].filter(Boolean).join(" · ")}
