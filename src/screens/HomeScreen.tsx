@@ -34,6 +34,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
   ],
   parent: [
     { key: "sporcum", label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
@@ -42,6 +43,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
   ],
   athlete: [
     { key: "antrenman", label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
@@ -50,6 +52,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "performansim", label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
   ],
   club_admin: [
     { key: "sporcu", label: "Sporcu Yönetimi", sub: "Sporcular, gruplar", icon: "👥" },
@@ -61,6 +64,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
     { key: "magaza", label: "Mağaza", sub: "Ürünler ve siparişler", icon: "🛍️" },
+    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet", icon: "🏆" },
   ],
   super_admin: [
     { key: "kulupler", label: "Kulüpler", sub: "", icon: "🏢" },
@@ -85,12 +89,14 @@ export const COORDINATOR_TILES: Tile[] = [
   { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
   { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
   { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+  { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "Branşının etkinlikleri", icon: "🏆" },
 ];
 
 async function handleTilePress(
   key: string,
   role: UserRole,
-  navigation: NativeStackNavigationProp<HomeStackParamList, "Home">
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Home">,
+  isBranchCoordinator: boolean
 ) {
   const isPlanner = role === "coach" || role === "club_admin";
 
@@ -136,6 +142,8 @@ async function handleTilePress(
     navigation.navigate("MembershipFreeze", undefined);
   } else if (key === "magaza") {
     navigation.navigate(role === "club_admin" ? "ShopManage" : "Shop");
+  } else if (key === "etkinlik") {
+    navigation.navigate(role === "club_admin" || isBranchCoordinator ? "EventsManage" : "EventsList");
   } else if (key === "kulupler") {
     navigation.navigate("SuperAdminClubs");
   } else if (key === "abonelik") {
@@ -399,7 +407,7 @@ export default function HomeScreen({
               key={tile.key}
               style={[styles.tile, { borderColor: accentSoft }]}
               activeOpacity={0.8}
-              onPress={() => handleTilePress(tile.key, role, navigation)}
+              onPress={() => handleTilePress(tile.key, role, navigation, isBranchCoordinator)}
             >
               <View style={topBarStyle(accent)} />
               <View style={decorCircleStyle(accentSoft)} />

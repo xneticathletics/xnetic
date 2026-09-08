@@ -33,7 +33,12 @@ export type NotificationEventType =
   // abonelik uyarıları — bilerek NOTIFICATION_EVENT_TYPES'a (Bildirim
   // Tercihleri ekranı) EKLENMİYOR, sadece getNotificationTarget'ın
   // yönlendirme yapabilmesi için bir event_type gerekiyordu.
-  | "subscription_alert";
+  | "subscription_alert"
+  // Etkinlik/Turnuva/Kamp modülü — bkz. src/lib/api/events.ts.
+  | "event_published"
+  | "event_registration_submitted"
+  | "event_registration_approved"
+  | "event_registration_rejected";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -47,6 +52,10 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "announcement", label: "Yeni Duyuru" },
   { key: "training_session", label: "Yeni Antrenman" },
   { key: "match_scheduled", label: "Yeni Maç Programı" },
+  { key: "event_published", label: "Yeni Etkinlik/Turnuva/Kamp" },
+  { key: "event_registration_submitted", label: "Etkinlik Kayıt Bildirimi (Admin'e)" },
+  { key: "event_registration_approved", label: "Etkinlik Kaydı Onaylandı" },
+  { key: "event_registration_rejected", label: "Etkinlik Kaydı Reddedildi" },
 ];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç

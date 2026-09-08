@@ -21,7 +21,12 @@ export type NotificationEventType =
   // Süper admin/kulüp admini abonelik uyarıları — mobildeki
   // src/lib/api/notifications.ts ile aynı gerekçeyle
   // NOTIFICATION_EVENT_TYPES'a eklenmiyor.
-  | "subscription_alert";
+  | "subscription_alert"
+  // Etkinlik/Turnuva/Kamp modülü — mobildeki src/lib/api/events.ts ile aynı.
+  | "event_published"
+  | "event_registration_submitted"
+  | "event_registration_approved"
+  | "event_registration_rejected";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -35,6 +40,10 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "announcement", label: "Yeni Duyuru" },
   { key: "training_session", label: "Yeni Antrenman" },
   { key: "match_scheduled", label: "Yeni Maç Programı" },
+  { key: "event_published", label: "Yeni Etkinlik/Turnuva/Kamp" },
+  { key: "event_registration_submitted", label: "Etkinlik Kayıt Bildirimi (Admin'e)" },
+  { key: "event_registration_approved", label: "Etkinlik Kaydı Onaylandı" },
+  { key: "event_registration_rejected", label: "Etkinlik Kaydı Reddedildi" },
 ];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç

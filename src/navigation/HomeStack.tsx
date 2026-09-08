@@ -110,6 +110,13 @@ import ShopManageScreen from "../screens/ShopManageScreen";
 import ShopProductFormScreen from "../screens/ShopProductFormScreen";
 import ShopOrdersScreen from "../screens/ShopOrdersScreen";
 import ShopStockScreen from "../screens/ShopStockScreen";
+import EventsListScreen from "../screens/EventsListScreen";
+import EventDetailScreen from "../screens/EventDetailScreen";
+import EventFormScreen from "../screens/EventFormScreen";
+import EventsManageScreen from "../screens/EventsManageScreen";
+import EventRegisterScreen from "../screens/EventRegisterScreen";
+import EventRegistrationsScreen from "../screens/EventRegistrationsScreen";
+import MyEventRegistrationsScreen from "../screens/MyEventRegistrationsScreen";
 import type { FoodCategoryKey, ArticleCategoryKey } from "../lib/nutritionCategories";
 
 export type HomeStackParamList = {
@@ -248,6 +255,13 @@ export type HomeStackParamList = {
   ShopProductForm: { productId: string | undefined };
   ShopOrders: undefined;
   ShopStock: undefined;
+  EventsList: undefined;
+  EventDetail: { eventId: string };
+  EventForm: { eventId: string | undefined };
+  EventsManage: undefined;
+  EventRegister: { eventId: string };
+  EventRegistrations: { eventId: string };
+  MyEventRegistrations: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -371,6 +385,13 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="ShopProductForm" component={ShopProductFormScreen} options={{ title: "Ürün" }} />
       <Stack.Screen name="ShopOrders" component={ShopOrdersScreen} options={{ title: "Siparişler" }} />
       <Stack.Screen name="ShopStock" component={ShopStockScreen} options={{ title: "Stok" }} />
+      <Stack.Screen name="EventsList" component={EventsListScreen} options={{ title: "Etkinlik/Turnuva/Kamp" }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: "Etkinlik" }} />
+      <Stack.Screen name="EventForm" component={EventFormScreen} options={{ title: "Etkinlik" }} />
+      <Stack.Screen name="EventsManage" component={EventsManageScreen} options={{ title: "Etkinlik/Turnuva/Kamp" }} />
+      <Stack.Screen name="EventRegister" component={EventRegisterScreen} options={{ title: "Kayıt Ol" }} />
+      <Stack.Screen name="EventRegistrations" component={EventRegistrationsScreen} options={{ title: "Kayıtlar" }} />
+      <Stack.Screen name="MyEventRegistrations" component={MyEventRegistrationsScreen} options={{ title: "Kayıtlarım" }} />
     </Stack.Navigator>
   );
 }
