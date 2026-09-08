@@ -11,11 +11,13 @@ import { listBranches, type Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachesList">;
 
 export default function CoachesListScreen({ navigation }: Props) {
   useHomeButton(navigation);
+  const { role } = useAuth();
   const { selectedBranch, setSelectedBranch } = useBranchSelect();
 
   const [coaches, setCoaches] = useState<CoachWithGroups[]>([]);
@@ -110,12 +112,17 @@ export default function CoachesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate("InviteUser", { presetRole: "coach" })}
-      >
-        <Text style={styles.addButtonText}>+ Antrenör Ekle</Text>
-      </TouchableOpacity>
+      {/* Yeni antrenör DAVET ETMEK, kulüp geneli bir hesap oluşturma işlemi —
+          "branş koordinatörü kendi branşının admini" ilkesi bunu kapsamıyor,
+          koordinatör sadece kendi branşındaki antrenörleri GÖREBİLİR. */}
+      {role === "club_admin" && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate("InviteUser", { presetRole: "coach" })}
+        >
+          <Text style={styles.addButtonText}>+ Antrenör Ekle</Text>
+        </TouchableOpacity>
+      )}
 
       {branches.length > 1 && (
         <ScrollView
