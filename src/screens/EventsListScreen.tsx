@@ -70,11 +70,6 @@ export default function EventsListScreen({ navigation }: Props) {
                   <Text style={{ fontSize: 48 }}>🏆</Text>
                 </View>
               )}
-              {/* Fotoğraf her renkte olabileceği için hafif genel bir
-                  karartma + yazı bloğunun altında daha koyu bir taban —
-                  metin her koşulda okunaklı kalsın diye. */}
-              <View style={styles.cardScrim} pointerEvents="none" />
-
               <View style={styles.cardTopRow}>
                 <Text style={styles.typeBadge}>{EVENT_TYPE_LABEL[item.type]}</Text>
               </View>
@@ -115,15 +110,14 @@ const styles = StyleSheet.create({
   cardImagePlaceholder: {
     ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface,
   },
-  // Fotoğraf her parlaklıkta olabileceği için alt kısımda sabit koyu bir
-  // "başlık şeridi" — metin bloğu her zaman bunun üzerinde, kontrast garanti.
-  cardScrim: { position: "absolute", left: 0, right: 0, bottom: 0, height: "62%", backgroundColor: "rgba(8,9,26,0.78)" },
   cardTopRow: { flexDirection: "row", padding: spacing.sm },
   typeBadge: {
     backgroundColor: "rgba(16,18,42,0.8)", borderRadius: radius.full, overflow: "hidden",
     paddingHorizontal: spacing.sm, paddingVertical: 3, color: colors.ink, fontSize: 11, fontWeight: "700",
   },
-  cardTextBlock: { padding: spacing.md },
+  // Koyu taban artık doğrudan yazı bloğunun kendi arka planı — fotoğrafın
+  // büyük bir kısmını değil, sadece metnin olduğu alanı kaplıyor.
+  cardTextBlock: { padding: spacing.md, backgroundColor: "rgba(8,9,26,0.78)" },
   cardTitle: { color: colors.ink, fontSize: 18, fontWeight: "800" },
   cardMeta: { color: colors.ink, opacity: 0.85, fontSize: 12, marginTop: 4 },
   cardPrice: { color: colors.yellow, fontSize: 16, fontWeight: "800", marginTop: spacing.xs },

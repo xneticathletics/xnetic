@@ -79,10 +79,6 @@ export default function EventsManageScreen({ navigation }: Props) {
                   <Text style={{ fontSize: 40 }}>🏆</Text>
                 </View>
               )}
-              {/* Fotoğraf her renkte olabileceği için sabit koyu bir taban —
-                  metin her koşulda okunaklı kalsın diye. */}
-              <View style={styles.rowScrim} pointerEvents="none" />
-
               <View style={styles.rowTextBlock}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
@@ -119,10 +115,9 @@ const styles = StyleSheet.create({
   rowBg: { width: "100%", height: 140, backgroundColor: colors.surface, justifyContent: "flex-end" },
   rowBgImage: { resizeMode: "cover" },
   thumbPlaceholder: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
-  // Fotoğraf her parlaklıkta olabileceği için alt kısımda sabit koyu bir
-  // "başlık şeridi" — metin bloğu her zaman bunun üzerinde, kontrast garanti.
-  rowScrim: { position: "absolute", left: 0, right: 0, bottom: 0, height: "75%", backgroundColor: "rgba(8,9,26,0.78)" },
-  rowTextBlock: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+  // Koyu taban artık doğrudan yazı bloğunun kendi arka planı — fotoğrafın
+  // büyük bir kısmını değil, sadece metnin olduğu alanı kaplıyor.
+  rowTextBlock: { flexDirection: "row", alignItems: "center", padding: spacing.md, backgroundColor: "rgba(8,9,26,0.78)" },
   rowTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" },
   rowSub: { color: colors.ink, opacity: 0.85, fontSize: 12, marginTop: 2 },
   badge: {
