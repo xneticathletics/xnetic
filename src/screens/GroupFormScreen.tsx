@@ -158,14 +158,24 @@ export default function GroupFormScreen({ route, navigation }: Props) {
       </Field>
 
       <Field label="Sabit Haftalık Program">
-        <TouchableOpacity
-          style={[styles.typeChip, form.fixed_schedule && styles.typeChipActive, { alignSelf: "flex-start" }]}
-          onPress={() => setForm((f) => ({ ...f, fixed_schedule: !f.fixed_schedule }))}
-        >
-          <Text style={[styles.typeChipText, form.fixed_schedule && styles.typeChipTextActive]}>
-            {form.fixed_schedule ? "✓ Açık" : "Kapalı"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={[styles.typeChip, form.fixed_schedule && styles.typeChipActive]}
+            onPress={() => setForm((f) => ({ ...f, fixed_schedule: true }))}
+          >
+            <Text style={[styles.typeChipText, form.fixed_schedule && styles.typeChipTextActive]}>
+              ✓ Açık
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.typeChip, !form.fixed_schedule && styles.typeChipActiveMusabik]}
+            onPress={() => setForm((f) => ({ ...f, fixed_schedule: false }))}
+          >
+            <Text style={[styles.typeChipText, !form.fixed_schedule && styles.typeChipTextActive]}>
+              Kapalı
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.hint}>
           Açılırsa bu grubun antrenmanları haftalık bir şablondan (branş koordinatörü/salon yetkilisi tarafından) otomatik üretilebilir — Takvim'deki Haftalık Program ekranında görünür.
         </Text>
