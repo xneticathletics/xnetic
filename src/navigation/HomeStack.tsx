@@ -39,6 +39,7 @@ import CoachBranchScreen from "../screens/CoachBranchScreen";
 import BranchSelectScreen from "../screens/BranchSelectScreen";
 import MyScheduleScreen from "../screens/MyScheduleScreen";
 import MySessionDetailScreen from "../screens/MySessionDetailScreen";
+import MyDayScheduleDetailScreen from "../screens/MyDayScheduleDetailScreen";
 import MyAttendanceScreen from "../screens/MyAttendanceScreen";
 import MyPaymentsScreen from "../screens/MyPaymentsScreen";
 import PaymentsListScreen from "../screens/PaymentsListScreen";
@@ -159,6 +160,13 @@ export type HomeStackParamList = {
   CoachBranch: { coachId: string; coachName: string };
   BranchSelect: undefined;
   MySchedule: undefined;
+  MyDayScheduleDetail: {
+    date: string;
+    sessions: import("../lib/api/trainingSessions").TrainingSession[];
+    attendanceMap: Record<string, import("../lib/api/attendance").AttendanceStatus>;
+    athleteId: string;
+    athleteName: string;
+  };
   MySessionDetail: { sessionId: string; athleteId: string; athleteName: string };
   MyAttendance: undefined;
   MyPayments: undefined;
@@ -291,6 +299,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="BranchSelect" component={BranchSelectScreen} options={{ title: "Branş Seç" }} />
       <Stack.Screen name="MySchedule" component={MyScheduleScreen} options={{ title: "Takvim" }} />
       <Stack.Screen name="MySessionDetail" component={MySessionDetailScreen} options={{ title: "Antrenman Detayı" }} />
+      <Stack.Screen name="MyDayScheduleDetail" component={MyDayScheduleDetailScreen} options={{ title: "Gün Detayı" }} />
       <Stack.Screen name="MyAttendance" component={MyAttendanceScreen} options={{ title: "Antrenman Katılım Durumu" }} />
       <Stack.Screen name="MyPayments" component={MyPaymentsScreen} options={{ title: "Aidat" }} />
       <Stack.Screen name="PaymentsList" component={PaymentsListScreen} />

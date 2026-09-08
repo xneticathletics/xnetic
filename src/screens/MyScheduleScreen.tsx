@@ -173,12 +173,29 @@ export default function MyScheduleScreen({ navigation }: Props) {
         {grid.map((day, idx) => {
           if (day === null) return <View key={idx} style={styles.dayCell} />;
           const dateKey = toDateKey(viewYear, viewMonth, day);
-          const hasSessions = !!sessionsByDate[dateKey]?.length;
+          const daySessions = sessionsByDate[dateKey] ?? [];
+          const hasSessions = daySessions.length > 0;
           const isSelected = dateKey === selectedDate;
           const isToday = dateKey === todayKey();
 
+          // İlk dokunuş sadece seçer — ZATEN seçili olan bir güne tekrar
+          // dokununca (ikinci dokunuş), o günü tam ekran gösteren
+          // MyDayScheduleDetail'e geçilir (antrenör tarafındaki
+          // DayScheduleDetail ile aynı desen).
+          const handleDayPress = () => {
+            if (isSelected) {
+              if (!athleteId) return;
+              navigation.navigate("MyDayScheduleDetail", {
+                date: dateKey, sessions: daySessions, attendanceMap,
+                athleteId, athleteName: athleteName ?? "Sporcu",
+              });
+            } else {
+              setSelectedDate(dateKey);
+            }
+          };
+
           return (
-            <TouchableOpacity key={idx} style={styles.dayCell} onPress={() => setSelectedDate(dateKey)}>
+            <TouchableOpacity key={idx} style={styles.dayCell} onPress={handleDayPress}>
               <View
                 style={[
                   styles.dayCircle,
