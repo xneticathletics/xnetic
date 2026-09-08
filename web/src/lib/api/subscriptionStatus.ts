@@ -41,5 +41,5 @@ export async function notifyRenewalPaymentClaim(clubName: string): Promise<void>
   if (error) throw error;
   const title = "Kulüp Yenileme Ödemesi Bildirdi";
   const body = `${clubName} kulübü abonelik yenileme ödemesini yaptığını bildirdi. Abonelikler ekranından kontrol edip onaylayabilirsin.`;
-  await Promise.all((admins ?? []).map((a) => sendNotification(a.id, title, body).catch(() => {})));
+  await Promise.all((admins ?? []).map((a) => sendNotification(a.id, title, body, "subscription_alert").catch(() => {})));
 }

@@ -13,8 +13,11 @@ export default function FitnessTrainingScreen({ navigation }: Props) {
   const { role } = useAuth();
   const { isLocked } = useBranchSelect();
   const isCoordinator = role === "coach" && isLocked;
-  // Yeni hareket ekleme sadece club_admin ve branş koordinatörüne açık.
-  const canAdd = role === "club_admin" || isCoordinator;
+  // Yeni hareket ekleme club_admin, branş koordinatörü ve süper admine açık
+  // — süper admin TÜM kulüplerde görünen global (club_id=null) hareketleri
+  // ekleyebiliyor (bkz. customFitnessExercises.ts uploadExerciseVideo'nun
+  // clubId===null durumu, FitnessCategoryScreen'in global düzenleme izni).
+  const canAdd = role === "club_admin" || role === "super_admin" || isCoordinator;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>

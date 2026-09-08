@@ -77,9 +77,16 @@ export async function createPayment(input: PaymentInput) {
 
 // Veli "Ödedim" dediğinde ödemeyi OTOMATİK "Ödendi" yapmıyoruz — havale/EFT
 // ve elden ödeme her zaman gerçek dünyada bir doğrulama gerektirir. Bunun
-// yerine kulüp admin(ler)ine, sporcunun grubunun baş antrenörüne ve branş
-// koordinatörüne bir bildirim gönderip, biri kendi ekranından kontrol edip
-// markPaymentPaid() ile onaylayana kadar durum "Bekliyor" kalır.
+// yerine kulüp admin(ler)ine VE branş koordinatörüne bir bildirim gönderip,
+// biri kendi ekranından kontrol edip markPaymentPaid() ile onaylayana kadar
+// durum "Bekliyor" kalır.
+//
+// ÖNEMLİ: baş antrenöre (group.head_coach_id) BİLEREK bildirim gönderilmiyor
+// — kullanıcı kararı: baş antrenör atamaları sürekli değişebiliyor, finansal
+// veriye erişimi/onay yetkisi olmamalı. Bu tam olarak "salon yetkilisi"
+// etiketinin çözdüğü sorunla aynı mantık (kararlı olmayan bir role kalıcı
+// yetki vermemek) — finans tarafında bu istikrar branş koordinatörlüğü ile
+// sağlanıyor.
 export async function notifyPaymentClaim(
   paymentId: string,
   amount: number,
@@ -94,21 +101,18 @@ export async function notifyPaymentClaim(
 
   const { data: payment } = await supabase
     .from("payments")
-    .select("athlete_id, athletes(groups!group_id(branch, head_coach_id))")
+    .select("athlete_id, athletes(groups!group_id(branch))")
     .eq("id", paymentId)
     .maybeSingle();
   const athleteId = (payment as any)?.athlete_id as string | undefined;
   const group = (payment as any)?.athletes?.groups;
-  if (group) {
-    if (group.head_coach_id) recipients.add(group.head_coach_id);
-    if (group.branch) {
-      const { data: branchRow } = await supabase
-        .from("branches")
-        .select("coordinator_user_id")
-        .eq("name", group.branch)
-        .maybeSingle();
-      if (branchRow?.coordinator_user_id) recipients.add(branchRow.coordinator_user_id);
-    }
+  if (group?.branch) {
+    const { data: branchRow } = await supabase
+      .from("branches")
+      .select("coordinator_user_id")
+      .eq("name", group.branch)
+      .maybeSingle();
+    if (branchRow?.coordinator_user_id) recipients.add(branchRow.coordinator_user_id);
   }
 
   const methodLabel = PAYMENT_METHOD_LABEL[method];

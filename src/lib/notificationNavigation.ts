@@ -51,6 +51,12 @@ export function getNotificationTarget(
       const athleteId = payload?.athleteId as string | undefined;
       return athleteId ? { tab: "Ana Menü", screen: "AthleteDetail", params: { athleteId } } : null;
     }
+    case "subscription_alert":
+      // Yeni kulüp ödemesi / abonelik süresi doldu / yenileme ödemesi
+      // bildirdi — hepsi süper admini "Abonelikler"e yönlendirir. club_admin
+      // için henüz ayrı bir "aboneliğim" ekranı yok (durum kötüyse zaten
+      // tam ekran bir kapı gösteriliyor, aktifken gidilecek bir yer yok).
+      return role === "super_admin" ? { tab: "Ana Menü", screen: "SuperAdminSubscriptions" } : null;
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;
       return announcementId

@@ -27,7 +27,13 @@ export type NotificationEventType =
   | "payment_reminder"
   | "announcement"
   | "training_session"
-  | "match_scheduled";
+  | "match_scheduled"
+  // Süper admine (yeni kulüp ödemesi, abonelik süresi doldu, yenileme
+  // bildirdi) ve kulüp adminine (süresi doldu/yakında dolacak) giden
+  // abonelik uyarıları — bilerek NOTIFICATION_EVENT_TYPES'a (Bildirim
+  // Tercihleri ekranı) EKLENMİYOR, sadece getNotificationTarget'ın
+  // yönlendirme yapabilmesi için bir event_type gerekiyordu.
+  | "subscription_alert";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },

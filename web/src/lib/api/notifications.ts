@@ -17,7 +17,11 @@ export type NotificationEventType =
   | "payment_reminder"
   | "announcement"
   | "training_session"
-  | "match_scheduled";
+  | "match_scheduled"
+  // Süper admin/kulüp admini abonelik uyarıları — mobildeki
+  // src/lib/api/notifications.ts ile aynı gerekçeyle
+  // NOTIFICATION_EVENT_TYPES'a eklenmiyor.
+  | "subscription_alert";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },

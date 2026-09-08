@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         recipient_user_id: a.id,
         title: "Yeni Kulüp Ödemesi Bildirdi",
         body: `${club.name} kulübü ${billingPeriod === "yearly" ? "yıllık" : "aylık"} plan için ödeme yaptığını bildirdi. Abonelikler ekranından kontrol edip onaylayabilirsin.`,
-        event_type: null,
+        event_type: "subscription_alert",
       }));
       const { data: insertedRows } = await admin.from("notifications").insert(rows).select("id");
       insertedRows?.forEach((row: { id: string }) => triggerPushNotification(SUPABASE_URL, row.id));
