@@ -77,7 +77,7 @@ export default function EventDetailScreen({ route, navigation }: Props) {
         onPress: async () => {
           setActionLoading("cancel");
           try {
-            await cancelEvent(event.id);
+            await cancelEvent(event);
             await load();
           } catch (e: any) {
             Alert.alert("Hata", e.message ?? "İptal edilemedi", [{ text: "Tamam" }]);

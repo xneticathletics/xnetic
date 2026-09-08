@@ -38,7 +38,9 @@ export type NotificationEventType =
   | "event_published"
   | "event_registration_submitted"
   | "event_registration_approved"
-  | "event_registration_rejected";
+  | "event_registration_rejected"
+  | "event_cancelled"
+  | "event_reminder";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -56,6 +58,8 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "event_registration_submitted", label: "Etkinlik Kayıt Bildirimi (Admin'e)" },
   { key: "event_registration_approved", label: "Etkinlik Kaydı Onaylandı" },
   { key: "event_registration_rejected", label: "Etkinlik Kaydı Reddedildi" },
+  { key: "event_cancelled", label: "Etkinlik İptal Edildi" },
+  { key: "event_reminder", label: "Etkinlik Hatırlatması" },
 ];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç

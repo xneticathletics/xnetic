@@ -111,9 +111,10 @@ export async function publishEvent(event: EventRow): Promise<void> {
   await notifyEventPublished(event).catch(() => {});
 }
 
-export async function cancelEvent(id: string): Promise<void> {
-  const { error } = await supabase.from("events").update({ status: "cancelled" }).eq("id", id);
+export async function cancelEvent(event: Pick<EventRow, "id" | "title">): Promise<void> {
+  const { error } = await supabase.from("events").update({ status: "cancelled" }).eq("id", event.id);
   if (error) throw error;
+  await notifyEventCancelled(event).catch(() => {});
 }
 
 export async function deleteEvent(id: string): Promise<void> {
@@ -324,6 +325,29 @@ async function notifyRegistrationReviewed(
     status === "approved" ? "event_registration_approved" : "event_registration_rejected",
     { eventId: registration.event_id }
   ).catch(() => {});
+}
+
+// Etkinlik iptal edilince, henüz reddedilmemiş/iptal edilmemiş (yani hâlâ
+// geçerli sayılan) kayıtların sahiplerine bildirim gider — ödeme yapmış
+// olabilecekleri için kulüp yönetimiyle iletişime geçme notu eklenir.
+async function notifyEventCancelled(event: Pick<EventRow, "id" | "title">): Promise<void> {
+  const { data: regs } = await supabase
+    .from("event_registrations")
+    .select("registered_by, status, amount_due")
+    .eq("event_id", event.id)
+    .in("status", ["pending", "approved"]);
+  if (!regs || regs.length === 0) return;
+
+  const title = "Etkinlik İptal Edildi";
+  await Promise.all(
+    regs.map((r) => {
+      const body =
+        r.status === "approved" && r.amount_due > 0
+          ? `"${event.title}" etkinliği iptal edildi. Ödeme yaptıysan kulüp yönetimiyle iletişime geçebilirsin.`
+          : `"${event.title}" etkinliği iptal edildi.`;
+      return sendNotification(r.registered_by, title, body, "event_cancelled", { eventId: event.id }).catch(() => {});
+    })
+  );
 }
 
 export const EVENT_TYPE_LABEL: Record<EventType, string> = {

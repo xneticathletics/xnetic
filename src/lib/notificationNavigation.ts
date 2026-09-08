@@ -57,7 +57,8 @@ export function getNotificationTarget(
       // için henüz ayrı bir "aboneliğim" ekranı yok (durum kötüyse zaten
       // tam ekran bir kapı gösteriliyor, aktifken gidilecek bir yer yok).
       return role === "super_admin" ? { tab: "Ana Menü", screen: "SuperAdminSubscriptions" } : null;
-    case "event_published": {
+    case "event_published":
+    case "event_reminder": {
       const eventId = payload?.eventId as string | undefined;
       return eventId ? { tab: "Ana Menü", screen: "EventDetail", params: { eventId } } : null;
     }
@@ -68,6 +69,7 @@ export function getNotificationTarget(
     }
     case "event_registration_approved":
     case "event_registration_rejected":
+    case "event_cancelled":
       return { tab: "Ana Menü", screen: "MyEventRegistrations" };
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;

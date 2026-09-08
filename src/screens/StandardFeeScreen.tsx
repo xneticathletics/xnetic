@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listBranches, updateBranchStandardFee, type Branch } from "../lib/api/branches";
+import { listBranchesWithFees, updateBranchStandardFee, type BranchFee } from "../lib/api/branches";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 // Kulüp admininin HER BRANŞ için ayrı, sabit bir aidat ücreti belirlemesini
@@ -18,7 +18,7 @@ import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 // bazında serbest tutar (PaymentForm) modelini kullanmaya devam eder.
 export default function StandardFeeScreen() {
   const { scrollRef, handleFocus } = useKeyboardScroll();
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branches, setBranches] = useState<BranchFee[]>([]);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ export default function StandardFeeScreen() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const all = await listBranches();
+      const all = await listBranchesWithFees();
       setBranches(all);
       setAmounts(Object.fromEntries(all.map((b) => [b.id, b.standard_fee_try != null ? String(b.standard_fee_try) : ""])));
     } catch (e: any) {
@@ -43,7 +43,7 @@ export default function StandardFeeScreen() {
     }, [load])
   );
 
-  const handleSave = (branch: Branch) => {
+  const handleSave = (branch: BranchFee) => {
     if (savingId) return;
     const newFee = Number(amounts[branch.id]);
     if (!amounts[branch.id] || isNaN(newFee) || newFee <= 0) {

@@ -9,23 +9,33 @@ export type Branch = {
   // skor" anlamlı değil — müsabaka sonucu skor yerine serbest metin
   // açıklamayla giriliyor (bkz. matches.result_note).
   is_individual: boolean;
-  // Branşa özel sabit aidat ücreti (bkz. updateBranchStandardFee) — null
-  // ise bu branş için sabit ücret hiç ayarlanmamış, sporcu bazında serbest
-  // tutar modeli geçerli.
-  standard_fee_try: number | null;
 };
 
 export async function listBranches(): Promise<Branch[]> {
   const { data, error } = await supabase
     .from("branches")
-    .select("id, name, coordinator_user_id, is_individual, standard_fee_try, coordinator:coordinator_user_id(name)")
+    .select("id, name, coordinator_user_id, is_individual, coordinator:coordinator_user_id(name)")
     .order("name", { ascending: true });
 
   if (error) throw error;
   return (data as unknown as Branch[]) ?? [];
 }
 
+export type BranchFee = { id: string; name: string; standard_fee_try: number | null };
 export type StandardFeeUpdateResult = { plansUpdated: number; paymentsUpdated: number };
+
+// Branş bazlı aidat ücretleri SADECE admin'e görünür — kullanıcı kararı:
+// "adminden başkasının diğer branşların aidatlarını görmesine gerek yok".
+// branches tablosunun geri kalan kolonları (isim, koordinatör vb.) kulübün
+// her üyesine açık kalmalı (grup/antrenman formlarında branş seçimi için),
+// bu yüzden RLS satır bazlı bir kısıtlama yerine SADECE bu alanı okuyan,
+// admin kontrolü yapan dar bir RPC kullanıyoruz — bkz. migration
+// 20260908060000_restrict_branch_fee_visibility.sql.
+export async function listBranchesWithFees(): Promise<BranchFee[]> {
+  const { data, error } = await supabase.rpc("list_branches_with_fees");
+  if (error) throw error;
+  return (data as BranchFee[]) ?? [];
+}
 
 // Admin bir branşın sabit aidat ücretini değiştirdiğinde: (1) branches'a
 // kaydedilir, (2) o branştaki sporcuların TÜM aktif aidat planlarının

@@ -17,7 +17,7 @@ import { createPaymentPlan } from "../lib/api/paymentPlans";
 import type { Group } from "../lib/api/groups";
 import { listGroups } from "../lib/api/groups";
 import type { Branch } from "../lib/api/branches";
-import { listBranches } from "../lib/api/branches";
+import { listBranches, listBranchesWithFees } from "../lib/api/branches";
 import GroupPickerModal from "../components/GroupPickerModal";
 import BranchPickerModal from "../components/BranchPickerModal";
 import LinkedAccountField from "../components/LinkedAccountField";
@@ -64,6 +64,12 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   const [groupPickerVisible, setGroupPickerVisible] = useState(false);
   const [bloodTypePickerVisible, setBloodTypePickerVisible] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
+  // Branş bazlı sabit aidat ücretleri SADECE admin'e görünür (bkz.
+  // listBranchesWithFees) — koordinatör/antrenör bu ekrana erişebildiği
+  // için RPC yetkisiz çağrıda hata fırlatır, o yüzden sessizce yutulur:
+  // admin değilse otomatik doldurma özelliği devre dışı kalır, sporcu
+  // ekleme akışı hiç etkilenmez.
+  const [branchFees, setBranchFees] = useState<Record<string, number>>({});
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
@@ -130,6 +136,13 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         setAllGroups(g);
       })
       .catch(() => {});
+    listBranchesWithFees()
+      .then((fees) => {
+        setBranchFees(
+          Object.fromEntries(fees.filter((f) => f.standard_fee_try != null).map((f) => [f.name, f.standard_fee_try as number]))
+        );
+      })
+      .catch(() => {}); // admin değilse RPC reddeder — otomatik doldurma sessizce devre dışı kalır
   }, []);
 
   // Düzenlemede, sporcunun mevcut grubuna göre branş filtresini bir
@@ -185,11 +198,8 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
     // değiştirebilir. Sadece YENİ kayıtta ve henüz elle bir şey
     // yazılmamışsa (mevcut sporcunun planını veya elle girilmiş bir
     // tutarı sessizce ezmemek için).
-    if (!isEdit && !monthlyFee.trim()) {
-      const branch = branches.find((b) => b.name === g.branch);
-      if (branch?.standard_fee_try != null) {
-        setMonthlyFee(String(branch.standard_fee_try));
-      }
+    if (!isEdit && !monthlyFee.trim() && branchFees[g.branch] != null) {
+      setMonthlyFee(String(branchFees[g.branch]));
     }
   };
 
