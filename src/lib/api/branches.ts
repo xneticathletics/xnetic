@@ -79,6 +79,36 @@ export async function setBranchCoordinator(branchId: string, userId: string | nu
   if (error) throw error;
 }
 
+export type BranchStats = { activeAthleteCount: number; coachCount: number; venueCount: number };
+
+// Branş koordinatörünün Ana Sayfa'sındaki özet satır için — admin'in kulüp
+// geneli istatistik satırıyla aynı fikir, sadece bu branşa sınırlı.
+export async function getBranchStats(branch: string): Promise<BranchStats> {
+  const { data: groups, error: groupsError } = await supabase
+    .from("groups")
+    .select("id, venue_id, head_coach_id")
+    .eq("branch", branch);
+  if (groupsError) throw groupsError;
+
+  const groupIds = (groups ?? []).map((g) => g.id);
+  const venueIds = new Set((groups ?? []).map((g) => g.venue_id).filter((v): v is string => !!v));
+  const coachIds = new Set((groups ?? []).map((g) => g.head_coach_id).filter((c): c is string => !!c));
+
+  if (groupIds.length === 0) return { activeAthleteCount: 0, coachCount: 0, venueCount: 0 };
+
+  const [assistantsResult, athleteCountResult] = await Promise.all([
+    supabase.from("group_coaches").select("coach_id").in("group_id", groupIds),
+    supabase.from("athletes").select("id", { count: "exact", head: true }).in("group_id", groupIds).eq("status", "active"),
+  ]);
+  (assistantsResult.data ?? []).forEach((r) => coachIds.add(r.coach_id));
+
+  return {
+    activeAthleteCount: athleteCountResult.count ?? 0,
+    coachCount: coachIds.size,
+    venueCount: venueIds.size,
+  };
+}
+
 // Giriş yapan kullanıcı bir branşın koordinatörüyse o branşın adını
 // döner, değilse null — Ana Sayfa'da otomatik branş kilitlemesi için.
 export async function getMyCoordinatorBranch(userId: string): Promise<string | null> {

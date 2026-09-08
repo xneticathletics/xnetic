@@ -38,6 +38,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [allGroups, setAllGroups] = useState<Group[]>([]);
+  const [athleteSearch, setAthleteSearch] = useState("");
   // Antrenör (branş koordinatörü dahil) sadece kendi branşı için fitness
   // grubu oluşturabilsin — undefined = henüz yüklenmedi. club_admin için
   // hiç kullanılmıyor (aşağıdaki allowedBranchNames boş kalır, tüm
@@ -95,6 +96,12 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
       .catch((e) => setError(e.message))
       .finally(() => setAthletesLoading(false));
   }, [branch]);
+
+  const filteredAthletes = useMemo(() => {
+    const q = athleteSearch.trim().toLocaleLowerCase("tr-TR");
+    if (!q) return athletes;
+    return athletes.filter((a) => a.full_name.toLocaleLowerCase("tr-TR").includes(q));
+  }, [athletes, athleteSearch]);
 
   const toggleAthlete = (athleteId: string) => {
     setSelectedIds((prev) => {
@@ -162,11 +169,23 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
       {branch && (
         <>
           <Text style={[styles.label, { marginTop: spacing.lg }]}>Müsabık Sporcular ({selectedIds.size} seçili)</Text>
+          {athletes.length > 0 && (
+            <TextInput
+              style={[styles.input, { marginBottom: spacing.sm }]}
+              value={athleteSearch}
+              onChangeText={setAthleteSearch}
+              placeholder="Sporcu ara..."
+              placeholderTextColor={colors.muted}
+            />
+          )}
           {athletesLoading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.sm }} />}
           {!athletesLoading && athletes.length === 0 && (
             <Text style={styles.empty}>Bu branşta müsabık tipinde aktif sporcu bulunamadı.</Text>
           )}
-          {athletes.map((a) => {
+          {!athletesLoading && athletes.length > 0 && filteredAthletes.length === 0 && (
+            <Text style={styles.empty}>Bu aramayla eşleşen sporcu yok.</Text>
+          )}
+          {filteredAthletes.map((a) => {
             const selected = selectedIds.has(a.id);
             return (
               <TouchableOpacity key={a.id} style={styles.athleteRow} onPress={() => toggleAthlete(a.id)}>

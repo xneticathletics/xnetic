@@ -104,6 +104,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
   }, [rows, query, searching, branchFilter, groupFilter, groupsInBranch, athleteGroupId]);
 
   const isToday = selectedDate === todayKey();
+  const groupNameById = useMemo(() => Object.fromEntries(groups.map((g) => [g.id, g.name])), [groups]);
 
   return (
     <KeyboardAvoidingView
@@ -214,7 +215,12 @@ export default function CoachWellnessScreen({ navigation }: Props) {
                 </View>
               )}
               <View style={{ flex: 1 }}>
-                <Text style={styles.rowName}>{item.full_name}</Text>
+                <Text style={styles.rowName}>
+                  {item.full_name}
+                  {!!groupNameById[athleteGroupId[item.athlete_id] ?? ""] && (
+                    <Text style={styles.rowGroup}> · {groupNameById[athleteGroupId[item.athlete_id] ?? ""]}</Text>
+                  )}
+                </Text>
                 {item.latest ? (
                   <Text style={styles.rowSub}>Check-in yaptı</Text>
                 ) : (
@@ -282,6 +288,7 @@ const styles = StyleSheet.create({
   avatarImage: { width: 44, height: 44, borderRadius: radius.full },
   avatarText: { color: colors.ink, fontWeight: "700" },
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  rowGroup: { color: colors.muted, fontSize: 12, fontWeight: "500" },
   rowSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   rowSubStale: { color: colors.coral, fontSize: 11, marginTop: 2, fontWeight: "600" },
   metricsBox: { flexDirection: "row", gap: 6 },

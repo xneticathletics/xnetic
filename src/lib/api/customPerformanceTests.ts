@@ -61,6 +61,11 @@ export async function updateCustomTest(id: string, input: CustomPerformanceTestI
   return data;
 }
 
+export async function deleteCustomTest(id: string) {
+  const { error } = await supabase.from("performance_test_catalog").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // "performance-test-videos" bucket'ında da bu değerle senkron (bkz.
 // supabase/migrations/..._performance_tests_global_library.sql).
 export const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;

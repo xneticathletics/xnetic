@@ -1,23 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getPerformanceCategory } from "../lib/performanceTests";
-import { listTestsByCategory, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
+import { listTestsByCategory, deleteCustomTest, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PerformanceCategory">;
 
 type Row = {
   key: string; name: string; unit: string; equipment: string | null;
-  testId: string; sourceLabel?: string; canEdit: boolean;
+  testId: string; sourceLabel?: string; canEdit: boolean; canDelete: boolean;
 };
 
 export default function PerformanceCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const { role, clubId } = useAuth();
+  const { isLocked: isBranchCoordinator } = useBranchSelect();
   const meta = getPerformanceCategory(category);
 
   const [tests, setTests] = useState<CustomPerformanceTest[]>([]);
@@ -50,6 +52,24 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
     }, [load])
   );
 
+  const handleDelete = (item: Row) => {
+    Alert.alert("Testi sil", `"${item.name}" kalıcı olarak silinecek. Emin misin?`, [
+      { text: "Vazgeç", style: "cancel" },
+      {
+        text: "Sil",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteCustomTest(item.testId);
+            load();
+          } catch (e: any) {
+            Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);
+          }
+        },
+      },
+    ]);
+  };
+
   if (!meta) {
     return (
       <View style={styles.container}>
@@ -70,6 +90,10 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
     // Var olan (global) testleri her antrenör/kulüp admini düzenleyebilir —
     // sadece YENİ global test eklemek Süper Admin'e özel.
     canEdit: t.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : t.club_id === clubId,
+    // Silme, düzenlemeden daha kısıtlı: global testi SADECE Süper Admin
+    // silebilir (RLS de bunu zaten şart koşuyor); kulübe özel testi admin
+    // veya branş koordinatörü silebilir.
+    canDelete: t.club_id === null ? role === "super_admin" : t.club_id === clubId && (role === "club_admin" || isBranchCoordinator),
   }));
 
   return (
@@ -110,6 +134,11 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
                 <Text style={styles.editButtonText}>✏️ Düzenle</Text>
               </TouchableOpacity>
             )}
+            {item.canDelete && (
+              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item)}>
+                <Text style={styles.deleteButtonText}>🗑</Text>
+              </TouchableOpacity>
+            )}
             <Text style={[styles.rowUnit, { color: meta.color }]}>{item.unit}</Text>
           </TouchableOpacity>
         )}
@@ -137,5 +166,7 @@ const styles = StyleSheet.create({
   globalBadge: { color: colors.muted, fontSize: 10, marginTop: 2 },
   editButton: { paddingHorizontal: spacing.xs, paddingVertical: 4 },
   editButtonText: { color: colors.violet, fontSize: 11, fontWeight: "700" },
+  deleteButton: { paddingHorizontal: spacing.xs, paddingVertical: 4 },
+  deleteButtonText: { color: colors.coral, fontSize: 14 },
   rowUnit: { fontSize: 12, fontWeight: "700" },
 });

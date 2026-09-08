@@ -28,6 +28,10 @@ function computeCombos(colors: string[], sizes: string[]): { color: string | nul
 }
 
 const CATEGORY_OPTIONS = ["Forma", "Şort", "Eşofman", "Ayakkabı", "Çanta", "Aksesuar", "Diğer"];
+// Ayakkabı numaraları serbest metinle tek tek yazmak yerine yaygın
+// aralıktan (30-46) tek dokunuşla seçilsin diye — büyüklerin/çocukların
+// numaralarını kapsayan geniş bir aralık.
+const SHOE_SIZE_OPTIONS = Array.from({ length: 17 }, (_, i) => String(30 + i));
 const GENDER_OPTIONS: { value: ShopGender; label: string }[] = [
   { value: "kadin", label: "Kadın" },
   { value: "erkek", label: "Erkek" },
@@ -316,30 +320,48 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
           )}
         </Field>
 
-        <Field label={isShoeCategory ? "Numara Seçenekleri (varsa)" : "Beden Seçenekleri (varsa)"}>
-          <View style={styles.chipInputRow}>
-            <TextInput
-              onFocus={handleFocus}
-              style={[styles.input, { flex: 1 }]}
-              value={sizeInput}
-              onChangeText={setSizeInput}
-              placeholder={isShoeCategory ? "Örn. 38" : "Örn. M"}
-              placeholderTextColor={colors.muted}
-              keyboardType={isShoeCategory ? "number-pad" : "default"}
-              onSubmitEditing={addSize}
-            />
-            <TouchableOpacity style={styles.chipAddButton} onPress={addSize}>
-              <Text style={styles.chipAddButtonText}>+ Ekle</Text>
-            </TouchableOpacity>
-          </View>
-          {sizes.length > 0 && (
+        <Field label={isShoeCategory ? "Numara Seçenekleri" : "Beden Seçenekleri (varsa)"}>
+          {isShoeCategory ? (
             <View style={styles.chipRow}>
-              {sizes.map((s) => (
-                <TouchableOpacity key={s} style={styles.chip} onPress={() => setSizes((prev) => prev.filter((x) => x !== s))}>
-                  <Text style={styles.chipText}>{s} ✕</Text>
-                </TouchableOpacity>
-              ))}
+              {SHOE_SIZE_OPTIONS.map((s) => {
+                const selected = sizes.includes(s);
+                return (
+                  <TouchableOpacity
+                    key={s}
+                    style={[styles.selectChip, selected && styles.selectChipActive]}
+                    onPress={() => setSizes((prev) => (selected ? prev.filter((x) => x !== s) : [...prev, s]))}
+                  >
+                    <Text style={[styles.selectChipText, selected && styles.selectChipTextActive]}>{s}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+          ) : (
+            <>
+              <View style={styles.chipInputRow}>
+                <TextInput
+                  onFocus={handleFocus}
+                  style={[styles.input, { flex: 1 }]}
+                  value={sizeInput}
+                  onChangeText={setSizeInput}
+                  placeholder="Örn. M"
+                  placeholderTextColor={colors.muted}
+                  onSubmitEditing={addSize}
+                />
+                <TouchableOpacity style={styles.chipAddButton} onPress={addSize}>
+                  <Text style={styles.chipAddButtonText}>+ Ekle</Text>
+                </TouchableOpacity>
+              </View>
+              {sizes.length > 0 && (
+                <View style={styles.chipRow}>
+                  {sizes.map((s) => (
+                    <TouchableOpacity key={s} style={styles.chip} onPress={() => setSizes((prev) => prev.filter((x) => x !== s))}>
+                      <Text style={styles.chipText}>{s} ✕</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </>
           )}
         </Field>
 

@@ -91,7 +91,7 @@ export default function EventDetailScreen({ route, navigation }: Props) {
 
   const handleDelete = () => {
     if (!event) return;
-    Alert.alert("Taslağı sil", "Bu taslak kalıcı olarak silinecek. Emin misin?", [
+    Alert.alert("Etkinliği sil", "Bu etkinlik kalıcı olarak silinecek. Emin misin?", [
       { text: "Vazgeç", style: "cancel" },
       {
         text: "Sil", style: "destructive",
@@ -196,12 +196,14 @@ export default function EventDetailScreen({ route, navigation }: Props) {
               )}
             </TouchableOpacity>
           )}
-          {event.status === "draft" && (
+          {(event.status === "draft" || event.status === "cancelled") && (
             <TouchableOpacity style={styles.destructiveButton} onPress={handleDelete} disabled={!!actionLoading}>
               {actionLoading === "delete" ? (
                 <ActivityIndicator color={colors.coral} />
               ) : (
-                <Text style={styles.destructiveButtonText}>Taslağı Sil</Text>
+                <Text style={styles.destructiveButtonText}>
+                  {event.status === "draft" ? "Taslağı Sil" : "Etkinliği Kalıcı Olarak Sil"}
+                </Text>
               )}
             </TouchableOpacity>
           )}

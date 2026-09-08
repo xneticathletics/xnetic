@@ -17,7 +17,7 @@ import { getClubLogoUrl } from "../lib/api/clubLogo";
 import { getClubName } from "../lib/api/clubSettings";
 import { listAllAthletes } from "../lib/api/athletes";
 import { listCoaches } from "../lib/api/coaches";
-import { listBranches } from "../lib/api/branches";
+import { listBranches, getBranchStats, type BranchStats } from "../lib/api/branches";
 import { getPlatformStats, type PlatformStats } from "../lib/api/superAdmin";
 import NotificationBell from "../components/NotificationBell";
 
@@ -82,6 +82,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
 // ve Finans da dahil daha geniş bir kutucuk seti gösterir.
 export const COORDINATOR_TILES: Tile[] = [
   { key: "sporcu", label: "Sporcu Yönetimi", sub: "Branşının sporcuları", icon: "👥" },
+  { key: "antrenorler", label: "Antrenörler", sub: "Branşının kadrosu", icon: "🧑‍🏫" },
   { key: "antrenman", label: "Antrenman-Maç Takvimi", sub: "", icon: "📅" },
   { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
   { key: "aidat", label: "Finans", sub: "Branşının aidatları", icon: "💰" },
@@ -141,7 +142,7 @@ async function handleTilePress(
   } else if (key === "freeze") {
     navigation.navigate("MembershipFreeze", undefined);
   } else if (key === "magaza") {
-    navigation.navigate(role === "club_admin" ? "ShopManage" : "Shop");
+    navigation.navigate(role === "club_admin" || isBranchCoordinator ? "ShopManage" : "Shop");
   } else if (key === "etkinlik") {
     navigation.navigate(role === "club_admin" || isBranchCoordinator ? "EventsManage" : "EventsList");
   } else if (key === "kulupler") {
@@ -201,6 +202,7 @@ export default function HomeScreen({
   const [activeAthleteCount, setActiveAthleteCount] = useState<number | null>(null);
   const [branchCount, setBranchCount] = useState<number | null>(null);
   const [coachCount, setCoachCount] = useState<number | null>(null);
+  const [branchStats, setBranchStats] = useState<BranchStats | null>(null);
   const [clubLogoFailed, setClubLogoFailed] = useState(false);
   const [clubName, setClubName] = useState<string | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
@@ -237,6 +239,20 @@ export default function HomeScreen({
       })();
       return () => { cancelled = true; };
     }, [role])
+  );
+
+  // Branş koordinatörünün Ana Sayfa'sındaki özet satır için — admin'in
+  // kulüp geneli istatistik satırıyla aynı fikir, sadece kendi branşına
+  // sınırlı (aktif sporcu, antrenör, salon sayısı).
+  useFocusEffect(
+    useCallback(() => {
+      if (!isBranchCoordinator || !selectedBranch) { setBranchStats(null); return; }
+      let cancelled = false;
+      getBranchStats(selectedBranch)
+        .then((s) => { if (!cancelled) setBranchStats(s); })
+        .catch(() => {});
+      return () => { cancelled = true; };
+    }, [isBranchCoordinator, selectedBranch])
   );
 
   useFocusEffect(
@@ -342,6 +358,23 @@ export default function HomeScreen({
                   <Text style={styles.statBoxLabel} numberOfLines={1}>Antrenör</Text>
                 </View>
               )}
+            </View>
+          )}
+
+          {isBranchCoordinator && branchStats && (
+            <View style={styles.statsRow}>
+              <View style={[styles.statBox, { flex: 1.15 }]}>
+                <Text style={styles.statBoxValue} numberOfLines={1}>👥 {branchStats.activeAthleteCount}</Text>
+                <Text style={styles.statBoxLabel} numberOfLines={1}>Aktif Sporcu</Text>
+              </View>
+              <View style={[styles.statBox, { flex: 1.05 }]}>
+                <Text style={styles.statBoxValue} numberOfLines={1}>🧑‍🏫 {branchStats.coachCount}</Text>
+                <Text style={styles.statBoxLabel} numberOfLines={1}>Antrenör</Text>
+              </View>
+              <View style={[styles.statBox, { flex: 0.9 }]}>
+                <Text style={styles.statBoxValue} numberOfLines={1}>🏟 {branchStats.venueCount}</Text>
+                <Text style={styles.statBoxLabel} numberOfLines={1}>Salon</Text>
+              </View>
             </View>
           )}
 
