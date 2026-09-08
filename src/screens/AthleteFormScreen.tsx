@@ -180,6 +180,17 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   const handleGroupSelect = (g: Group) => {
     set("group_id", g.id);
     setGroupName(g.name);
+    // Branşın sabit bir aidat ücreti varsa (bkz. StandardFeeScreen), yeni
+    // sporcu eklerken aidat tutarını otomatik doldur — admin hâlâ isterse
+    // değiştirebilir. Sadece YENİ kayıtta ve henüz elle bir şey
+    // yazılmamışsa (mevcut sporcunun planını veya elle girilmiş bir
+    // tutarı sessizce ezmemek için).
+    if (!isEdit && !monthlyFee.trim()) {
+      const branch = branches.find((b) => b.name === g.branch);
+      if (branch?.standard_fee_try != null) {
+        setMonthlyFee(String(branch.standard_fee_try));
+      }
+    }
   };
 
   const pickPhoto = async () => {
