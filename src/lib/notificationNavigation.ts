@@ -41,7 +41,12 @@ export function getNotificationTarget(
     case "session_excuse":
       return { tab: "Ana Menü", screen: isPlanner ? "TrainingSessions" : "MySchedule" };
     case "fitness_program":
-      return { tab: "Ana Menü", screen: "Fitness" };
+      // "Fitness" ekranı sadece antrenör/admin'in Ana Sayfa'sında var (bkz.
+      // HomeScreen.tsx TILES_BY_ROLE) — veli/sporcu buraya gönderilirse
+      // hiç erişemeyecekleri bir yönetim ekranına düşerdi. Bildirimin
+      // payload'ında athleteId yok (toplu gönderim), bu yüzden veli/sporcu
+      // için en güvenli hedef kendi Sporcum listesidir.
+      return { tab: "Ana Menü", screen: isPlanner ? "Fitness" : "MyAthleteList" };
     case "membership_freeze": {
       const athleteId = payload?.athleteId as string | undefined;
       return athleteId ? { tab: "Ana Menü", screen: "AthleteDetail", params: { athleteId } } : null;

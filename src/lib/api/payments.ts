@@ -251,17 +251,43 @@ export function getCurrentMonthRange(): { start: string; end: string } {
 // vardı. paid_at kullanmak "bu ay gerçekten ne kadar para girdi"
 // sorusunu doğru cevaplıyor; pending/overdue hâlâ due_date'e bakıyor
 // çünkü onlar HENÜZ ödenmemiş kayıtlar için "hangi aya ait" sorusuna cevap veriyor.
-// graceDays: Gelişmiş Ayarlar'daki tolerans günü.
-export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
+// graceDays: Gelişmiş Ayarlar'daki tolerans günü. branchName: verilirse
+// (ör. branş koordinatörü) özet SADECE o branşın sporcularının aidatlarını
+// kapsar — verilmezse (admin) tüm kulübü kapsar. Bu parametre eklenmeden
+// önce bir branş koordinatörü, "Finans" ekranındaki grup listesi kendi
+// branşıyla sınırlıyken, aynı ekranın üstündeki özet kartında (Toplam
+// Aidat Durumu / Tahsil Edilen / Bekleyen / Vadesi Geçmiş) TÜM kulübün
+// rakamlarını görüyordu — Ana Sayfa'daki "Finans: Branşının aidatları"
+// etiketiyle çelişen gerçek bir kapsam sızıntısıydı.
+export async function getMonthlyFinanceSummary(graceDays: number = 0, branchName?: string): Promise<MonthlyFinanceSummary> {
   const { start, end } = getCurrentMonthRange();
   const now = new Date();
   const startOfMonthTs = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
   const startOfNextMonthTs = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0).toISOString();
 
+  let athleteIds: string[] | null = null;
+  if (branchName) {
+    const { data: branchGroups, error: groupsError } = await supabase.from("groups").select("id").eq("branch", branchName);
+    if (groupsError) throw groupsError;
+    const groupIds = (branchGroups ?? []).map((g) => g.id);
+    if (groupIds.length === 0) return { expected: 0, collected: 0, pending: 0, overdue: 0 };
+    const { data: branchAthletes, error: athletesError } = await supabase.from("athletes").select("id").in("group_id", groupIds);
+    if (athletesError) throw athletesError;
+    athleteIds = (branchAthletes ?? []).map((a) => a.id);
+    if (athleteIds.length === 0) return { expected: 0, collected: 0, pending: 0, overdue: 0 };
+  }
+
+  let collectedQuery = supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs);
+  let thisMonthDueQuery = supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end);
+  let allPendingQuery = supabase.from("payments").select("amount, status, due_date").eq("status", "pending");
+  if (athleteIds) {
+    collectedQuery = collectedQuery.in("athlete_id", athleteIds);
+    thisMonthDueQuery = thisMonthDueQuery.in("athlete_id", athleteIds);
+    allPendingQuery = allPendingQuery.in("athlete_id", athleteIds);
+  }
+
   const [collectedResult, thisMonthDueResult, allPendingResult] = await Promise.all([
-    supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs),
-    supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end),
-    supabase.from("payments").select("amount, status, due_date").eq("status", "pending"),
+    collectedQuery, thisMonthDueQuery, allPendingQuery,
   ]);
   if (collectedResult.error) throw collectedResult.error;
   if (thisMonthDueResult.error) throw thisMonthDueResult.error;

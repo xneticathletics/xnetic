@@ -443,7 +443,8 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
                 sessions: daySessions,
                 matches: dayMatches,
                 staffing,
-                canManageSchedule,
+                isAdminOrCoordinator: !isCoach,
+                authorizedVenueIds,
                 individualBranchNames: Array.from(individualBranchNames),
                 branchByGroupId,
                 attendanceWindowBeforeMinutes: settings.attendance_window_before_minutes,
@@ -526,7 +527,8 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
             item={item}
             navigation={navigation}
             staffing={staffing}
-            canManageSchedule={canManageSchedule}
+            isAdminOrCoordinator={!isCoach}
+            authorizedVenueIds={authorizedVenueIds}
             individualBranchNames={individualBranchNames}
             branchByGroupId={branchByGroupId}
             attendanceWindowBeforeMinutes={settings.attendance_window_before_minutes}

@@ -135,7 +135,8 @@ export type HomeStackParamList = {
     sessions: import("../lib/api/trainingSessions").TrainingSession[];
     matches: import("../lib/api/matches").MatchRow[];
     staffing: Record<string, import("../lib/api/coaches").GroupStaffing>;
-    canManageSchedule: boolean;
+    isAdminOrCoordinator: boolean;
+    authorizedVenueIds: string[];
     individualBranchNames: string[];
     branchByGroupId: Record<string, string>;
     attendanceWindowBeforeMinutes: number;

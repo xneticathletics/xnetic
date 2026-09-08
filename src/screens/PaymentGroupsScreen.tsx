@@ -42,7 +42,8 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
         try {
           setError(null);
           const [g, b, a, s] = await Promise.all([
-            listGroups(), listBranches(), listAllAthletes(), getMonthlyFinanceSummary(settings.payment_overdue_grace_days),
+            listGroups(), listBranches(), listAllAthletes(),
+            getMonthlyFinanceSummary(settings.payment_overdue_grace_days, isLocked ? globalBranch ?? undefined : undefined),
           ]);
           if (!cancelled) {
             setAllGroups(g);
@@ -58,7 +59,7 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
         }
       })();
       return () => { cancelled = true; };
-    }, [settings.payment_overdue_grace_days])
+    }, [settings.payment_overdue_grace_days, isLocked, globalBranch])
   );
 
   const formatTL = (n: number) => `${n.toLocaleString("tr-TR")} ₺`;

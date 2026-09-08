@@ -18,7 +18,8 @@ export default function DayAgendaItem({
   item,
   navigation,
   staffing,
-  canManageSchedule,
+  isAdminOrCoordinator,
+  authorizedVenueIds,
   individualBranchNames,
   branchByGroupId,
   attendanceWindowBeforeMinutes,
@@ -30,9 +31,13 @@ export default function DayAgendaItem({
   item: DayItem;
   navigation: NativeStackNavigationProp<HomeStackParamList, any>;
   staffing: Record<string, GroupStaffing>;
-  // Antrenmanı silme yetkisi: admin, branş koordinatörü ya da salon
-  // yetkilisi — sıradan (etiketsiz) antrenör artık silemez.
-  canManageSchedule: boolean;
+  // Antrenmanı silme yetkisi: admin/koordinatör HER antrenmanı silebilir;
+  // salon yetkilisi SADECE kendi yetkili olduğu salondaki antrenmanı
+  // silebilir (tek bir global "canManageSchedule" bayrağı kullanmak,
+  // salon yetkilisine BAŞKA salonların antrenmanlarında da Sil butonu
+  // gösterip RLS'in sessizce reddettiği bir tıklamaya yol açıyordu).
+  isAdminOrCoordinator: boolean;
+  authorizedVenueIds: string[];
   individualBranchNames: Set<string>;
   branchByGroupId: Record<string, string>;
   attendanceWindowBeforeMinutes: number;
@@ -79,6 +84,7 @@ export default function DayAgendaItem({
   const attendanceOpen = isAttendanceWindowOpen(session, attendanceWindowBeforeMinutes, attendanceWindowAfterMinutes);
   const completionOpen = isCompletionWindowOpen(session, completionWindowBeforeMinutes);
   const isPast = isSessionPast(session);
+  const canDeleteThis = isAdminOrCoordinator || (!!session.venue_id && authorizedVenueIds.includes(session.venue_id));
 
   const handleYoklamaPress = () => {
     if (!attendanceOpen) {
@@ -163,7 +169,7 @@ export default function DayAgendaItem({
             </Text>
           </TouchableOpacity>
         )}
-        {isPast && canManageSchedule && (
+        {isPast && canDeleteThis && (
           <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(session)}>
             <Text style={styles.deleteButtonText}>🗑 Sil</Text>
           </TouchableOpacity>
