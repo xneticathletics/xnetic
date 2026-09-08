@@ -2,7 +2,7 @@ import { supabase } from "../supabase";
 import { getCurrentAppUserId } from "./currentUser";
 import { sendNotification } from "./notifications";
 
-export type FreezeRequestedBy = "parent" | "admin";
+export type FreezeRequestedBy = "parent" | "admin" | "coach";
 
 export type MembershipFreeze = {
   id: string;

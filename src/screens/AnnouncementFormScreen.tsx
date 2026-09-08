@@ -12,6 +12,7 @@ import type { Branch } from "../lib/api/branches";
 import { listBranches } from "../lib/api/branches";
 import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { ProfileStackParamList } from "../navigation/ProfileStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
@@ -26,7 +27,12 @@ const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
 ];
 
 export default function AnnouncementFormScreen({ navigation }: Props) {
-  const { clubId } = useAuth();
+  const { clubId, role } = useAuth();
+  const { isLocked, selectedBranch } = useBranchSelect();
+  // Branş koordinatörü sadece kendi branşının gruplarına duyuru
+  // gönderebilir — "Tüm Kulüp"/"Veliler"/"Antrenörler"/"Sporcular" kulüp
+  // geneli bir yayın olduğu için admin'e özel kalıyor.
+  const isCoordinator = role === "coach" && isLocked;
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -55,6 +61,12 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       })
       .catch(() => {});
   }, []);
+
+  // Koordinatörün tek seçeneği "Belirli Gruplar" — elle seçmesine gerek
+  // kalmadan otomatik işaretliyoruz, diğer hedef tipleri hiç gösterilmiyor.
+  useEffect(() => {
+    if (isCoordinator) setTargetTypes(["group"]);
+  }, [isCoordinator]);
 
   const toggleTarget = (value: AnnouncementTarget) => {
     setTargetTypes((prev) => (prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]));
@@ -153,24 +165,30 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
         />
       </Field>
 
-      <Field label="Kime Gönderilsin? * (birden fazla seçebilirsin)">
-        <View style={styles.targetGrid}>
-          {TARGET_OPTIONS.map((opt) => {
-            const active = targetTypes.includes(opt.value);
-            return (
-              <TouchableOpacity
-                key={opt.value}
-                style={[styles.targetChip, active && styles.targetChipActive]}
-                onPress={() => toggleTarget(opt.value)}
-              >
-                <Text style={[styles.targetChipText, active && styles.targetChipTextActive]}>
-                  {active ? "✓ " : ""}{opt.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </Field>
+      {isCoordinator ? (
+        <Text style={styles.coordinatorNote}>
+          Bu duyuru, aşağıda seçtiğin {selectedBranch} branşındaki gruplara gönderilecek.
+        </Text>
+      ) : (
+        <Field label="Kime Gönderilsin? * (birden fazla seçebilirsin)">
+          <View style={styles.targetGrid}>
+            {TARGET_OPTIONS.map((opt) => {
+              const active = targetTypes.includes(opt.value);
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.targetChip, active && styles.targetChipActive]}
+                  onPress={() => toggleTarget(opt.value)}
+                >
+                  <Text style={[styles.targetChipText, active && styles.targetChipTextActive]}>
+                    {active ? "✓ " : ""}{opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Field>
+      )}
 
       <Field label={`Ek (isteğe bağlı, en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB)`}>
         {attachmentName ? (
@@ -189,7 +207,7 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
 
       {targetTypes.includes("group") && (
         <Field label="Gruplar *">
-          {branches.length > 1 && (
+          {!isCoordinator && branches.length > 1 && (
             <View style={styles.branchFilterRow}>
               <TouchableOpacity
                 style={[styles.branchChip, !branchFilter && styles.branchChipActive]}
@@ -236,7 +254,11 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
         onConfirm={setSelectedGroups}
         onClose={() => setGroupPickerVisible(false)}
         allowedIds={
-          branchFilter ? allGroups.filter((g) => g.branch === branchFilter).map((g) => g.id) : undefined
+          isCoordinator
+            ? allGroups.filter((g) => g.branch === selectedBranch).map((g) => g.id)
+            : branchFilter
+            ? allGroups.filter((g) => g.branch === branchFilter).map((g) => g.id)
+            : undefined
         }
       />
       </ScrollView>
@@ -260,6 +282,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
+  coordinatorNote: { color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: spacing.md },
   targetGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   targetChip: {
     borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,

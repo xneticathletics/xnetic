@@ -142,7 +142,7 @@ export default function MembershipFreezeScreen({ route, navigation }: Props) {
         athlete_id: athleteId,
         start_date: startDate,
         end_date: endDate,
-        requested_by_role: role === "club_admin" ? "admin" : "parent",
+        requested_by_role: role === "club_admin" ? "admin" : role === "coach" ? "coach" : "parent",
         reason: reason.trim() || null,
       });
       await loadForAthlete(athleteId);
@@ -259,7 +259,9 @@ export default function MembershipFreezeScreen({ route, navigation }: Props) {
                 onLongPress={canDeleteFreeze ? () => handleDelete(f) : undefined}
               >
                 <Text style={styles.historyRange}>{formatDate(f.start_date)} - {formatDate(f.end_date)}</Text>
-                <Text style={styles.historyBy}>{f.requested_by_role === "admin" ? "Admin" : "Veli"}</Text>
+                <Text style={styles.historyBy}>
+                  {f.requested_by_role === "admin" ? "Admin" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
+                </Text>
               </TouchableOpacity>
             ))}
           </>

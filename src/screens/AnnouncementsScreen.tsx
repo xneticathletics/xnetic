@@ -8,6 +8,7 @@ import { listAnnouncements, filterAnnouncementsForViewer, type Announcement } fr
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { useClubSettings } from "../context/ClubSettingsContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 // Hem ProfileStack (Kulüp Admini/Süper Admin'de, Profil'in içinden) hem
 // AnnouncementsStack (Antrenör/Veli/Sporcu'da, kendi bağımsız "Duyurular"
@@ -26,6 +27,8 @@ const TARGET_LABEL: Record<string, string> = {
 
 export default function AnnouncementsScreen({ navigation }: Props) {
   const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  const isBranchCoordinator = role === "coach" && isLocked;
   const { settings } = useClubSettings();
   const [items, setItems] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +72,7 @@ export default function AnnouncementsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {role === "club_admin" && (
+      {(role === "club_admin" || isBranchCoordinator) && (
         <View style={styles.header}>
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("AnnouncementForm")}>
             <Text style={styles.addButtonText}>+ Duyuru Yap</Text>
@@ -91,7 +94,7 @@ export default function AnnouncementsScreen({ navigation }: Props) {
             style={styles.row}
             onPress={() => navigation.navigate("AnnouncementDetail", { announcementId: item.id })}
           >
-            {role === "club_admin" ? (
+            {role === "club_admin" || isBranchCoordinator ? (
               <>
                 <View style={styles.rowTop}>
                   <Text style={styles.rowTag}>
