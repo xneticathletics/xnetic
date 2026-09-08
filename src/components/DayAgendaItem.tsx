@@ -155,7 +155,7 @@ export default function DayAgendaItem({
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate("SessionMedia", { sessionId: session.id, label: `${session.groups?.name ?? ""} · ${session.session_date}` })}
+          onPress={() => navigation.navigate("SessionMedia", { sessionId: session.id, label: `${session.groups?.name ?? ""} · ${session.session_date}`, canManagePhotos: canDeleteThis })}
         >
           <Text style={styles.actionButtonText}>📷 Fotoğraflar</Text>
         </TouchableOpacity>

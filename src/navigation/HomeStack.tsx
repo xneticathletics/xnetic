@@ -154,7 +154,7 @@ export type HomeStackParamList = {
   TrainingSessionForm: { sessionId: string | undefined };
   Attendance: { sessionId: string; groupId: string; groupName: string };
   SessionRoster: { sessionId: string; groupId: string; groupName: string };
-  SessionMedia: { sessionId: string; label?: string };
+  SessionMedia: { sessionId: string; label?: string; canManagePhotos?: boolean };
   InviteUser: { presetRole?: "parent" | "athlete" | "coach" } | undefined;
   CoachesList: undefined;
   CoachesOverview: undefined;

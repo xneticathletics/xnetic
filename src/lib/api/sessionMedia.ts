@@ -6,13 +6,14 @@ export type SessionMedia = {
   id: string;
   media_url: string;
   media_type: string;
+  storage_path: string;
   created_at: string;
 };
 
 export async function listSessionMedia(sessionId: string): Promise<SessionMedia[]> {
   const { data, error } = await supabase
     .from("training_session_media")
-    .select("id, media_url, media_type, created_at")
+    .select("id, media_url, media_type, storage_path, created_at")
     .eq("session_id", sessionId)
     .order("created_at", { ascending: false });
 
@@ -43,8 +44,20 @@ export async function uploadSessionPhoto(sessionId: string, localUri: string) {
 
   const { error: insertError } = await supabase
     .from("training_session_media")
-    .insert({ session_id: sessionId, media_url: signedData.signedUrl, media_type: "photo" });
+    .insert({ session_id: sessionId, media_url: signedData.signedUrl, media_type: "photo", storage_path: path });
   if (insertError) throw insertError;
 
   return signedData.signedUrl;
+}
+
+// Fotoğrafı hem Storage'dan (gerçek dosya) hem veritabanından siler —
+// sadece admin/branş koordinatörü/salon yetkilisi çağırabilir (bkz.
+// migration 20260908080000, storage.objects "session_media_delete" ve
+// training_session_media "training_session_media_delete" politikaları).
+export async function deleteSessionMedia(media: Pick<SessionMedia, "id" | "storage_path">): Promise<void> {
+  const { error: storageError } = await supabase.storage.from("session-media").remove([media.storage_path]);
+  if (storageError) throw storageError;
+
+  const { error } = await supabase.from("training_session_media").delete().eq("id", media.id);
+  if (error) throw error;
 }
