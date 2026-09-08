@@ -11,11 +11,18 @@ export default function Pricing({ settings, loading }: { settings: PlatformSetti
     <section id="fiyatlandirma" className="border-y border-line bg-surface/40 py-20">
       <div className="mx-auto max-w-4xl px-5">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <span className="text-xs font-bold uppercase tracking-widest text-teal">Fiyatlandırma</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow/40 bg-yellow/10 px-3 py-1 text-xs font-bold text-yellow">
+            🚀 Erken Dönem Fırsatı
+          </span>
+          <span className="mt-3 block text-xs font-bold uppercase tracking-widest text-teal">Fiyatlandırma</span>
           <h2 className="mt-3 text-3xl font-extrabold text-ink md:text-4xl">Tek plan, sınırsız kullanıcı</h2>
           <p className="mt-4 text-sm leading-relaxed text-muted">
             Kulüp büyüklüğü fark etmeksizin sabit fiyat — sporcu, antrenör ya da veli
             sayısına göre ek ücret yok.
+          </p>
+          <p className="mt-2 text-sm font-semibold text-ink">
+            Şimdi katılan kulüpler için özel erken dönem fiyatları — ilerleyen dönemde artabilir,
+            bugün başlayan bu fiyatı korur.
           </p>
         </div>
 
