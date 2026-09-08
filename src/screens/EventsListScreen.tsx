@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, ImageBackground } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -60,26 +60,36 @@ export default function EventsListScreen({ navigation }: Props) {
             activeOpacity={0.85}
             onPress={() => navigation.navigate("EventDetail", { eventId: item.id })}
           >
-            {item.banner_url ? (
-              <Image source={{ uri: item.banner_url }} style={styles.cardImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
-                <Text style={{ fontSize: 40 }}>🏆</Text>
+            <ImageBackground
+              source={item.banner_url ? { uri: item.banner_url } : undefined}
+              style={styles.cardBg}
+              imageStyle={styles.cardBgImage}
+            >
+              {!item.banner_url && (
+                <View style={styles.cardImagePlaceholder}>
+                  <Text style={{ fontSize: 48 }}>🏆</Text>
+                </View>
+              )}
+              {/* Fotoğraf her renkte olabileceği için hafif genel bir
+                  karartma + yazı bloğunun altında daha koyu bir taban —
+                  metin her koşulda okunaklı kalsın diye. */}
+              <View style={styles.cardScrim} pointerEvents="none" />
+
+              <View style={styles.cardTopRow}>
+                <Text style={styles.typeBadge}>{EVENT_TYPE_LABEL[item.type]}</Text>
               </View>
-            )}
-            <View style={styles.typeBadge}>
-              <Text style={styles.typeBadgeText}>{EVENT_TYPE_LABEL[item.type]}</Text>
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.cardMeta}>
-                {new Date(item.start_date).toLocaleDateString("tr-TR")}
-                {item.location ? ` · ${item.location}` : ""}
-              </Text>
-              <Text style={styles.cardPrice}>
-                {item.fee_try > 0 ? `${item.fee_try.toLocaleString("tr-TR")} ₺` : "Ücretsiz"}
-              </Text>
-            </View>
+
+              <View style={styles.cardTextBlock}>
+                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.cardMeta}>
+                  {new Date(item.start_date).toLocaleDateString("tr-TR")}
+                  {item.location ? ` · ${item.location}` : ""}
+                </Text>
+                <Text style={styles.cardPrice}>
+                  {item.fee_try > 0 ? `${item.fee_try.toLocaleString("tr-TR")} ₺` : "Ücretsiz"}
+                </Text>
+              </View>
+            </ImageBackground>
           </TouchableOpacity>
         )}
       />
@@ -97,20 +107,24 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   card: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, overflow: "hidden", marginBottom: spacing.md,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, overflow: "hidden", marginBottom: spacing.lg,
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3,
   },
-  cardImage: { width: "100%", height: 150, backgroundColor: colors.bg },
-  cardImagePlaceholder: { alignItems: "center", justifyContent: "center" },
-  typeBadge: {
-    position: "absolute", top: spacing.sm, left: spacing.sm,
-    backgroundColor: "rgba(16,18,42,0.75)", borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 3,
+  cardBg: { width: "100%", height: 220, backgroundColor: colors.surface, justifyContent: "space-between" },
+  cardBgImage: { resizeMode: "cover" },
+  cardImagePlaceholder: {
+    ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface,
   },
-  typeBadgeText: { color: colors.ink, fontSize: 11, fontWeight: "700" },
-  cardBody: { padding: spacing.md },
-  cardTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" },
-  cardMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
-  cardPrice: { color: colors.yellow, fontSize: 15, fontWeight: "800", marginTop: spacing.xs },
+  // Fotoğraf her parlaklıkta olabileceği için alt kısımda sabit koyu bir
+  // "başlık şeridi" — metin bloğu her zaman bunun üzerinde, kontrast garanti.
+  cardScrim: { position: "absolute", left: 0, right: 0, bottom: 0, height: "62%", backgroundColor: "rgba(8,9,26,0.78)" },
+  cardTopRow: { flexDirection: "row", padding: spacing.sm },
+  typeBadge: {
+    backgroundColor: "rgba(16,18,42,0.8)", borderRadius: radius.full, overflow: "hidden",
+    paddingHorizontal: spacing.sm, paddingVertical: 3, color: colors.ink, fontSize: 11, fontWeight: "700",
+  },
+  cardTextBlock: { padding: spacing.md },
+  cardTitle: { color: colors.ink, fontSize: 18, fontWeight: "800" },
+  cardMeta: { color: colors.ink, opacity: 0.85, fontSize: 12, marginTop: 4 },
+  cardPrice: { color: colors.yellow, fontSize: 16, fontWeight: "800", marginTop: spacing.xs },
 });

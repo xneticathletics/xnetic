@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, ImageBackground } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -69,23 +69,33 @@ export default function EventsManageScreen({ navigation }: Props) {
             activeOpacity={0.85}
             onPress={() => navigation.navigate("EventDetail", { eventId: item.id })}
           >
-            {item.banner_url ? (
-              <Image source={{ uri: item.banner_url }} style={styles.thumb} resizeMode="cover" />
-            ) : (
-              <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                <Text style={{ fontSize: 28 }}>🏆</Text>
+            <ImageBackground
+              source={item.banner_url ? { uri: item.banner_url } : undefined}
+              style={styles.rowBg}
+              imageStyle={styles.rowBgImage}
+            >
+              {!item.banner_url && (
+                <View style={styles.thumbPlaceholder}>
+                  <Text style={{ fontSize: 40 }}>🏆</Text>
+                </View>
+              )}
+              {/* Fotoğraf her renkte olabileceği için sabit koyu bir taban —
+                  metin her koşulda okunaklı kalsın diye. */}
+              <View style={styles.rowScrim} pointerEvents="none" />
+
+              <View style={styles.rowTextBlock}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
+                  <Text style={styles.rowSub}>
+                    {EVENT_TYPE_LABEL[item.type]} · {new Date(item.start_date).toLocaleDateString("tr-TR")}
+                  </Text>
+                  <Text style={[styles.badge, { color: STATUS_COLOR[item.status], borderColor: STATUS_COLOR[item.status] }]}>
+                    {STATUS_LABEL[item.status]}
+                  </Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
               </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
-              <Text style={styles.rowSub}>
-                {EVENT_TYPE_LABEL[item.type]} · {new Date(item.start_date).toLocaleDateString("tr-TR")}
-              </Text>
-              <Text style={[styles.badge, { color: STATUS_COLOR[item.status], borderColor: STATUS_COLOR[item.status] }]}>
-                {STATUS_LABEL[item.status]}
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
+            </ImageBackground>
           </TouchableOpacity>
         )}
       />
@@ -103,18 +113,21 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {
-    flexDirection: "row", alignItems: "center", gap: spacing.md,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, padding: spacing.sm, marginBottom: spacing.sm,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, overflow: "hidden", marginBottom: spacing.md,
     shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2,
   },
-  thumb: { width: 64, height: 64, borderRadius: radius.md },
-  thumbPlaceholder: { backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
-  rowTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  rowBg: { width: "100%", height: 140, backgroundColor: colors.surface, justifyContent: "flex-end" },
+  rowBgImage: { resizeMode: "cover" },
+  thumbPlaceholder: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
+  // Fotoğraf her parlaklıkta olabileceği için alt kısımda sabit koyu bir
+  // "başlık şeridi" — metin bloğu her zaman bunun üzerinde, kontrast garanti.
+  rowScrim: { position: "absolute", left: 0, right: 0, bottom: 0, height: "75%", backgroundColor: "rgba(8,9,26,0.78)" },
+  rowTextBlock: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" },
+  rowSub: { color: colors.ink, opacity: 0.85, fontSize: 12, marginTop: 2 },
   badge: {
-    alignSelf: "flex-start", fontSize: 10, fontWeight: "700", marginTop: 4,
+    alignSelf: "flex-start", fontSize: 10, fontWeight: "700", marginTop: 6,
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full, borderWidth: 1, overflow: "hidden",
   },
-  chevron: { color: colors.muted, fontSize: 20, fontWeight: "700" },
+  chevron: { color: colors.ink, fontSize: 24, fontWeight: "700" },
 });

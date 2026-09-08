@@ -24,6 +24,10 @@ export default function EventDetailScreen({ route, navigation }: Props) {
   const [myRegistration, setMyRegistration] = useState<EventRegistrationRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Yayınla/İptal Et/Sil bildirim gönderimi vs. içerdiği için birkaç saniye
+  // sürebiliyor — buton kendi üstünde dönen bir gösterge olmadan basıldıktan
+  // sonra hiçbir tepki vermiyormuş gibi görünüyordu.
+  const [actionLoading, setActionLoading] = useState<"publish" | "cancel" | "delete" | null>(null);
 
   const isAdmin = role === "club_admin";
   const canManage = isAdmin || (isLocked && !!event?.branch && event.branch === selectedBranch);
@@ -52,12 +56,15 @@ export default function EventDetailScreen({ route, navigation }: Props) {
   );
 
   const handlePublish = async () => {
-    if (!event) return;
+    if (!event || actionLoading) return;
+    setActionLoading("publish");
     try {
       await publishEvent(event);
-      load();
+      await load();
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Yayınlanamadı", [{ text: "Tamam" }]);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -68,11 +75,14 @@ export default function EventDetailScreen({ route, navigation }: Props) {
       {
         text: "İptal Et", style: "destructive",
         onPress: async () => {
+          setActionLoading("cancel");
           try {
             await cancelEvent(event.id);
-            load();
+            await load();
           } catch (e: any) {
             Alert.alert("Hata", e.message ?? "İptal edilemedi", [{ text: "Tamam" }]);
+          } finally {
+            setActionLoading(null);
           }
         },
       },
@@ -86,11 +96,13 @@ export default function EventDetailScreen({ route, navigation }: Props) {
       {
         text: "Sil", style: "destructive",
         onPress: async () => {
+          setActionLoading("delete");
           try {
             await deleteEvent(event.id);
             navigation.goBack();
           } catch (e: any) {
             Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);
+            setActionLoading(null);
           }
         },
       },
@@ -151,26 +163,46 @@ export default function EventDetailScreen({ route, navigation }: Props) {
       {canManage && (
         <View style={styles.footer}>
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("EventForm", { eventId: event.id })}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => navigation.navigate("EventForm", { eventId: event.id })}
+              disabled={!!actionLoading}
+            >
               <Text style={styles.secondaryButtonText}>Düzenle</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("EventRegistrations", { eventId: event.id })}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => navigation.navigate("EventRegistrations", { eventId: event.id })}
+              disabled={!!actionLoading}
+            >
               <Text style={styles.secondaryButtonText}>Kayıtlar</Text>
             </TouchableOpacity>
           </View>
           {event.status === "draft" && (
-            <TouchableOpacity style={styles.primaryButton} onPress={handlePublish}>
-              <Text style={styles.primaryButtonText}>Yayınla</Text>
+            <TouchableOpacity style={styles.primaryButton} onPress={handlePublish} disabled={!!actionLoading}>
+              {actionLoading === "publish" ? (
+                <ActivityIndicator color={colors.bg} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Yayınla</Text>
+              )}
             </TouchableOpacity>
           )}
           {event.status === "published" && (
-            <TouchableOpacity style={styles.destructiveButton} onPress={handleCancel}>
-              <Text style={styles.destructiveButtonText}>Etkinliği İptal Et</Text>
+            <TouchableOpacity style={styles.destructiveButton} onPress={handleCancel} disabled={!!actionLoading}>
+              {actionLoading === "cancel" ? (
+                <ActivityIndicator color={colors.coral} />
+              ) : (
+                <Text style={styles.destructiveButtonText}>Etkinliği İptal Et</Text>
+              )}
             </TouchableOpacity>
           )}
           {event.status === "draft" && (
-            <TouchableOpacity style={styles.destructiveButton} onPress={handleDelete}>
-              <Text style={styles.destructiveButtonText}>Taslağı Sil</Text>
+            <TouchableOpacity style={styles.destructiveButton} onPress={handleDelete} disabled={!!actionLoading}>
+              {actionLoading === "delete" ? (
+                <ActivityIndicator color={colors.coral} />
+              ) : (
+                <Text style={styles.destructiveButtonText}>Taslağı Sil</Text>
+              )}
             </TouchableOpacity>
           )}
         </View>
