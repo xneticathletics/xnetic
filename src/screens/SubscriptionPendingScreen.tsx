@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Linking, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth } from "../context/AuthContext";
 import { getPlatformSettings, type PlatformSettings } from "../lib/api/platformSettings";
-import { useCopyToast } from "../hooks/useCopyToast";
+import { getClubName } from "../lib/api/clubSettings";
+import { notifyRenewalPaymentClaim } from "../lib/api/subscriptionStatus";
 
 type Props = { status: string; billingPeriod: string; amountTry: number };
+
+// wa.me formatı: ülke koduyla, başında "+" ya da "0" olmadan sadece rakam
+// (web/src/routes/CreateClubPage.tsx'teki aynı yardımcı fonksiyonun kopyası
+// — mobil ve web ayrı paketler, paylaşılamıyor).
+function toWhatsappDigits(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = `90${digits.slice(1)}`;
+  else if (!digits.startsWith("90")) digits = `90${digits}`;
+  return digits;
+}
 
 const COPY: Record<string, { icon: string; title: string; text: string }> = {
   pending_review: {
@@ -28,15 +39,30 @@ const COPY: Record<string, { icon: string; title: string; text: string }> = {
 
 export default function SubscriptionPendingScreen({ status, billingPeriod, amountTry }: Props) {
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
+  const { signOut, clubId } = useAuth();
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
-  const { copy, copiedKey } = useCopyToast();
+  const [clubName, setClubName] = useState<string | null>(null);
+  const [notifying, setNotifying] = useState(false);
+  const [notified, setNotified] = useState(false);
 
   useEffect(() => {
     getPlatformSettings().then(setSettings).catch(() => {});
-  }, []);
+    if (clubId) getClubName(clubId).then(setClubName).catch(() => {});
+  }, [clubId]);
 
   const copyInfo = COPY[status] ?? COPY.pending_review;
+
+  const handleNotifyPaid = async () => {
+    setNotifying(true);
+    try {
+      await notifyRenewalPaymentClaim(clubName ?? "Bir kulüp");
+      setNotified(true);
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "Bildirilemedi", [{ text: "Tamam" }]);
+    } finally {
+      setNotifying(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -56,16 +82,34 @@ export default function SubscriptionPendingScreen({ status, billingPeriod, amoun
 
       {settings === null ? (
         <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.lg }} />
-      ) : settings.bankIban ? (
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Ödeme Hesabı</Text>
-          {settings.bankAccountName && <Text style={styles.cardValue}>{settings.bankAccountName}</Text>}
-          <TouchableOpacity onPress={() => copy("iban", settings.bankIban!)} style={styles.ibanRow}>
-            <Text style={styles.ibanText}>{settings.bankIban}</Text>
-            <Text style={styles.copyHint}>{copiedKey === "iban" ? "Kopyalandı ✓" : "Kopyala"}</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
+      ) : settings.supportPhone ? (
+        <TouchableOpacity
+          style={styles.whatsappButton}
+          onPress={() =>
+            Linking.openURL(
+              `https://wa.me/${toWhatsappDigits(settings.supportPhone!)}?text=${encodeURIComponent(
+                `Merhaba, X-NETIC'te aboneliğimi ödemek/yenilemek istiyorum.`
+              )}`
+            )
+          }
+        >
+          <Text style={styles.whatsappButtonText}>💬 WhatsApp'tan İletişime Geç</Text>
+        </TouchableOpacity>
+      ) : (
+        <Text style={styles.noPhoneText}>
+          Şu an için lütfen {settings?.supportEmail ?? "destek@xnetic.net"} üzerinden iletişime geç.
+        </Text>
+      )}
+
+      {status === "past_due" && (
+        <TouchableOpacity style={styles.paidButton} onPress={handleNotifyPaid} disabled={notifying || notified}>
+          {notifying ? (
+            <ActivityIndicator color={colors.bg} size="small" />
+          ) : (
+            <Text style={styles.paidButtonText}>{notified ? "✓ Bildirildi" : "Ödedim, Bildir"}</Text>
+          )}
+        </TouchableOpacity>
+      )}
 
       {(settings?.supportEmail || settings?.supportPhone) && (
         <Text style={styles.support}>
@@ -94,9 +138,17 @@ const styles = StyleSheet.create({
   },
   cardLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", marginBottom: 4 },
   cardValue: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  ibanRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 },
-  ibanText: { color: colors.yellow, fontSize: 14, fontWeight: "700", flexShrink: 1 },
-  copyHint: { color: colors.teal, fontSize: 12, fontWeight: "700", marginLeft: spacing.sm },
+  whatsappButton: {
+    alignSelf: "stretch", flexDirection: "row", justifyContent: "center", alignItems: "center",
+    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md, paddingVertical: 12, marginBottom: spacing.md,
+  },
+  whatsappButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
+  noPhoneText: { color: colors.coral, fontSize: 12, lineHeight: 18, textAlign: "center", marginBottom: spacing.md },
+  paidButton: {
+    alignSelf: "stretch", backgroundColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: "center", marginBottom: spacing.md,
+  },
+  paidButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
   support: { color: colors.muted, fontSize: 12, textAlign: "center", marginTop: spacing.sm },
   signOutButton: { marginTop: spacing.xl, paddingVertical: spacing.sm },
   signOutText: { color: colors.muted, fontWeight: "600" },

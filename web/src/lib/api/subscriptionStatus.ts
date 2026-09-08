@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { sendNotification } from "./notifications";
 
 export type ClubSubscriptionStatus = {
   status: string;
@@ -30,3 +31,15 @@ export async function getMySubscriptionStatus(): Promise<ClubSubscriptionStatus 
 }
 
 export const BLOCKED_SUBSCRIPTION_STATUSES = ["pending_review", "past_due", "cancelled"];
+
+// "past_due" ekranındaki "Ödedim, Bildir" butonu — mobildeki
+// notifyRenewalPaymentClaim ile birebir aynı (notifications_insert_club
+// RLS politikası "recipient rolü super_admin ise farklı kulüpten de olsa
+// izin ver" şartını zaten içeriyor, ekstra bir edge function gerekmiyor).
+export async function notifyRenewalPaymentClaim(clubName: string): Promise<void> {
+  const { data: admins, error } = await supabase.from("users").select("id").eq("role", "super_admin").eq("is_active", true);
+  if (error) throw error;
+  const title = "Kulüp Yenileme Ödemesi Bildirdi";
+  const body = `${clubName} kulübü abonelik yenileme ödemesini yaptığını bildirdi. Abonelikler ekranından kontrol edip onaylayabilirsin.`;
+  await Promise.all((admins ?? []).map((a) => sendNotification(a.id, title, body).catch(() => {})));
+}

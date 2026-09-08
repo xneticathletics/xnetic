@@ -53,6 +53,7 @@ export type SubscriptionRow = {
   status: string;
   amount_try: number;
   created_at: string;
+  current_period_end: string | null;
 };
 
 // Abonelikler ekranı için — her kulübün EN SON abonelik kaydıyla birlikte
@@ -63,7 +64,7 @@ export async function listAllSubscriptions(): Promise<SubscriptionRow[]> {
     supabase.from("clubs").select("id, name").order("name", { ascending: true }),
     supabase
       .from("club_subscriptions")
-      .select("id, club_id, billing_period, status, amount_try, created_at")
+      .select("id, club_id, billing_period, status, amount_try, created_at, current_period_end")
       .order("created_at", { ascending: false }),
   ]);
   if (clubsResult.error) throw clubsResult.error;
@@ -84,6 +85,7 @@ export async function listAllSubscriptions(): Promise<SubscriptionRow[]> {
       status: s?.status ?? "none",
       amount_try: s?.amount_try ?? 0,
       created_at: s?.created_at ?? "",
+      current_period_end: s?.current_period_end ?? null,
     };
   });
 }
@@ -116,7 +118,11 @@ export async function upsertSubscription(input: {
         billing_period: input.billing_period,
         status: input.status,
         amount_try: input.amount_try,
-        ...(input.status === "active" ? { current_period_end: currentPeriodEnd } : {}),
+        // "active"e çekilince yeni bir dönem başlıyor demektir — bir
+        // önceki dönemden kalan yenileme hatırlatması bayrağı sıfırlanır,
+        // yoksa process_subscription_renewals() bu yeni dönem için hiç
+        // hatırlatma göndermez (renewal_reminder_sent_at is null şartı).
+        ...(input.status === "active" ? { current_period_end: currentPeriodEnd, renewal_reminder_sent_at: null } : {}),
       })
       .eq("id", input.id);
     if (error) throw error;

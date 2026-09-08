@@ -39,12 +39,19 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Onay bekleyen (yeni ödeme bildirimi) kayıtlar en üstte görünsün — süper
-  // adminin her açılışta ilk göreceği şey bunlar olsun.
+  // Onay bekleyen (yeni ödeme bildirimi) VE süresi dolmuş (yenileme
+  // gereken) kayıtlar en üstte görünsün — süper adminin her açılışta ilk
+  // göreceği şey, dikkat gerektiren kulüpler olsun.
+  const needsAttention = (status: string) => status === "pending_review" || status === "past_due";
   const sortedRows = useMemo(
-    () => [...rows].sort((a, b) => (a.status === "pending_review" ? -1 : 0) - (b.status === "pending_review" ? -1 : 0)),
+    () => [...rows].sort((a, b) => (needsAttention(a.status) ? -1 : 0) - (needsAttention(b.status) ? -1 : 0)),
     [rows]
   );
+
+  const formatPeriodEnd = (iso: string | null) => {
+    if (!iso) return null;
+    return new Date(iso).toLocaleDateString("tr-TR");
+  };
 
   const load = useCallback(() => {
     setError(null);
@@ -117,11 +124,14 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{PERIOD_LABELS[item.billing_period] ?? item.billing_period}</Text>
                   </View>
-                  <View style={[styles.badge, item.status === "pending_review" ? styles.badgePending : styles.badgeStatus]}>
+                  <View style={[styles.badge, needsAttention(item.status) ? styles.badgePending : styles.badgeStatus]}>
                     <Text style={styles.badgeText}>{STATUS_LABELS[item.status] ?? item.status}</Text>
                   </View>
                   <Text style={styles.amountText}>₺{item.amount_try.toLocaleString("tr-TR")}</Text>
                 </View>
+              )}
+              {item.status === "active" && formatPeriodEnd(item.current_period_end) && (
+                <Text style={styles.periodEndText}>Dönem bitişi: {formatPeriodEnd(item.current_period_end)}</Text>
               )}
             </View>
             <Text style={styles.chevron}>›</Text>
@@ -203,6 +213,7 @@ const styles = StyleSheet.create({
   badgeText: { color: colors.ink, fontSize: 11, fontWeight: "700" },
   amountText: { color: colors.yellow, fontSize: 12, fontWeight: "800" },
   noSub: { color: colors.coral, fontSize: 11, fontStyle: "italic", marginTop: 4 },
+  periodEndText: { color: colors.muted, fontSize: 10, marginTop: 4 },
   chevron: { color: colors.yellow, fontSize: 20, fontWeight: "700" },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   sheet: {
