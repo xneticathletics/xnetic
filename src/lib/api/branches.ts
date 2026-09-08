@@ -9,16 +9,36 @@ export type Branch = {
   // skor" anlamlı değil — müsabaka sonucu skor yerine serbest metin
   // açıklamayla giriliyor (bkz. matches.result_note).
   is_individual: boolean;
+  // Branşa özel sabit aidat ücreti (bkz. updateBranchStandardFee) — null
+  // ise bu branş için sabit ücret hiç ayarlanmamış, sporcu bazında serbest
+  // tutar modeli geçerli.
+  standard_fee_try: number | null;
 };
 
 export async function listBranches(): Promise<Branch[]> {
   const { data, error } = await supabase
     .from("branches")
-    .select("id, name, coordinator_user_id, is_individual, coordinator:coordinator_user_id(name)")
+    .select("id, name, coordinator_user_id, is_individual, standard_fee_try, coordinator:coordinator_user_id(name)")
     .order("name", { ascending: true });
 
   if (error) throw error;
   return (data as unknown as Branch[]) ?? [];
+}
+
+export type StandardFeeUpdateResult = { plansUpdated: number; paymentsUpdated: number };
+
+// Admin bir branşın sabit aidat ücretini değiştirdiğinde: (1) branches'a
+// kaydedilir, (2) o branştaki sporcuların TÜM aktif aidat planlarının
+// tutarı güncellenir, (3) BULUNULAN AY HARİÇ, henüz ödenmemiş gelecek
+// aylardaki mevcut payments satırları da yeni tutara çekilir. Diğer
+// branşlara hiç dokunulmaz — bkz. migration 20260908050000.
+export async function updateBranchStandardFee(branchId: string, newFee: number): Promise<StandardFeeUpdateResult> {
+  const { data, error } = await supabase
+    .rpc("update_branch_standard_fee", { p_branch_id: branchId, p_new_fee: newFee })
+    .single();
+  if (error) throw error;
+  const row = data as { plans_updated: number; payments_updated: number };
+  return { plansUpdated: row.plans_updated, paymentsUpdated: row.payments_updated };
 }
 
 export async function createBranch(name: string, isIndividual: boolean = false) {
