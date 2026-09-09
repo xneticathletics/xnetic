@@ -153,12 +153,6 @@ export default function DayAgendaItem({
             Yoklama Al
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate("SessionMedia", { sessionId: session.id, label: `${session.groups?.name ?? ""} · ${session.session_date}`, canManagePhotos: canDeleteThis })}
-        >
-          <Text style={styles.actionButtonText}>📷 Fotoğraflar</Text>
-        </TouchableOpacity>
         {!isCompleted && (
           <TouchableOpacity
             style={[styles.completeButton, !completionOpen && styles.actionButtonDisabled]}

@@ -23,7 +23,8 @@ import WeeklyScheduleScreen from "../screens/WeeklyScheduleScreen";
 import TodayAttendanceScreen from "../screens/TodayAttendanceScreen";
 import TrainingSessionFormScreen from "../screens/TrainingSessionFormScreen";
 import AttendanceScreen from "../screens/AttendanceScreen";
-import SessionMediaScreen from "../screens/SessionMediaScreen";
+import SocialFeedScreen from "../screens/SocialFeedScreen";
+import SocialPostFormScreen from "../screens/SocialPostFormScreen";
 import SessionRosterScreen from "../screens/SessionRosterScreen";
 import InviteUserScreen from "../screens/InviteUserScreen";
 import CoachesListScreen from "../screens/CoachesListScreen";
@@ -154,7 +155,8 @@ export type HomeStackParamList = {
   TrainingSessionForm: { sessionId: string | undefined };
   Attendance: { sessionId: string; groupId: string; groupName: string };
   SessionRoster: { sessionId: string; groupId: string; groupName: string };
-  SessionMedia: { sessionId: string; label?: string; canManagePhotos?: boolean };
+  SocialFeed: { initialTab?: "feed" | "pending" } | undefined;
+  SocialPostForm: undefined;
   InviteUser: { presetRole?: "parent" | "athlete" | "coach" } | undefined;
   CoachesList: undefined;
   CoachesOverview: undefined;
@@ -298,7 +300,8 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Yoklama Al" }} />
       <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Yoklama Al" }} />
-      <Stack.Screen name="SessionMedia" component={SessionMediaScreen} options={{ title: "Antrenman Fotoğrafları" }} />
+      <Stack.Screen name="SocialFeed" component={SocialFeedScreen} options={{ title: "Sosyal Alan" }} />
+      <Stack.Screen name="SocialPostForm" component={SocialPostFormScreen} options={{ title: "Yeni Paylaşım" }} />
       <Stack.Screen name="SessionRoster" component={SessionRosterScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="InviteUser" component={InviteUserScreen} options={{ title: "Antrenör Ekle" }} />
       <Stack.Screen name="CoachesList" component={CoachesListScreen} options={{ title: "Antrenörler" }} />

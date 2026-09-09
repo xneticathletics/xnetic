@@ -185,13 +185,6 @@ export default function MySessionDetailScreen({ route, navigation }: Props) {
         <Text style={styles.status}>{STATUS_LABEL[session.status] ?? session.status}</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.photosButton}
-        onPress={() => navigation.navigate("SessionMedia", { sessionId, label: `${session.session_date}` })}
-      >
-        <Text style={styles.photosButtonText}>📷 Antrenman Fotoğrafları</Text>
-      </TouchableOpacity>
-
       {session.status === "planned" && session.session_date >= todayKey() && (
         <View style={styles.excuseCard}>
           <Text style={styles.excuseLabel}>
@@ -284,11 +277,6 @@ const styles = StyleSheet.create({
   sectionLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
   sectionText: { color: colors.ink, fontSize: 14, marginTop: 2, lineHeight: 20 },
   status: { color: colors.muted, fontSize: 12, marginTop: spacing.md, fontWeight: "600" },
-  photosButton: {
-    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md,
-    paddingVertical: 14, alignItems: "center", marginBottom: spacing.md,
-  },
-  photosButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
   excuseCard: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.coral,
     borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md,

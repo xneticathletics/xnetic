@@ -40,7 +40,10 @@ export type NotificationEventType =
   | "event_registration_approved"
   | "event_registration_rejected"
   | "event_cancelled"
-  | "event_reminder";
+  | "event_reminder"
+  // Sosyal Alan modülü — bkz. src/lib/api/socialPosts.ts.
+  | "social_post_submitted"
+  | "social_post_approved";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -60,6 +63,8 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "event_registration_rejected", label: "Etkinlik Kaydı Reddedildi" },
   { key: "event_cancelled", label: "Etkinlik İptal Edildi" },
   { key: "event_reminder", label: "Etkinlik Hatırlatması" },
+  { key: "social_post_submitted", label: "Sosyal Alan Onay Bekliyor" },
+  { key: "social_post_approved", label: "Paylaşımın Onaylandı" },
 ];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç

@@ -71,6 +71,10 @@ export function getNotificationTarget(
     case "event_registration_rejected":
     case "event_cancelled":
       return { tab: "Ana Menü", screen: "MyEventRegistrations" };
+    case "social_post_submitted":
+      return isPlanner ? { tab: "Ana Menü", screen: "SocialFeed", params: { initialTab: "pending" } } : null;
+    case "social_post_approved":
+      return { tab: "Ana Menü", screen: "SocialFeed" };
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;
       return announcementId

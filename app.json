@@ -51,7 +51,8 @@
           "organization": "xnetic",
           "project": "react-native"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {

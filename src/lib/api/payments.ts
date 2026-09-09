@@ -131,7 +131,7 @@ export async function notifyPaymentClaim(
 
 // "Ödedim, Bildir" akışında isteğe bağlı dekont/makbuz fotoğrafı — bucket
 // private, herkese açık URL yerine ~10 yıllık imzalı URL kullanılıyor
-// (bkz. sessionMedia.ts'teki aynı desen).
+// (bkz. socialPosts.ts'teki aynı desen).
 export async function uploadPaymentReceipt(paymentId: string, localUri: string): Promise<string> {
   const fileExt = localUri.split(".").pop()?.split("?")[0] || "jpg";
   const path = `${paymentId}/${Date.now()}.${fileExt}`;
