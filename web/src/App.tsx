@@ -33,6 +33,7 @@ import AnnouncementsListPage from "./routes/announcements/AnnouncementsListPage"
 import MessagesPage from "./routes/messages/MessagesPage";
 import ClubSettingsPage from "./routes/settings/ClubSettingsPage";
 import AccountPage from "./routes/account/AccountPage";
+import AuditLogPage from "./routes/AuditLogPage";
 import UsersListPage from "./routes/users/UsersListPage";
 import PerformanceOverviewPage from "./routes/performance/PerformanceOverviewPage";
 import PerformanceCategoryPage from "./routes/performance/PerformanceCategoryPage";
@@ -131,6 +132,7 @@ export default function App() {
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<ClubSettingsPage />} />
               <Route path="/account" element={<AccountPage />} />
+              <Route path="/audit-log" element={<AuditLogPage />} />
             </Route>
           </Route>
 

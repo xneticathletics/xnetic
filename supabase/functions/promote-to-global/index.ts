@@ -15,6 +15,15 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function getRequestIp(req: Request): string | null {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null
+  );
+}
+
 // Sadece bu 4 tabloya izin ver — istemciden gelen bir tablo adını doğrudan
 // SQL'e basmak (SQL injection/keyfi tablo erişimi) yerine izin listesi.
 const ALLOWED_TABLES = ["fitness_exercises", "nutrition_foods", "nutrition_recipes", "performance_test_catalog"] as const;
@@ -41,7 +50,7 @@ Deno.serve(async (req) => {
 
     const { data: callerRow, error: callerRowError } = await admin
       .from("users")
-      .select("role")
+      .select("id, role")
       .eq("auth_user_id", callerAuth.user.id)
       .single();
     if (callerRowError || !callerRow) throw new Error("Kullanıcı bulunamadı.");
@@ -52,8 +61,22 @@ Deno.serve(async (req) => {
     if (!ALLOWED_TABLES.includes(table)) throw new Error("Geçersiz tablo.");
     if (!id) throw new Error("Kayıt belirtilmedi.");
 
+    const { data: originalRow } = await admin.from(table as AllowedTable).select("club_id").eq("id", id).single();
+
     const { error: updateError } = await admin.from(table as AllowedTable).update({ club_id: null }).eq("id", id);
     if (updateError) throw updateError;
+
+    await admin.from("audit_log").insert({
+      actor_user_id: callerRow.id,
+      actor_email: callerAuth.user.email,
+      actor_role: callerRow.role,
+      club_id: originalRow?.club_id ?? null,
+      action: "content_promoted_to_global",
+      target_type: table,
+      target_id: id,
+      details: { table },
+      ip_address: getRequestIp(req),
+    });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },

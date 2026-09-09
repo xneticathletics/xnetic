@@ -23,6 +23,7 @@ const NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean; tileK
   { to: "/nutrition", label: "Beslenme", icon: "🥗", tileKey: "beslenme" },
   { to: "/shop/products", label: "Mağaza", icon: "🛍️", tileKey: "magaza" },
   { to: "/users", label: "Kullanıcılar", icon: "👥" },
+  { to: "/audit-log", label: "Denetim Kaydı", icon: "🧾" },
   { to: "/settings", label: "Kulüp Ayarları", icon: "⚙️" },
   { to: "/account", label: "Hesabım", icon: "👤" },
 ];
@@ -39,6 +40,7 @@ const SUPER_ADMIN_NAV_ITEMS: { to: string; label: string; icon: string; end?: bo
   { to: "/admin/screens", label: "Ekranlar", icon: "🖥️" },
   { to: "/admin/announce", label: "Duyurular", icon: "📣" },
   { to: "/messages", label: "Mesajlar", icon: "💬" },
+  { to: "/audit-log", label: "Denetim Kaydı", icon: "🧾" },
   { to: "/admin/settings", label: "Sistem Ayarları", icon: "⚙️" },
   { to: "/account", label: "Hesabım", icon: "👤" },
 ];

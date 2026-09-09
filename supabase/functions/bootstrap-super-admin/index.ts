@@ -13,6 +13,15 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function getRequestIp(req: Request): string | null {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null
+  );
+}
+
 function generateTempPassword(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   let pass = "";
@@ -62,6 +71,22 @@ Deno.serve(async (req) => {
       await admin.auth.admin.deleteUser(createdAuth.user.id).catch(() => {});
       throw userError;
     }
+
+    // Not: role='super_admin' yazımı zaten audit_log_role_super_admin
+    // trigger'ı tarafından da otomatik loglanıyor (bkz. migration
+    // 20260909120000) — bu ayrı kayıt, o genel sinyale ek olarak "bootstrap
+    // akışı SETUP_SECRET ile gerçekten çalıştı" bilgisini taşır.
+    await admin.from("audit_log").insert({
+      actor_user_id: null,
+      actor_email: null,
+      actor_role: null,
+      club_id: null,
+      action: "super_admin_bootstrap",
+      target_type: "user",
+      target_id: createdAuth.user.id,
+      details: { target_email: normalizedEmail },
+      ip_address: getRequestIp(req),
+    });
 
     return new Response(JSON.stringify({ email: normalizedEmail, tempPassword }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },

@@ -21,6 +21,18 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Denetim kaydı (audit_log) için — hem web hem mobil aynı Supabase
+// projesinin arkasında olduğundan, Cloudflare/proxy zincirinin bıraktığı
+// bu üç header'dan biri her zaman gerçek istemci IP'sini taşır.
+function getRequestIp(req: Request): string | null {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null
+  );
+}
+
 // clubs'a cascade FK'sı OLMAYAN, club_id kolonu taşıyan tablolar — 2026-09-05
 // tarihli pg_constraint sorgusuyla doğrulanmış tam liste. Yeni böyle bir
 // tablo eklenirse burası da güncellenmeli (bkz. aynı isimde kontrol
@@ -64,7 +76,7 @@ Deno.serve(async (req) => {
 
     const { data: callerRow, error: callerRowError } = await admin
       .from("users")
-      .select("role")
+      .select("id, role")
       .eq("auth_user_id", callerAuth.user.id)
       .single();
     if (callerRowError || !callerRow) throw new Error("Kullanıcı bulunamadı.");
@@ -82,6 +94,19 @@ Deno.serve(async (req) => {
     if (!confirmClubName || confirmClubName.trim() !== club.name) {
       throw new Error("Kulüp adı eşleşmedi — onay metnini tam olarak yazmalısın.");
     }
+
+    // Denetim kaydı — silme işleminden ÖNCE (club_id anlamsızlaşmadan).
+    await admin.from("audit_log").insert({
+      actor_user_id: callerRow.id,
+      actor_email: callerAuth.user.email,
+      actor_role: callerRow.role,
+      club_id: clubId,
+      action: "club_deleted",
+      target_type: "club",
+      target_id: clubId,
+      details: { clubName: club.name },
+      ip_address: getRequestIp(req),
+    });
 
     // 1. Bu kulübün kullanıcılarının auth hesaplarını sil (public.users
     // hâlâ dururken alt sorgu geçerli veriyi okur).

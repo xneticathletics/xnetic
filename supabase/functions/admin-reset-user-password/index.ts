@@ -13,6 +13,15 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function getRequestIp(req: Request): string | null {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null
+  );
+}
+
 function generateTempPassword(): string {
   // Karışıklık yaratabilecek karakterleri (0/O, 1/l/I) çıkardık — admin
   // bunu sesli okuyup iletebilir diye.
@@ -43,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: callerRow, error: callerRowError } = await admin
       .from("users")
-      .select("club_id, role")
+      .select("id, club_id, role")
       .eq("auth_user_id", callerAuth.user.id)
       .single();
     if (callerRowError || !callerRow) throw new Error("Kullanıcı bulunamadı.");
@@ -79,6 +88,18 @@ Deno.serve(async (req) => {
       .update({ must_change_password: true })
       .eq("id", userId);
     if (flagError) throw flagError;
+
+    await admin.from("audit_log").insert({
+      actor_user_id: callerRow.id,
+      actor_email: callerAuth.user.email,
+      actor_role: callerRow.role,
+      club_id: targetRow.club_id,
+      action: "password_reset_by_admin",
+      target_type: "user",
+      target_id: userId,
+      details: null,
+      ip_address: getRequestIp(req),
+    });
 
     return new Response(JSON.stringify({ tempPassword }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
