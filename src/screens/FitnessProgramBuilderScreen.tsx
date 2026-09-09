@@ -65,12 +65,18 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   // branşındaki fitness gruplarına program gönderebilsin — club_admin
   // hâlâ kulübün tüm gruplarını görür. getMyCoachedGroupIds zaten
   // koordinatörü kendi branşının tamamına genişletiyor (bkz. myGroups.ts).
+  // Hedef grup listesi ayrıca sadece MÜSABIK gruplarla sınırlandı — fitness
+  // programı spor okulu gruplarına gönderilmiyor (kullanıcı kararı).
+  // fitness_groups (ad-hoc, elle seçilmiş sporcu grupları) bu filtreye
+  // dahil değil — myBranches BİLEREK filtrelenmemiş "g" üzerinden
+  // hesaplanıyor, yoksa sadece spor okulu grubu olan bir branşın fitness
+  // gruplarını da yanlışlıkla gizlerdi.
   useEffect(() => {
     if (!finalizing) return;
     setLoadingGroups(true);
     Promise.all([isCoach ? listMyCoachedGroups() : listGroups(), listFitnessGroups()])
       .then(([g, fg]) => {
-        setGroups(g);
+        setGroups(g.filter((x) => x.athlete_type === "musabik"));
         if (isCoach) {
           const myBranches = new Set(g.map((x) => x.branch));
           setFitnessGroups(fg.filter((x) => myBranches.has(x.branch)));
