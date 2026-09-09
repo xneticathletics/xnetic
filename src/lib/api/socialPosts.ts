@@ -202,16 +202,24 @@ export async function deleteSocialPost(post: Pick<SocialPost, "id" | "storage_pa
 }
 
 // Paylaşım onay beklemeye düşünce o branşın baş+yardımcı antrenörlerine,
-// coach_branches uzmanlarına ve koordinatörüne bildirim gider — events.ts
-// notifyRegistrationSubmitted deseninin birebir kopyası. Admin'e bildirim
-// GİTMEZ (kullanıcının "admine onay gerek yok" kararı — admin sessiz bir
-// güvenlik ağı olarak kalır, akışa dahil edilmez).
+// coach_branches uzmanlarına, koordinatörüne VE club_admin'lere bildirim
+// gider — events.ts notifyRegistrationSubmitted deseninin bir uzantısı.
+// ÖNCEDEN admin bilerek dışarıda tutulmuştu ("admine onay gerek yok,
+// sessiz bir güvenlik ağı kalsın" kararı) ama kullanıcı canlıda admin'e
+// hiç bildirim gelmediğini fark edip bunu istedi — artık admin de branş
+// moderatörleriyle birlikte bilgilendiriliyor (is_admin_tier() zaten
+// approveSocialPost'u da kullanabildiği için tutarlı).
 async function notifySocialPostSubmitted(post: SocialPost): Promise<void> {
   const recipients = new Set<string>();
 
-  const { data: branchGroups } = await supabase.from("groups").select("id, head_coach_id").eq("branch", post.branch);
+  const [branchGroupsResult, adminsResult] = await Promise.all([
+    supabase.from("groups").select("id, head_coach_id").eq("branch", post.branch),
+    supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true),
+  ]);
+  const branchGroups = branchGroupsResult.data;
   const groupIds = (branchGroups ?? []).map((g) => g.id);
   (branchGroups ?? []).forEach((g) => g.head_coach_id && recipients.add(g.head_coach_id));
+  (adminsResult.data ?? []).forEach((a) => recipients.add(a.id));
 
   if (groupIds.length > 0) {
     const { data: assistants } = await supabase.from("group_coaches").select("coach_id").in("group_id", groupIds);
