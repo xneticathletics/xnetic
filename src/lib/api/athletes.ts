@@ -117,6 +117,20 @@ export async function listAthletesInGroups(groupIds: string[]): Promise<Athlete[
   return (data as unknown as Athlete[]) ?? [];
 }
 
+// Ana Sayfa'daki kompakt istatistik satırı SADECE aktif sporcu SAYISINA
+// ihtiyaç duyuyor — bunun için listAllAthletes() ile tüm sporcuların tüm
+// alanlarını (20 kolon + grup join'i) çekip client'ta saymak, kulüp
+// büyüdükçe (yüzlerce sporcu) Ana Sayfa'yı gereksiz yere yavaşlatıyordu.
+// getBranchStats()'teki count-only desenle aynı.
+export async function getActiveAthleteCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("athletes")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "active");
+  if (error) throw error;
+  return count ?? 0;
+}
+
 // Grup filtresi olmadan tüm kulüp sporcularını döner — aidat ekleme gibi
 // gruptan bağımsız sporcu seçimi gereken ekranlarda kullanılır.
 export async function listAllAthletes(): Promise<Athlete[]> {

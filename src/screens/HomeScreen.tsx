@@ -15,7 +15,7 @@ import { useBranchSelect } from "../context/BranchSelectContext";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { getClubLogoUrl } from "../lib/api/clubLogo";
 import { getClubName } from "../lib/api/clubSettings";
-import { listAllAthletes } from "../lib/api/athletes";
+import { getActiveAthleteCount } from "../lib/api/athletes";
 import { listCoaches } from "../lib/api/coaches";
 import { listBranches, getBranchStats, type BranchStats } from "../lib/api/branches";
 import { getPlatformStats, type PlatformStats } from "../lib/api/superAdmin";
@@ -211,6 +211,13 @@ export default function HomeScreen({
   const [coachCount, setCoachCount] = useState<number | null>(null);
   const [branchStats, setBranchStats] = useState<BranchStats | null>(null);
   const [clubLogoFailed, setClubLogoFailed] = useState(false);
+  // clubId değişmediği sürece AYNI URL string'ini/nesnesini döner —
+  // getClubLogoUrl() artık zaten sabit bir URL veriyor, ama her render'da
+  // yeni bir {uri:...} nesnesi oluşturmamak için burada da memoize ediyoruz.
+  const clubLogoSource = useMemo(
+    () => (clubId ? { uri: getClubLogoUrl(clubId) } : null),
+    [clubId]
+  );
   const [clubName, setClubName] = useState<string | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
 
@@ -234,9 +241,9 @@ export default function HomeScreen({
       let cancelled = false;
       (async () => {
         try {
-          const [athletes, branches, coaches] = await Promise.all([listAllAthletes(), listBranches(), listCoaches()]);
+          const [athleteCount, branches, coaches] = await Promise.all([getActiveAthleteCount(), listBranches(), listCoaches()]);
           if (!cancelled) {
-            setActiveAthleteCount(athletes.filter((a) => a.status === "active").length);
+            setActiveAthleteCount(athleteCount);
             setBranchCount(branches.length);
             setCoachCount(coaches.length);
           }
@@ -329,7 +336,7 @@ export default function HomeScreen({
     >
       <View style={styles.headerRow}>
         <Image
-          source={clubLogoFailed || !clubId ? require("../assets/xnetic-logo-yellow.png") : { uri: getClubLogoUrl(clubId) }}
+          source={clubLogoFailed || !clubLogoSource ? require("../assets/xnetic-logo-yellow.png") : clubLogoSource}
           style={[styles.heroLogo, role === "super_admin" && styles.heroLogoSmall]}
           resizeMode="cover"
           onError={() => setClubLogoFailed(true)}

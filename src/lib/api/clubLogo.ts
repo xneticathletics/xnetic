@@ -12,11 +12,15 @@ function logoPath(clubId: string): string {
   return `${clubId}/logo.png`;
 }
 
+// ÖNEMLİ: bilerek bir "cache buster" (ör. ?t=Date.now()) EKLEMİYOR — bu
+// fonksiyon Ana Sayfa gibi ekranlarda her render'da çağrılıyor, ve her
+// çağrıda farklı bir URL string'i döndürmek React Native'in <Image>
+// önbelleğini tamamen devre dışı bırakıp logoyu HER SEFERİNDE ağdan
+// yeniden indirtiyordu (canlıda fark edilen bir yavaşlığın kaynağıydı).
+// URL sabit olduğu sürece RN aynı görseli önbellekten anında gösterir.
 export function getClubLogoUrl(clubId: string): string {
   const { data } = supabase.storage.from("club-logos").getPublicUrl(logoPath(clubId));
-  // Supabase'in CDN önbelleği eski logoyu göstermeye devam etmesin diye
-  // her çağrıda bir "cache buster" ekliyoruz.
-  return `${data.publicUrl}?t=${Date.now()}`;
+  return data.publicUrl;
 }
 
 export async function uploadClubLogo(localUri: string, clubId: string): Promise<string> {
@@ -28,5 +32,9 @@ export async function uploadClubLogo(localUri: string, clubId: string): Promise<
     .upload(logoPath(clubId), arrayBuffer, { upsert: true, contentType: "image/png" });
   if (error) throw error;
 
-  return getClubLogoUrl(clubId);
+  // Buradaki cache buster BİLEREK sadece burada, yeni yüklemeden hemen
+  // sonra ekleniyor — CDN/istemci önbelleğinin eski logoyu göstermeye
+  // devam etmesini önlemek için, ama SADECE bu tek seferlik dönüş
+  // değerinde (ekranın kendi state'ini güncellemesi için).
+  return `${getClubLogoUrl(clubId)}?t=${Date.now()}`;
 }
