@@ -36,6 +36,10 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
   const { programId, athleteId } = route.params;
   const { role } = useAuth();
   const { handleFocus } = useKeyboardScroll();
+  // Antrenör/admin buraya sporcunun profilinden salt okunur inceleme için
+  // gelir — kendi bireysel programı olmadığı için giriş formu yok, sadece
+  // hareketler + tarihleriyle geçmiş çalışmalar.
+  const isStaff = role === "club_admin" || role === "coach";
 
   // "role === athlete" tek başına yeterli değil — bu ekranın gösterdiği
   // program GERÇEKTEN bu girişteki sporcuya mı ait, onu da kontrol
@@ -154,27 +158,31 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
               {item.exercise_name} <Text style={styles.itemTarget}>(hedef {item.sets}×{item.reps})</Text>
             </Text>
 
-            <SetEntryList
-              value={setsByItem[item.id] ?? []}
-              onChange={(rows) => setSetsByItem((prev) => ({ ...prev, [item.id]: rows }))}
-              onFocus={handleFocus}
-            />
+            {!isStaff && (
+              <>
+                <SetEntryList
+                  value={setsByItem[item.id] ?? []}
+                  onChange={(rows) => setSetsByItem((prev) => ({ ...prev, [item.id]: rows }))}
+                  onFocus={handleFocus}
+                />
 
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={() => handleSaveItem(item)}
-              disabled={savingItem === item.id}
-            >
-              {savingItem === item.id ? (
-                <ActivityIndicator color={colors.bg} />
-              ) : (
-                <Text style={styles.saveButtonText}>Kaydet</Text>
-              )}
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={() => handleSaveItem(item)}
+                  disabled={savingItem === item.id}
+                >
+                  {savingItem === item.id ? (
+                    <ActivityIndicator color={colors.bg} />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Kaydet</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
 
-            {(history[item.id]?.length ?? 0) > 0 && (
+            {(history[item.id]?.length ?? 0) > 0 ? (
               <View style={styles.historyBox}>
-                {history[item.id].slice(0, 3).map((m) => (
+                {history[item.id].slice(0, isStaff ? 10 : 3).map((m) => (
                   <View key={m.id} style={styles.historyRow}>
                     <Text style={styles.historyValue}>
                       {m.weight_kg != null ? `${m.weight_kg} kg` : "Vücut ağırlığı"} × {m.reps} tekrar
@@ -183,7 +191,9 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
                   </View>
                 ))}
               </View>
-            )}
+            ) : isStaff ? (
+              <Text style={styles.historyEmpty}>Bu hareket için henüz kayıt yok.</Text>
+            ) : null}
           </View>
         ))}
 
@@ -211,6 +221,7 @@ const styles = StyleSheet.create({
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 13 },
   historyBox: { marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.xs },
   historyRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 },
+  historyEmpty: { color: colors.muted, fontSize: 12, fontStyle: "italic", marginTop: spacing.xs },
   historyValue: { color: colors.ink, fontSize: 12, fontWeight: "600" },
   historyDate: { color: colors.muted, fontSize: 12 },
   deleteButton: { alignItems: "center", paddingVertical: spacing.lg, marginBottom: spacing.xl },

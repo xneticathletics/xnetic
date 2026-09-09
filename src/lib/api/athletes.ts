@@ -144,7 +144,7 @@ export async function listAllAthletes(): Promise<Athlete[]> {
 }
 
 export async function getAthlete(id: string): Promise<Athlete | null> {
-  const { data, error } = await supabase.from("athletes").select(`${ATHLETE_FIELDS}, groups!group_id(name)`).eq("id", id).single();
+  const { data, error } = await supabase.from("athletes").select(`${ATHLETE_FIELDS}, groups!group_id(name, branch)`).eq("id", id).single();
   if (error) throw error;
   return data as unknown as Athlete;
 }
