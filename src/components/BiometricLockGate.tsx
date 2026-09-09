@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, AppState, type AppStateStatus } from "react-native";
+import { AppState, type AppStateStatus } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
-import { colors, radius, spacing } from "../theme/tokens";
+import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import SplashScreen from "../screens/SplashScreen";
 
 // Sadece admin/antrenör/süper admin için — veli/sporcu hesabı her zaman
 // açık kalıyor (kullanıcının kararı: "veli sporcunun hesabı hep açık
@@ -46,7 +47,17 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
         cancelLabel: "Vazgeç",
         disableDeviceFallback: false,
       });
-      setUnlocked(result.success);
+      if (result.success) {
+        setUnlocked(true);
+      } else {
+        // Tanımadı / reddetti / vazgeçti — "Tekrar Dene" ekranında
+        // bekletmek yerine doğrudan normal giriş sayfasına düşürüyoruz:
+        // oturumu kapatıyoruz, session null olunca RootNavigator zaten
+        // Login ekranını gösteriyor.
+        await supabase.auth.signOut().catch(() => {});
+      }
+    } catch {
+      await supabase.auth.signOut().catch(() => {});
     } finally {
       setChecking(false);
       isAuthenticatingRef.current = false;
@@ -89,27 +100,11 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
 
   if (!needsGate || unlocked) return <>{children}</>;
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.icon}>🔒</Text>
-      <Text style={styles.title}>Kilitli</Text>
-      <Text style={styles.subtitle}>Devam etmek için kimliğini doğrula.</Text>
-      {checking ? (
-        <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.lg }} />
-      ) : (
-        <TouchableOpacity style={styles.button} onPress={attemptUnlock}>
-          <Text style={styles.buttonText}>Tekrar Dene</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  // Face ID/Touch ID kontrolü sürerken ayrı bir "Kilitli" yazılı ekran
+  // GÖSTERMİYORUZ — kullanıcı isteği: uygulama açılışındaki logo ekranından
+  // (SplashScreen, RootNavigator'da da aynısı kullanılıyor) kesintisiz
+  // devam ediyormuş gibi hissettirsin. Tanımama/reddetme durumunda zaten
+  // attemptUnlock oturumu kapatıp normal giriş ekranına düşürüyor, bu
+  // yüzden burada ayrıca bir "Tekrar Dene" ekranına da gerek yok.
+  return <SplashScreen />;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", padding: spacing.xl },
-  icon: { fontSize: 40, marginBottom: spacing.md },
-  title: { color: colors.ink, fontSize: 18, fontWeight: "800", marginBottom: spacing.xs },
-  subtitle: { color: colors.muted, fontSize: 13, textAlign: "center", marginBottom: spacing.lg },
-  button: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingHorizontal: spacing.xl, paddingVertical: 14 },
-  buttonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
-});
