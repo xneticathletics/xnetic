@@ -13,7 +13,7 @@ import SplashScreen from "../screens/SplashScreen";
 const GATED_ROLES = new Set(["club_admin", "coach", "super_admin"]);
 
 export default function BiometricLockGate({ children }: { children: React.ReactNode }) {
-  const { session, role, loading, initialSessionWasRestored } = useAuth();
+  const { session, role, loading, initialSessionWasRestored, consumeJustSignedIn } = useAuth();
   const needsGate = !loading && !!session && !!role && GATED_ROLES.has(role);
 
   const [unlocked, setUnlocked] = useState(false);
@@ -93,10 +93,19 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
   }, [needsGate]);
 
   // Kilit tekrar devreye girdiğinde (yukarıdaki iki tetikleyiciden biri
-  // unlocked'ı false yaptığında) otomatik olarak biyometrik istemi aç.
+  // unlocked'ı false yaptığında) otomatik olarak biyometrik istemi aç —
+  // AMA bu oturum az önce şifreyle interaktif signIn()'den geldiyse
+  // (örn. Face ID reddedilip oturum kapandıktan sonra şifreyle tekrar
+  // giriş yapıldığında) hiç sormadan direkt içeri alıyoruz — kullanıcı
+  // zaten o an kimliğini şifreyle kanıtladı, ayrıca Face ID istemek gereksiz.
   useEffect(() => {
-    if (needsGate && !unlocked && !checking && coldStartHandledRef.current) attemptUnlock();
-  }, [needsGate, unlocked, checking, attemptUnlock]);
+    if (!needsGate || unlocked || checking || !coldStartHandledRef.current) return;
+    if (consumeJustSignedIn()) {
+      setUnlocked(true);
+      return;
+    }
+    attemptUnlock();
+  }, [needsGate, unlocked, checking, attemptUnlock, consumeJustSignedIn]);
 
   if (!needsGate || unlocked) return <>{children}</>;
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
@@ -23,6 +23,13 @@ type AuthState = {
   // signIn() ile (kullanıcı az önce şifresini girerek) başladı, aynı anda
   // ayrıca biyometrik istemeye gerek yok.
   initialSessionWasRestored: boolean | null;
+  // Bir kere okunup sıfırlanan bir bayrak: son oturum değişikliği az önce
+  // BAŞARILI bir signIn() (şifreyle interaktif giriş) çağrısından mı geldi?
+  // BiometricLockGate, şifreyle az önce giriş yapan birine hemen ardından
+  // ayrıca Face ID/parmak izi sormamak için bunu kullanıyor (Face ID
+  // reddedilip oturum kapatıldıktan sonra tekrar şifreyle giriş yapıldığında
+  // da geçerli — sadece uygulamanın İLK açılışına özel değil).
+  consumeJustSignedIn: () => boolean;
   signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
@@ -71,6 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const initialSessionWasRestoredRef = useRef<boolean | null>(null);
+  const justSignedInRef = useRef(false);
+  const consumeJustSignedIn = useCallback(() => {
+    const v = justSignedInRef.current;
+    justSignedInRef.current = false;
+    return v;
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -108,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clubId: (claims.club_id as string) ?? null,
     loading,
     initialSessionWasRestored: initialSessionWasRestoredRef.current,
+    consumeJustSignedIn,
     signIn: async (email, password, captchaToken) => {
       if (!email.trim() || !password) {
         return { error: "Giriş bilgisi ve şifre alanlarını doldurmalısınız." };
@@ -123,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         options: captchaToken ? { captchaToken } : undefined,
       });
+      if (!error) justSignedInRef.current = true;
       return { error: error ? translateAuthError(error.message) : null };
     },
     signOut: async () => {
