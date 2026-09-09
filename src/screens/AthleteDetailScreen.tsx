@@ -34,16 +34,20 @@ const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
 // (AthleteTrackingHubScreen zaten sadece antrenör/veli/sporcu görüntülemesi
 // için var) bu bölümü görmez, kendi düzenleme araçları var.
 const TRACKING_TILES: {
-  key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram";
+  key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram" | "IndividualFitnessProgramList";
   icon: string;
   title: string;
   sub: string;
   accent: string;
+  // "Bireysel Programım" sporcunun KENDİ yazdığı bir şey — veli bu kartı
+  // hiç görmüyor (bkz. render'daki role==="athlete" filtresi).
+  athleteOnly?: boolean;
 }[] = [
   { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet, dayanıklılık", accent: colors.teal },
   { key: "AthleteFitnessView", icon: "🏋️", title: "Çalışma", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
   { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk", accent: colors.violet },
   { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı program", accent: colors.yellow },
+  { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi programını oluştur ve işle", accent: colors.coral, athleteOnly: true },
 ];
 
 type TabKey = "info" | "parent" | "health";
@@ -326,7 +330,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <Text style={styles.trackingSubtitle}>Gelişimini takip et</Text>
           </View>
           <View style={styles.trackingGrid}>
-            {TRACKING_TILES.map((t) => (
+            {TRACKING_TILES.filter((t) => !t.athleteOnly || role === "athlete").map((t) => (
               <TouchableOpacity
                 key={t.key}
                 style={styles.trackingTile}

@@ -3,20 +3,30 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteTrackingHub">;
 
 const ACCENTS = [colors.teal, colors.coral, colors.violet];
 
-const TILES: { key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram"; icon: string; title: string; sub: string }[] = [
+const TILES: {
+  key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram" | "IndividualFitnessProgramList";
+  icon: string;
+  title: string;
+  sub: string;
+  // "Bireysel Programım" sporcunun KENDİ yazdığı bir şey — veli görmüyor.
+  athleteOnly?: boolean;
+}[] = [
   { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri" },
   { key: "AthleteFitnessView", icon: "🏋️", title: "Çalışma", sub: "Fitness/kuvvet antrenmanı geçmişi" },
   { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk check-in geçmişi" },
   { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı çalışma programı" },
+  { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi yazdığın çalışma programı", athleteOnly: true },
 ];
 
 export default function AthleteTrackingHubScreen({ route, navigation }: Props) {
   const { athleteId, athleteName } = route.params;
+  const { role } = useAuth();
 
   useEffect(() => {
     navigation.setOptions({ title: athleteName });
@@ -27,7 +37,7 @@ export default function AthleteTrackingHubScreen({ route, navigation }: Props) {
       <Text style={styles.subtitle}>Gelişimini takip et — sadece görüntüleme.</Text>
 
       <View style={styles.grid}>
-        {TILES.map((t, index) => {
+        {TILES.filter((t) => !t.athleteOnly || role === "athlete").map((t, index) => {
           const accent = ACCENTS[index % ACCENTS.length];
           return (
             <TouchableOpacity

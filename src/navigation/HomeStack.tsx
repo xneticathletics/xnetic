@@ -74,6 +74,9 @@ import FitnessCategoryScreen from "../screens/FitnessCategoryScreen";
 import FitnessExerciseDetailScreen from "../screens/FitnessExerciseDetailScreen";
 import FitnessExerciseFormScreen from "../screens/FitnessExerciseFormScreen";
 import FitnessExerciseVisibilityScreen from "../screens/FitnessExerciseVisibilityScreen";
+import IndividualFitnessProgramListScreen from "../screens/IndividualFitnessProgramListScreen";
+import IndividualFitnessProgramBuilderScreen from "../screens/IndividualFitnessProgramBuilderScreen";
+import IndividualFitnessProgramDetailScreen from "../screens/IndividualFitnessProgramDetailScreen";
 import AthleteWellnessDetailScreen from "../screens/AthleteWellnessDetailScreen";
 import NutritionScreen from "../screens/NutritionScreen";
 import NutritionFoodsScreen from "../screens/NutritionFoodsScreen";
@@ -221,6 +224,9 @@ export type HomeStackParamList = {
   FitnessExerciseDetail: { exerciseKey: string };
   FitnessExerciseForm: { exerciseId?: string } | undefined;
   FitnessExerciseVisibility: { category: string };
+  IndividualFitnessProgramList: { athleteId: string; athleteName: string };
+  IndividualFitnessProgramBuilder: { athleteId: string };
+  IndividualFitnessProgramDetail: { programId: string; athleteId: string; athleteName: string };
   Nutrition: undefined;
   NutritionFoods: undefined;
   NutritionFoodCategory: { category: FoodCategoryKey };
@@ -352,6 +358,9 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="FitnessExerciseDetail" component={FitnessExerciseDetailScreen} />
       <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Çalışma Ekle" }} />
       <Stack.Screen name="FitnessExerciseVisibility" component={FitnessExerciseVisibilityScreen} options={{ title: "Hareketleri Yönet" }} />
+      <Stack.Screen name="IndividualFitnessProgramList" component={IndividualFitnessProgramListScreen} options={{ title: "Bireysel Programım" }} />
+      <Stack.Screen name="IndividualFitnessProgramBuilder" component={IndividualFitnessProgramBuilderScreen} options={{ title: "Program Ekle" }} />
+      <Stack.Screen name="IndividualFitnessProgramDetail" component={IndividualFitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />
       <Stack.Screen name="Nutrition" component={NutritionScreen} options={{ title: "Beslenme" }} />
       <Stack.Screen name="NutritionFoods" component={NutritionFoodsScreen} options={{ title: "Besinler" }} />
       <Stack.Screen name="NutritionFoodCategory" component={NutritionFoodCategoryScreen} />
