@@ -3,7 +3,10 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listManageableEvents, getPendingRegistrationCount, EVENT_TYPE_LABEL, type EventRow, type EventStatus } from "../lib/api/events";
+import {
+  listManageableEvents, getPendingRegistrationCount, getPendingRegistrationCountsByEvent,
+  EVENT_TYPE_LABEL, type EventRow, type EventStatus,
+} from "../lib/api/events";
 import { useHomeButton } from "../hooks/useHomeButton";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
@@ -17,6 +20,7 @@ export default function EventsManageScreen({ navigation }: Props) {
 
   const [events, setEvents] = useState<EventRow[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingByEvent, setPendingByEvent] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +28,12 @@ export default function EventsManageScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [all, pending] = await Promise.all([listManageableEvents(), getPendingRegistrationCount()]);
+      const [all, pending, byEvent] = await Promise.all([
+        listManageableEvents(), getPendingRegistrationCount(), getPendingRegistrationCountsByEvent(),
+      ]);
       setEvents(all);
       setPendingCount(pending);
+      setPendingByEvent(byEvent);
     } catch (e: any) {
       setError(e.message ?? "Etkinlikler yüklenemedi");
     } finally {
@@ -79,6 +86,11 @@ export default function EventsManageScreen({ navigation }: Props) {
                   <Text style={{ fontSize: 40 }}>🏆</Text>
                 </View>
               )}
+              {!!pendingByEvent[item.id] && (
+                <View style={styles.eventPendingBadge}>
+                  <Text style={styles.eventPendingBadgeText}>{pendingByEvent[item.id]} bekleyen kayıt</Text>
+                </View>
+              )}
               <View style={styles.rowTextBlock}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
@@ -106,6 +118,11 @@ const styles = StyleSheet.create({
   addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
   pendingBadge: { backgroundColor: colors.coral, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 4 },
   pendingBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+  eventPendingBadge: {
+    position: "absolute", top: spacing.sm, right: spacing.sm,
+    backgroundColor: colors.coral, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 5,
+  },
+  eventPendingBadgeText: { color: "#fff", fontSize: 11, fontWeight: "800" },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {

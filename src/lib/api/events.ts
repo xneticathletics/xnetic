@@ -180,6 +180,18 @@ export async function getPendingRegistrationCount(): Promise<number> {
   return count ?? 0;
 }
 
+// "Yönet" listesindeki HER etkinlik kartının üzerinde kendi bekleyen kayıt
+// sayısını gösterebilmek için — tek bir toplam yerine event_id'ye göre
+// gruplanmış sayım. Sadece id/event_id çekip client'ta sayıyoruz (bekleyen
+// kayıt sayısı normalde küçük olduğu için ayrı bir RPC/agregasyona gerek yok).
+export async function getPendingRegistrationCountsByEvent(): Promise<Record<string, number>> {
+  const { data, error } = await supabase.from("event_registrations").select("event_id").eq("status", "pending");
+  if (error) return {};
+  const counts: Record<string, number> = {};
+  (data ?? []).forEach((r) => { counts[r.event_id] = (counts[r.event_id] ?? 0) + 1; });
+  return counts;
+}
+
 export async function registerForEvent(
   event: Pick<EventRow, "id" | "title" | "fee_try">,
   athleteId: string,

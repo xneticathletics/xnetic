@@ -377,7 +377,9 @@ const styles = StyleSheet.create({
   viewerContainer: { flex: 1, backgroundColor: "#000" },
   viewerPage: { width: screenWidth, alignItems: "center", justifyContent: "center" },
   fullImage: { width: screenWidth, height: "100%" },
-  fullVideo: { width: screenWidth, height: "100%" },
+  // Fotoğraftan farklı olarak biraz küçük ve dikeyde ortalı — video ekranın
+  // en tepesinden (status bar'a yakın) başlamasın diye (kullanıcı isteği).
+  fullVideo: { width: screenWidth, height: "70%" },
   viewerInfoBar: {
     backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xs,
   },
