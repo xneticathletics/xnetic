@@ -22,15 +22,9 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
   // ZATEN kayıtlı bir oturum varsa kilit gösteriyoruz — az önce şifreyle
   // interaktif giriş yapan birine hemen ardından ayrıca Face ID sormuyoruz.
   const coldStartHandledRef = useRef(false);
-  // Face ID/Touch ID istemi (authenticateAsync) EKRANDA GÖRÜNÜRKEN iOS
-  // uygulamayı kısa süreliğine "inactive" yapıp geri "active"e döndürüyor
-  // — aşağıdaki AppState dinleyicisi bunu "arka plana atıldı" sanıp
-  // kilidi tekrar tetikliyor, bu da Face ID'nin sonsuz döngüde tekrar
-  // tekrar açılmasına yol açıyordu. Bu bayrak, biyometrik istem SÜRERKEN
-  // o kendi kaynaklı AppState geçişini yok saymamızı sağlıyor. Ayrıca
-  // attemptUnlock'un kendi içinde de bir koruma görevi görüyor — aynı
-  // render turunda iki ayrı effect'in (ilk açılış + yeniden kilitleme)
-  // aynı anda ikinci bir istem açmasını engelliyor.
+  // attemptUnlock'un kendi içindeki koruma — aynı render turunda iki ayrı
+  // effect'in (ilk açılış + yeniden kilitleme) aynı anda ikinci bir Face
+  // ID istemi açmasını engelliyor.
   const isAuthenticatingRef = useRef(false);
 
   const attemptUnlock = useCallback(async () => {
@@ -55,9 +49,7 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
       setUnlocked(result.success);
     } finally {
       setChecking(false);
-      // İstemin kendi AppState geçişi biraz gecikmeli gelebiliyor — bayrağı
-      // hemen değil, kısa bir gecikmeyle indiriyoruz ki o geçiş de yok sayılsın.
-      setTimeout(() => { isAuthenticatingRef.current = false; }, 500);
+      isAuthenticatingRef.current = false;
     }
   }, []);
 
@@ -71,16 +63,17 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
   }, [loading, needsGate, initialSessionWasRestored, attemptUnlock]);
 
   // Arka plandan her geri dönüşte yeniden kilitle — telefon arka planda
-  // açık bırakılıp başkasının eline geçmesi riskine karşı. Biyometrik
-  // istem zaten sürüyorsa (isAuthenticatingRef) bu geçişi yok sayıyoruz.
+  // açık bırakılıp başkasının eline geçmesi riskine karşı. ÖNEMLİ: sadece
+  // ÖNCEKİ durum GERÇEKTEN "background" ise tetikliyoruz — Face ID/Touch ID
+  // istemi ekrandayken iOS uygulamayı "inactive" yapıyor (background'a hiç
+  // düşmeden), bunu da arka plana atılma sanmak Face ID'nin kendi kendini
+  // sonsuz döngüde tekrar tetiklemesine yol açıyordu (kullanıcı canlıda
+  // karşılaştı). "inactive" geçici bir sistem-arayüzü durumu (Face ID,
+  // bildirim, kontrol merkezi vb.) — gerçek arka plana atma HER ZAMAN
+  // "background" durumundan geçer, o yüzden sadece onu izliyoruz.
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
-      if (
-        appStateRef.current.match(/inactive|background/) &&
-        next === "active" &&
-        needsGate &&
-        !isAuthenticatingRef.current
-      ) {
+      if (appStateRef.current === "background" && next === "active" && needsGate) {
         setUnlocked(false);
       }
       appStateRef.current = next;
