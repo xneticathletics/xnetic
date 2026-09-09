@@ -18,7 +18,8 @@ type Props = NativeStackScreenProps<HomeStackParamList, "CoachesList">;
 export default function CoachesListScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const { role } = useAuth();
-  const { selectedBranch, setSelectedBranch } = useBranchSelect();
+  const { selectedBranch, setSelectedBranch, isLocked } = useBranchSelect();
+  const isBranchCoordinator = role === "coach" && isLocked;
 
   const [coaches, setCoaches] = useState<CoachWithGroups[]>([]);
   const [coachBranches, setCoachBranches] = useState<Record<string, CoachBranchInfo[]>>({});
@@ -124,7 +125,7 @@ export default function CoachesListScreen({ navigation }: Props) {
         </TouchableOpacity>
       )}
 
-      {branches.length > 1 && (
+      {!isBranchCoordinator && branches.length > 1 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
