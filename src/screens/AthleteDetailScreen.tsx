@@ -380,12 +380,12 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => navigation.navigate("IndividualFitnessProgramList", { athleteId: athlete.id, athleteName: athlete.full_name })}
+            onPress={() => navigation.navigate("AthleteFitnessView", { athleteId: athlete.id, athleteName: athlete.full_name })}
           >
             <View style={[styles.actionIconCircle, { backgroundColor: colors.violet }]}>
-              <Text style={styles.actionIconText}>📝</Text>
+              <Text style={styles.actionIconText}>🏋️</Text>
             </View>
-            <Text style={styles.actionLabel}>Bireysel Program</Text>
+            <Text style={styles.actionLabel}>Çalışma</Text>
           </TouchableOpacity>
         </View>
       )}

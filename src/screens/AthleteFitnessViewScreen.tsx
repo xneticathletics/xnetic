@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAllMeasurementsForAthlete, type FitnessMeasurement } from "../lib/api/fitnessMeasurements";
 import { listAllCompletionsForAthlete, type FitnessProgramCompletion } from "../lib/api/fitnessPrograms";
+import { listMyIndividualPrograms, type IndividualFitnessProgram } from "../lib/api/individualFitnessPrograms";
 import { getFitnessExercise, getFitnessCategory } from "../lib/fitnessExercises";
 import { getCustomExercise } from "../lib/api/customFitnessExercises";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -47,6 +48,10 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
   const { athleteId, athleteName } = route.params;
   const [groups, setGroups] = useState<Group[]>([]);
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
+  // Bireysel program bölümü SADECE bu sporcunun en az bir programı varsa
+  // gösteriliyor — hiç oluşturmamış bir sporcunun profilinde boş bir
+  // bölüm göstermeye gerek yok (kullanıcı kararı).
+  const [individualPrograms, setIndividualPrograms] = useState<IndividualFitnessProgram[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -56,9 +61,10 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
       setLoading(true);
       (async () => {
         try {
-          const [all, allCompletions] = await Promise.all([
+          const [all, allCompletions, ownPrograms] = await Promise.all([
             listAllMeasurementsForAthlete(athleteId),
             listAllCompletionsForAthlete(athleteId),
+            listMyIndividualPrograms(athleteId),
           ]);
           const byKey = new Map<string, FitnessMeasurement[]>();
           all.forEach((m) => {
@@ -78,6 +84,7 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
           if (!cancelled) {
             setGroups(valid);
             setCompletions(allCompletions);
+            setIndividualPrograms(ownPrograms);
           }
         } finally {
           if (!cancelled) setLoading(false);
@@ -97,7 +104,26 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.sectionTitle}>Tamamlanan Programlar</Text>
+      {individualPrograms.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Bireysel Program</Text>
+          {individualPrograms.map((p) => (
+            <TouchableOpacity
+              key={p.id}
+              style={[styles.card, { borderColor: colors.violet }]}
+              onPress={() => navigation.navigate("IndividualFitnessProgramDetail", { programId: p.id, athleteId, athleteName })}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardIcon}>📝</Text>
+                <Text style={styles.cardTitle}>{p.name}</Text>
+              </View>
+              <Text style={styles.completionMeta}>{new Date(p.created_at).toLocaleDateString("tr-TR")}</Text>
+            </TouchableOpacity>
+          ))}
+        </>
+      )}
+
+      <Text style={[styles.sectionTitle, individualPrograms.length > 0 && { marginTop: spacing.lg }]}>Tamamlanan Programlar</Text>
       {completions.length === 0 ? (
         <Text style={styles.empty}>Henüz tamamlandı olarak işaretlenmiş bir program yok.</Text>
       ) : (
