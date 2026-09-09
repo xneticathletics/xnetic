@@ -89,6 +89,7 @@ export const COORDINATOR_TILES: Tile[] = [
   { key: "antrenorler", label: "Antrenörler", sub: "Branşının kadrosu", icon: "🧑‍🏫" },
   { key: "antrenman", label: "Antrenman-Maç Takvimi", sub: "", icon: "📅" },
   { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
+  { key: "kulup_yapisi", label: "Kulüp Yapısı", sub: "Branşının grup ve salonları", icon: "🏛️" },
   { key: "aidat", label: "Finans", sub: "Branşının aidatları", icon: "💰" },
   { key: "performans", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
   { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },

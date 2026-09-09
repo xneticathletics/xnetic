@@ -4,6 +4,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listGroups, type Group } from "../lib/api/groups";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 // Bu ekran hem ClubSettingsStack'ten (Kulüp Ayarları) hem de HomeStack'ten
 // (Ana Sayfa → Kulüp Yapısı) açılabiliyor — belirli bir stack'in
@@ -14,6 +16,14 @@ import { listGroups, type Group } from "../lib/api/groups";
 type Props = { navigation: NativeStackNavigationProp<any> };
 
 export default function GroupsListScreen({ navigation }: Props) {
+  const { role } = useAuth();
+  const { selectedBranch, isLocked } = useBranchSelect();
+  // Branş koordinatörü Kulüp Yapısı'nı SADECE kendi branşıyla ilgili
+  // bölümü görüntülemek için kullanıyor — grup oluşturma/düzenleme
+  // club_admin'e özel kalıyor (RLS zaten groups_admin_write/update ile
+  // sadece is_admin_tier()'a izin veriyor, burada sadece UI'da bunu
+  // yansıtıp tıklanamaz/eklenemez hâle getiriyoruz).
+  const isCoordinator = role === "coach" && isLocked;
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,8 +55,9 @@ export default function GroupsListScreen({ navigation }: Props) {
   // Branş branş grupla — her branşın altında kendi grupları, alfabetik
   // sırayla, küçük başlıklarla ayrılmış.
   const sections = useMemo(() => {
+    const scoped = isCoordinator ? groups.filter((g) => g.branch === selectedBranch) : groups;
     const byBranch: Record<string, Group[]> = {};
-    groups.forEach((g) => {
+    scoped.forEach((g) => {
       (byBranch[g.branch] ??= []).push(g);
     });
     return Object.entries(byBranch)
@@ -55,15 +66,17 @@ export default function GroupsListScreen({ navigation }: Props) {
         branch,
         groupsInBranch: [...groupsInBranch].sort((x, y) => x.name.localeCompare(y.name, "tr")),
       }));
-  }, [groups]);
+  }, [groups, isCoordinator, selectedBranch]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("GroupForm", { groupId: undefined })}>
-          <Text style={styles.addButtonText}>+ Ekle</Text>
-        </TouchableOpacity>
-      </View>
+      {!isCoordinator && (
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("GroupForm", { groupId: undefined })}>
+            <Text style={styles.addButtonText}>+ Ekle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -84,6 +97,7 @@ export default function GroupsListScreen({ navigation }: Props) {
                 <TouchableOpacity
                   key={item.id}
                   style={styles.card}
+                  disabled={isCoordinator}
                   onPress={() => navigation.navigate("GroupForm", { groupId: item.id })}
                 >
                   <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>

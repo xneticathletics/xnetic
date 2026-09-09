@@ -4,8 +4,17 @@ import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listBranches, createBranch, deleteBranch, updateBranch, type Branch } from "../lib/api/branches";
 import { listGroups, type Group } from "../lib/api/groups";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 export default function BranchesListScreen() {
+  const { role } = useAuth();
+  const { selectedBranch, isLocked } = useBranchSelect();
+  // Branş koordinatörü burada SADECE kendi branşını görür, ekleme/düzenleme/
+  // silme yapamaz (RLS zaten branches_admin_write/update/delete ile
+  // is_admin_tier() şart koşuyor) — Kulüp Yapısı'nda kendi branşıyla
+  // ilgili bölümü görebilsin diye eklendi.
+  const isCoordinator = role === "coach" && isLocked;
   const [branches, setBranches] = useState<Branch[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [newName, setNewName] = useState("");
@@ -44,6 +53,11 @@ export default function BranchesListScreen() {
       if (!hasLoadedOnceRef.current) setLoading(true);
       load();
     }, [load])
+  );
+
+  const visibleBranches = useMemo(
+    () => (isCoordinator ? branches.filter((b) => b.name === selectedBranch) : branches),
+    [branches, isCoordinator, selectedBranch]
   );
 
   // Her branşta kaç grup olduğunu hızlıca bulmak için.
@@ -127,33 +141,39 @@ export default function BranchesListScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.subtitle}>Kulübünüzün çalıştığı spor branşları</Text>
+      <Text style={styles.subtitle}>
+        {isCoordinator ? "Branşının bilgileri" : "Kulübünüzün çalıştığı spor branşları"}
+      </Text>
 
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          value={newName}
-          onChangeText={setNewName}
-          placeholder="Örn. Basketbol"
-          placeholderTextColor={colors.muted}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAdd} disabled={saving}>
-          {saving ? <ActivityIndicator size="small" color={colors.bg} /> : <Text style={styles.addButtonText}>Ekle</Text>}
-        </TouchableOpacity>
-      </View>
+      {!isCoordinator && (
+        <>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Örn. Basketbol"
+              placeholderTextColor={colors.muted}
+            />
+            <TouchableOpacity style={styles.addButton} onPress={handleAdd} disabled={saving}>
+              {saving ? <ActivityIndicator size="small" color={colors.bg} /> : <Text style={styles.addButtonText}>Ekle</Text>}
+            </TouchableOpacity>
+          </View>
 
-      <TouchableOpacity style={styles.individualToggle} onPress={() => setNewIsIndividual((v) => !v)}>
-        <View style={[styles.checkbox, newIsIndividual && styles.checkboxChecked]}>
-          {newIsIndividual && <Text style={styles.checkmark}>✓</Text>}
-        </View>
-        <Text style={styles.individualToggleText}>Bireysel branş (Yüzme, Atletizm vb. — skor yerine sonuç açıklaması girilir)</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.individualToggle} onPress={() => setNewIsIndividual((v) => !v)}>
+            <View style={[styles.checkbox, newIsIndividual && styles.checkboxChecked]}>
+              {newIsIndividual && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.individualToggleText}>Bireysel branş (Yüzme, Atletizm vb. — skor yerine sonuç açıklaması girilir)</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.lg }} />}
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
-        data={branches}
+        data={visibleBranches}
         keyExtractor={(b) => b.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         ListEmptyComponent={
@@ -166,6 +186,20 @@ export default function BranchesListScreen() {
         renderItem={({ item }) => {
           const isEditing = editingId === item.id;
           const groupCount = groupCountByBranch[item.name] ?? 0;
+
+          if (isCoordinator) {
+            return (
+              <View style={styles.row}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowName}>{item.name}</Text>
+                  <Text style={styles.rowMeta}>
+                    {groupCount} grup{item.coordinator?.name ? ` · Koordinatör: ${item.coordinator.name}` : ""}
+                    {item.is_individual ? " · Bireysel" : ""}
+                  </Text>
+                </View>
+              </View>
+            );
+          }
 
           if (isEditing) {
             return (

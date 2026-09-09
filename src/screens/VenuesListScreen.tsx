@@ -5,12 +5,20 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listVenues, type Venue } from "../lib/api/venues";
 import { listBranches, type Branch } from "../lib/api/branches";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 // Bu ekran hem ClubSettingsStack'ten hem de HomeStack'ten (Kulüp Yapısı)
 // açılabiliyor — bkz. GroupsListScreen.tsx'teki aynı not.
 type Props = { navigation: NativeStackNavigationProp<any> };
 
 export default function VenuesListScreen({ navigation }: Props) {
+  const { role } = useAuth();
+  const { selectedBranch, isLocked } = useBranchSelect();
+  // Branş koordinatörü sadece kendi branşına atanmış (branch_ids içinde
+  // kendi branşı geçen) salonları görür, ekleyip düzenleyemez (RLS zaten
+  // venues_admin_write/update ile is_admin_tier() şart koşuyor).
+  const isCoordinator = role === "coach" && isLocked;
   const [venues, setVenues] = useState<Venue[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +49,13 @@ export default function VenuesListScreen({ navigation }: Props) {
     return map;
   }, [branches]);
 
+  const visibleVenues = React.useMemo(() => {
+    if (!isCoordinator) return venues;
+    const myBranchId = branches.find((b) => b.name === selectedBranch)?.id;
+    if (!myBranchId) return [];
+    return venues.filter((v) => v.branch_ids.includes(myBranchId));
+  }, [venues, branches, isCoordinator, selectedBranch]);
+
   useFocusEffect(
     useCallback(() => {
       if (!hasLoadedOnceRef.current) setLoading(true);
@@ -50,23 +65,25 @@ export default function VenuesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("VenueForm", { venueId: undefined })}>
-          <Text style={styles.addButtonText}>+ Ekle</Text>
-        </TouchableOpacity>
-      </View>
+      {!isCoordinator && (
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("VenueForm", { venueId: undefined })}>
+            <Text style={styles.addButtonText}>+ Ekle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
-        data={venues}
+        data={visibleVenues}
         keyExtractor={(v) => v.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz salon eklenmemiş.</Text> : null}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate("VenueForm", { venueId: item.id })}>
+          <TouchableOpacity style={styles.row} disabled={isCoordinator} onPress={() => navigation.navigate("VenueForm", { venueId: item.id })}>
             <Text style={styles.rowName}>{item.name}</Text>
             <Text style={styles.rowSub}>
               {item.address ?? "Adres girilmemiş"}{item.capacity ? ` · ${item.capacity} kişilik` : ""}
