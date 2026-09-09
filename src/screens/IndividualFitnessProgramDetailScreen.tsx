@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -12,6 +12,7 @@ import {
   listMeasurementsForAthleteExercise, createFitnessMeasurement, type FitnessMeasurement,
 } from "../lib/api/fitnessMeasurements";
 import SetEntryList, { type SetEntry } from "../components/SetEntryList";
+import { getMyAthletes } from "../lib/api/myAthletes";
 import { useAuth } from "../context/AuthContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
@@ -34,8 +35,20 @@ function formatDate(iso: string) {
 export default function IndividualFitnessProgramDetailScreen({ route, navigation }: Props) {
   const { programId, athleteId } = route.params;
   const { role } = useAuth();
-  const canDelete = role === "club_admin" || role === "athlete";
   const { handleFocus } = useKeyboardScroll();
+
+  // "role === athlete" tek başına yeterli değil — bu ekranın gösterdiği
+  // program GERÇEKTEN bu girişteki sporcuya mı ait, onu da kontrol
+  // ediyoruz (RLS zaten yetkisiz silmeyi reddediyor, bu sadece butonun
+  // doğru yerde görünmesi için).
+  const [myAthleteIds, setMyAthleteIds] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (role !== "athlete") return;
+    let cancelled = false;
+    getMyAthletes().then((athletes) => { if (!cancelled) setMyAthleteIds(athletes.map((a) => a.id)); });
+    return () => { cancelled = true; };
+  }, [role]);
+  const canDelete = role === "club_admin" || (role === "athlete" && !!myAthleteIds?.includes(athleteId));
 
   const [program, setProgram] = useState<IndividualFitnessProgram | null>(null);
   const [items, setItems] = useState<IndividualFitnessProgramItem[]>([]);
