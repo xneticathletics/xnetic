@@ -143,6 +143,22 @@ export async function listAllAthletes(): Promise<Athlete[]> {
   return (data as unknown as Athlete[]) ?? [];
 }
 
+export type AthleteSearchResult = { id: string; full_name: string; group_id: string | null; groups?: { name: string } | null };
+
+// Sporcu Yönetimi'ndeki "sporcu ara" kutusu için — listAllAthletes()'in
+// tüm sağlık/veli alanlarını (health_info, allergies, blood_type vb.)
+// içeren ağır sorgusu yerine, sadece isim aramasının ihtiyaç duyduğu
+// birkaç alanı çeker. Ayrıca çağıran ekran bunu sadece kullanıcı aramaya
+// BAŞLADIĞINDA (lazy) çağırıyor — her ekran açılışında değil.
+export async function searchAthleteNames(): Promise<AthleteSearchResult[]> {
+  const { data, error } = await supabase
+    .from("athletes")
+    .select("id, full_name, group_id, groups!group_id(name)")
+    .order("full_name", { ascending: true });
+  if (error) throw error;
+  return (data as unknown as AthleteSearchResult[]) ?? [];
+}
+
 export async function getAthlete(id: string): Promise<Athlete | null> {
   const { data, error } = await supabase.from("athletes").select(`${ATHLETE_FIELDS}, groups!group_id(name, branch)`).eq("id", id).single();
   if (error) throw error;

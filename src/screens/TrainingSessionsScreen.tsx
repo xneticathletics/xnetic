@@ -49,6 +49,15 @@ function todayKey() {
   return toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+// generateSessionsFromTemplates() iki ekstra sorgu (şablonlar + çakışma
+// kontrolü için mevcut antrenmanlar) yapıyor — ekran her odaklandığında
+// (sekmeler arası geçişte bile) çalıştırmak yerine, bu modül-seviyesi
+// zaman damgasıyla en fazla birkaç saatte bir çalışacak şekilde
+// sınırlıyoruz. Yeni şablonlar yine de birkaç saat içinde üretilmiş olur,
+// ama Takvim'e her giriş çıkışta gereksiz iki ağ isteği eklenmez.
+let lastTemplateGenAt = 0;
+const TEMPLATE_GEN_THROTTLE_MS = 6 * 60 * 60 * 1000;
+
 // Ay ızgarasını (Pazartesi başlangıçlı, 7 sütunlu) hücre dizisi olarak
 // üretir — boş hücreler null'dır.
 function buildMonthGrid(year: number, month0: number): (number | null)[] {
@@ -110,12 +119,15 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       setBranches(branchList);
       setAuthorizedVenueIds(myVenueIds);
 
-      // Ekran her açıldığında aktif haftalık program şablonlarının önümüzdeki
-      // ufkunu tazeler (aidattaki topUpAllActivePlans ile aynı yerde/mantıkta)
-      // — sıradan (etiketsiz) bir antrenör için RLS zaten insert'i reddeder,
-      // bu yüzden sadece yönetme yetkisi olanlarda çağrılır, hata sessizce yutulur.
+      // Aktif haftalık program şablonlarının önümüzdeki ufkunu tazeler
+      // (aidattaki topUpAllActivePlans ile aynı yerde/mantıkta) — sıradan
+      // (etiketsiz) bir antrenör için RLS zaten insert'i reddeder, bu
+      // yüzden sadece yönetme yetkisi olanlarda çağrılır, hata sessizce
+      // yutulur. Yukarıdaki throttle sayesinde ekrana her giriş çıkışta
+      // değil, en fazla birkaç saatte bir çalışıyor.
       const canManage = !isCoach || myVenueIds.length > 0;
-      if (canManage) {
+      if (canManage && Date.now() - lastTemplateGenAt > TEMPLATE_GEN_THROTTLE_MS) {
+        lastTemplateGenAt = Date.now();
         await generateSessionsFromTemplates().catch(() => {});
       }
 

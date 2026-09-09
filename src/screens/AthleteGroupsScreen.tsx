@@ -6,7 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listGroups, listMyCoachedGroups, type Group } from "../lib/api/groups";
 import { listVenues, type Venue } from "../lib/api/venues";
 import { listBranches, type Branch } from "../lib/api/branches";
-import { listAllAthletes, type Athlete } from "../lib/api/athletes";
+import { searchAthleteNames, type AthleteSearchResult } from "../lib/api/athletes";
 import { getGroupStaffingMap, type GroupStaffing } from "../lib/api/coaches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
@@ -30,7 +30,8 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [allAthletes, setAllAthletes] = useState<Athlete[]>([]);
+  const [allAthletes, setAllAthletes] = useState<AthleteSearchResult[]>([]);
+  const [athleteSearchLoaded, setAthleteSearchLoaded] = useState(false);
   const [staffing, setStaffing] = useState<Record<string, GroupStaffing>>({});
   const [localBranch, setLocalBranch] = useState<string | null>(null);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
@@ -52,18 +53,21 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [g, b, v, s, a] = await Promise.all([
+      // Tüm sporcu listesi (arama için) burada ARTIK çekilmiyor — ağır bir
+      // sorgu (20+ alan, sağlık verisi dahil) sadece kullanıcı gerçekten
+      // arama kutusuna yazmaya başladığında, aşağıdaki lazy effect ile
+      // çekiliyor. Sırf grupları görüntülemek için her ekran açılışında
+      // gereksiz yere tüm kulüp sporcularını indirmeyi engelliyor.
+      const [g, b, v, s] = await Promise.all([
         isCoach ? listMyCoachedGroups() : listGroups(),
         isCoach ? Promise.resolve([]) : listBranches(),
         isCoach ? Promise.resolve([]) : listVenues(),
         isCoach ? Promise.resolve({}) : getGroupStaffingMap(),
-        isCoach ? Promise.resolve([]) : listAllAthletes(),
       ]);
       setAllGroups(g);
       setBranches(b);
       setVenues(v);
       setStaffing(s);
-      setAllAthletes(a);
     } catch (e: any) {
       setError(e.message ?? "Gruplar yüklenemedi");
     } finally {
@@ -118,6 +122,14 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
   }, [allAthletes, query, localBranch, branchGroupIds]);
 
   const isSearching = query.trim().length > 0;
+
+  // Sporcu listesi sadece arama gerçekten KULLANILDIĞINDA (ilk karakter
+  // yazıldığında), bir kere çekilip önbelleğe alınıyor.
+  useEffect(() => {
+    if (isCoach || athleteSearchLoaded || !isSearching) return;
+    setAthleteSearchLoaded(true);
+    searchAthleteNames().then(setAllAthletes).catch(() => {});
+  }, [isSearching, isCoach, athleteSearchLoaded]);
 
   const topBar = (
     <>
