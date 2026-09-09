@@ -89,7 +89,12 @@ export default function SocialPostFormScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scrollRef}
+        style={styles.container}
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl * 4 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <Field label="Fotoğraf / Video *">
           <TouchableOpacity style={styles.mediaSlot} onPress={pickMedia}>
             {localUri && mediaType === "photo" ? (

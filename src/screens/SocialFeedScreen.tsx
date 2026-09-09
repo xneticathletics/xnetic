@@ -141,7 +141,15 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             contentOffset={{ x: (viewerIndex ?? 0) * screenWidth, y: 0 }}
-            onMomentumScrollEnd={(e) => setViewerIndex(Math.round(e.nativeEvent.contentOffset.x / screenWidth))}
+            onMomentumScrollEnd={(e) => {
+              // Bir sayfa geçişinin momentum'u hâlâ sönümlenirken "Kapat"a
+              // basılırsa, bu olay kapatmadan SONRA gecikmeli tetiklenip
+              // viewerIndex'i tekrar dolduruyor ve görüntüleyici kapanır
+              // kapanmaz yeniden açılıyordu. Zaten kapatılmışsa (null)
+              // gecikmeli olayı yok sayıyoruz.
+              const newIndex = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+              setViewerIndex((current) => (current === null ? null : newIndex));
+            }}
           >
             {posts.map((item, index) => (
               <ViewerPage key={item.id} post={item} active={index === viewerIndex} />
