@@ -158,7 +158,9 @@ export default function MembershipFreezeSection({ athleteId }: { athleteId: stri
                 <span className="font-semibold text-ink">
                   {formatDate(f.start_date)} - {formatDate(f.end_date)}
                 </span>
-                <span className="ml-1.5 text-muted">· {f.requested_by_role === "admin" ? "Admin" : "Veli"}</span>
+                <span className="ml-1.5 text-muted">
+                  · {f.requested_by_role === "admin" ? "Admin" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
+                </span>
                 {f.reason && <span className="ml-1.5 text-muted">· {f.reason}</span>}
               </span>
               <button type="button" onClick={() => handleDelete(f)} className="shrink-0 font-bold text-coral hover:underline">

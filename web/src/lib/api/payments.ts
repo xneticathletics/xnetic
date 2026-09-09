@@ -79,38 +79,44 @@ export function getCurrentMonthRange(): { start: string; end: string } {
   return { start, end };
 }
 
-// Tahsil edilen (bu ay ödenmiş), bekleyen (bu ay vadeli, henüz gecikmemiş)
-// ve vadesi geçmiş (AY SINIRI OLMAKSIZIN, geçmiş aylardan kalanlar dahil TÜM
-// gecikmiş ödemeler) tutarlarını döner. "expected" bu üçünün basit toplamıdır
-// — üstteki toplam rakamın alttaki 3 kutunun toplamıyla HER ZAMAN birebir
-// tutması için bilerek böyle hesaplanır (aksi halde "Vadesi Geçmiş" geçen
-// aylardan tutar içerdiğinde üstteki toplamla alttaki kutular tutmuyordu —
-// mobildeki aynı fonksiyonla birebir aynı, bkz. src/lib/api/payments.ts).
+// Tahsil edilen (bu ay FİİLEN ödenmiş — paid_at'e göre), bekleyen (bu ay
+// vadeli, henüz gecikmemiş) ve vadesi geçmiş (AY SINIRI OLMAKSIZIN, geçmiş
+// aylardan kalanlar dahil TÜM gecikmiş ödemeler) tutarlarını döner.
+// "expected" bu üçünün basit toplamıdır.
+//
+// ÖNEMLİ: "Tahsil Edilen" bilerek due_date değil paid_at'e göre hesaplanır —
+// aksi halde biri Eylül'de Ekim ayının aidatını erken ödediğinde para
+// sessizce hiçbir ayın "Tahsil Edilen"ine yazılmıyordu (mobildeki aynı
+// düzeltmeyle birebir aynı, bkz. src/lib/api/payments.ts). "Vadesi Geçmiş"
+// de artık kulübün TÜM geçmişindeki pending satırlarını istemciye çekmek
+// yerine tek bir SUM sorgusuyla (get_overdue_payments_total RPC) veritabanı
+// tarafında hesaplanıyor — kulüp yıllar boyu kullandıkça bu sorgu hiç
+// büyümüyor. Web'de branş bazlı kapsam yok (coordinator hesapları web'e hiç
+// giremiyor — bkz. WEB_ALLOWED_ROLES), bu yüzden mobildeki branchName
+// parametresi burada gerekmiyor.
 export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
   const { start, end } = getCurrentMonthRange();
+  const now = new Date();
+  const startOfMonthTs = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
+  const startOfNextMonthTs = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0).toISOString();
 
-  const [thisMonthResult, allPendingResult] = await Promise.all([
+  const [collectedResult, thisMonthDueResult, overdueResult] = await Promise.all([
+    supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs),
     supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end),
-    supabase.from("payments").select("amount, status, due_date").eq("status", "pending"),
+    supabase.rpc("get_overdue_payments_total", { p_grace_days: graceDays, p_athlete_ids: null }),
   ]);
-  if (thisMonthResult.error) throw thisMonthResult.error;
-  if (allPendingResult.error) throw allPendingResult.error;
+  if (collectedResult.error) throw collectedResult.error;
+  if (thisMonthDueResult.error) throw thisMonthDueResult.error;
+  if (overdueResult.error) throw overdueResult.error;
 
-  let collected = 0;
+  const collected = (collectedResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+
   let pending = 0;
-  (thisMonthResult.data ?? []).forEach((p) => {
-    const amount = Number(p.amount);
-    if (p.status === "paid") {
-      collected += amount;
-    } else if (!isOverdue(p as Payment, graceDays)) {
-      pending += amount;
-    }
+  (thisMonthDueResult.data ?? []).forEach((p) => {
+    if (p.status !== "paid" && !isOverdue(p as Payment, graceDays)) pending += Number(p.amount);
   });
 
-  let overdue = 0;
-  (allPendingResult.data ?? []).forEach((p) => {
-    if (isOverdue(p as Payment, graceDays)) overdue += Number(p.amount);
-  });
+  const overdue = Number(overdueResult.data ?? 0);
 
   const expected = collected + pending + overdue;
 
