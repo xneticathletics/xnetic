@@ -283,19 +283,19 @@ export async function getMonthlyFinanceSummary(graceDays: number = 0, branchName
 
   let collectedQuery = supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs);
   let thisMonthDueQuery = supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end);
-  let allPendingQuery = supabase.from("payments").select("amount, status, due_date").eq("status", "pending");
   if (athleteIds) {
     collectedQuery = collectedQuery.in("athlete_id", athleteIds);
     thisMonthDueQuery = thisMonthDueQuery.in("athlete_id", athleteIds);
-    allPendingQuery = allPendingQuery.in("athlete_id", athleteIds);
   }
 
-  const [collectedResult, thisMonthDueResult, allPendingResult] = await Promise.all([
-    collectedQuery, thisMonthDueQuery, allPendingQuery,
+  const [collectedResult, thisMonthDueResult, overdueResult] = await Promise.all([
+    collectedQuery,
+    thisMonthDueQuery,
+    supabase.rpc("get_overdue_payments_total", { p_grace_days: graceDays, p_athlete_ids: athleteIds }),
   ]);
   if (collectedResult.error) throw collectedResult.error;
   if (thisMonthDueResult.error) throw thisMonthDueResult.error;
-  if (allPendingResult.error) throw allPendingResult.error;
+  if (overdueResult.error) throw overdueResult.error;
 
   const collected = (collectedResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
 
@@ -304,10 +304,7 @@ export async function getMonthlyFinanceSummary(graceDays: number = 0, branchName
     if (p.status !== "paid" && !isOverdue(p as Payment, graceDays)) pending += Number(p.amount);
   });
 
-  let overdue = 0;
-  (allPendingResult.data ?? []).forEach((p) => {
-    if (isOverdue(p as Payment, graceDays)) overdue += Number(p.amount);
-  });
+  const overdue = Number(overdueResult.data ?? 0);
 
   const expected = collected + pending + overdue;
 

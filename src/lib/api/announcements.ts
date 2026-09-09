@@ -22,6 +22,7 @@ export type AnnouncementInput = {
   title: string;
   body: string;
   attachment_url?: string | null;
+  storage_path?: string | null;
 };
 
 export async function listAnnouncements(): Promise<Announcement[]> {
@@ -44,7 +45,7 @@ export async function uploadAnnouncementAttachment(
   clubId: string,
   fileName: string,
   mimeType: string | null
-): Promise<string> {
+): Promise<{ url: string; path: string }> {
   const info = await FileSystem.getInfoAsync(localUri);
   if (info.exists && info.size > MAX_ATTACHMENT_SIZE_BYTES) {
     throw new Error(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
@@ -61,7 +62,7 @@ export async function uploadAnnouncementAttachment(
   if (error) throw error;
 
   const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
-  return data.publicUrl;
+  return { url: data.publicUrl, path };
 }
 
 // Duyuru hedeflerine (target_types/target_ids) göre gerçek alıcı kullanıcı

@@ -113,8 +113,11 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
     setError(null);
     try {
       let attachmentUrl: string | null = null;
+      let storagePath: string | null = null;
       if (attachmentUri && attachmentName && clubId) {
-        attachmentUrl = await uploadAnnouncementAttachment(attachmentUri, clubId, attachmentName, attachmentMimeType);
+        const uploaded = await uploadAnnouncementAttachment(attachmentUri, clubId, attachmentName, attachmentMimeType);
+        attachmentUrl = uploaded.url;
+        storagePath = uploaded.path;
       }
       await createAnnouncement({
         title,
@@ -122,6 +125,7 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
         target_types: targetTypes,
         target_ids: targetTypes.includes("group") ? selectedGroups.map((g) => g.id) : null,
         attachment_url: attachmentUrl,
+        storage_path: storagePath,
       });
       navigation.goBack();
     } catch (e: any) {
