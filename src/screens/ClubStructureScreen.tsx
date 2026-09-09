@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "ClubStructure">;
 
@@ -21,9 +23,16 @@ const ITEMS: { icon: string; title: string; sub: string; screen: "GroupsList" | 
 // döner ve alt menüde "Ana Menü" vurgulu kalır, "Kulüp Ayarları"na
 // atlamaz.
 export default function ClubStructureScreen({ navigation }: Props) {
+  const { role } = useAuth();
+  const { isLocked } = useBranchSelect();
+  // Koordinatör Kulüp Yapısı'nda sadece Gruplar ve Salonlar'ı görüyor —
+  // Branşlar bilerek gösterilmiyor (kullanıcı kararı).
+  const isCoordinator = role === "coach" && isLocked;
+  const items = isCoordinator ? ITEMS.filter((i) => i.screen !== "BranchesList") : ITEMS;
+
   return (
     <View style={styles.container}>
-      {ITEMS.map((item, index) => {
+      {items.map((item, index) => {
         const accent = ACCENTS[index % ACCENTS.length];
         return (
           <TouchableOpacity

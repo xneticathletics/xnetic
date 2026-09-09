@@ -18,11 +18,11 @@ type Props = { navigation: NativeStackNavigationProp<any> };
 export default function GroupsListScreen({ navigation }: Props) {
   const { role } = useAuth();
   const { selectedBranch, isLocked } = useBranchSelect();
-  // Branş koordinatörü Kulüp Yapısı'nı SADECE kendi branşıyla ilgili
-  // bölümü görüntülemek için kullanıyor — grup oluşturma/düzenleme
-  // club_admin'e özel kalıyor (RLS zaten groups_admin_write/update ile
-  // sadece is_admin_tier()'a izin veriyor, burada sadece UI'da bunu
-  // yansıtıp tıklanamaz/eklenemez hâle getiriyoruz).
+  // Branş koordinatörü Kulüp Yapısı'nda SADECE kendi branşının gruplarını
+  // görür ve YÖNETEBİLİR (ekle/düzenle/sil) — RLS zaten groups_coordinator_write/
+  // update/delete ile bunu kendi branşıyla sınırlıyor (is_my_coordinator_branch/
+  // is_my_coordinated_group). Salonlar bunun aksine hâlâ salt okunur, branşlar
+  // hiç gösterilmiyor (bkz. VenuesListScreen.tsx / ClubStructureScreen.tsx).
   const isCoordinator = role === "coach" && isLocked;
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,13 +70,11 @@ export default function GroupsListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {!isCoordinator && (
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("GroupForm", { groupId: undefined })}>
-            <Text style={styles.addButtonText}>+ Ekle</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("GroupForm", { groupId: undefined })}>
+          <Text style={styles.addButtonText}>+ Ekle</Text>
+        </TouchableOpacity>
+      </View>
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -97,7 +95,6 @@ export default function GroupsListScreen({ navigation }: Props) {
                 <TouchableOpacity
                   key={item.id}
                   style={styles.card}
-                  disabled={isCoordinator}
                   onPress={() => navigation.navigate("GroupForm", { groupId: item.id })}
                 >
                   <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>

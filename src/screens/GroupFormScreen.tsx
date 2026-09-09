@@ -8,6 +8,8 @@ import BranchPickerModal from "../components/BranchPickerModal";
 import VenuePickerModal from "../components/VenuePickerModal";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 // Bu ekran hem ClubSettingsStack'ten hem de HomeStack'ten (Kulüp Yapısı)
 // açılabiliyor — bkz. GroupsListScreen.tsx'teki aynı not.
 type Props = {
@@ -19,10 +21,20 @@ const emptyForm: GroupInput = { name: "", branch: "", venue_id: null, athlete_ty
 
 export default function GroupFormScreen({ route, navigation }: Props) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
+  const { role } = useAuth();
+  const { selectedBranch, isLocked } = useBranchSelect();
+  // Branş koordinatörü artık kendi branşının gruplarını ekleyip
+  // düzenleyebiliyor (bkz. GroupsListScreen.tsx) ama branşı DEĞİŞTİREMEZ —
+  // RLS zaten insert/update'i is_my_coordinator_branch()/is_my_coordinated_group()
+  // ile kendi branşına kilitliyor, burada da alanı kilitli gösterip yanlışlıkla
+  // başka bir branş seçip RLS hatası almalarını önlüyoruz.
+  const isCoordinator = role === "coach" && isLocked;
   const groupId = route.params?.groupId;
   const isEdit = !!groupId;
 
-  const [form, setForm] = useState<GroupInput>(emptyForm);
+  const [form, setForm] = useState<GroupInput>(
+    isCoordinator ? { ...emptyForm, branch: selectedBranch ?? "" } : emptyForm
+  );
   const [venueName, setVenueName] = useState<string | null>(null);
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
   const [venuePickerVisible, setVenuePickerVisible] = useState(false);
@@ -128,9 +140,15 @@ export default function GroupFormScreen({ route, navigation }: Props) {
       </Field>
 
       <Field label="Branş *">
-        <TouchableOpacity style={styles.input} onPress={() => setBranchPickerVisible(true)}>
-          <Text style={{ color: form.branch ? colors.ink : colors.muted }}>{form.branch || "Branş seç"}</Text>
-        </TouchableOpacity>
+        {isCoordinator ? (
+          <View style={[styles.input, styles.inputDisabled]}>
+            <Text style={{ color: colors.muted }}>{form.branch}</Text>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.input} onPress={() => setBranchPickerVisible(true)}>
+            <Text style={{ color: form.branch ? colors.ink : colors.muted }}>{form.branch || "Branş seç"}</Text>
+          </TouchableOpacity>
+        )}
       </Field>
 
       <Field label="Sporcu Tipi *">
@@ -249,6 +267,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
+  inputDisabled: { justifyContent: "center" },
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
