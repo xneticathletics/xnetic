@@ -45,6 +45,13 @@ function formatDayLabel(iso: string): string {
 // Paylaşımları gün başlıklarına ayırıp, her günün fotoğraflarını
 // COLUMNS'luk satırlara böler — tek bir FlatList'te hem başlık hem
 // ızgara satırı olarak render edilebilsin diye.
+function formatPostDateTime(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("tr-TR");
+  const time = d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  return `${date} · ${time}`;
+}
+
 function buildFeedRows(posts: SocialPost[]): FeedRow[] {
   const rows: FeedRow[] = [];
   let currentLabel: string | null = null;
@@ -214,6 +221,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
                         <Text style={styles.pendingBadgeText}>⏳ Onay Bekliyor</Text>
                       </View>
                     )}
+                    <Text style={styles.thumbAuthor} numberOfLines={1}>{item.author_name ?? "—"}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -244,6 +252,17 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
               <ViewerPage key={item.id} post={item} active={index === viewerIndex} />
             ))}
           </ScrollView>
+
+          {activePost && (
+            <View style={styles.viewerInfoBar}>
+              <View style={styles.viewerInfoTopRow}>
+                <Text style={styles.viewerAuthor}>{activePost.author_name ?? "—"}</Text>
+                <Text style={styles.viewerDate}>{formatPostDateTime(activePost.created_at)}</Text>
+              </View>
+              <Text style={styles.viewerBranch}>{activePost.branch}</Text>
+              {!!activePost.caption && <Text style={styles.viewerCaption}>{activePost.caption}</Text>}
+            </View>
+          )}
 
           <View style={styles.viewerFooter}>
             <TouchableOpacity style={styles.viewerButton} onPress={() => setViewerIndex(null)}>
@@ -342,10 +361,19 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.72)", borderRadius: radius.sm, paddingVertical: 4, alignItems: "center",
   },
   pendingBadgeText: { color: colors.yellow, fontSize: 10, fontWeight: "700" },
+  thumbAuthor: { color: colors.muted, fontSize: 11, marginTop: 4 },
   viewerContainer: { flex: 1, backgroundColor: "#000" },
   viewerPage: { width: screenWidth, alignItems: "center", justifyContent: "center" },
   fullImage: { width: screenWidth, height: "100%" },
   fullVideo: { width: screenWidth, height: "100%" },
+  viewerInfoBar: {
+    backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xs,
+  },
+  viewerInfoTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  viewerAuthor: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  viewerDate: { color: colors.muted, fontSize: 11 },
+  viewerBranch: { color: colors.teal, fontSize: 11, fontWeight: "600", marginTop: 2 },
+  viewerCaption: { color: colors.ink, fontSize: 13, marginTop: spacing.xs, lineHeight: 18 },
   viewerFooter: {
     flexDirection: "row", justifyContent: "center", gap: spacing.md,
     paddingVertical: spacing.md, paddingBottom: spacing.xl, backgroundColor: "rgba(0,0,0,0.6)",
