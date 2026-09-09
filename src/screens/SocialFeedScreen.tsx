@@ -320,7 +320,19 @@ function VideoViewerPage({ uri, active }: { uri: string; active: boolean }) {
 
   return (
     <View style={styles.viewerPage}>
-      <VideoView style={styles.fullVideo} player={player} allowsFullscreen contentFit="contain" />
+      <VideoView
+        style={styles.fullVideo}
+        player={player}
+        contentFit="contain"
+        // Video zaten kendi tam ekran görüntüleyicimizde (Modal) oynuyor —
+        // expo-video'nun KENDİ "tam ekran" düğmesi bunun ÜSTÜNE binince
+        // video telefonun saat/pil simgelerinin olduğu status bar'ın
+        // üzerine kadar taşıyordu (kullanıcı canlıda karşılaştı). Zaten
+        // gereksiz olan bu native tam ekran geçişini kapatıyoruz. Ayrıca
+        // eski allowsFullscreen prop'u deprecated olduğu için artık
+        // fullscreenOptions kullanılıyor.
+        fullscreenOptions={{ enable: false }}
+      />
     </View>
   );
 }
