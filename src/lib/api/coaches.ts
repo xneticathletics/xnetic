@@ -65,7 +65,7 @@ export async function updateCoach(id: string, input: Partial<CoachInput>) {
 export async function getCoachGroups(coachId: string): Promise<{ id: string; name: string; branch: string }[]> {
   const [headResult, assistantResult] = await Promise.all([
     supabase.from("groups").select("id, name, branch").eq("head_coach_id", coachId),
-    supabase.from("group_coaches").select("groups(id, name, branch)").eq("coach_id", coachId),
+    supabase.from("group_coaches").select("groups!group_id(id, name, branch)").eq("coach_id", coachId),
   ]);
   if (headResult.error) throw headResult.error;
   if (assistantResult.error) throw assistantResult.error;

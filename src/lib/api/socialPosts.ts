@@ -73,10 +73,17 @@ export async function listMyBranches(role: UserRole | null): Promise<string[]> {
   const userId = await getCurrentAppUserId();
   if (!userId) return [];
 
+  // "groups!group_id": athletes/group_coaches ile groups arasında birden
+  // fazla ilişki var (athlete_groups köprü tablosu da groups'a bağlı) —
+  // FK'yi açıkça belirtmezsek PostgREST embed'i belirsiz sayıp sessizce
+  // boş/yanlış dönebiliyor (bkz. athletes.ts/fitnessGroups.ts/payments.ts'de
+  // zaten uygulanan aynı düzeltme). Bu olmadan, sadece kendi sporcu kaydı
+  // üzerinden branşı bulunan bir sporcu/veli "Bağlı olduğun bir branş
+  // bulunamadı" hatası alıyordu.
   const [athleteRows, headGroups, assistantGroups, coachBranches, coordBranches] = await Promise.all([
-    supabase.from("athletes").select("groups(branch)").or(`parent_user_id.eq.${userId},athlete_user_id.eq.${userId}`),
+    supabase.from("athletes").select("groups!group_id(branch)").or(`parent_user_id.eq.${userId},athlete_user_id.eq.${userId}`),
     supabase.from("groups").select("branch").eq("head_coach_id", userId),
-    supabase.from("group_coaches").select("groups(branch)").eq("coach_id", userId),
+    supabase.from("group_coaches").select("groups!group_id(branch)").eq("coach_id", userId),
     supabase.from("coach_branches").select("branches(name)").eq("coach_id", userId),
     supabase.from("branches").select("name").eq("coordinator_user_id", userId),
   ]);
