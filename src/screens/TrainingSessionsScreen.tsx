@@ -121,19 +121,23 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
       let fetched: TrainingSession[];
       let fetchedMatches: MatchRow[];
+      let fetchedStaffing: Record<string, GroupStaffing>;
       if (isCoach) {
         const groupIds = await getMyCoachedGroupIds();
-        fetched = await listSessionsForGroups(groupIds);
-        fetchedMatches = await listMatchesForGroups(groupIds);
+        [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
+          listSessionsForGroups(groupIds), listMatchesForGroups(groupIds), getGroupStaffingMap(),
+        ]);
       } else if (selectedBranch) {
         // Kulüp Admini bir branş seçtiyse (çoklu branşlı kulüp), o
         // branştaki grupların antrenmanlarıyla sınırla.
         const groupIds = groups.filter((g) => g.branch === selectedBranch).map((g) => g.id);
-        fetched = await listSessionsForGroups(groupIds);
-        fetchedMatches = await listMatchesForGroups(groupIds);
+        [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
+          listSessionsForGroups(groupIds), listMatchesForGroups(groupIds), getGroupStaffingMap(),
+        ]);
       } else {
-        fetched = await listSessions();
-        fetchedMatches = await listMatches();
+        [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
+          listSessions(), listMatches(), getGroupStaffingMap(),
+        ]);
       }
 
       // Bitişinden belirli süre geçmiş, hâlâ "planned" antrenmanları
@@ -149,7 +153,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
       setSessions(fetched);
       setMatches(fetchedMatches);
-      setStaffing(await getGroupStaffingMap());
+      setStaffing(fetchedStaffing);
     } catch (e: any) {
       setError(e.message ?? "Program yüklenemedi");
     } finally {
