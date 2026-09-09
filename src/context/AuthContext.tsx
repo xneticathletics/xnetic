@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
@@ -17,6 +17,12 @@ type AuthState = {
   role: UserRole | null;
   clubId: string | null;
   loading: boolean;
+  // true: uygulama açılırken zaten cihazda kayıtlı bir oturum vardı (tam
+  // kapatılıp tekrar açılmış demek) — BiometricLockGate SADECE bu durumda
+  // ilk açılışta kilit gösteriyor. false/null: bu oturum interaktif bir
+  // signIn() ile (kullanıcı az önce şifresini girerek) başladı, aynı anda
+  // ayrıca biyometrik istemeye gerek yok.
+  initialSessionWasRestored: boolean | null;
   signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
@@ -64,9 +70,11 @@ function decodeJwtPayload(accessToken: string): Record<string, unknown> {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialSessionWasRestoredRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      initialSessionWasRestoredRef.current = !!data.session;
       setSession(data.session);
       setLoading(false);
     });
@@ -99,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: (claims.app_role as UserRole) ?? null,
     clubId: (claims.club_id as string) ?? null,
     loading,
+    initialSessionWasRestored: initialSessionWasRestoredRef.current,
     signIn: async (email, password, captchaToken) => {
       if (!email.trim() || !password) {
         return { error: "Giriş bilgisi ve şifre alanlarını doldurmalısınız." };

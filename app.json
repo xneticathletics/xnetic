@@ -52,7 +52,13 @@
           "project": "react-native"
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Hesabına hızlı ve güvenli erişim için Face ID kullanılıyor."
+        }
+      ]
     ],
     "extra": {
       "eas": {

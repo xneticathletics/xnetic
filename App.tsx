@@ -10,6 +10,7 @@ import { ClubSettingsProvider } from "./src/context/ClubSettingsContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import NotificationResponseHandler from "./src/components/NotificationResponseHandler";
+import BiometricLockGate from "./src/components/BiometricLockGate";
 import { colors } from "./src/theme/tokens";
 
 // Geliştirme sırasında kendi hatalarımız Sentry'yi kirletmesin diye sadece
@@ -99,7 +100,9 @@ function App() {
             <ClubSettingsProvider>
               <StatusBar style="light" />
               <NotificationResponseHandler />
-              <RootNavigator />
+              <BiometricLockGate>
+                <RootNavigator />
+              </BiometricLockGate>
             </ClubSettingsProvider>
           </BranchSelectProvider>
         </AuthProvider>
