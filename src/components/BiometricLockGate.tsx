@@ -22,8 +22,20 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
   // ZATEN kayıtlı bir oturum varsa kilit gösteriyoruz — az önce şifreyle
   // interaktif giriş yapan birine hemen ardından ayrıca Face ID sormuyoruz.
   const coldStartHandledRef = useRef(false);
+  // Face ID/Touch ID istemi (authenticateAsync) EKRANDA GÖRÜNÜRKEN iOS
+  // uygulamayı kısa süreliğine "inactive" yapıp geri "active"e döndürüyor
+  // — aşağıdaki AppState dinleyicisi bunu "arka plana atıldı" sanıp
+  // kilidi tekrar tetikliyor, bu da Face ID'nin sonsuz döngüde tekrar
+  // tekrar açılmasına yol açıyordu. Bu bayrak, biyometrik istem SÜRERKEN
+  // o kendi kaynaklı AppState geçişini yok saymamızı sağlıyor. Ayrıca
+  // attemptUnlock'un kendi içinde de bir koruma görevi görüyor — aynı
+  // render turunda iki ayrı effect'in (ilk açılış + yeniden kilitleme)
+  // aynı anda ikinci bir istem açmasını engelliyor.
+  const isAuthenticatingRef = useRef(false);
 
   const attemptUnlock = useCallback(async () => {
+    if (isAuthenticatingRef.current) return;
+    isAuthenticatingRef.current = true;
     setChecking(true);
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -43,6 +55,9 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
       setUnlocked(result.success);
     } finally {
       setChecking(false);
+      // İstemin kendi AppState geçişi biraz gecikmeli gelebiliyor — bayrağı
+      // hemen değil, kısa bir gecikmeyle indiriyoruz ki o geçiş de yok sayılsın.
+      setTimeout(() => { isAuthenticatingRef.current = false; }, 500);
     }
   }, []);
 
@@ -56,10 +71,16 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
   }, [loading, needsGate, initialSessionWasRestored, attemptUnlock]);
 
   // Arka plandan her geri dönüşte yeniden kilitle — telefon arka planda
-  // açık bırakılıp başkasının eline geçmesi riskine karşı.
+  // açık bırakılıp başkasının eline geçmesi riskine karşı. Biyometrik
+  // istem zaten sürüyorsa (isAuthenticatingRef) bu geçişi yok sayıyoruz.
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
-      if (appStateRef.current.match(/inactive|background/) && next === "active" && needsGate) {
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        next === "active" &&
+        needsGate &&
+        !isAuthenticatingRef.current
+      ) {
         setUnlocked(false);
       }
       appStateRef.current = next;

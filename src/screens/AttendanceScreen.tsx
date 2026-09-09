@@ -144,17 +144,19 @@ export default function AttendanceScreen({ route, navigation }: Props) {
         ListEmptyComponent={<Text style={styles.empty}>Bu grupta aktif sporcu bulunamadı.</Text>}
         renderItem={({ item }) => (
           <View style={styles.athleteRow}>
-            {item.photo_url ? (
-              <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-              </View>
-            )}
+            <View style={styles.athleteHeaderRow}>
+              {item.photo_url ? (
+                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
 
-            <View style={styles.athleteInfo}>
-              <Text style={styles.athleteName}>{item.full_name}</Text>
-              {!!item.birth_date && <Text style={styles.athleteBirth}>{item.birth_date}</Text>}
+              <View style={styles.athleteInfo}>
+                <Text style={styles.athleteName}>{item.full_name}</Text>
+                {!!item.birth_date && <Text style={styles.athleteBirth}>{item.birth_date}</Text>}
+              </View>
             </View>
 
             <View style={styles.statusButtons}>
@@ -169,6 +171,12 @@ export default function AttendanceScreen({ route, navigation }: Props) {
                 onPress={() => setStatus(item.athlete_id, "gelmedi")}
               >
                 <Text style={[styles.statusButtonText, { color: item.status === "gelmedi" ? colors.bg : colors.coral }]}>Gelmedi</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.statusButton, { borderColor: colors.violet }, item.status === "izinli" && { backgroundColor: colors.violet }]}
+                onPress={() => setStatus(item.athlete_id, "izinli")}
+              >
+                <Text style={[styles.statusButtonText, { color: item.status === "izinli" ? colors.bg : colors.violet }]}>İzinli</Text>
               </TouchableOpacity>
             </View>
           </View>
