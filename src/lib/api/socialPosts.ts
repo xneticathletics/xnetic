@@ -33,17 +33,36 @@ async function attachAuthorNames(posts: SocialPost[]): Promise<SocialPost[]> {
   return posts.map((p) => ({ ...p, author_name: nameById.get(p.author_id) ?? "—" }));
 }
 
-// Branşlarımdaki ONAYLI paylaşımlar — RLS zaten is_my_branch(branch) ile
-// filtreliyor, burada sadece status='approved' istemi ekliyoruz (yoksa
-// antrenör/koordinatör/yazarın kendi bekleyen paylaşımları da karışırdı).
+// Branşlarımdaki ONAYLI paylaşımlar + KENDİ bekleyen paylaşımlarım —
+// böylece bir sporcu/veli kendi az önce yüklediği fotoğrafı hemen akışta
+// (pasif/"onay bekliyor" görünümüyle) görebiliyor, tamamen kaybolmuyor.
+// Başka birinin bekleyen paylaşımı (moderatöre görünen) buraya KARIŞMIYOR
+// — o sadece "Onay Bekleyenler" sekmesinde kalıyor (author_id filtresiyle
+// sadece kendiminkini çekiyoruz).
 export async function listSocialFeed(): Promise<SocialPost[]> {
-  const { data, error } = await supabase
+  const myUserId = await getCurrentAppUserId();
+  const [approvedResult, ownPendingResult] = await Promise.all([
+    supabase.from("social_posts").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+    myUserId
+      ? supabase.from("social_posts").select("*").eq("status", "pending").eq("author_id", myUserId)
+      : Promise.resolve({ data: [] as SocialPost[], error: null }),
+  ]);
+  if (approvedResult.error) throw approvedResult.error;
+  if (ownPendingResult.error) throw ownPendingResult.error;
+  const merged = [...(ownPendingResult.data ?? []), ...(approvedResult.data ?? [])] as SocialPost[];
+  merged.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return attachAuthorNames(merged);
+}
+
+// "Onay Bekleyenler" sekmesi rozetindeki sayı için — hafif bir count
+// sorgusu, tüm bekleyen satırları çekmeden.
+export async function getPendingSocialPostCount(): Promise<number> {
+  const { count, error } = await supabase
     .from("social_posts")
-    .select("*")
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return attachAuthorNames(data ?? []);
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  if (error) return 0;
+  return count ?? 0;
 }
 
 // Branşımı modere edebildiğim (antrenör/koordinatör/admin) bekleyen

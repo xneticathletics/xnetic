@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Alert,
   Modal, ScrollView, Dimensions,
@@ -8,8 +8,10 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  listSocialFeed, listPendingSocialPosts, approveSocialPost, deleteSocialPost, type SocialPost,
+  listSocialFeed, listPendingSocialPosts, getPendingSocialPostCount, approveSocialPost, deleteSocialPost,
+  type SocialPost,
 } from "../lib/api/socialPosts";
+import { getCurrentAppUserId } from "../lib/api/currentUser";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
@@ -17,6 +19,55 @@ type Props = NativeStackScreenProps<HomeStackParamList, "SocialFeed">;
 type Tab = "feed" | "pending";
 
 const screenWidth = Dimensions.get("window").width;
+const COLUMNS = 2;
+const GRID_GAP = spacing.sm;
+const THUMB_SIZE = (screenWidth - spacing.lg * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS;
+
+type FeedRow =
+  | { type: "header"; key: string; label: string }
+  | { type: "photos"; key: string; posts: SocialPost[] };
+
+// "Bugün" / "Dün" / "9 Eylül" gibi gün başlıkları — Instagram/Google
+// Fotoğraflar'daki tanıdık gün gruplaması, akışı taramayı kolaylaştırıyor.
+function formatDayLabel(iso: string): string {
+  const d = new Date(iso);
+  const dayOnly = new Date(d);
+  dayOnly.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today.getTime() - dayOnly.getTime()) / 86400000);
+  if (diffDays === 0) return "Bugün";
+  if (diffDays === 1) return "Dün";
+  const sameYear = d.getFullYear() === today.getFullYear();
+  return d.toLocaleDateString("tr-TR", sameYear ? { day: "numeric", month: "long" } : { day: "numeric", month: "long", year: "numeric" });
+}
+
+// Paylaşımları gün başlıklarına ayırıp, her günün fotoğraflarını
+// COLUMNS'luk satırlara böler — tek bir FlatList'te hem başlık hem
+// ızgara satırı olarak render edilebilsin diye.
+function buildFeedRows(posts: SocialPost[]): FeedRow[] {
+  const rows: FeedRow[] = [];
+  let currentLabel: string | null = null;
+  let buffer: SocialPost[] = [];
+  const flush = () => {
+    for (let i = 0; i < buffer.length; i += COLUMNS) {
+      const chunk = buffer.slice(i, i + COLUMNS);
+      rows.push({ type: "photos", key: `row-${chunk[0].id}`, posts: chunk });
+    }
+    buffer = [];
+  };
+  posts.forEach((p) => {
+    const label = formatDayLabel(p.created_at);
+    if (label !== currentLabel) {
+      flush();
+      rows.push({ type: "header", key: `header-${label}-${p.id}`, label });
+      currentLabel = label;
+    }
+    buffer.push(p);
+  });
+  flush();
+  return rows;
+}
 
 export default function SocialFeedScreen({ route, navigation }: Props) {
   const { role } = useAuth();
@@ -26,6 +77,8 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
 
   const [tab, setTab] = useState<Tab>(route.params?.initialTab === "pending" && canModerate ? "pending" : "feed");
   const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
@@ -37,14 +90,23 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      setPosts(tab === "pending" ? await listPendingSocialPosts() : await listSocialFeed());
+      // Sekme hangisi olursa olsun "Onay Bekleyenler" rozetindeki sayı
+      // güncel kalsın diye ayrıca, paralel olarak çekiliyor.
+      const [fetchedPosts, myId, pendingTotal] = await Promise.all([
+        tab === "pending" ? listPendingSocialPosts() : listSocialFeed(),
+        getCurrentAppUserId(),
+        canModerate ? getPendingSocialPostCount() : Promise.resolve(0),
+      ]);
+      setPosts(fetchedPosts);
+      setMyUserId(myId);
+      setPendingCount(pendingTotal);
     } catch (e: any) {
       setError(e.message ?? "Paylaşımlar yüklenemedi");
     } finally {
       setLoading(false);
       hasLoadedOnceRef.current = true;
     }
-  }, [tab]);
+  }, [tab, canModerate]);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,6 +114,8 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
       load();
     }, [load])
   );
+
+  const feedRows = useMemo(() => buildFeedRows(posts), [posts]);
 
   const handleApprove = (post: SocialPost) => {
     setApproving(true);
@@ -86,6 +150,9 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
     ]);
   };
 
+  const activePost = viewerIndex !== null ? posts[viewerIndex] : null;
+  const canDeleteActivePost = !!activePost && (canModerate || activePost.author_id === myUserId);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -102,6 +169,11 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tabButton, tab === "pending" && styles.tabButtonActive]} onPress={() => setTab("pending")}>
             <Text style={[styles.tabButtonText, tab === "pending" && styles.tabButtonTextActive]}>Onay Bekleyenler</Text>
+            {pendingCount > 0 && (
+              <View style={styles.tabBadge}>
+                <Text style={styles.tabBadgeText}>{pendingCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -111,27 +183,44 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
-        data={posts}
-        keyExtractor={(p) => p.id}
-        numColumns={3}
-        contentContainerStyle={{ padding: spacing.lg, paddingTop: 0 }}
-        columnWrapperStyle={{ gap: spacing.sm }}
+        data={feedRows}
+        keyExtractor={(row) => row.key}
+        contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.xs }}
         ListEmptyComponent={
           !loading ? (
             <Text style={styles.empty}>{tab === "pending" ? "Onay bekleyen paylaşım yok." : "Henüz paylaşım yapılmamış."}</Text>
           ) : null
         }
-        renderItem={({ item, index }) => (
-          <TouchableOpacity onPress={() => setViewerIndex(index)}>
-            {item.media_type === "photo" ? (
-              <Image source={{ uri: item.media_url }} style={styles.thumb} />
-            ) : (
-              <View style={[styles.thumb, styles.videoThumb]}>
-                <Text style={styles.videoThumbIcon}>▶</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
+        renderItem={({ item: row }) => {
+          if (row.type === "header") {
+            return <Text style={styles.dayHeader}>{row.label}</Text>;
+          }
+          return (
+            <View style={styles.photoRow}>
+              {row.posts.map((item) => {
+                const globalIndex = posts.indexOf(item);
+                const isPending = item.status === "pending";
+                return (
+                  <TouchableOpacity key={item.id} style={styles.thumbWrap} onPress={() => setViewerIndex(globalIndex)}>
+                    {item.media_type === "photo" ? (
+                      <Image source={{ uri: item.media_url }} style={[styles.thumb, isPending && styles.thumbPending]} />
+                    ) : (
+                      <View style={[styles.thumb, styles.videoThumb, isPending && styles.thumbPending]}>
+                        <Text style={styles.videoThumbIcon}>▶</Text>
+                      </View>
+                    )}
+                    {isPending && (
+                      <View style={styles.pendingBadge}>
+                        <Text style={styles.pendingBadgeText}>⏳ Onay Bekliyor</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              {row.posts.length < COLUMNS && <View style={{ width: THUMB_SIZE }} />}
+            </View>
+          );
+        }}
       />
 
       <Modal visible={viewerIndex !== null} animationType="fade" transparent={false} onRequestClose={() => setViewerIndex(null)}>
@@ -160,20 +249,22 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
             <TouchableOpacity style={styles.viewerButton} onPress={() => setViewerIndex(null)}>
               <Text style={styles.viewerButtonText}>Kapat</Text>
             </TouchableOpacity>
-            {viewerIndex !== null && posts[viewerIndex] && (
+            {activePost && (
               <>
-                {posts[viewerIndex].status === "pending" && canModerate && (
-                  <TouchableOpacity style={styles.viewerButton} onPress={() => handleApprove(posts[viewerIndex])} disabled={approving}>
+                {activePost.status === "pending" && canModerate && (
+                  <TouchableOpacity style={styles.viewerButton} onPress={() => handleApprove(activePost)} disabled={approving}>
                     {approving ? <ActivityIndicator color={colors.ink} /> : <Text style={styles.viewerButtonText}>✓ Onayla</Text>}
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity
-                  style={[styles.viewerButton, styles.viewerDeleteButton]}
-                  onPress={() => handleDelete(posts[viewerIndex])}
-                  disabled={deleting}
-                >
-                  {deleting ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.viewerDeleteButtonText}>🗑 Sil</Text>}
-                </TouchableOpacity>
+                {canDeleteActivePost && (
+                  <TouchableOpacity
+                    style={[styles.viewerButton, styles.viewerDeleteButton]}
+                    onPress={() => handleDelete(activePost)}
+                    disabled={deleting}
+                  >
+                    {deleting ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.viewerDeleteButtonText}>🗑 Sil</Text>}
+                  </TouchableOpacity>
+                )}
               </>
             )}
           </View>
@@ -222,16 +313,35 @@ const styles = StyleSheet.create({
   addButton: { backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
   addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
   tabRow: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  tabButton: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8 },
+  tabButton: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8,
+  },
   tabButtonActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   tabButtonText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
   tabButtonTextActive: { color: colors.bg },
+  tabBadge: {
+    backgroundColor: colors.coral, borderRadius: radius.full, minWidth: 18, height: 18,
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 5,
+  },
+  tabBadgeText: { color: colors.bg, fontSize: 10, fontWeight: "800" },
   hint: { color: colors.muted, fontSize: 11, marginHorizontal: spacing.lg, marginBottom: spacing.md },
   error: { color: colors.coral, marginHorizontal: spacing.lg, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
-  thumb: { width: (screenWidth - spacing.lg * 2 - spacing.sm * 2) / 3, aspectRatio: 1, borderRadius: radius.sm, marginBottom: spacing.sm, backgroundColor: colors.surface },
+  dayHeader: {
+    color: colors.ink, fontSize: 14, fontWeight: "800", marginTop: spacing.md, marginBottom: spacing.sm,
+  },
+  photoRow: { flexDirection: "row", gap: GRID_GAP, marginBottom: GRID_GAP },
+  thumbWrap: { width: THUMB_SIZE },
+  thumb: { width: THUMB_SIZE, aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.surface },
+  thumbPending: { opacity: 0.45 },
   videoThumb: { alignItems: "center", justifyContent: "center" },
-  videoThumbIcon: { color: colors.ink, fontSize: 20 },
+  videoThumbIcon: { color: colors.ink, fontSize: 28 },
+  pendingBadge: {
+    position: "absolute", bottom: 6, left: 6, right: 6,
+    backgroundColor: "rgba(0,0,0,0.72)", borderRadius: radius.sm, paddingVertical: 4, alignItems: "center",
+  },
+  pendingBadgeText: { color: colors.yellow, fontSize: 10, fontWeight: "700" },
   viewerContainer: { flex: 1, backgroundColor: "#000" },
   viewerPage: { width: screenWidth, alignItems: "center", justifyContent: "center" },
   fullImage: { width: screenWidth, height: "100%" },
