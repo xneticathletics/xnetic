@@ -141,9 +141,14 @@ export default function CreateClubPage() {
           <button onClick={handleBack} className="text-sm font-semibold text-muted hover:text-ink">
             ‹ Geri
           </button>
-          <a href={MARKETING_URL} className="text-sm font-extrabold text-ink hover:text-yellow">
-            X-NETIC
-          </a>
+          <div className="flex items-center gap-4">
+            <a href={MARKETING_URL} className="text-sm font-semibold text-muted hover:text-ink">
+              Anasayfa
+            </a>
+            <a href={MARKETING_URL} className="text-sm font-extrabold text-ink hover:text-yellow">
+              X-NETIC
+            </a>
+          </div>
         </div>
 
         <h1 className="mb-1 text-xl font-extrabold text-ink">Kulüp Oluştur</h1>
