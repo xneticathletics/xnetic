@@ -204,7 +204,7 @@ export type HomeStackParamList = {
   CoachAdvanceForm: undefined;
   AthleticPerformance: undefined;
   PerformanceCategory: { category: string };
-  PerformanceTestDetail: { testKey: string };
+  PerformanceTestDetail: { testKey: string; athleteId?: string; athleteName?: string; readOnly?: boolean };
   PerformanceTestForm: { testId?: string } | undefined;
   WellnessCheckin: undefined;
   MembershipFreeze: { athleteId?: string; athleteName?: string } | undefined;

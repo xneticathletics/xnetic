@@ -8,7 +8,7 @@ import { getCustomTest, type CustomPerformanceTest } from "../lib/api/customPerf
 import {
   listMeasurementsForAthleteTest, createMeasurement, deleteMeasurement, type PerformanceMeasurement,
 } from "../lib/api/performanceMeasurements";
-import type { Athlete } from "../lib/api/athletes";
+import { getAthlete, type Athlete } from "../lib/api/athletes";
 import AthletePickerModal from "../components/AthletePickerModal";
 import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -41,7 +41,7 @@ function formatDate(iso: string) {
 }
 
 export default function PerformanceTestDetailScreen({ route, navigation }: Props) {
-  const { testKey } = route.params;
+  const { testKey, athleteId: presetAthleteId, athleteName: presetAthleteName, readOnly } = route.params;
   const { handleFocus } = useKeyboardScroll();
 
   const [resolved, setResolved] = useState<Resolved | null | undefined>(undefined);
@@ -69,10 +69,23 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
     resolveTest(testKey).then((r) => {
       if (cancelled) return;
       setResolved(r);
-      navigation.setOptions({ title: r?.test.name ?? "Test" });
+      const testName = r?.test.name ?? "Test";
+      navigation.setOptions({ title: presetAthleteName ? `${presetAthleteName} — ${testName}` : testName });
     });
     return () => { cancelled = true; };
-  }, [testKey, navigation]);
+  }, [testKey, navigation, presetAthleteName]);
+
+  // Sporcunun kendi profilinden gelindiyse (AthleteDetailScreen üzerindeki
+  // "Performans" butonu, ya da veli/sporcunun "Ölçümler" ekranı) sporcu
+  // zaten belli — ayrıca AthletePickerModal ile seçtirmeye gerek yok.
+  useEffect(() => {
+    if (!presetAthleteId) return;
+    let cancelled = false;
+    getAthlete(presetAthleteId).then((a) => {
+      if (!cancelled) setAthlete(a);
+    });
+    return () => { cancelled = true; };
+  }, [presetAthleteId]);
 
   const loadHistory = useCallback(async (athleteId: string) => {
     setLoadingHistory(true);
@@ -204,12 +217,14 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
             <Text style={styles.instructionsText}>{test.instructions}</Text>
           </View>
 
-          <TouchableOpacity style={styles.athleteButton} onPress={() => setPickerVisible(true)}>
-            <Text style={styles.athleteButtonLabel}>{athlete ? "Sporcu" : "Sporcu Ara"}</Text>
-            <Text style={styles.athleteButtonValue}>{athlete ? athlete.full_name : "Seçmek için dokun"}</Text>
-          </TouchableOpacity>
+          {!presetAthleteId && (
+            <TouchableOpacity style={styles.athleteButton} onPress={() => setPickerVisible(true)}>
+              <Text style={styles.athleteButtonLabel}>{athlete ? "Sporcu" : "Sporcu Ara"}</Text>
+              <Text style={styles.athleteButtonValue}>{athlete ? athlete.full_name : "Seçmek için dokun"}</Text>
+            </TouchableOpacity>
+          )}
 
-          {athlete && (
+          {athlete && !readOnly && (
             <View style={styles.formCard}>
               <Text style={styles.formLabel}>{`Değer (${test.unit}) *`}</Text>
               <TextInput
@@ -243,11 +258,13 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
               <TouchableOpacity style={[styles.saveButton, { backgroundColor: category.color }]} onPress={handleSave} disabled={saving}>
                 {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
               </TouchableOpacity>
-
-              <Text style={styles.historyLabel}>
-                {athlete.full_name} — Geçmiş Ölçümler{loadingHistory ? "…" : ""}
-              </Text>
             </View>
+          )}
+
+          {athlete && (
+            <Text style={styles.historyLabel}>
+              {athlete.full_name} — Geçmiş Ölçümler{loadingHistory ? "…" : ""}
+            </Text>
           )}
         </>
       }
@@ -255,7 +272,7 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
         athlete && !loadingHistory ? <Text style={styles.empty}>Bu sporcu için henüz kayıt yok.</Text> : null
       }
       renderItem={({ item }) => (
-        <TouchableOpacity style={styles.historyRow} onLongPress={() => handleDelete(item)}>
+        <TouchableOpacity style={styles.historyRow} onLongPress={readOnly ? undefined : () => handleDelete(item)} disabled={readOnly}>
           <View>
             <Text style={styles.historyValue}>{item.value} {test.unit}</Text>
             {!!item.notes && <Text style={styles.historyNotes}>{item.notes}</Text>}
