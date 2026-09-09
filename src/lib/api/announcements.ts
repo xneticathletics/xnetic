@@ -35,6 +35,20 @@ export async function listAnnouncements(): Promise<Announcement[]> {
   return data ?? [];
 }
 
+// Tek bir duyuruyu getirir — AnnouncementDetailScreen'in, sadece bir tanesini
+// göstermek için TÜM kulübün duyuru listesini indirip client-side .find()
+// yaptığı eski deseni değiştiriyor (duyuru sayısı arttıkça her detay
+// ekranı açılışında gereksiz büyüyen bir indirme oluyordu).
+export async function getAnnouncement(id: string): Promise<Announcement> {
+  const { data, error } = await supabase
+    .from("announcements")
+    .select("id, target_types, target_ids, title, body, created_at, attachment_url")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // Duyuru eki: fotoğraf/video/belge — max 1 MB (bkz. migration
 // 20260905050000_announcement_attachments.sql'deki bucket sınırı, ikisi
 // senkron tutulmalı). Kulübe özel bir yolda tutulur ("<clubId>/<dosya>").

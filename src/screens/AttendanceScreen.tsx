@@ -230,10 +230,11 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginHorizontal: spacing.lg, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   athleteRow: {
-    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    gap: spacing.sm,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
+  athleteHeaderRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   avatar: {
     width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.line,
     alignItems: "center", justifyContent: "center",
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   athleteBirth: { color: colors.muted, fontSize: 11, marginTop: 2 },
   statusButtons: { flexDirection: "row", gap: 8 },
   statusButton: {
-    borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: 16, paddingVertical: 12, minWidth: 78, alignItems: "center",
+    flex: 1, borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 12, alignItems: "center",
   },
   statusButtonText: { fontSize: 13, fontWeight: "700" },
   footer: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm },

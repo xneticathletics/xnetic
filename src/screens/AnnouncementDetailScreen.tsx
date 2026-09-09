@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth } from "../context/AuthContext";
 import {
-  listAnnouncements, markAnnouncementRead, getAnnouncementReaders,
+  getAnnouncement, markAnnouncementRead, getAnnouncementReaders,
   type Announcement, type AnnouncementReader,
 } from "../lib/api/announcements";
 // ProfileStack ve AnnouncementsStack'in ikisinden de mount edilebiliyor —
@@ -48,15 +48,18 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
     (async () => {
       try {
         setError(null);
-        // Okundu kaydı sessizce tutulur — kullanıcıya ayrıca bir onay
-        // metni gösterilmez (bilinçli tasarım kararı).
-        await markAnnouncementRead(announcementId);
-        const all = await listAnnouncements();
-        const found = all.find((a) => a.id === announcementId) ?? null;
-        if (!cancelled) setAnnouncement(found);
-        if (canSeeReaders) {
-          const readerList = await getAnnouncementReaders(announcementId);
-          if (!cancelled) setReaders(readerList);
+        // Üçü de birbirinden bağımsız — okundu kaydı, duyurunun kendisi ve
+        // (varsa) okuyanlar listesi ayrı ayrı sıra sıra beklenmek yerine
+        // paralel çekiliyor. Okundu kaydı sessizce tutulur — kullanıcıya
+        // ayrıca bir onay metni gösterilmez (bilinçli tasarım kararı).
+        const [, found, readerList] = await Promise.all([
+          markAnnouncementRead(announcementId),
+          getAnnouncement(announcementId),
+          canSeeReaders ? getAnnouncementReaders(announcementId) : Promise.resolve([]),
+        ]);
+        if (!cancelled) {
+          setAnnouncement(found);
+          setReaders(readerList);
         }
       } catch (e: any) {
         if (!cancelled) setError(e.message ?? "Duyuru yüklenemedi");

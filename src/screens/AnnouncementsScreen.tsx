@@ -41,15 +41,16 @@ export default function AnnouncementsScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const all = await listAnnouncements();
-
-      let myGroupIds: string[] = [];
-      if (role === "parent" || role === "athlete") {
-        const athletes = await getMyAthletes();
-        myGroupIds = athletes.map((a) => a.group_id).filter((id): id is string => !!id);
-      } else if (role === "coach") {
-        myGroupIds = await getMyCoachedGroupIds();
-      }
+      // Duyuru listesi ile "benim grup(lar)ım" sorgusu birbirinden bağımsız
+      // — sıra sıra beklemek yerine paralel çekiliyor.
+      const [all, myGroupIds] = await Promise.all([
+        listAnnouncements(),
+        role === "parent" || role === "athlete"
+          ? getMyAthletes().then((athletes) => athletes.map((a) => a.group_id).filter((id): id is string => !!id))
+          : role === "coach"
+          ? getMyCoachedGroupIds()
+          : Promise.resolve([] as string[]),
+      ]);
 
       const visibilityMs = settings.announcement_visibility_days * 24 * 60 * 60 * 1000;
       const recentOnly = all.filter((a) => Date.now() - new Date(a.created_at).getTime() <= visibilityMs);

@@ -36,10 +36,14 @@ export default function ChatScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [me, msgs] = await Promise.all([getCurrentAppUserId(), listMessagesWithUser(userId)]);
+      // Üçü de birbirinden bağımsız — sıra sıra beklemek yerine paralel.
+      const [me, msgs] = await Promise.all([
+        getCurrentAppUserId(),
+        listMessagesWithUser(userId),
+        markMessagesRead(userId),
+      ]);
       setMyUserId(me);
       setMessages(msgs);
-      await markMessagesRead(userId);
       refreshUnreadMessagesCount();
     } catch (e: any) {
       setError(e.message ?? "Mesajlar yüklenemedi");
@@ -61,8 +65,11 @@ export default function ChatScreen({ route, navigation }: Props) {
     setDraft("");
     setError(null);
     try {
-      await sendMessage(userId, body);
-      setMessages(await listMessagesWithUser(userId));
+      // Gönderilen mesajı doğrudan listeye ekliyoruz — az önce tekrar
+      // indirmemek için TÜM konuşma geçmişini yeniden çekmeye gerek yok,
+      // sendMessage zaten eklenen satırı geri döndürüyor.
+      const sent = await sendMessage(userId, body);
+      setMessages((prev) => [...prev, sent]);
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
     } catch (e: any) {
       setError(e.message ?? "Gönderilemedi");

@@ -200,14 +200,14 @@ export async function getTotalUnreadMessageCount(): Promise<number> {
   return count ?? 0;
 }
 
-export async function sendMessage(receiverId: string, body: string) {
+export async function sendMessage(receiverId: string, body: string): Promise<Message> {
   const myUserId = await getCurrentAppUserId();
   if (!myUserId) throw new Error("Kullanıcı bulunamadı");
 
   const { data, error } = await supabase
     .from("messages")
     .insert({ sender_id: myUserId, receiver_id: receiverId, body })
-    .select()
+    .select(MESSAGE_FIELDS)
     .single();
   if (error) throw error;
   return data;
