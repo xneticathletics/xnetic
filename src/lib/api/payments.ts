@@ -240,21 +240,34 @@ export function getCurrentMonthRange(): { start: string; end: string } {
   return { start, end };
 }
 
-// Tahsil edilen (bu ay FİİLEN ödenmiş — paid_at'e göre), bekleyen (bu ay
-// vadeli, henüz gecikmemiş) ve vadesi geçmiş (AY SINIRI OLMAKSIZIN, geçmiş
-// aylardan kalanlar dahil TÜM gecikmiş ödemeler) tutarlarını döner.
-// "expected" bu üçünün basit toplamıdır.
+// "expected" (Bu Ay Beklenen), TÜM AKTİF aidat planlarının toplam tutarıdır
+// — yani "her şey normal giderse bu ay toplam ne kadar tahsil edilmeli"
+// sorusunun cevabı. "pending" (Bekleyen) bu toplamdan bu ay tahsil edileni
+// düşer, tahsilat arttıkça geriler.
 //
-// ÖNEMLİ: "Tahsil Edilen" bilerek due_date değil paid_at'e göre hesaplanır.
+// ÖNEMLİ: eskiden "expected" ve "pending", o ayki due_date'e sahip
+// `payments` satırlarından hesaplanıyordu — ama yeni oluşturulan bir plan
+// için ilk `payments` satırı ancak gelecek ay üretiliyor (bkz.
+// paymentPlans.ts computeMissingRows: planın oluşturulduğu ay hiçbir zaman
+// bir ödeme ayı değildir). Bu yüzden o ay içinde kurulan planlar için "Bu
+// Ay Beklenen" hep 0 TL görünüyordu, gerçekte o sporcuların aidatı olsa
+// bile. `payment_plans` tablosundan doğrudan toplamak bu satır üretim
+// zamanlamasından tamamen bağımsız, her zaman doğru bir "bu ay beklenen"
+// rakamı verir.
+//
+// "Tahsil Edilen" bilerek due_date değil paid_at'e göre hesaplanır.
 // Önceden due_date kullanılıyordu — bu, biri Eylül'de Ekim ayının aidatını
 // erken ödediğinde (due_date=Ekim, paid_at=Eylül) o parayı HİÇBİR AYIN
 // "Tahsil Edilen"ine yazmıyordu (Eylül sorgusu due_date filtresiyle
 // bulamıyor, Ekim geldiğinde de artık "pending" değil "paid" olduğu için
-// o ayın sorgusuna hiç girmiyordu — para sessizce kayboluyordu). Aynı
-// sorun geç ödenen (due_date geçmiş ayda, bu ay ödenen) kayıtlarda da
-// vardı. paid_at kullanmak "bu ay gerçekten ne kadar para girdi"
-// sorusunu doğru cevaplıyor; pending/overdue hâlâ due_date'e bakıyor
-// çünkü onlar HENÜZ ödenmemiş kayıtlar için "hangi aya ait" sorusuna cevap veriyor.
+// o ayın sorgusuna hiç girmiyordu — para sessizce kayboluyordu). paid_at
+// kullanmak "bu ay gerçekten ne kadar para girdi" sorusunu doğru cevaplıyor.
+//
+// "overdue" (Vadesi Geçmiş) AY SINIRI OLMAKSIZIN, geçmiş aylardan kalanlar
+// dahil TÜM gecikmiş ödemeleri kapsar — bilerek "expected"in dışında,
+// ayrı bir kalem (aksi halde bir önceki ayın gecikmiş borcu bu ayın
+// beklenenine karışırdı).
+//
 // graceDays: Gelişmiş Ayarlar'daki tolerans günü. branchName: verilirse
 // (ör. branş koordinatörü) özet SADECE o branşın sporcularının aidatlarını
 // kapsar — verilmezse (admin) tüm kulübü kapsar. Bu parametre eklenmeden
@@ -264,7 +277,6 @@ export function getCurrentMonthRange(): { start: string; end: string } {
 // rakamlarını görüyordu — Ana Sayfa'daki "Finans: Branşının aidatları"
 // etiketiyle çelişen gerçek bir kapsam sızıntısıydı.
 export async function getMonthlyFinanceSummary(graceDays: number = 0, branchName?: string): Promise<MonthlyFinanceSummary> {
-  const { start, end } = getCurrentMonthRange();
   const now = new Date();
   const startOfMonthTs = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
   const startOfNextMonthTs = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0).toISOString();
@@ -282,31 +294,25 @@ export async function getMonthlyFinanceSummary(graceDays: number = 0, branchName
   }
 
   let collectedQuery = supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs);
-  let thisMonthDueQuery = supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end);
+  let activePlansQuery = supabase.from("payment_plans").select("amount").eq("active", true);
   if (athleteIds) {
     collectedQuery = collectedQuery.in("athlete_id", athleteIds);
-    thisMonthDueQuery = thisMonthDueQuery.in("athlete_id", athleteIds);
+    activePlansQuery = activePlansQuery.in("athlete_id", athleteIds);
   }
 
-  const [collectedResult, thisMonthDueResult, overdueResult] = await Promise.all([
+  const [collectedResult, activePlansResult, overdueResult] = await Promise.all([
     collectedQuery,
-    thisMonthDueQuery,
+    activePlansQuery,
     supabase.rpc("get_overdue_payments_total", { p_grace_days: graceDays, p_athlete_ids: athleteIds }),
   ]);
   if (collectedResult.error) throw collectedResult.error;
-  if (thisMonthDueResult.error) throw thisMonthDueResult.error;
+  if (activePlansResult.error) throw activePlansResult.error;
   if (overdueResult.error) throw overdueResult.error;
 
   const collected = (collectedResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
-
-  let pending = 0;
-  (thisMonthDueResult.data ?? []).forEach((p) => {
-    if (p.status !== "paid" && !isOverdue(p as Payment, graceDays)) pending += Number(p.amount);
-  });
-
+  const expected = (activePlansResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
   const overdue = Number(overdueResult.data ?? 0);
-
-  const expected = collected + pending + overdue;
+  const pending = Math.max(expected - collected, 0);
 
   return { expected, collected, pending, overdue };
 }
