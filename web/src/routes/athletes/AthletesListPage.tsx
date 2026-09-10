@@ -37,7 +37,14 @@ export default function AthletesListPage() {
     if (q) list = list.filter((a) => a.full_name.toLowerCase().includes(q));
     if (branchFilter) list = list.filter((a) => a.groups?.branch === branchFilter);
     if (typeFilter) list = list.filter((a) => a.athlete_type === typeFilter);
-    return [...list].sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
+    return [...list].sort((a, b) => {
+      const ga = a.groups?.name ?? "";
+      const gb = b.groups?.name ?? "";
+      if (!ga !== !gb) return ga ? -1 : 1;
+      const groupCompare = ga.localeCompare(gb, "tr");
+      if (groupCompare !== 0) return groupCompare;
+      return a.full_name.localeCompare(b.full_name, "tr");
+    });
   }, [athletes, query, branchFilter, typeFilter]);
 
   const handleDelete = async (a: Athlete) => {
