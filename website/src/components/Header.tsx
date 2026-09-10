@@ -35,6 +35,12 @@ export default function Header() {
             Giriş Yap
           </a>
           <a
+            href="/demo"
+            className="hidden rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal transition hover:bg-teal/10 sm:inline-block"
+          >
+            Demo
+          </a>
+          <a
             href={`${APP_URL}/kulup-olustur`}
             className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg transition hover:brightness-95"
           >
@@ -67,6 +73,15 @@ export default function Header() {
               </li>
             ))}
             <li className="mt-2 border-t border-line pt-2">
+              <a
+                href="/demo"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-lg px-2 py-2.5 text-base font-bold text-teal hover:bg-surface"
+              >
+                Demo — Kaydolmadan Dene
+              </a>
+            </li>
+            <li>
               <a
                 href={`${APP_URL}/login`}
                 onClick={() => setMenuOpen(false)}

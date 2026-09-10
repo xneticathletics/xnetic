@@ -11,6 +11,7 @@ import CtaBanner from "./components/CtaBanner";
 import Footer from "./components/Footer";
 import KvkkPage from "./components/KvkkPage";
 import ServicePage from "./components/ServicePage";
+import DemoPage from "./components/DemoPage";
 import { getPlatformSettings, type PlatformSettings } from "./lib/platformSettings";
 import { getServiceBySlug } from "./lib/services";
 
@@ -34,6 +35,9 @@ export default function App() {
   const { pathname } = window.location;
   if (pathname === "/kvkk") {
     return <KvkkPage settings={settings} />;
+  }
+  if (pathname === "/demo") {
+    return <DemoPage settings={settings} />;
   }
   if (pathname.startsWith("/hizmet/")) {
     const service = getServiceBySlug(pathname.slice("/hizmet/".length));
