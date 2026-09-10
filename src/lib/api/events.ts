@@ -169,17 +169,6 @@ export async function listEventRegistrations(eventId: string): Promise<EventRegi
   return (data as unknown as EventRegistrationRow[]) ?? [];
 }
 
-// "Yönet" ekranındaki rozet için — tüm kapsamdaki etkinliklerin bekleyen
-// kayıt sayısı toplamı (getPendingOrderCount ile aynı fikir).
-export async function getPendingRegistrationCount(): Promise<number> {
-  const { count, error } = await supabase
-    .from("event_registrations")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-  if (error) return 0;
-  return count ?? 0;
-}
-
 // "Yönet" listesindeki HER etkinlik kartının üzerinde kendi bekleyen kayıt
 // sayısını gösterebilmek için — tek bir toplam yerine event_id'ye göre
 // gruplanmış sayım. Sadece id/event_id çekip client'ta sayıyoruz (bekleyen

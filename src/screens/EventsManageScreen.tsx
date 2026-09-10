@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  listManageableEvents, getPendingRegistrationCount, getPendingRegistrationCountsByEvent,
+  listManageableEvents, getPendingRegistrationCountsByEvent,
   EVENT_TYPE_LABEL, type EventRow, type EventStatus,
 } from "../lib/api/events";
 import { useHomeButton } from "../hooks/useHomeButton";
@@ -19,7 +19,6 @@ export default function EventsManageScreen({ navigation }: Props) {
   useHomeButton(navigation);
 
   const [events, setEvents] = useState<EventRow[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
   const [pendingByEvent, setPendingByEvent] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,11 +27,10 @@ export default function EventsManageScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [all, pending, byEvent] = await Promise.all([
-        listManageableEvents(), getPendingRegistrationCount(), getPendingRegistrationCountsByEvent(),
+      const [all, byEvent] = await Promise.all([
+        listManageableEvents(), getPendingRegistrationCountsByEvent(),
       ]);
       setEvents(all);
-      setPendingCount(pending);
       setPendingByEvent(byEvent);
     } catch (e: any) {
       setError(e.message ?? "Etkinlikler yüklenemedi");
@@ -54,11 +52,6 @@ export default function EventsManageScreen({ navigation }: Props) {
         <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("EventForm", { eventId: undefined })}>
           <Text style={styles.addButtonText}>+ Etkinlik Oluştur</Text>
         </TouchableOpacity>
-        {pendingCount > 0 && (
-          <View style={styles.pendingBadge}>
-            <Text style={styles.pendingBadgeText}>{pendingCount} bekleyen kayıt</Text>
-          </View>
-        )}
       </View>
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
@@ -116,8 +109,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md, gap: spacing.sm },
   addButton: { backgroundColor: colors.violet, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
   addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
-  pendingBadge: { backgroundColor: colors.coral, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 4 },
-  pendingBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   eventPendingBadge: {
     position: "absolute", top: spacing.sm, right: spacing.sm,
     backgroundColor: colors.coral, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 5,
