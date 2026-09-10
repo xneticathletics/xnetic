@@ -23,6 +23,7 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
   const [targetTypes, setTargetTypes] = useState<AnnouncementTarget[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [isImportant, setIsImportant] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +68,7 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
         target_types: targetTypes,
         target_ids: targetTypes.includes("group") ? selectedGroupIds : null,
         attachment_url: attachmentUrl,
+        is_important: isImportant,
       });
       onSaved();
     } catch (e: any) {
@@ -124,6 +126,11 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
           </div>
         </FormField>
       )}
+
+      <label className="mb-4 flex items-center gap-2 rounded-lg border border-coral/40 bg-coral/5 px-3 py-2.5 text-sm font-semibold text-coral">
+        <input type="checkbox" checked={isImportant} onChange={(e) => setIsImportant(e.target.checked)} />
+        ⚠️ Dikkat Gerektiriyor — listenin en üstünde öne çıkar
+      </label>
 
       {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}
 

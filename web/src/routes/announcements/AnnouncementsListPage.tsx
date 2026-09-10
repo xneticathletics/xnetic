@@ -74,9 +74,21 @@ export default function AnnouncementsListPage() {
 
       <div className="space-y-3">
         {items.map((a) => (
-          <div key={a.id} className="rounded-xl border border-line bg-surface p-4">
+          <div
+            key={a.id}
+            className={`rounded-xl border p-4 ${
+              a.is_important ? "border-coral/50 bg-coral/5" : "border-line bg-surface"
+            }`}
+          >
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs font-bold text-teal">{a.target_types.map((t) => TARGET_LABEL[t] ?? t).join(", ")}</span>
+              <div className="flex items-center gap-2">
+                {a.is_important && (
+                  <span className="flex items-center gap-1 rounded-full bg-coral/20 px-2 py-0.5 text-xs font-bold text-coral">
+                    ⚠️ Dikkat Gerektiriyor
+                  </span>
+                )}
+                <span className="text-xs font-bold text-teal">{a.target_types.map((t) => TARGET_LABEL[t] ?? t).join(", ")}</span>
+              </div>
               <span className="text-xs text-muted">{new Date(a.created_at).toLocaleDateString("tr-TR")}</span>
             </div>
             <p className="mb-1 text-lg font-bold text-yellow">{a.title}</p>

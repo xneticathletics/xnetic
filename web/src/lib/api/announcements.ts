@@ -12,6 +12,7 @@ export type Announcement = {
   body: string;
   created_at: string;
   attachment_url: string | null;
+  is_important: boolean;
 };
 
 export type AnnouncementInput = {
@@ -20,12 +21,14 @@ export type AnnouncementInput = {
   title: string;
   body: string;
   attachment_url?: string | null;
+  is_important?: boolean;
 };
 
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, title, body, created_at, attachment_url")
+    .select("id, target_types, target_ids, title, body, created_at, attachment_url, is_important")
+    .order("is_important", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
