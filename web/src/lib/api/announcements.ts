@@ -62,7 +62,10 @@ async function resolveAnnouncementRecipients(announcement: Announcement): Promis
 
   for (const t of announcement.target_types) {
     if (t === "club") {
-      const { data } = await supabase.from("users").select("id").eq("is_active", true);
+      // Süper admin hiçbir kulübün duyurusuyla ilgilenmez — sadece kulüp
+      // adminlerine duyuru GÖNDEREBİLİR (bkz. AdminAnnouncePage), asla
+      // bir kulübün "Tüm Kulüp" duyurusunu ALMAZ.
+      const { data } = await supabase.from("users").select("id").eq("is_active", true).neq("role", "super_admin");
       (data ?? []).forEach((u) => recipients.add(u.id));
     } else if (t === "parents" || t === "coaches" || t === "athletes") {
       const role = t === "parents" ? "parent" : t === "coaches" ? "coach" : "athlete";
