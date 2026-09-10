@@ -80,8 +80,17 @@ export function getNotificationTarget(
     }
     case "event_registration_approved":
     case "event_registration_rejected":
-    case "event_cancelled":
-      return { tab: "Ana Menü", screen: "MyEventRegistrations" };
+    case "event_cancelled": {
+      // Bu üç gönderim noktası da payload'a eventId koyuyor (bkz.
+      // src/lib/api/events.ts) ama bu case onu hep görmezden gelip
+      // doğrudan genel listeye düşürüyordu — kişi hangi etkinlikten
+      // bahsedildiğini kendi aramak zorunda kalıyordu. Artık varsa
+      // doğrudan o etkinliğe gidiyor.
+      const eventId = payload?.eventId as string | undefined;
+      return eventId
+        ? { tab: "Ana Menü", screen: "EventDetail", params: { eventId } }
+        : { tab: "Ana Menü", screen: "MyEventRegistrations" };
+    }
     case "social_post_submitted":
       return isPlanner ? { tab: "Ana Menü", screen: "SocialFeed", params: { initialTab: "pending" } } : null;
     case "social_post_approved":
