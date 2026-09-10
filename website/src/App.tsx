@@ -10,7 +10,9 @@ import Faq from "./components/Faq";
 import CtaBanner from "./components/CtaBanner";
 import Footer from "./components/Footer";
 import KvkkPage from "./components/KvkkPage";
+import ServicePage from "./components/ServicePage";
 import { getPlatformSettings, type PlatformSettings } from "./lib/platformSettings";
+import { getServiceBySlug } from "./lib/services";
 
 export default function App() {
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
@@ -23,11 +25,21 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Tek sayfalık site (router yok) — tek istisna /kvkk. vercel.json zaten
-  // her yolu index.html'e yönlendiriyor, bu yüzden bu basit pathname
-  // kontrolü yeterli, ayrı bir router bağımlılığı eklemeye gerek yok.
-  if (window.location.pathname === "/kvkk") {
+  // Tek sayfalık site (router yok) — istisnalar /kvkk ve /hizmet/<slug>.
+  // vercel.json zaten her yolu index.html'e yönlendiriyor, bu yüzden bu
+  // basit pathname kontrolü yeterli, ayrı bir router bağımlılığı eklemeye
+  // gerek yok. Sayfalar arası geçiş normal <a> linkleriyle tam sayfa
+  // yenilemesi ile oluyor, bu yüzden pathname'i sadece ilk render'da
+  // okumak yeterli — bir dinleyiciye gerek yok.
+  const { pathname } = window.location;
+  if (pathname === "/kvkk") {
     return <KvkkPage settings={settings} />;
+  }
+  if (pathname.startsWith("/hizmet/")) {
+    const service = getServiceBySlug(pathname.slice("/hizmet/".length));
+    if (service) {
+      return <ServicePage service={service} settings={settings} />;
+    }
   }
 
   return (

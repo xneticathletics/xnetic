@@ -3,11 +3,11 @@ import { useState } from "react";
 const APP_URL = import.meta.env.VITE_APP_URL as string;
 
 const NAV_LINKS = [
-  { href: "#hakkimizda", label: "Hakkımızda" },
-  { href: "#ozellikler", label: "Özellikler" },
-  { href: "#nasil-calisir", label: "Nasıl Çalışır" },
-  { href: "#fiyatlandirma", label: "Fiyatlandırma" },
-  { href: "#sss", label: "SSS" },
+  { href: "/#hakkimizda", label: "Hakkımızda" },
+  { href: "/#ozellikler", label: "Özellikler" },
+  { href: "/#nasil-calisir", label: "Nasıl Çalışır" },
+  { href: "/#fiyatlandirma", label: "Fiyatlandırma" },
+  { href: "/#sss", label: "SSS" },
 ];
 
 export default function Header() {
@@ -16,7 +16,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-line/80 bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-        <a href="#top" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
+        <a href="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
           <img src="/logo-mark.png" alt="X-NETIC" className="h-16 w-16 drop-shadow-lg" />
           <span className="text-lg font-extrabold tracking-tight text-ink">X-NETIC Spor Sistemleri</span>
         </a>
