@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, type AppStateStatus } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -18,7 +17,6 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
 
   const [unlocked, setUnlocked] = useState(false);
   const [checking, setChecking] = useState(false);
-  const appStateRef = useRef(AppState.currentState);
   // İlk açılışta (uygulama tam kapatılıp tekrar açıldığında) sadece
   // ZATEN kayıtlı bir oturum varsa kilit gösteriyoruz — az önce şifreyle
   // interaktif giriş yapan birine hemen ardından ayrıca Face ID sormuyoruz.
@@ -73,31 +71,20 @@ export default function BiometricLockGate({ children }: { children: React.ReactN
     else if (needsGate) setUnlocked(true);
   }, [loading, needsGate, initialSessionWasRestored, attemptUnlock]);
 
-  // Arka plandan her geri dönüşte yeniden kilitle — telefon arka planda
-  // açık bırakılıp başkasının eline geçmesi riskine karşı. ÖNEMLİ: sadece
-  // ÖNCEKİ durum GERÇEKTEN "background" ise tetikliyoruz — Face ID/Touch ID
-  // istemi ekrandayken iOS uygulamayı "inactive" yapıyor (background'a hiç
-  // düşmeden), bunu da arka plana atılma sanmak Face ID'nin kendi kendini
-  // sonsuz döngüde tekrar tetiklemesine yol açıyordu (kullanıcı canlıda
-  // karşılaştı). "inactive" geçici bir sistem-arayüzü durumu (Face ID,
-  // bildirim, kontrol merkezi vb.) — gerçek arka plana atma HER ZAMAN
-  // "background" durumundan geçer, o yüzden sadece onu izliyoruz.
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
-      if (appStateRef.current === "background" && next === "active" && needsGate) {
-        setUnlocked(false);
-      }
-      appStateRef.current = next;
-    });
-    return () => sub.remove();
-  }, [needsGate]);
+  // Kullanıcı kararı: kilit SADECE uygulama tam kapatılıp tekrar
+  // açıldığında (yukarıdaki ilk açılış efekti) devreye girsin — kısa süreli
+  // arka plana atılma (başka bir uygulamaya geçiş, bildirim, kontrol
+  // merkezi vb.) tekrar Face ID sormasın. Eskiden AppState "background" →
+  // "active" geçişinde de yeniden kilitleniyordu; bu, normal kullanım
+  // sırasında (ör. bir bildirime dokunup geri dönmek) gereksiz ve
+  // rahatsız edici sıklıkta Face ID istemine yol açıyordu.
 
-  // Kilit tekrar devreye girdiğinde (yukarıdaki iki tetikleyiciden biri
-  // unlocked'ı false yaptığında) otomatik olarak biyometrik istemi aç —
-  // AMA bu oturum az önce şifreyle interaktif signIn()'den geldiyse
-  // (örn. Face ID reddedilip oturum kapandıktan sonra şifreyle tekrar
-  // giriş yapıldığında) hiç sormadan direkt içeri alıyoruz — kullanıcı
-  // zaten o an kimliğini şifreyle kanıtladı, ayrıca Face ID istemek gereksiz.
+  // Kilit tekrar devreye girdiğinde (ilk açılış efekti unlocked'ı false
+  // bıraktığında) otomatik olarak biyometrik istemi aç — AMA bu oturum az
+  // önce şifreyle interaktif signIn()'den geldiyse (örn. Face ID
+  // reddedilip oturum kapandıktan sonra şifreyle tekrar giriş
+  // yapıldığında) hiç sormadan direkt içeri alıyoruz — kullanıcı zaten o
+  // an kimliğini şifreyle kanıtladı, ayrıca Face ID istemek gereksiz.
   useEffect(() => {
     if (!needsGate || unlocked || checking || !coldStartHandledRef.current) return;
     if (consumeJustSignedIn()) {
