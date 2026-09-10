@@ -94,7 +94,7 @@ export default function CoachAssignmentsPage() {
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {filteredGroups.length === 0 && <p className="text-sm text-muted">Bu branşta grup bulunamadı.</p>}
         {filteredGroups.map((g) => {
           const s = staffing[g.id] ?? { headCoachId: null, headCoachName: null, assistants: [] };
