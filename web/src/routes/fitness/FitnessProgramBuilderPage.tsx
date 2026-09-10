@@ -165,9 +165,9 @@ export default function FitnessProgramBuilderPage() {
           {items.length === 0 && <p className="text-sm text-muted">Henüz hareket eklenmedi.</p>}
           <div className="mb-6 space-y-2">
             {items.map((item, index) => (
-              <div key={index} className="flex items-center justify-between rounded-lg border border-line bg-bg p-3">
+              <div key={index} className="flex items-center justify-between rounded-lg border border-violet bg-violet/10 p-3">
                 <div>
-                  <p className="text-sm font-semibold text-ink">{item.exercise_name}</p>
+                  <p className="text-sm font-semibold text-violet">✓ {item.exercise_name}</p>
                   <p className="text-xs text-muted">{item.sets} set × {item.reps} tekrar</p>
                 </div>
                 <button onClick={() => handleRemoveItem(index)} className="text-xs font-bold text-coral hover:underline">

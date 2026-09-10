@@ -145,8 +145,8 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
               <>
                 <Text style={styles.sectionTitle}>Eklenen Hareketler</Text>
                 {items.map((item, index) => (
-                  <TouchableOpacity key={index} style={styles.itemRow} onLongPress={() => handleRemoveItem(index)}>
-                    <Text style={styles.itemName}>{item.exercise_name}</Text>
+                  <TouchableOpacity key={index} style={[styles.itemRow, styles.itemRowAdded]} onLongPress={() => handleRemoveItem(index)}>
+                    <Text style={[styles.itemName, styles.itemNameAdded]}>✓ {item.exercise_name}</Text>
                     <Text style={styles.itemDetail}>{item.sets} set × {item.reps} tekrar</Text>
                   </TouchableOpacity>
                 ))}
@@ -312,7 +312,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
+  // Programa zaten eklenmiş bir hareketi listede hemen ayırt edilsin diye
+  // mor vurgu (kullanıcı isteği) — henüz eklenmemiş/seçim aşamasındaki
+  // hareket chip'lerinden görsel olarak net bir şekilde ayrışıyor.
+  itemRowAdded: { backgroundColor: colors.violetSoft, borderColor: colors.violet },
   itemName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  itemNameAdded: { color: colors.violet },
   itemDetail: { color: colors.muted, fontSize: 12 },
   hint: { color: colors.muted, fontSize: 11, fontStyle: "italic", marginBottom: spacing.sm },
   completeButton: { backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.xl },

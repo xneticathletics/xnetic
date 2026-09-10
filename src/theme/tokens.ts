@@ -14,6 +14,7 @@ export const colors = {
   yellowSoft: "#FFC84522",
   tealSoft: "#3FD6C622",
   coralSoft: "#FF6B5D22",
+  violetSoft: "#9B7BFF22",
 };
 
 // Kutucukları sırayla dolaşarak renklendirmek için kullanılan aksan listesi.
