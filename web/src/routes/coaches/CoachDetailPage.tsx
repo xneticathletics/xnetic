@@ -243,6 +243,77 @@ export default function CoachDetailPage() {
             <InfoRow label="Ad Soyad" value={coach.emergency_contact_name} />
             <InfoRow label="Telefon" value={coach.emergency_contact_phone} />
           </div>
+
+          <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Sorumlu Gruplar</h2>
+          <div className="rounded-xl border border-line bg-surface p-4">
+            {groups.length === 0 ? (
+              <p className="text-sm text-muted">Henüz bir gruba atanmadı.</p>
+            ) : (
+              groups.map((g) => (
+                <div key={g.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
+                  <span className="text-sm font-semibold text-ink">{g.name}</span>
+                  <span className="text-xs text-muted">{athleteCounts[g.id] ?? 0} sporcu · {g.branch}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <h2 className="mb-3 mt-6 text-sm font-bold text-ink">İzin İşlemleri</h2>
+          <div className="mb-3 rounded-xl border border-line bg-surface p-4">
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <div>
+                <label className="mb-1 block text-[10px] font-bold text-muted">Başlangıç</label>
+                <input
+                  type="date"
+                  value={leaveForm.start_date}
+                  onChange={(e) => setLeaveForm((f) => ({ ...f, start_date: e.target.value }))}
+                  className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-bold text-muted">Bitiş</label>
+                <input
+                  type="date"
+                  value={leaveForm.end_date}
+                  onChange={(e) => setLeaveForm((f) => ({ ...f, end_date: e.target.value }))}
+                  className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
+                />
+              </div>
+            </div>
+            <input
+              type="text"
+              value={leaveForm.reason}
+              onChange={(e) => setLeaveForm((f) => ({ ...f, reason: e.target.value }))}
+              placeholder="Neden (isteğe bağlı)"
+              className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
+            />
+            <button
+              onClick={handleAddLeave}
+              disabled={savingLeave}
+              className="w-full rounded-lg bg-violet px-4 py-2 text-sm font-bold text-bg disabled:opacity-60"
+            >
+              {savingLeave ? "Kaydediliyor…" : "+ İzin Ekle"}
+            </button>
+          </div>
+          <div className="rounded-xl border border-line bg-surface p-4">
+            {leaves.length === 0 ? (
+              <p className="text-sm text-muted">Henüz izin kaydı yok.</p>
+            ) : (
+              leaves.map((l) => (
+                <div key={l.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      {formatDate(l.start_date)} – {formatDate(l.end_date)}
+                    </p>
+                    {l.reason && <p className="text-xs text-muted">{l.reason}</p>}
+                  </div>
+                  <button onClick={() => handleDeleteLeave(l)} className="text-xs font-bold text-coral hover:underline">
+                    Sil
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         <div>
@@ -351,77 +422,6 @@ export default function CoachDetailPage() {
               </div>
             </>
           )}
-
-          <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Sorumlu Gruplar</h2>
-          <div className="rounded-xl border border-line bg-surface p-4">
-            {groups.length === 0 ? (
-              <p className="text-sm text-muted">Henüz bir gruba atanmadı.</p>
-            ) : (
-              groups.map((g) => (
-                <div key={g.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
-                  <span className="text-sm font-semibold text-ink">{g.name}</span>
-                  <span className="text-xs text-muted">{athleteCounts[g.id] ?? 0} sporcu · {g.branch}</span>
-                </div>
-              ))
-            )}
-          </div>
-
-          <h2 className="mb-3 mt-6 text-sm font-bold text-ink">İzin İşlemleri</h2>
-          <div className="mb-3 rounded-xl border border-line bg-surface p-4">
-            <div className="mb-2 grid grid-cols-2 gap-2">
-              <div>
-                <label className="mb-1 block text-[10px] font-bold text-muted">Başlangıç</label>
-                <input
-                  type="date"
-                  value={leaveForm.start_date}
-                  onChange={(e) => setLeaveForm((f) => ({ ...f, start_date: e.target.value }))}
-                  className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-[10px] font-bold text-muted">Bitiş</label>
-                <input
-                  type="date"
-                  value={leaveForm.end_date}
-                  onChange={(e) => setLeaveForm((f) => ({ ...f, end_date: e.target.value }))}
-                  className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
-                />
-              </div>
-            </div>
-            <input
-              type="text"
-              value={leaveForm.reason}
-              onChange={(e) => setLeaveForm((f) => ({ ...f, reason: e.target.value }))}
-              placeholder="Neden (isteğe bağlı)"
-              className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-violet"
-            />
-            <button
-              onClick={handleAddLeave}
-              disabled={savingLeave}
-              className="w-full rounded-lg bg-violet px-4 py-2 text-sm font-bold text-bg disabled:opacity-60"
-            >
-              {savingLeave ? "Kaydediliyor…" : "+ İzin Ekle"}
-            </button>
-          </div>
-          <div className="rounded-xl border border-line bg-surface p-4">
-            {leaves.length === 0 ? (
-              <p className="text-sm text-muted">Henüz izin kaydı yok.</p>
-            ) : (
-              leaves.map((l) => (
-                <div key={l.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-ink">
-                      {formatDate(l.start_date)} – {formatDate(l.end_date)}
-                    </p>
-                    {l.reason && <p className="text-xs text-muted">{l.reason}</p>}
-                  </div>
-                  <button onClick={() => handleDeleteLeave(l)} className="text-xs font-bold text-coral hover:underline">
-                    Sil
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
         </div>
       </div>
 
