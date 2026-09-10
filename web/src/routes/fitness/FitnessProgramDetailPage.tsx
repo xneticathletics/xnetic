@@ -4,7 +4,7 @@ import {
   getProgram, listProgramItems, deleteProgram, listCompletionsForProgram,
   type FitnessProgram, type FitnessProgramItem, type FitnessProgramCompletion,
 } from "../../lib/api/fitnessPrograms";
-import { listMeasurementsForAthleteOnDate, type FitnessMeasurement } from "../../lib/api/fitnessMeasurements";
+import { listMeasurementsNearCompletion, type FitnessMeasurement } from "../../lib/api/fitnessMeasurements";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -50,8 +50,7 @@ export default function FitnessProgramDetailPage() {
     if (details[c.id]) return;
     setLoadingDetailId(c.id);
     try {
-      const dateKey = c.completed_at.slice(0, 10);
-      const measurements = await listMeasurementsForAthleteOnDate(c.athlete_id, dateKey);
+      const measurements = await listMeasurementsNearCompletion(c.athlete_id, c.completed_at);
       const itemKeys = new Set(items.map((i) => i.exercise_key));
       setDetails((prev) => ({ ...prev, [c.id]: measurements.filter((m) => itemKeys.has(m.exercise_key)) }));
     } catch {

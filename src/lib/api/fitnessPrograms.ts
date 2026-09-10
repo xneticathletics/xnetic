@@ -168,41 +168,70 @@ export async function markProgramCompleted(input: {
   return data;
 }
 
-async function resolveGroupRecipients(groupId: string): Promise<Set<string>> {
-  const recipients = new Set<string>();
+// Bir bildirim alıcısı — mümkünse HANGİ sporcu için bu bildirimi aldığını
+// da taşır (dokununca doğrudan o sporcunun programına gidebilsin diye,
+// bkz. src/lib/notificationNavigation.ts "fitness_program" case). Baş
+// antrenör gibi belirli bir sporcuya bağlı olmayan alıcılarda null.
+type ProgramRecipient = { userId: string; athleteId: string | null; athleteName: string | null };
+
+async function resolveGroupRecipients(groupId: string): Promise<ProgramRecipient[]> {
+  const recipients: ProgramRecipient[] = [];
+  const seen = new Set<string>();
   const [athletesResult, headResult] = await Promise.all([
-    supabase.from("athletes").select("parent_user_id, athlete_user_id").eq("group_id", groupId),
+    supabase.from("athletes").select("id, full_name, parent_user_id, athlete_user_id").eq("group_id", groupId),
     supabase.from("groups").select("head_coach_id").eq("id", groupId).maybeSingle(),
   ]);
   (athletesResult.data ?? []).forEach((a) => {
-    if (a.parent_user_id) recipients.add(a.parent_user_id);
-    if (a.athlete_user_id) recipients.add(a.athlete_user_id);
+    if (a.parent_user_id && !seen.has(a.parent_user_id)) {
+      seen.add(a.parent_user_id);
+      recipients.push({ userId: a.parent_user_id, athleteId: a.id, athleteName: a.full_name });
+    }
+    if (a.athlete_user_id && !seen.has(a.athlete_user_id)) {
+      seen.add(a.athlete_user_id);
+      recipients.push({ userId: a.athlete_user_id, athleteId: a.id, athleteName: a.full_name });
+    }
   });
-  if (headResult.data?.head_coach_id) recipients.add(headResult.data.head_coach_id);
+  if (headResult.data?.head_coach_id && !seen.has(headResult.data.head_coach_id)) {
+    seen.add(headResult.data.head_coach_id);
+    recipients.push({ userId: headResult.data.head_coach_id, athleteId: null, athleteName: null });
+  }
   return recipients;
 }
 
 // Fitness gruplarının tek bir "baş antrenörü" kavramı yok (branş genelinden
 // serbestçe seçilmiş sporcular) — sadece üye sporcuların veli/kendi
 // hesaplarına gidiyor.
-async function resolveFitnessGroupRecipients(fitnessGroupId: string): Promise<Set<string>> {
-  const recipients = new Set<string>();
+async function resolveFitnessGroupRecipients(fitnessGroupId: string): Promise<ProgramRecipient[]> {
+  const recipients: ProgramRecipient[] = [];
+  const seen = new Set<string>();
   const { data } = await supabase
     .from("fitness_group_members")
-    .select("athletes(parent_user_id, athlete_user_id)")
+    .select("athletes(id, full_name, parent_user_id, athlete_user_id)")
     .eq("fitness_group_id", fitnessGroupId);
   (data ?? []).forEach((m: any) => {
-    if (m.athletes?.parent_user_id) recipients.add(m.athletes.parent_user_id);
-    if (m.athletes?.athlete_user_id) recipients.add(m.athletes.athlete_user_id);
+    const a = m.athletes;
+    if (!a) return;
+    if (a.parent_user_id && !seen.has(a.parent_user_id)) {
+      seen.add(a.parent_user_id);
+      recipients.push({ userId: a.parent_user_id, athleteId: a.id, athleteName: a.full_name });
+    }
+    if (a.athlete_user_id && !seen.has(a.athlete_user_id)) {
+      seen.add(a.athlete_user_id);
+      recipients.push({ userId: a.athlete_user_id, athleteId: a.id, athleteName: a.full_name });
+    }
   });
   return recipients;
 }
 
 // Bir grubun (normal ya da fitness) tüm bağlı hesaplarına yeni program
 // bildirimi gönderir. Bildirim metnine programdaki hareketlerin kısa bir
-// özeti de eklenir.
+// özeti de eklenir. Payload'a programId + (varsa) athleteId/athleteName
+// eklenir — böylece bildirime dokununca sporcu/veli doğrudan İLGİLİ
+// programa gider, önceden (payload boş olduğu için) sadece "Sporcum"
+// listesine düşüyordu.
 async function notifyProgramPublished(
   target: { group_id: string | null; fitness_group_id: string | null },
+  programId: string,
   programName: string,
   items: FitnessProgramItemInput[]
 ) {
@@ -215,7 +244,15 @@ async function notifyProgramPublished(
   const body = `"${programName}" programı yayınlandı: ${summary}`;
 
   await Promise.all(
-    Array.from(recipients).map((uid) => sendNotification(uid, title, body, "fitness_program").catch(() => {}))
+    recipients.map((r) =>
+      sendNotification(
+        r.userId,
+        title,
+        body,
+        "fitness_program",
+        r.athleteId ? { programId, athleteId: r.athleteId, athleteName: r.athleteName } : undefined
+      ).catch(() => {})
+    )
   );
 }
 
@@ -255,6 +292,7 @@ export async function publishFitnessProgram(input: {
 
   await notifyProgramPublished(
     { group_id: input.group_id ?? null, fitness_group_id: input.fitness_group_id ?? null },
+    program.id,
     input.name,
     input.items
   );

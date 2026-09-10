@@ -28,16 +28,24 @@ export async function listMeasurementsForAthleteExercise(athleteId: string, exer
   return data ?? [];
 }
 
-// Bir sporcunun belirli bir güne ait TÜM ölçüm kayıtlarını döner —
 // FitnessProgramDetailPage'deki "Tamamlayanlar" listesinde, bir tamamlama
-// satırına tıklayınca o gün girilen set bazlı ağırlık/tekrar detaylarını
-// göstermek için (mobildeki aynı fonksiyonla birebir aynı).
-export async function listMeasurementsForAthleteOnDate(athleteId: string, date: string): Promise<FitnessMeasurement[]> {
+// satırına tıklayınca o an girilen set bazlı ağırlık/tekrar detaylarını
+// göstermek için — tamamlama zamanına (completed_at) YAKIN bir zaman
+// penceresindeki kayıtları getirir. ÖNEMLİ: bilerek "measured_at bu güne
+// eşit mi" diye tarih string'i karşılaştırmıyoruz — measured_at yerel
+// tarihle yazılırken completed_at UTC saklanıyor; gece yarısına yakın
+// (TR saatiyle 00:00-03:00 arası) tamamlanan bir antrenmanda bu iki tarih
+// FARKLI güne denk gelip kaydı "yok" gibi gösterebiliyordu (canlıda tam
+// bu şekilde yaşandı — mobildeki aynı düzeltmeyle birebir aynı).
+export async function listMeasurementsNearCompletion(athleteId: string, completedAtIso: string): Promise<FitnessMeasurement[]> {
+  const center = new Date(completedAtIso).getTime();
+  const windowMs = 10 * 60 * 1000;
   const { data, error } = await supabase
     .from("fitness_measurements")
     .select(FIELDS)
     .eq("athlete_id", athleteId)
-    .eq("measured_at", date)
+    .gte("created_at", new Date(center - windowMs).toISOString())
+    .lte("created_at", new Date(center + windowMs).toISOString())
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data ?? [];

@@ -40,13 +40,24 @@ export function getNotificationTarget(
     case "match_result":
     case "session_excuse":
       return { tab: "Ana Menü", screen: isPlanner ? "TrainingSessions" : "MySchedule" };
-    case "fitness_program":
+    case "fitness_program": {
       // "Fitness" ekranı sadece antrenör/admin'in Ana Sayfa'sında var (bkz.
       // HomeScreen.tsx TILES_BY_ROLE) — veli/sporcu buraya gönderilirse
-      // hiç erişemeyecekleri bir yönetim ekranına düşerdi. Bildirimin
-      // payload'ında athleteId yok (toplu gönderim), bu yüzden veli/sporcu
-      // için en güvenli hedef kendi Sporcum listesidir.
-      return { tab: "Ana Menü", screen: isPlanner ? "Fitness" : "MyAthleteList" };
+      // hiç erişemeyecekleri bir yönetim ekranına düşerdi.
+      if (isPlanner) return { tab: "Ana Menü", screen: "Fitness" };
+      // Veli/sporcu için payload'da programId + athleteId varsa (bkz.
+      // fitnessPrograms.ts notifyProgramPublished) doğrudan programın
+      // kendisine gidiyor — önceden bu bilgi taşınmadığı için her zaman
+      // "Sporcum" listesine düşüyordu. Eski bir bildirimde (payload'sız)
+      // ya da athlete_id çözülemediyse yine o listeye düşülür.
+      const programId = payload?.programId as string | undefined;
+      const athleteId = payload?.athleteId as string | undefined;
+      const athleteName = payload?.athleteName as string | undefined;
+      if (programId && athleteId) {
+        return { tab: "Ana Menü", screen: "FitnessProgramDetail", params: { programId, athleteId, athleteName: athleteName ?? "" } };
+      }
+      return { tab: "Ana Menü", screen: "MyAthleteList" };
+    }
     case "membership_freeze": {
       const athleteId = payload?.athleteId as string | undefined;
       return athleteId ? { tab: "Ana Menü", screen: "AthleteDetail", params: { athleteId } } : null;

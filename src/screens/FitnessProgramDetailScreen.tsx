@@ -14,7 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
-import { createFitnessMeasurement, listMeasurementsForAthleteOnDate, type FitnessMeasurement } from "../lib/api/fitnessMeasurements";
+import { createFitnessMeasurement, listMeasurementsNearCompletion, type FitnessMeasurement } from "../lib/api/fitnessMeasurements";
 import SetEntryList, { type SetEntry } from "../components/SetEntryList";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramDetail">;
@@ -119,8 +119,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
     if (completionDetails[c.id]) return;
     setLoadingDetailId(c.id);
     try {
-      const dateKey = c.completed_at.slice(0, 10);
-      const measurements = await listMeasurementsForAthleteOnDate(c.athlete_id, dateKey);
+      const measurements = await listMeasurementsNearCompletion(c.athlete_id, c.completed_at);
       const itemKeys = new Set(items.map((i) => i.exercise_key));
       setCompletionDetails((prev) => ({ ...prev, [c.id]: measurements.filter((m) => itemKeys.has(m.exercise_key)) }));
     } catch {
