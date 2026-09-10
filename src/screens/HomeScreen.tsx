@@ -305,14 +305,17 @@ export default function HomeScreen({
       if (!hasLoadedAnnouncementsOnce.current) setLoadingAnnouncements(true);
       (async () => {
         try {
-          const all = await listAnnouncements();
-          let myGroupIds: string[] = [];
-          if (role === "parent" || role === "athlete") {
-            const athletes = await getMyAthletes();
-            myGroupIds = athletes.map((a) => a.group_id).filter((id): id is string => !!id);
-          } else if (role === "coach") {
-            myGroupIds = await getMyCoachedGroupIds();
-          }
+          // İki sorgu birbirinden bağımsız — sıra sıra beklemek yerine
+          // paralel çekiliyor (AnnouncementsScreen.tsx'teki aynı düzeltme
+          // burada eksikti, "Son Duyurular" önizlemesi gereksiz yavaştı).
+          const [all, myGroupIds] = await Promise.all([
+            listAnnouncements(),
+            role === "parent" || role === "athlete"
+              ? getMyAthletes().then((athletes) => athletes.map((a) => a.group_id).filter((id): id is string => !!id))
+              : role === "coach"
+              ? getMyCoachedGroupIds()
+              : Promise.resolve([] as string[]),
+          ]);
           const previewMs = settings.announcement_home_preview_days * 24 * 60 * 60 * 1000;
           const recentOnly = all.filter((a) => Date.now() - new Date(a.created_at).getTime() <= previewMs);
           const visible = filterAnnouncementsForViewer(recentOnly, role, myGroupIds).slice(0, 3);
