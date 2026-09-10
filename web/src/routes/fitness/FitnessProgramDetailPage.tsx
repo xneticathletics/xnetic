@@ -4,6 +4,7 @@ import {
   getProgram, listProgramItems, deleteProgram, listCompletionsForProgram,
   type FitnessProgram, type FitnessProgramItem, type FitnessProgramCompletion,
 } from "../../lib/api/fitnessPrograms";
+import { listMeasurementsForAthleteOnDate, type FitnessMeasurement } from "../../lib/api/fitnessMeasurements";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -19,6 +20,9 @@ export default function FitnessProgramDetailPage() {
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [details, setDetails] = useState<Record<string, FitnessMeasurement[]>>({});
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -36,6 +40,26 @@ export default function FitnessProgramDetailPage() {
       cancelled = true;
     };
   }, [id]);
+
+  const handleToggle = async (c: FitnessProgramCompletion) => {
+    if (expandedId === c.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(c.id);
+    if (details[c.id]) return;
+    setLoadingDetailId(c.id);
+    try {
+      const dateKey = c.completed_at.slice(0, 10);
+      const measurements = await listMeasurementsForAthleteOnDate(c.athlete_id, dateKey);
+      const itemKeys = new Set(items.map((i) => i.exercise_key));
+      setDetails((prev) => ({ ...prev, [c.id]: measurements.filter((m) => itemKeys.has(m.exercise_key)) }));
+    } catch {
+      setDetails((prev) => ({ ...prev, [c.id]: [] }));
+    } finally {
+      setLoadingDetailId(null);
+    }
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -79,19 +103,56 @@ export default function FitnessProgramDetailPage() {
 
           <h2 className="mb-3 mt-8 text-sm font-bold text-ink">Tamamlayanlar</h2>
           <div className="space-y-2">
-            {completions.map((c) => (
-              <div key={c.id} className="rounded-lg border border-line bg-surface p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-ink">{c.athletes?.full_name ?? "Sporcu"}</span>
-                  <span className="text-xs text-muted">
-                    {formatDateTime(c.completed_at)}
-                    {c.difficulty != null ? ` · Zorluk: ${c.difficulty}/10` : ""}
-                    {c.duration_minutes != null ? ` · ${c.duration_minutes} dk` : ""}
-                  </span>
-                </div>
-                {c.note && <p className="mt-1 text-xs italic text-muted">{c.note}</p>}
-              </div>
-            ))}
+            {completions.map((c) => {
+              const expanded = expandedId === c.id;
+              const rows = details[c.id] ?? [];
+              const byExercise = new Map<string, FitnessMeasurement[]>();
+              rows.forEach((m) => {
+                if (!byExercise.has(m.exercise_key)) byExercise.set(m.exercise_key, []);
+                byExercise.get(m.exercise_key)!.push(m);
+              });
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => handleToggle(c)}
+                  className="w-full rounded-lg border border-line bg-surface p-4 text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-ink">{c.athletes?.full_name ?? "Sporcu"}</span>
+                    <span className="text-xs text-muted">
+                      {formatDateTime(c.completed_at)}
+                      {c.difficulty != null ? ` · Zorluk: ${c.difficulty}/10` : ""}
+                      {c.duration_minutes != null ? ` · ${c.duration_minutes} dk` : ""}
+                      <span className="ml-2">{expanded ? "▲" : "▼"}</span>
+                    </span>
+                  </div>
+                  {c.note && <p className="mt-1 text-xs italic text-muted">{c.note}</p>}
+
+                  {expanded && (
+                    <div className="mt-3 border-t border-line pt-3">
+                      {loadingDetailId === c.id ? (
+                        <p className="text-xs text-muted">Yükleniyor…</p>
+                      ) : rows.length === 0 ? (
+                        <p className="text-xs italic text-muted">Set bazlı ağırlık/tekrar girişi yok.</p>
+                      ) : (
+                        items
+                          .filter((item) => byExercise.has(item.exercise_key))
+                          .map((item) => (
+                            <div key={item.id} className="mb-2">
+                              <p className="text-xs font-extrabold text-violet">{item.exercise_name}</p>
+                              {byExercise.get(item.exercise_key)!.map((m, i) => (
+                                <p key={m.id} className="ml-2 text-xs text-ink">
+                                  Set {i + 1}: {m.weight_kg != null ? `${m.weight_kg} kg` : "Vücut ağırlığı"} × {m.reps} tekrar
+                                </p>
+                              ))}
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
             {completions.length === 0 && (
               <p className="text-sm text-muted">Bu programı henüz kimse tamamladı olarak işaretlemedi.</p>
             )}

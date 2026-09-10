@@ -14,7 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
-import { createFitnessMeasurement } from "../lib/api/fitnessMeasurements";
+import { createFitnessMeasurement, listMeasurementsForAthleteOnDate, type FitnessMeasurement } from "../lib/api/fitnessMeasurements";
 import SetEntryList, { type SetEntry } from "../components/SetEntryList";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramDetail">;
@@ -46,6 +46,11 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
 
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
   const [loadingCompletions, setLoadingCompletions] = useState(false);
+  // Bir "Tamamlayanlar" satırına dokununca o sporcunun o gün girdiği
+  // set bazlı ağırlık/tekrar detayları açılır (lazy — sadece açılınca çekilir).
+  const [expandedCompletionId, setExpandedCompletionId] = useState<string | null>(null);
+  const [completionDetails, setCompletionDetails] = useState<Record<string, FitnessMeasurement[]>>({});
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
 
   // "Bir Sporcu İçin Gir" kaldırıldı — program artık her zaman bir Fitness
   // Grubuna atanıyor, admin/koordinatörün ayrıca tek tek sporcu seçip
@@ -104,6 +109,26 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
       return () => { cancelled = true; };
     }, [programId, targetAthleteId, showLogSection])
   );
+
+  const handleToggleCompletion = async (c: FitnessProgramCompletion) => {
+    if (expandedCompletionId === c.id) {
+      setExpandedCompletionId(null);
+      return;
+    }
+    setExpandedCompletionId(c.id);
+    if (completionDetails[c.id]) return;
+    setLoadingDetailId(c.id);
+    try {
+      const dateKey = c.completed_at.slice(0, 10);
+      const measurements = await listMeasurementsForAthleteOnDate(c.athlete_id, dateKey);
+      const itemKeys = new Set(items.map((i) => i.exercise_key));
+      setCompletionDetails((prev) => ({ ...prev, [c.id]: measurements.filter((m) => itemKeys.has(m.exercise_key)) }));
+    } catch {
+      setCompletionDetails((prev) => ({ ...prev, [c.id]: [] }));
+    } finally {
+      setLoadingDetailId(null);
+    }
+  };
 
   const handleDelete = () => {
     Alert.alert("Programı Sil", "Bu programı silmek istediğine emin misin?", [
@@ -287,17 +312,54 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
             ) : completions.length === 0 ? (
               <Text style={styles.emptyText}>Bu programı henüz kimse tamamladı olarak işaretlemedi.</Text>
             ) : (
-              completions.map((c) => (
-                <View key={c.id} style={styles.completionRow}>
-                  <Text style={styles.completionName}>{c.athletes?.full_name ?? "Sporcu"}</Text>
-                  <Text style={styles.completionDate}>
-                    {formatDateTime(c.completed_at)}
-                    {c.difficulty != null ? ` · Zorluk: ${c.difficulty}/10` : ""}
-                    {c.duration_minutes != null ? ` · ${c.duration_minutes} dk` : ""}
-                  </Text>
-                  {!!c.note && <Text style={styles.completionNote}>{c.note}</Text>}
-                </View>
-              ))
+              completions.map((c) => {
+                const expanded = expandedCompletionId === c.id;
+                const details = completionDetails[c.id] ?? [];
+                // Set kayıtlarını hareket adına göre grupla — her hareketin
+                // altında girilen tüm setler (kaç kg × kaç tekrar) sırayla listelensin.
+                const byExercise = new Map<string, FitnessMeasurement[]>();
+                details.forEach((m) => {
+                  if (!byExercise.has(m.exercise_key)) byExercise.set(m.exercise_key, []);
+                  byExercise.get(m.exercise_key)!.push(m);
+                });
+                return (
+                  <TouchableOpacity key={c.id} style={styles.completionRow} onPress={() => handleToggleCompletion(c)}>
+                    <View style={styles.completionRowTop}>
+                      <Text style={styles.completionName}>{c.athletes?.full_name ?? "Sporcu"}</Text>
+                      <Text style={styles.chevronSmall}>{expanded ? "︿" : "﹀"}</Text>
+                    </View>
+                    <Text style={styles.completionDate}>
+                      {formatDateTime(c.completed_at)}
+                      {c.difficulty != null ? ` · Zorluk: ${c.difficulty}/10` : ""}
+                      {c.duration_minutes != null ? ` · ${c.duration_minutes} dk` : ""}
+                    </Text>
+                    {!!c.note && <Text style={styles.completionNote}>{c.note}</Text>}
+
+                    {expanded && (
+                      <View style={styles.completionDetailBox}>
+                        {loadingDetailId === c.id ? (
+                          <ActivityIndicator color={colors.yellow} style={{ marginVertical: spacing.sm }} />
+                        ) : details.length === 0 ? (
+                          <Text style={styles.emptyText}>Set bazlı ağırlık/tekrar girişi yok.</Text>
+                        ) : (
+                          items
+                            .filter((item) => byExercise.has(item.exercise_key))
+                            .map((item) => (
+                              <View key={item.id} style={styles.completionExerciseBlock}>
+                                <Text style={styles.completionExerciseName}>{item.exercise_name}</Text>
+                                {byExercise.get(item.exercise_key)!.map((m, i) => (
+                                  <Text key={m.id} style={styles.completionSetLine}>
+                                    Set {i + 1}: {m.weight_kg != null ? `${m.weight_kg} kg` : "Vücut ağırlığı"} × {m.reps} tekrar
+                                  </Text>
+                                ))}
+                              </View>
+                            ))
+                        )}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })
             )}
           </>
         )}
@@ -364,9 +426,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
+  completionRowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   completionName: { color: colors.ink, fontSize: 13, fontWeight: "700", marginBottom: 2 },
+  chevronSmall: { color: colors.muted, fontSize: 11 },
   completionDate: { color: colors.muted, fontSize: 11 },
   completionNote: { color: colors.ink, fontSize: 12, marginTop: 4, fontStyle: "italic" },
+  completionDetailBox: { marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
+  completionExerciseBlock: { marginBottom: spacing.sm },
+  completionExerciseName: { color: colors.violet, fontSize: 12, fontWeight: "800", marginBottom: 2 },
+  completionSetLine: { color: colors.ink, fontSize: 12, marginLeft: spacing.xs },
   deleteButton: {
     borderWidth: 1, borderColor: colors.coral, borderRadius: radius.md,
     paddingVertical: 14, alignItems: "center", marginTop: spacing.xl,

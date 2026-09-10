@@ -27,3 +27,18 @@ export async function listMeasurementsForAthleteExercise(athleteId: string, exer
   if (error) throw error;
   return data ?? [];
 }
+
+// Bir sporcunun belirli bir güne ait TÜM ölçüm kayıtlarını döner —
+// FitnessProgramDetailPage'deki "Tamamlayanlar" listesinde, bir tamamlama
+// satırına tıklayınca o gün girilen set bazlı ağırlık/tekrar detaylarını
+// göstermek için (mobildeki aynı fonksiyonla birebir aynı).
+export async function listMeasurementsForAthleteOnDate(athleteId: string, date: string): Promise<FitnessMeasurement[]> {
+  const { data, error } = await supabase
+    .from("fitness_measurements")
+    .select(FIELDS)
+    .eq("athlete_id", athleteId)
+    .eq("measured_at", date)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
