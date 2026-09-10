@@ -8,7 +8,7 @@ import {
   type TrainingSession,
 } from "../lib/api/trainingSessions";
 import { listMatches, listMatchesForGroups, type MatchRow } from "../lib/api/matches";
-import { getMyCoachedGroupIds } from "../lib/api/myGroups";
+import { getMyBranchGroupIds } from "../lib/api/myGroups";
 import { syncScheduleToDeviceCalendar } from "../lib/calendarSync";
 import { listGroups, type Group } from "../lib/api/groups";
 import { listBranches, type Branch } from "../lib/api/branches";
@@ -84,6 +84,11 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [staffing, setStaffing] = useState<Record<string, GroupStaffing>>({});
   const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
+  // Sadece isCoach (düz antrenör) için doldurulur — kendi branş(lar)ının
+  // adlarını bulup branş filtre çubuğunu SADECE bunlarla sınırlamak için
+  // (aksi halde programı zaten hiç görünmeyecek başka branşların filtre
+  // etiketleri de listelenip tıklanınca boş sonuç verirdi).
+  const [myGroupIds, setMyGroupIds] = useState<Set<string> | null>(null);
   // Antrenman EKLEME/SİLME yetkisi: admin, branş koordinatörü ya da en az
   // bir salonun yetkilisi olan antrenör. Sıradan (etiketsiz) bir antrenör
   // artık antrenman ekleyemez/silemez — sadece yoklama/tamamlama gibi
@@ -135,7 +140,11 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       let fetchedMatches: MatchRow[];
       let fetchedStaffing: Record<string, GroupStaffing>;
       if (isCoach) {
-        const groupIds = await getMyCoachedGroupIds();
+        // Düz (koordinatör olmayan) antrenör takvimde SADECE kendi branşının
+        // programını görür — koçluğunu yaptığı gruplarla sınırlı değil,
+        // coach_branches'taki tüm branşındaki antrenman/maçlar dahil.
+        const groupIds = await getMyBranchGroupIds();
+        setMyGroupIds(new Set(groupIds));
         [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
           listSessionsForGroups(groupIds), listMatchesForGroups(groupIds), getGroupStaffingMap(),
         ]);
@@ -218,14 +227,24 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   // önce belirli bir branş seçilmesini bekleyip ancak ondan sonra grup
   // listesini gösteriyoruz — "Tüm Branşlar" seçiliyken grup filtresi AÇILMAZ.
   const effectiveBranchFilter = isLocked ? selectedBranch : branchFilter;
-  const showBranchChips = !isLocked && branches.length > 1;
+  // Düz antrenör için branş çubuğu SADECE kendi branş(lar)ıyla sınırlı —
+  // programı zaten hiç görünmeyecek başka branşların etiketi listelenmez.
+  const visibleBranches = useMemo(() => {
+    if (!isCoach || !myGroupIds) return branches;
+    const myBranchNames = new Set(allGroups.filter((g) => myGroupIds.has(g.id)).map((g) => g.branch));
+    return branches.filter((b) => myBranchNames.has(b.name));
+  }, [isCoach, myGroupIds, allGroups, branches]);
+  const showBranchChips = !isLocked && visibleBranches.length > 1;
   const showGroupChips = !showBranchChips || typeof effectiveBranchFilter === "string";
   const groupOptions = useMemo(() => {
-    const list = typeof effectiveBranchFilter === "string"
+    let list = typeof effectiveBranchFilter === "string"
       ? allGroups.filter((g) => g.branch === effectiveBranchFilter)
       : allGroups;
+    // Düz antrenör hiç branş seçmediyse (tek branşı varsa çip zaten
+    // gizli) bile grup listesi kendi branşıyla sınırlı kalır.
+    if (isCoach && myGroupIds) list = list.filter((g) => myGroupIds.has(g.id));
     return list.map((g) => ({ id: g.id, name: g.name }));
-  }, [allGroups, effectiveBranchFilter]);
+  }, [allGroups, effectiveBranchFilter, isCoach, myGroupIds]);
 
   // group_id -> branş adı haritası — antrenman/maç kayıtlarında branş bilgisi
   // doğrudan yok, grup üzerinden çözülüyor. Belirli bir branş seçiliyken
@@ -382,7 +401,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           >
             <Text style={[styles.groupChipText, branchFilter === null && styles.groupChipTextActive]}>Tüm Branşlar</Text>
           </TouchableOpacity>
-          {branches.map((b) => (
+          {visibleBranches.map((b) => (
             <TouchableOpacity
               key={b.id}
               style={[styles.groupChip, branchFilter === b.name && styles.groupChipActive]}
