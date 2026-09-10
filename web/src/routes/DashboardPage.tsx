@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [todayItems, setTodayItems] = useState<DayItem[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [importantAnnouncementCount, setImportantAnnouncementCount] = useState(0);
   const [finance, setFinance] = useState<MonthlyFinanceSummary | null>(null);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [pendingResets, setPendingResets] = useState(0);
@@ -75,6 +76,7 @@ export default function DashboardPage() {
         ].sort((x, y) => x.time.localeCompare(y.time));
         setTodayItems(items);
         setAnnouncements(ann.slice(0, 4));
+        setImportantAnnouncementCount(ann.filter((a) => a.is_important).length);
         setFinance(fin);
         setPendingOrders(orders);
         setPendingResets(resets.length);
@@ -100,7 +102,8 @@ export default function DashboardPage() {
   }, [todayItems]);
 
   const activeAthleteCount = athletes.filter((a) => a.status === "active").length;
-  const attentionCount = pendingOrders + pendingResets + (finance ? (finance.overdue > 0 ? 1 : 0) : 0);
+  const attentionCount =
+    pendingOrders + pendingResets + (finance ? (finance.overdue > 0 ? 1 : 0) : 0) + (importantAnnouncementCount > 0 ? 1 : 0);
 
   return (
     <div>
@@ -135,46 +138,56 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <SectionCard title="Bugünün Programı" empty={!loading && todayItems.length === 0} emptyText="Bugün için antrenman ya da müsabaka yok.">
-            {groupedTodayItems.map(({ branch, items }) => (
-              <div key={branch}>
-                <div className="bg-bg px-4 py-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-yellow">{branch}</span>
-                </div>
-                {items.map((item) => (
-                  <div
-                    key={`${item.kind}-${item.data.id}`}
-                    className="flex items-center justify-between border-b border-line px-4 py-3 last:border-0"
-                  >
-                    <div>
-                      <p className="text-sm font-bold text-ink">
-                        {item.kind === "match" ? "🏆 " : "📅 "}
-                        {item.kind === "match"
-                          ? `${item.data.groups?.name ?? "Grup atanmadı"} — vs. ${(item.data as MatchRow).opponent_name}`
-                          : (item.data as TrainingSession).groups?.name ?? "Grup atanmadı"}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {item.kind === "session" ? (item.data as TrainingSession).venues?.name ?? "Salon atanmadı" : (item.data as MatchRow).location ?? "Konum belirtilmedi"}
-                      </p>
-                    </div>
-                    <span className={`text-sm font-bold ${item.kind === "match" ? "text-coral" : "text-teal"}`}>
-                      {item.time.slice(0, 5)}
-                    </span>
+          <SectionCard title="Son Duyurular" empty={!loading && announcements.length === 0} emptyText="Henüz duyuru yok.">
+            {announcements.map((a) => (
+              <div
+                key={a.id}
+                className={`border-b border-line px-4 py-3 last:border-0 ${a.is_important ? "bg-coral/5" : ""}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    {a.is_important && (
+                      <span className="shrink-0 rounded-full bg-coral/20 px-2 py-0.5 text-[10px] font-bold text-coral">
+                        ⚠️ Dikkat
+                      </span>
+                    )}
+                    <p className="truncate text-sm font-bold text-ink">{a.title}</p>
                   </div>
-                ))}
+                  <span className="shrink-0 text-xs text-muted">{formatDate(a.created_at)}</span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-muted">{a.body}</p>
               </div>
             ))}
           </SectionCard>
 
           <div className="mt-6">
-            <SectionCard title="Son Duyurular" empty={!loading && announcements.length === 0} emptyText="Henüz duyuru yok.">
-              {announcements.map((a) => (
-                <div key={a.id} className="border-b border-line px-4 py-3 last:border-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-ink">{a.title}</p>
-                    <span className="shrink-0 text-xs text-muted">{formatDate(a.created_at)}</span>
+            <SectionCard title="Bugünün Programı" empty={!loading && todayItems.length === 0} emptyText="Bugün için antrenman ya da müsabaka yok.">
+              {groupedTodayItems.map(({ branch, items }) => (
+                <div key={branch}>
+                  <div className="bg-bg px-4 py-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-yellow">{branch}</span>
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-muted">{a.body}</p>
+                  {items.map((item) => (
+                    <div
+                      key={`${item.kind}-${item.data.id}`}
+                      className="flex items-center justify-between border-b border-line px-4 py-3 last:border-0"
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-ink">
+                          {item.kind === "match" ? "🏆 " : "📅 "}
+                          {item.kind === "match"
+                            ? `${item.data.groups?.name ?? "Grup atanmadı"} — vs. ${(item.data as MatchRow).opponent_name}`
+                            : (item.data as TrainingSession).groups?.name ?? "Grup atanmadı"}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {item.kind === "session" ? (item.data as TrainingSession).venues?.name ?? "Salon atanmadı" : (item.data as MatchRow).location ?? "Konum belirtilmedi"}
+                        </p>
+                      </div>
+                      <span className={`text-sm font-bold ${item.kind === "match" ? "text-coral" : "text-teal"}`}>
+                        {item.time.slice(0, 5)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </SectionCard>
@@ -199,6 +212,7 @@ export default function DashboardPage() {
                 display={finance ? formatTry(finance.overdue) : undefined}
                 loading={loading}
               />
+              <AttentionRow to="/announcements" label="Dikkat gerektiren duyuru" count={importantAnnouncementCount} loading={loading} />
             </div>
           </div>
         </div>
