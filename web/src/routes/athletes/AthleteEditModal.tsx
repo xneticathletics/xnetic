@@ -21,6 +21,7 @@ import {
 import { listGroups, type Group } from "../../lib/api/groups";
 import { listBranches, type Branch } from "../../lib/api/branches";
 import MembershipFreezeSection from "./MembershipFreezeSection";
+import LinkedAccountField from "../../components/LinkedAccountField";
 
 const emptyForm: AthleteInput = {
   full_name: "",
@@ -379,61 +380,29 @@ export default function AthleteEditModal({
               />
             </FormField>
 
-            <div className="mt-2 border-t border-line pt-3">
-              <p className="mb-2 text-xs font-bold text-ink">Sporcu Giriş Hesabı</p>
-              {athleteLinkedUser ? (
-                <div className="flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2">
-                  <span className="text-sm font-semibold text-teal">{athleteLinkedUser.name}</span>
-                  <button type="button" onClick={() => setAthleteLinkedUser(null)} className="text-xs font-bold text-coral">
-                    Kaldır
-                  </button>
-                </div>
-              ) : (
-                <select
-                  className={inputClass}
-                  value=""
-                  onChange={(e) => {
-                    const u = unlinkedAthleteUsers.find((x) => x.id === e.target.value);
-                    if (u) setAthleteLinkedUser(u);
-                  }}
-                >
-                  <option value="">Bağlı hesap yok — seç</option>
-                  {unlinkedAthleteUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            <LinkedAccountField
+              title="Sporcu Giriş Hesabı"
+              hint="Sporcunun kendi uygulamaya giriş yapabileceği hesap."
+              inviteRole="athlete"
+              defaultName={form.full_name}
+              linkedUser={athleteLinkedUser}
+              existingUsers={unlinkedAthleteUsers}
+              onUnlink={() => setAthleteLinkedUser(null)}
+              onLinkExisting={setAthleteLinkedUser}
+              onCreated={setAthleteLinkedUser}
+            />
 
-            <div className="mt-3 border-t border-line pt-3">
-              <p className="mb-2 text-xs font-bold text-ink">Veli Giriş Hesabı</p>
-              {parentLinkedUser ? (
-                <div className="flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2">
-                  <span className="text-sm font-semibold text-teal">{parentLinkedUser.name}</span>
-                  <button type="button" onClick={() => setParentLinkedUser(null)} className="text-xs font-bold text-coral">
-                    Kaldır
-                  </button>
-                </div>
-              ) : (
-                <select
-                  className={inputClass}
-                  value=""
-                  onChange={(e) => {
-                    const u = parentUsers.find((x) => x.id === e.target.value);
-                    if (u) setParentLinkedUser(u);
-                  }}
-                >
-                  <option value="">Bağlı hesap yok — seç</option>
-                  {parentUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            <LinkedAccountField
+              title="Veli Giriş Hesabı"
+              hint="Velinin kendi uygulamaya giriş yapabileceği hesap."
+              inviteRole="parent"
+              defaultName={form.parent_name ?? ""}
+              linkedUser={parentLinkedUser}
+              existingUsers={parentUsers}
+              onUnlink={() => setParentLinkedUser(null)}
+              onLinkExisting={setParentLinkedUser}
+              onCreated={setParentLinkedUser}
+            />
 
             {athleteId !== "new" && (
               <div className="mt-3 border-t border-line pt-3">
