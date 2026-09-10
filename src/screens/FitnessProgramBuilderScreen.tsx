@@ -178,13 +178,21 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
                 <View style={styles.chipGrid}>
                   {exerciseOptions.map((ex) => {
                     const active = exerciseKey === ex.key;
+                    // Bu hareket zaten programa eklendiyse (aynı bölgede
+                    // başka bir hareket seçilirken de görünür kalsın diye)
+                    // mor vurguyla işaretleniyor — kullanıcı isteği: hangi
+                    // hareketleri zaten eklediğini yukarı kaydırmadan,
+                    // hareket listesinin kendisinde görsün.
+                    const added = items.some((i) => i.exercise_key === ex.key);
                     return (
                       <TouchableOpacity
                         key={ex.key}
-                        style={[styles.chip, styles.chipNeutral, active && styles.chipNeutralActive]}
+                        style={[styles.chip, styles.chipNeutral, added && styles.chipAdded, active && styles.chipNeutralActive]}
                         onPress={() => setExerciseKey(ex.key)}
                       >
-                        <Text style={[styles.chipText, active && styles.chipTextActive]}>{ex.name}</Text>
+                        <Text style={[styles.chipText, added && styles.chipTextAdded, active && styles.chipTextActive]}>
+                          {added ? "✓ " : ""}{ex.name}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -290,8 +298,10 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 10 },
   chipNeutral: { borderColor: colors.line, backgroundColor: colors.surface },
   chipNeutralActive: { backgroundColor: colors.violet, borderColor: colors.violet },
+  chipAdded: { borderColor: colors.violet, backgroundColor: colors.violetSoft },
   chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
   chipTextActive: { color: colors.bg, fontWeight: "800" },
+  chipTextAdded: { color: colors.violet, fontWeight: "700" },
   stickyFooter: {
     backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line,
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,

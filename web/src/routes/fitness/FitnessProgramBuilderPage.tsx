@@ -130,11 +130,14 @@ export default function FitnessProgramBuilderPage() {
             <FormField label="Hareket">
               <select className={inputClass} value={exerciseKey ?? ""} onChange={(e) => setExerciseKey(e.target.value || null)}>
                 <option value="">Bir hareket seç</option>
-                {exerciseOptions.map((ex) => (
-                  <option key={ex.key} value={ex.key}>
-                    {ex.name}
-                  </option>
-                ))}
+                {exerciseOptions.map((ex) => {
+                  const added = items.some((i) => i.exercise_key === ex.key);
+                  return (
+                    <option key={ex.key} value={ex.key}>
+                      {added ? "✓ " : ""}{ex.name}
+                    </option>
+                  );
+                })}
               </select>
             </FormField>
           )}
