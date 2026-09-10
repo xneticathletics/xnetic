@@ -66,19 +66,27 @@ export type MonthlyFinanceSummary = {
   overdue: number;
 };
 
-// "expected" (Bu Ay Beklenen), TÜM AKTİF aidat planlarının toplam tutarıdır
-// — "her şey normal giderse bu ay toplam ne kadar tahsil edilmeli" sorusunun
-// cevabı. "pending" (Bekleyen) bu toplamdan bu ay tahsil edileni düşer,
-// tahsilat arttıkça geriler.
-//
-// ÖNEMLİ: eskiden "expected"/"pending", o ayki due_date'e sahip `payments`
-// satırlarından hesaplanıyordu — ama yeni oluşturulan bir plan için ilk
-// `payments` satırı ancak gelecek ay üretiliyor (bkz. paymentPlans.ts
-// computeMissingRows: planın oluşturulduğu ay hiçbir zaman bir ödeme ayı
-// değildir). Bu yüzden o ay içinde kurulan planlar için "Bu Ay Beklenen"
-// hep 0 TL görünüyordu, gerçekte o sporcuların aidatı olsa bile.
-// `payment_plans` tablosundan doğrudan toplamak bu satır üretim
-// zamanlamasından tamamen bağımsız, her zaman doğru bir rakam verir.
+// "Ayın 1'i ile son günü arasındaki" tarih aralığını döner — "expected"
+// ve "pending"in AY SINIRINA sıkı sıkıya bağlı kalması için (mobildeki
+// src/lib/api/payments.ts ile aynı paylaşılan kaynak).
+export function getCurrentMonthRange(): { start: string; end: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const start = `${year}-${pad2(month + 1)}-01`;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const end = `${year}-${pad2(month + 1)}-${pad2(lastDay)}`;
+  return { start, end };
+}
+
+// "expected" (Bu Ay Beklenen) SADECE due_date'i bu ay içinde (1'i - son
+// günü) olan `payments` satırlarının toplamıdır — durumları (ödendi/
+// bekliyor/gecikmiş) fark etmez, o ay için planlanan TOPLAM tutardır.
+// "pending" (Bekleyen) bunun henüz ödenmemiş VE gecikmemiş kısmıdır. Diğer
+// aylara ait (geçmiş veya gelecek) tutarlar bu ikisine hiç karışmaz — her
+// ay kendi "beklenen"ini hesaplar (bkz. paymentPlans.ts computeMissingRows:
+// bir plan bu ay kurulmuş olsa bile günü hâlâ önümüzdeyse bu ayın satırı
+// da üretilir, bu yüzden bu hesap artık güvenilir).
 //
 // "Tahsil Edilen" bilerek due_date değil paid_at'e göre hesaplanır —
 // aksi halde biri Eylül'de Ekim ayının aidatını erken ödediğinde para
@@ -93,23 +101,30 @@ export type MonthlyFinanceSummary = {
 // hesapları web'e hiç giremiyor — bkz. WEB_ALLOWED_ROLES), bu yüzden
 // mobildeki branchName parametresi burada gerekmiyor.
 export async function getMonthlyFinanceSummary(graceDays: number = 0): Promise<MonthlyFinanceSummary> {
+  const { start, end } = getCurrentMonthRange();
   const now = new Date();
   const startOfMonthTs = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
   const startOfNextMonthTs = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0).toISOString();
 
-  const [collectedResult, activePlansResult, overdueResult] = await Promise.all([
+  const [collectedResult, thisMonthDueResult, overdueResult] = await Promise.all([
     supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", startOfMonthTs).lt("paid_at", startOfNextMonthTs),
-    supabase.from("payment_plans").select("amount").eq("active", true),
+    supabase.from("payments").select("amount, status, due_date").gte("due_date", start).lte("due_date", end),
     supabase.rpc("get_overdue_payments_total", { p_grace_days: graceDays, p_athlete_ids: null }),
   ]);
   if (collectedResult.error) throw collectedResult.error;
-  if (activePlansResult.error) throw activePlansResult.error;
+  if (thisMonthDueResult.error) throw thisMonthDueResult.error;
   if (overdueResult.error) throw overdueResult.error;
 
   const collected = (collectedResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
-  const expected = (activePlansResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+
+  let expected = 0;
+  let pending = 0;
+  (thisMonthDueResult.data ?? []).forEach((p) => {
+    expected += Number(p.amount);
+    if (p.status !== "paid" && !isOverdue(p as Payment, graceDays)) pending += Number(p.amount);
+  });
+
   const overdue = Number(overdueResult.data ?? 0);
-  const pending = Math.max(expected - collected, 0);
 
   return { expected, collected, pending, overdue };
 }

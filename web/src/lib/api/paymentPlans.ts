@@ -43,14 +43,24 @@ function monthIndexOf(date: Date): number {
 type PendingPaymentRow = { plan_id: string; athlete_id: string; period: "monthly"; amount: number; due_date: string };
 
 // Bir plan için, eksik olan ayların payments satırlarını HESAPLAR (henüz
-// yazmaz) — due_date bazında, zaten var olan ayları tekrarlamaz. Planın
-// OLUŞTURULDUĞU ay HİÇBİR ZAMAN bir ödeme ayı değildir — ilk ödeme her
-// zaman plan kaydından sonraki ilk aydır. topUpPlan (tekil) ve
-// topUpAllActivePlans (toplu) bu tek hesaplamayı paylaşır.
+// yazmaz) — due_date bazında, zaten var olan ayları tekrarlamaz. topUpPlan
+// (tekil) ve topUpAllActivePlans (toplu) bu tek hesaplamayı paylaşır.
+//
+// Plan BU AY oluşturulduysa ve günü (day_of_month) bugünün gününden ZATEN
+// geçtiyse, bu ay atlanır (geçmişe dönük/retroaktif ücretlendirme olmasın) —
+// ilk ödeme gelecek aydan başlar. Ama günü hâlâ önümüzdeyse (ör. bugün
+// ayın 10'u, plan günü 28), bu ay da dahil edilir — eskiden bu ayrım
+// yapılmıyordu, planın oluşturulduğu ay HER ZAMAN atlanıyordu; bu da o ay
+// içinde kurulan bir planın "Bu Ay Beklenen"de hep 0 TL görünmesine yol
+// açıyordu (bkz. src/lib/api/payments.ts getMonthlyFinanceSummary, mobildeki
+// aynı düzeltmeyle birebir aynı). Plan geçmiş bir ayda oluşturulmuşsa bu
+// ayrımın bir önemi yok, doğrudan bugünkü aydan başlanır (eskisiyle aynı).
 function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>): PendingPaymentRow[] {
-  const nowMonthIndex = monthIndexOf(new Date());
-  const firstAllowedMonthIndex = monthIndexOf(new Date(plan.created_at)) + 1;
-  const startMonthIndex = Math.max(nowMonthIndex, firstAllowedMonthIndex);
+  const now = new Date();
+  const nowMonthIndex = monthIndexOf(now);
+  const createdMonthIndex = monthIndexOf(new Date(plan.created_at));
+  const currentMonthDayAlreadyPassed = createdMonthIndex === nowMonthIndex && plan.day_of_month < now.getDate();
+  const startMonthIndex = currentMonthDayAlreadyPassed ? nowMonthIndex + 1 : nowMonthIndex;
 
   const rows: PendingPaymentRow[] = [];
   for (let i = 0; i < MONTHS_AHEAD; i++) {
