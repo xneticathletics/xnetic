@@ -15,9 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { createFitnessMeasurement } from "../lib/api/fitnessMeasurements";
-import AthletePickerModal from "../components/AthletePickerModal";
 import SetEntryList, { type SetEntry } from "../components/SetEntryList";
-import type { Athlete } from "../lib/api/athletes";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramDetail">;
 
@@ -39,9 +37,6 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
   const canManage = role === "coach" || role === "club_admin";
   // Silme sadece club_admin ve branş koordinatörüne açık.
   const canDelete = role === "club_admin" || (role === "coach" && isLocked);
-  // Bir sporcu adına antrenman girişi yapabilmek de aynı şekilde sadece
-  // club_admin ve branş koordinatörüne açık — sıradan antrenör değil.
-  const canLogForAthlete = role === "club_admin" || (role === "coach" && isLocked);
   const { programId, athleteId, athleteName } = route.params;
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
@@ -52,14 +47,13 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
   const [loadingCompletions, setLoadingCompletions] = useState(false);
 
-  // Sporcu kendi hesabıyla girdiğinde athleteId route param'dan geliyor;
-  // koordinatör/admin "Bir Sporcu İçin Gir" ile başka bir sporcu
-  // SEÇTİĞİNDE logAthlete bunu geçersiz kılıyor — form ikisi için de aynı.
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const [logAthlete, setLogAthlete] = useState<Athlete | null>(null);
-  const targetAthleteId = logAthlete?.id ?? athleteId;
-  const targetAthleteName = logAthlete?.full_name ?? athleteName;
-  const showLogSection = (!canManage && !!athleteId) || (canManage && !!logAthlete);
+  // "Bir Sporcu İçin Gir" kaldırıldı — program artık her zaman bir Fitness
+  // Grubuna atanıyor, admin/koordinatörün ayrıca tek tek sporcu seçip
+  // onun adına giriş yapmasına gerek yok (kullanıcı kararı). Tamamlama
+  // formu sadece sporcunun kendi hesabından, kendi adına gösterilir.
+  const targetAthleteId = athleteId;
+  const targetAthleteName = athleteName;
+  const showLogSection = !canManage && !!athleteId;
 
   const [myCompletion, setMyCompletion] = useState<FitnessProgramCompletion | null>(null);
   const [loadingMyCompletion, setLoadingMyCompletion] = useState(false);
@@ -163,22 +157,10 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
       });
       await Promise.all(logCalls);
 
-      if (logAthlete) {
-        // Koordinatör/admin başka bir sporcu adına girdi — formu kapatıp
-        // "Tamamlayanlar" listesini tazeliyoruz, kendi ekranından ayrılmıyor.
-        setLogAthlete(null);
-        setSetsByItem({});
-        setNote("");
-        setDifficulty(null);
-        setDuration("");
-        listCompletionsForProgram(programId).then(setCompletions);
-        Alert.alert("Kaydedildi", `${targetAthleteName ?? "Sporcu"} adına antrenman kaydedildi.`, [{ text: "Tamam" }]);
-      } else {
-        // Tamamlama formu artık ekranda kalmıyor — doğrudan Sporcu Takip
-        // Merkezi'ne (Performansım) dönülüyor, geçmiş oradaki "Çalışma"
-        // bölümünde görünüyor (bkz. AthleteFitnessViewScreen).
-        navigation.navigate("AthleteTrackingHub", { athleteId: targetAthleteId, athleteName: targetAthleteName ?? "" });
-      }
+      // Tamamlama formu artık ekranda kalmıyor — doğrudan Sporcu Takip
+      // Merkezi'ne (Performansım) dönülüyor, geçmiş oradaki "Çalışma"
+      // bölümünde görünüyor (bkz. AthleteFitnessViewScreen).
+      navigation.navigate("AthleteTrackingHub", { athleteId: targetAthleteId, athleteName: targetAthleteName ?? "" });
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);
     } finally {
@@ -216,27 +198,13 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
           </View>
         ))}
 
-        {canManage && canLogForAthlete && !logAthlete && (
-          <TouchableOpacity style={styles.logForAthleteButton} onPress={() => setPickerVisible(true)}>
-            <Text style={styles.logForAthleteButtonText}>+ Bir Sporcu İçin Gir</Text>
-          </TouchableOpacity>
-        )}
-
-        {canManage && logAthlete && (
-          <TouchableOpacity onPress={() => { setLogAthlete(null); setSetsByItem({}); }}>
-            <Text style={styles.backLink}>‹ Vazgeç</Text>
-          </TouchableOpacity>
-        )}
-
         {showLogSection && loadingMyCompletion && (
           <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.lg }} />
         )}
 
         {showLogSection && !loadingMyCompletion && myCompletion && (
           <View style={styles.completedBox}>
-            <Text style={styles.completedTitle}>
-              ✓ {logAthlete ? `${targetAthleteName} bu antrenmanı tamamladı` : "Bu antrenmanı tamamladın"}
-            </Text>
+            <Text style={styles.completedTitle}>✓ Bu antrenmanı tamamladın</Text>
             <Text style={styles.completionDate}>
               {formatDateTime(myCompletion.completed_at)}
               {myCompletion.difficulty != null ? ` · Zorluk: ${myCompletion.difficulty}/10` : ""}
@@ -248,9 +216,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
 
         {showLogSection && !loadingMyCompletion && !myCompletion && (
           <View style={styles.completeBox}>
-            <Text style={styles.sectionTitle}>
-              {logAthlete ? `${targetAthleteName} İçin Antrenmanı Kaydet` : "Antrenmanı Tamamladım"}
-            </Text>
+            <Text style={styles.sectionTitle}>Antrenmanı Tamamladım</Text>
 
             <Text style={styles.label}>Set Bazlı Ağırlık ve Tekrar</Text>
             {items.map((item) => (
@@ -307,7 +273,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
               {marking ? (
                 <ActivityIndicator color={colors.bg} />
               ) : (
-                <Text style={styles.completeButtonText}>✓ {logAthlete ? "Kaydet" : "Antrenmanı Tamamladım"}</Text>
+                <Text style={styles.completeButtonText}>✓ Antrenmanı Tamamladım</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -342,20 +308,6 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
           </TouchableOpacity>
         )}
       </ScrollView>
-
-      <AthletePickerModal
-        visible={pickerVisible}
-        selectedId={logAthlete?.id ?? null}
-        onSelect={(a) => {
-          setLogAthlete(a);
-          setPickerVisible(false);
-          setSetsByItem({});
-          setNote("");
-          setDifficulty(null);
-          setDuration("");
-        }}
-        onClose={() => setPickerVisible(false)}
-      />
     </KeyboardAvoidingView>
   );
 }
@@ -374,12 +326,6 @@ const styles = StyleSheet.create({
   },
   itemName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   itemDetail: { color: colors.muted, fontSize: 12 },
-  logForAthleteButton: {
-    borderWidth: 1, borderColor: colors.violet, borderRadius: radius.md, paddingVertical: 12,
-    alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.sm,
-  },
-  logForAthleteButtonText: { color: colors.violet, fontWeight: "700", fontSize: 14 },
-  backLink: { color: colors.teal, fontSize: 13, fontWeight: "600", marginBottom: spacing.sm },
   setItemBlock: {
     backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     padding: spacing.sm, marginBottom: spacing.sm,
