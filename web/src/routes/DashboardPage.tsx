@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { listAllAthletes, type Athlete } from "../lib/api/athletes";
@@ -23,8 +23,10 @@ function formatDate(iso: string) {
 }
 
 type DayItem =
-  | { kind: "session"; time: string; data: TrainingSession }
-  | { kind: "match"; time: string; data: MatchRow };
+  | { kind: "session"; time: string; branch: string; data: TrainingSession }
+  | { kind: "match"; time: string; branch: string; data: MatchRow };
+
+const NO_BRANCH_LABEL = "Branşsız";
 
 export default function DashboardPage() {
   const { clubId } = useAuth();
@@ -66,10 +68,10 @@ export default function DashboardPage() {
         const items: DayItem[] = [
           ...sessions
             .filter((s) => s.session_date === today && s.status !== "cancelled")
-            .map((s): DayItem => ({ kind: "session", time: s.start_time, data: s })),
+            .map((s): DayItem => ({ kind: "session", time: s.start_time, branch: s.groups?.branch ?? NO_BRANCH_LABEL, data: s })),
           ...matches
             .filter((m) => m.match_date === today)
-            .map((m): DayItem => ({ kind: "match", time: m.start_time, data: m })),
+            .map((m): DayItem => ({ kind: "match", time: m.start_time, branch: m.groups?.branch ?? NO_BRANCH_LABEL, data: m })),
         ].sort((x, y) => x.time.localeCompare(y.time));
         setTodayItems(items);
         setAnnouncements(ann.slice(0, 4));
@@ -80,6 +82,22 @@ export default function DashboardPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  // Karışık, tek bir zaman çizelgesi yerine branşa göre gruplanmış başlıklar
+  // altında gösteriyoruz — çok branşlı bir kulüpte "hangi antrenman hangi
+  // branşa ait" ayrımı artık net (kullanıcı geri bildirimi: "karışık görünüyor").
+  // Gruplar, o branştaki en erken etkinliğin saatine göre sıralı.
+  const groupedTodayItems = useMemo(() => {
+    const byBranch = new Map<string, DayItem[]>();
+    todayItems.forEach((item) => {
+      const list = byBranch.get(item.branch) ?? [];
+      list.push(item);
+      byBranch.set(item.branch, list);
+    });
+    return Array.from(byBranch.entries())
+      .map(([branch, items]) => ({ branch, items }))
+      .sort((a, b) => a.items[0].time.localeCompare(b.items[0].time));
+  }, [todayItems]);
 
   const activeAthleteCount = athletes.filter((a) => a.status === "active").length;
   const attentionCount = pendingOrders + pendingResets + (finance ? (finance.overdue > 0 ? 1 : 0) : 0);
@@ -118,25 +136,32 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <SectionCard title="Bugünün Programı" empty={!loading && todayItems.length === 0} emptyText="Bugün için antrenman ya da müsabaka yok.">
-            {todayItems.map((item) => (
-              <div
-                key={`${item.kind}-${item.data.id}`}
-                className="flex items-center justify-between border-b border-line px-4 py-3 last:border-0"
-              >
-                <div>
-                  <p className="text-sm font-bold text-ink">
-                    {item.kind === "match" ? "🏆 " : "📅 "}
-                    {item.kind === "match"
-                      ? `${item.data.groups?.name ?? "Grup atanmadı"} — vs. ${(item.data as MatchRow).opponent_name}`
-                      : (item.data as TrainingSession).groups?.name ?? "Grup atanmadı"}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {item.kind === "session" ? (item.data as TrainingSession).venues?.name ?? "Salon atanmadı" : (item.data as MatchRow).location ?? "Konum belirtilmedi"}
-                  </p>
+            {groupedTodayItems.map(({ branch, items }) => (
+              <div key={branch}>
+                <div className="bg-bg px-4 py-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wide text-yellow">{branch}</span>
                 </div>
-                <span className={`text-sm font-bold ${item.kind === "match" ? "text-coral" : "text-teal"}`}>
-                  {item.time.slice(0, 5)}
-                </span>
+                {items.map((item) => (
+                  <div
+                    key={`${item.kind}-${item.data.id}`}
+                    className="flex items-center justify-between border-b border-line px-4 py-3 last:border-0"
+                  >
+                    <div>
+                      <p className="text-sm font-bold text-ink">
+                        {item.kind === "match" ? "🏆 " : "📅 "}
+                        {item.kind === "match"
+                          ? `${item.data.groups?.name ?? "Grup atanmadı"} — vs. ${(item.data as MatchRow).opponent_name}`
+                          : (item.data as TrainingSession).groups?.name ?? "Grup atanmadı"}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {item.kind === "session" ? (item.data as TrainingSession).venues?.name ?? "Salon atanmadı" : (item.data as MatchRow).location ?? "Konum belirtilmedi"}
+                      </p>
+                    </div>
+                    <span className={`text-sm font-bold ${item.kind === "match" ? "text-coral" : "text-teal"}`}>
+                      {item.time.slice(0, 5)}
+                    </span>
+                  </div>
+                ))}
               </div>
             ))}
           </SectionCard>

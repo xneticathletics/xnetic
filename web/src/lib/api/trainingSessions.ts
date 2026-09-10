@@ -13,7 +13,7 @@ export type TrainingSession = {
   topic: string | null;
   notes: string | null;
   status: SessionStatus;
-  groups?: { name: string } | null;
+  groups?: { name: string; branch: string } | null;
   venues?: { name: string } | null;
 };
 
@@ -36,7 +36,7 @@ export async function listSessions(): Promise<TrainingSession[]> {
   const { data, error } = await supabase
     .from("training_sessions")
     .select(
-      "id, group_id, venue_id, session_date, start_time, end_time, topic, notes, status, groups(name), venues(name)"
+      "id, group_id, venue_id, session_date, start_time, end_time, topic, notes, status, groups(name, branch), venues(name)"
     )
     .order("session_date", { ascending: true })
     .order("start_time", { ascending: true });
