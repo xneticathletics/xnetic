@@ -87,8 +87,7 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
         <>
           {summary && (
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Toplam Aidat Durumu</Text>
-              <Text style={styles.summaryExpected}>{formatTL(summary.expected)}</Text>
+              <Text style={styles.summaryLabel}>Aidat Gelirleri</Text>
               <View style={styles.summaryRow}>
                 <TouchableOpacity style={[styles.statBox, { borderColor: colors.teal }]} onPress={() => navigation.navigate("PaymentsList", { filter: "paid" })}>
                   <View style={styles.statBoxHeader}>
@@ -253,8 +252,7 @@ const styles = StyleSheet.create({
   },
   docsButtonText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
   docsButtonArrow: { color: colors.muted, fontSize: 15, fontWeight: "700" },
-  summaryLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
-  summaryExpected: { color: colors.yellow, fontSize: 26, fontWeight: "800", marginTop: 4, marginBottom: spacing.md },
+  summaryLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", marginBottom: spacing.md },
   summaryRow: { flexDirection: "row", gap: spacing.sm },
   statBox: {
     flex: 1, borderWidth: 1, borderRadius: radius.md, backgroundColor: colors.bg,
