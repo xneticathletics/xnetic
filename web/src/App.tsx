@@ -57,6 +57,9 @@ import FitnessProgramsPage from "./routes/fitness/FitnessProgramsPage";
 import FitnessProgramBuilderPage from "./routes/fitness/FitnessProgramBuilderPage";
 import FitnessProgramDetailPage from "./routes/fitness/FitnessProgramDetailPage";
 import FitnessWellnessPage from "./routes/fitness/FitnessWellnessPage";
+import IndividualFitnessProgramsPage from "./routes/fitness/IndividualFitnessProgramsPage";
+import IndividualFitnessProgramListPage from "./routes/fitness/IndividualFitnessProgramListPage";
+import IndividualFitnessProgramDetailPage from "./routes/fitness/IndividualFitnessProgramDetailPage";
 
 // Süper Admin'in kulübü yok — "/" (kulüp özeti) ona hiç uygun değil,
 // kendi platform-geneli Genel Bakış'ına yönlendirilir.
@@ -128,6 +131,9 @@ export default function App() {
               <Route path="/fitness/programs/new" element={<FitnessProgramBuilderPage />} />
               <Route path="/fitness/programs/:id" element={<FitnessProgramDetailPage />} />
               <Route path="/fitness/wellness" element={<FitnessWellnessPage />} />
+              <Route path="/fitness/individual" element={<IndividualFitnessProgramsPage />} />
+              <Route path="/fitness/individual/:athleteId" element={<IndividualFitnessProgramListPage />} />
+              <Route path="/fitness/individual/:athleteId/:programId" element={<IndividualFitnessProgramDetailPage />} />
               <Route path="/announcements" element={<AnnouncementsListPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<ClubSettingsPage />} />

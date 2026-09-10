@@ -7,6 +7,7 @@ const TILES = [
   { to: "/fitness/exercises", icon: "🏋️", title: "Egzersiz Kütüphanesi", sub: "Göğüs, sırt, bacak, kol, omuz — hareket ekle/düzenle" },
   { to: "/fitness/groups", icon: "🎯", title: "Fitness Grupları", sub: "Branştaki müsabık sporculardan özel gruplar oluştur" },
   { to: "/fitness/programs", icon: "📋", title: "Programlar", sub: "Gruplara ya da fitness gruplarına özel çalışma programları oluştur" },
+  { to: "/fitness/individual", icon: "📝", title: "Bireysel Programlar", sub: "Sporcuların kendi yazdığı programları incele (salt okunur)" },
   { to: "/fitness/wellness", icon: "🌡️", title: "Wellness Check-in", sub: "Sporcuların uyku, enerji ve ruh hâli takibi (salt okunur)" },
 ];
 
