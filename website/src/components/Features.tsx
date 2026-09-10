@@ -150,6 +150,7 @@ function FeatureVisual({ feature }: { feature: FeatureDetail }) {
       <video
         src={feature.video}
         controls
+        preload="none"
         className="aspect-[4/3] w-full rounded-2xl border border-line bg-surface object-cover"
       />
     );
@@ -160,6 +161,7 @@ function FeatureVisual({ feature }: { feature: FeatureDetail }) {
         src={feature.image}
         alt={feature.title}
         className="aspect-[4/3] w-full rounded-2xl border border-line bg-surface object-cover"
+        loading="lazy"
       />
     );
   }

@@ -68,7 +68,13 @@ export default function Hero() {
               <span className="rounded-full bg-teal/15 px-2 py-1 text-[10px] font-bold text-teal">{view.badge}</span>
             </div>
             <div key={active} className="animate-[fadein_0.4s_ease]">
-              <img src={view.image} alt={`${view.title} — X-NETIC ${view.badge.toLowerCase()}`} className="block w-full" />
+              <img
+                src={view.image}
+                alt={`${view.title} — X-NETIC ${view.badge.toLowerCase()}`}
+                className="block w-full"
+                fetchPriority={active === 0 ? "high" : "auto"}
+                loading={active === 0 ? "eager" : "lazy"}
+              />
             </div>
             <div className="flex justify-center gap-1.5 border-t border-line py-3">
               {VIEWS.map((v, i) => (
