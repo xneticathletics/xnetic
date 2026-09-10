@@ -34,23 +34,47 @@ export function getFinancePeriodRange(startDay: number, today: Date = new Date()
 
 export type PeriodFinanceSummary = { income: number; expense: number; net: number };
 
-// Belirtilen tarih aralığındaki tahsil edilmiş aidatları (gelir) ve
-// giderleri toplayıp net bakiyeyi döner — Finans ana sayfası ve Finansal
-// Dökümanlarım'daki "Gelir / Gider / Toplam" özetleri için ortak fonksiyon.
-export async function getPeriodFinanceSummary(startDate: string, endDate: string): Promise<PeriodFinanceSummary> {
-  const [paymentsResult, expensesResult] = await Promise.all([
-    supabase
-      .from("payments")
-      .select("amount")
-      .eq("status", "paid")
-      .gte("paid_at", startDate)
-      .lte("paid_at", `${endDate}T23:59:59`),
-    supabase.from("expenses").select("amount").gte("expense_date", startDate).lte("expense_date", endDate),
+// Tahsil edilmiş aidatlar + ekstra gelirler (gelir) ile giderler + antrenör
+// ödemeleri (gider) toplanıp net bakiye (Ana Kasa) döner. startDate/endDate
+// verilmezse TÜM zamanların toplamı hesaplanır — "bu zamana kadar giren
+// çıkan hesaplandıktan sonra kalan" mantığındaki Ana Kasa'nın varsayılanı bu.
+// Finans ana sayfasındaki Ana Kasa kutusu ve Finansal Dökümanlarım'daki
+// "Gelir / Gider / Toplam" özeti için ortak fonksiyon.
+export async function getPeriodFinanceSummary(startDate?: string, endDate?: string): Promise<PeriodFinanceSummary> {
+  let paymentsQuery = supabase.from("payments").select("amount").eq("status", "paid");
+  let extraIncomeQuery = supabase.from("extra_income").select("amount");
+  let expensesQuery = supabase.from("expenses").select("amount");
+  let coachPaymentsQuery = supabase.from("coach_payments").select("amount").eq("status", "paid");
+
+  if (startDate) {
+    paymentsQuery = paymentsQuery.gte("paid_at", startDate);
+    extraIncomeQuery = extraIncomeQuery.gte("income_date", startDate);
+    expensesQuery = expensesQuery.gte("expense_date", startDate);
+    coachPaymentsQuery = coachPaymentsQuery.gte("paid_at", startDate);
+  }
+  if (endDate) {
+    paymentsQuery = paymentsQuery.lte("paid_at", `${endDate}T23:59:59`);
+    extraIncomeQuery = extraIncomeQuery.lte("income_date", endDate);
+    expensesQuery = expensesQuery.lte("expense_date", endDate);
+    coachPaymentsQuery = coachPaymentsQuery.lte("paid_at", `${endDate}T23:59:59`);
+  }
+
+  const [paymentsResult, extraIncomeResult, expensesResult, coachPaymentsResult] = await Promise.all([
+    paymentsQuery,
+    extraIncomeQuery,
+    expensesQuery,
+    coachPaymentsQuery,
   ]);
   if (paymentsResult.error) throw paymentsResult.error;
+  if (extraIncomeResult.error) throw extraIncomeResult.error;
   if (expensesResult.error) throw expensesResult.error;
+  if (coachPaymentsResult.error) throw coachPaymentsResult.error;
 
-  const income = (paymentsResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
-  const expense = (expensesResult.data ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const income =
+    (paymentsResult.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0) +
+    (extraIncomeResult.data ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const expense =
+    (expensesResult.data ?? []).reduce((sum, e) => sum + Number(e.amount), 0) +
+    (coachPaymentsResult.data ?? []).reduce((sum, c) => sum + Number(c.amount), 0);
   return { income, expense, net: income - expense };
 }

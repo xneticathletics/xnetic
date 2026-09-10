@@ -10,6 +10,7 @@ import {
   type Payment,
   type MonthlyFinanceSummary,
 } from "../../lib/api/payments";
+import { getPeriodFinanceSummary, type PeriodFinanceSummary } from "../../lib/api/financeSummary";
 import { topUpAllActivePlans } from "../../lib/api/paymentPlans";
 import { getClubSettings } from "../../lib/api/clubSettings";
 import { sendNotification } from "../../lib/api/notifications";
@@ -39,6 +40,10 @@ export default function FinanceOverviewPage() {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [incomeModalOpen, setIncomeModalOpen] = useState(false);
   const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [treasuryStart, setTreasuryStart] = useState("");
+  const [treasuryEnd, setTreasuryEnd] = useState("");
+  const [treasury, setTreasury] = useState<PeriodFinanceSummary | null>(null);
+  const [treasuryLoading, setTreasuryLoading] = useState(true);
 
   const load = async () => {
     if (!clubId) return;
@@ -60,6 +65,19 @@ export default function FinanceOverviewPage() {
   useEffect(() => {
     load();
   }, [clubId]);
+
+  const loadTreasury = () => {
+    if (!clubId) return;
+    setTreasuryLoading(true);
+    getPeriodFinanceSummary(treasuryStart || undefined, treasuryEnd || undefined)
+      .then(setTreasury)
+      .catch((e) => setError(e.message))
+      .finally(() => setTreasuryLoading(false));
+  };
+
+  useEffect(() => {
+    loadTreasury();
+  }, [clubId, treasuryStart, treasuryEnd]);
 
   const filtered = useMemo(() => {
     let list = payments;
@@ -181,24 +199,72 @@ export default function FinanceOverviewPage() {
 
       {summary && (
         <div className="mb-6 rounded-xl border border-line bg-surface p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">Bu Ay Beklenen Toplam Aidat</p>
-          <p className="mb-3 mt-1 text-2xl font-extrabold text-yellow">{formatTL(summary.expected)}</p>
-          <div className="flex gap-8">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">Aidat Gelirleri</p>
+          <div className="flex flex-wrap gap-8">
             <div>
               <p className="text-xs font-semibold text-muted">Tahsil Edilen</p>
               <p className="font-bold text-teal">{formatTL(summary.collected)}</p>
+              <p className="mt-0.5 text-[11px] text-muted">Bu ay fiilen ödenmiş aidatlar</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-muted">Bekleyen</p>
+              <p className="text-xs font-semibold text-muted">Bu Ay Bekleyen</p>
               <p className="font-bold text-yellow">{formatTL(summary.pending)}</p>
+              <p className="mt-0.5 text-[11px] text-muted">Vadesi bu ay içinde (1'i - son günü), henüz gecikmemiş</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-muted">Vadesi Geçmiş</p>
               <p className="font-bold text-coral">{formatTL(summary.overdue)}</p>
+              <p className="mt-0.5 text-[11px] text-muted">Ay sınırı yok — geçmiş aylardan kalanlar dahil tümü</p>
             </div>
           </div>
         </div>
       )}
+
+      <div className="mb-6 rounded-xl border border-line bg-surface p-5">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-muted">Ana Kasa</p>
+            <p className="mt-0.5 text-[11px] text-muted">
+              Tahsil edilen aidat + ekstra gelirler, gider ve antrenör ödemeleri düşülerek — seçili tarihe kadar elde kalan net bakiye.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-xs font-semibold text-muted">
+              Başlangıç
+              <input type="date" className={`${inputClass} mt-1`} value={treasuryStart} onChange={(e) => setTreasuryStart(e.target.value)} />
+            </label>
+            <label className="text-xs font-semibold text-muted">
+              Bitiş
+              <input type="date" className={`${inputClass} mt-1`} value={treasuryEnd} onChange={(e) => setTreasuryEnd(e.target.value)} />
+            </label>
+            {(treasuryStart || treasuryEnd) && (
+              <button
+                onClick={() => {
+                  setTreasuryStart("");
+                  setTreasuryEnd("");
+                }}
+                className="pb-2 text-xs font-bold text-coral"
+              >
+                Tümü
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-8">
+          <div>
+            <p className="text-xs font-semibold text-muted">Toplam Gelir</p>
+            <p className="font-bold text-teal">{treasuryLoading ? "…" : formatTL(treasury?.income ?? 0)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-muted">Toplam Gider</p>
+            <p className="font-bold text-coral">{treasuryLoading ? "…" : formatTL(treasury?.expense ?? 0)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-muted">Net (Kasa)</p>
+            <p className="text-2xl font-extrabold text-yellow">{treasuryLoading ? "…" : formatTL(treasury?.net ?? 0)}</p>
+          </div>
+        </div>
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-3">
         <input
@@ -235,6 +301,7 @@ export default function FinanceOverviewPage() {
           onSaved={() => {
             setExpenseModalOpen(false);
             load();
+            loadTreasury();
           }}
         />
       )}
@@ -244,6 +311,7 @@ export default function FinanceOverviewPage() {
           onClose={() => setIncomeModalOpen(false)}
           onSaved={() => {
             setIncomeModalOpen(false);
+            loadTreasury();
             load();
           }}
         />
