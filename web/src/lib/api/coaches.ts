@@ -53,26 +53,74 @@ export async function getCoachGroups(coachId: string): Promise<{ id: string; nam
   return [...head, ...assistant];
 }
 
-export type CoachBranchInfo = { branch_id: string; branch_name: string; level: number };
+export type CoachBranchInfo = {
+  branch_id: string;
+  branch_name: string;
+  level: number;
+  license_no: string | null;
+  experience_years: number | null;
+  hire_date: string | null;
+};
+
+const COACH_BRANCH_FIELDS = "branch_id, level, license_no, experience_years, hire_date";
 
 export async function getAllCoachBranches(): Promise<Record<string, CoachBranchInfo[]>> {
-  const { data, error } = await supabase.from("coach_branches").select("coach_id, branch_id, level, branches(name)");
+  const { data, error } = await supabase.from("coach_branches").select(`coach_id, ${COACH_BRANCH_FIELDS}, branches(name)`);
   if (error) throw error;
   const map: Record<string, CoachBranchInfo[]> = {};
   (data as any[] ?? []).forEach((r) => {
-    (map[r.coach_id] ??= []).push({ branch_id: r.branch_id, level: r.level, branch_name: r.branches?.name ?? "?" });
+    (map[r.coach_id] ??= []).push({
+      branch_id: r.branch_id, level: r.level, branch_name: r.branches?.name ?? "?",
+      license_no: r.license_no ?? null, experience_years: r.experience_years ?? null, hire_date: r.hire_date ?? null,
+    });
   });
   return map;
 }
 
-export async function setCoachBranches(coachId: string, entries: { branch_id: string; level: number }[]) {
+export type CoachBranchEntry = {
+  branch_id: string;
+  level: number;
+  license_no?: string | null;
+  experience_years?: number | null;
+  hire_date?: string | null;
+};
+
+// Bir antrenörün branş listesini (kademe, belge no, deneyim yılı, kulübe
+// başlama tarihi dahil) TAMAMEN yeniden yazar — mobildeki aynı fonksiyonla
+// birebir aynı.
+export async function setCoachBranches(coachId: string, entries: CoachBranchEntry[]) {
   const { error: delError } = await supabase.from("coach_branches").delete().eq("coach_id", coachId);
   if (delError) throw delError;
   if (entries.length === 0) return;
-  const { error: insError } = await supabase
-    .from("coach_branches")
-    .insert(entries.map((e) => ({ coach_id: coachId, branch_id: e.branch_id, level: e.level })));
+  const { error: insError } = await supabase.from("coach_branches").insert(
+    entries.map((e) => ({
+      coach_id: coachId, branch_id: e.branch_id, level: e.level,
+      license_no: e.license_no ?? null, experience_years: e.experience_years ?? null, hire_date: e.hire_date ?? null,
+    }))
+  );
   if (insError) throw insError;
+}
+
+// user-photos bucket'ı private — mobildeki uploadPhotoForUser ile aynı
+// desen (bkz. web/src/lib/api/currentUser.ts uploadMyPhoto), sadece
+// hedef kullanıcı id'si parametre olarak veriliyor çünkü admin BAŞKA bir
+// antrenörün fotoğrafını yüklüyor.
+export async function uploadCoachPhoto(coachId: string, file: File): Promise<string> {
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const path = `${coachId}/${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("user-photos")
+    .upload(path, file, { upsert: true, contentType: file.type || "image/jpeg" });
+  if (uploadError) throw uploadError;
+
+  const { data: signedData, error: signError } = await supabase.storage.from("user-photos").createSignedUrl(path, 315360000);
+  if (signError || !signedData) throw signError ?? new Error("İmzalı URL oluşturulamadı");
+
+  const { error: updateError } = await supabase.from("users").update({ photo_url: signedData.signedUrl }).eq("id", coachId);
+  if (updateError) throw updateError;
+
+  return signedData.signedUrl;
 }
 
 export async function deactivateCoach(userId: string) {

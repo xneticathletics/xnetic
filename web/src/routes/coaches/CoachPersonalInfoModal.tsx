@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
-import { updateCoach, type Coach } from "../../lib/api/coaches";
+import { updateCoach, uploadCoachPhoto, type Coach } from "../../lib/api/coaches";
 
 const EDUCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "lise", label: "Lise" },
@@ -25,6 +25,7 @@ export default function CoachPersonalInfoModal({
   const [address, setAddress] = useState(coach.address ?? "");
   const [emergencyName, setEmergencyName] = useState(coach.emergency_contact_name ?? "");
   const [emergencyPhone, setEmergencyPhone] = useState(coach.emergency_contact_phone ?? "");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +41,7 @@ export default function CoachPersonalInfoModal({
         emergency_contact_name: emergencyName.trim() || null,
         emergency_contact_phone: emergencyPhone.trim() || null,
       });
+      if (photoFile) await uploadCoachPhoto(coach.id, photoFile);
       onSaved();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -78,6 +80,14 @@ export default function CoachPersonalInfoModal({
       </FormField>
       <FormField label="Acil Durum Kişisi — Telefon">
         <input className={inputClass} value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} placeholder="0532-123-45-67" />
+      </FormField>
+      <FormField label="Fotoğraf">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+          className="block w-full text-xs text-muted"
+        />
       </FormField>
 
       {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}

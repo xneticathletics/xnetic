@@ -10,8 +10,11 @@ import {
   type Coach,
   type CoachBranchInfo,
 } from "../../lib/api/coaches";
-import { listBranches, type Branch } from "../../lib/api/branches";
+import { listBranches, setBranchCoordinator, type Branch } from "../../lib/api/branches";
 import { listCoachLeaves, createCoachLeave, deleteCoachLeave, type CoachLeave } from "../../lib/api/coachLeaves";
+import { listVenues, type Venue } from "../../lib/api/venues";
+import { getCoachVenueIds, setCoachVenue } from "../../lib/api/venueCoaches";
+import { listAllAthletes } from "../../lib/api/athletes";
 import CoachEditModal from "./CoachEditModal";
 import CoachPersonalInfoModal from "./CoachPersonalInfoModal";
 
@@ -44,6 +47,9 @@ export default function CoachDetailPage() {
   const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [groups, setGroups] = useState<{ id: string; name: string; branch: string }[]>([]);
   const [leaves, setLeaves] = useState<CoachLeave[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
+  const [athleteCounts, setAthleteCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,24 +57,67 @@ export default function CoachDetailPage() {
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", reason: "" });
   const [savingLeave, setSavingLeave] = useState(false);
+  const [venueTogglingId, setVenueTogglingId] = useState<string | null>(null);
+  const [coordinatorSaving, setCoordinatorSaving] = useState(false);
 
   const load = () => {
     if (!id) return;
     setLoading(true);
     setError(null);
-    Promise.all([getCoach(id), getAllCoachBranches(), getCoachGroups(id), listBranches(), listCoachLeaves(id)])
-      .then(([c, allCoachBranches, g, b, l]) => {
+    Promise.all([
+      getCoach(id), getAllCoachBranches(), getCoachGroups(id), listBranches(), listCoachLeaves(id),
+      listVenues(), getCoachVenueIds(id), listAllAthletes(),
+    ])
+      .then(([c, allCoachBranches, g, b, l, v, venueIds, athletes]) => {
         setCoach(c);
         setBranches(allCoachBranches[id] ?? []);
         setGroups(g);
         setAllBranches(b);
         setLeaves(l);
+        setVenues(v);
+        setAuthorizedVenueIds(venueIds);
+        const counts: Record<string, number> = {};
+        athletes.forEach((a) => {
+          if (a.group_id && a.status === "active") counts[a.group_id] = (counts[a.group_id] ?? 0) + 1;
+        });
+        setAthleteCounts(counts);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [id]);
+
+  const myCoordinatorBranch = allBranches.find((b) => b.coordinator_user_id === id) ?? null;
+
+  const handleSetCoordinator = async (branch: Branch | null) => {
+    if (!id) return;
+    setCoordinatorSaving(true);
+    try {
+      if (myCoordinatorBranch && myCoordinatorBranch.id !== branch?.id) {
+        await setBranchCoordinator(myCoordinatorBranch.id, null);
+      }
+      if (branch) await setBranchCoordinator(branch.id, id);
+      setAllBranches(await listBranches());
+    } catch (e: any) {
+      alert(e.message ?? "Kaydedilemedi");
+    } finally {
+      setCoordinatorSaving(false);
+    }
+  };
+
+  const handleToggleVenue = async (venueId: string, currentlyOn: boolean) => {
+    if (!id) return;
+    setVenueTogglingId(venueId);
+    try {
+      await setCoachVenue(id, venueId, !currentlyOn);
+      setAuthorizedVenueIds(await getCoachVenueIds(id));
+    } catch (e: any) {
+      alert(e.message ?? "Kaydedilemedi");
+    } finally {
+      setVenueTogglingId(null);
+    }
+  };
 
   const handleAddLeave = async () => {
     if (!id || !leaveForm.start_date || !leaveForm.end_date) {
@@ -211,10 +260,97 @@ export default function CoachDetailPage() {
                 <div key={b.branch_id} className="border-b border-line py-2 last:border-0">
                   <p className="text-sm font-semibold text-ink">{b.branch_name}</p>
                   <p className="text-xs text-muted">{b.level}. Kademe</p>
+                  {(b.license_no || b.experience_years != null || b.hire_date) && (
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      {[
+                        b.license_no && `Belge: ${b.license_no}`,
+                        b.experience_years != null && `${b.experience_years} yıl deneyim`,
+                        b.hire_date && `Başlama: ${formatDate(b.hire_date)}`,
+                      ].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                 </div>
               ))
             )}
           </div>
+
+          {allBranches.length > 1 && (
+            <>
+              <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Branş Koordinatörlüğü</h2>
+              <div className="rounded-xl border border-line bg-surface p-4">
+                <p className="mb-3 text-xs leading-relaxed text-muted">
+                  Koordinatör olduğu branşta, sadece kendi grupları değil o branşın TÜM sporcularını ve aidatlarını görebilir.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleSetCoordinator(null)}
+                    disabled={coordinatorSaving}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-60 ${
+                      !myCoordinatorBranch ? "border-yellow bg-yellow text-bg" : "border-line text-muted"
+                    }`}
+                  >
+                    Yok
+                  </button>
+                  {allBranches.map((b) => {
+                    const active = myCoordinatorBranch?.id === b.id;
+                    const takenByOther = !!b.coordinator_user_id && b.coordinator_user_id !== id;
+                    return (
+                      <button
+                        key={b.id}
+                        disabled={coordinatorSaving}
+                        onClick={() => {
+                          if (takenByOther) {
+                            if (
+                              confirm(
+                                `${b.name} branşının koordinatörü şu an ${b.coordinator?.name ?? "başka bir antrenör"}. Bunu ${coach.name} ile değiştirmek istiyor musun?`
+                              )
+                            ) {
+                              handleSetCoordinator(b);
+                            }
+                            return;
+                          }
+                          handleSetCoordinator(b);
+                        }}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-60 ${
+                          active ? "border-yellow bg-yellow text-bg" : "border-line text-muted"
+                        }`}
+                      >
+                        {b.name}
+                        {takenByOther ? ` (${b.coordinator?.name ?? "atanmış"})` : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {venues.length > 0 && (
+            <>
+              <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Salon Yetkisi</h2>
+              <div className="rounded-xl border border-line bg-surface p-4">
+                <p className="mb-3 text-xs leading-relaxed text-muted">
+                  İşaretli salon(lar) için bu antrenör, kendi branşındaki tüm gruplar adına antrenman planı oluşturabilir.
+                </p>
+                {venues.map((v) => {
+                  const on = authorizedVenueIds.includes(v.id);
+                  return (
+                    <label
+                      key={v.id}
+                      className="flex cursor-pointer items-center justify-between border-b border-line py-2 last:border-0"
+                    >
+                      <span className="text-sm font-semibold text-ink">{v.name}</span>
+                      {venueTogglingId === v.id ? (
+                        <span className="text-xs text-muted">…</span>
+                      ) : (
+                        <input type="checkbox" checked={on} onChange={() => handleToggleVenue(v.id, on)} />
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Sorumlu Gruplar</h2>
           <div className="rounded-xl border border-line bg-surface p-4">
@@ -224,7 +360,7 @@ export default function CoachDetailPage() {
               groups.map((g) => (
                 <div key={g.id} className="flex items-center justify-between border-b border-line py-2 last:border-0">
                   <span className="text-sm font-semibold text-ink">{g.name}</span>
-                  <span className="text-xs text-muted">{g.branch}</span>
+                  <span className="text-xs text-muted">{athleteCounts[g.id] ?? 0} sporcu · {g.branch}</span>
                 </div>
               ))
             )}
@@ -290,6 +426,12 @@ export default function CoachDetailPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
+        <Link
+          to={`/finance/coach-payments?coach=${coach.id}`}
+          className="rounded-lg border border-violet px-4 py-2 text-sm font-bold text-violet"
+        >
+          💰 Ödemeler &amp; Avanslar
+        </Link>
         {coach.is_active ? (
           <button onClick={handleDeactivate} className="rounded-lg border border-coral px-4 py-2 text-sm font-bold text-coral">
             Pasifleştir

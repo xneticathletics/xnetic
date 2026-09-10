@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DataTable, { type Column } from "../../components/DataTable";
 import {
   listCoachPayments, markCoachPaymentPaid, markCoachPaymentPending, deleteCoachPayment, type CoachPayment,
@@ -19,6 +20,8 @@ function formatDate(iso: string | null) {
 }
 
 export default function CoachPaymentsPage() {
+  const [searchParams] = useSearchParams();
+  const coachIdFilter = searchParams.get("coach");
   const [payments, setPayments] = useState<CoachPayment[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [loading, setLoading] = useState(true);
@@ -53,10 +56,14 @@ export default function CoachPaymentsPage() {
     return { pending, paid };
   }, [payments]);
 
-  const filtered = useMemo(
-    () => (statusFilter === "all" ? payments : payments.filter((p) => p.status === statusFilter)),
-    [payments, statusFilter]
-  );
+  const filtered = useMemo(() => {
+    let list = payments;
+    if (coachIdFilter) list = list.filter((p) => p.coach_id === coachIdFilter);
+    if (statusFilter !== "all") list = list.filter((p) => p.status === statusFilter);
+    return list;
+  }, [payments, statusFilter, coachIdFilter]);
+
+  const coachFilterName = coachIdFilter ? payments.find((p) => p.coach_id === coachIdFilter)?.users?.name : null;
 
   const handleTogglePaid = async (item: CoachPayment) => {
     const isPending = item.status === "pending";
@@ -129,7 +136,17 @@ export default function CoachPaymentsPage() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-ink">Antrenör Ödemeleri</h1>
+        <div>
+          <h1 className="text-xl font-bold text-ink">Antrenör Ödemeleri</h1>
+          {coachIdFilter && (
+            <p className="mt-1 text-xs text-muted">
+              {coachFilterName ?? "Antrenör"} için filtrelendi —{" "}
+              <a href="/finance/coach-payments" className="font-bold text-teal hover:underline">
+                Tümünü Göster
+              </a>
+            </p>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setAdvanceModalOpen(true)} className="rounded-lg border border-violet px-4 py-2 text-sm font-bold text-violet">
             + Avans Ver

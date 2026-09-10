@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { listGroups, type Group } from "../../lib/api/groups";
-import { listCoaches, getGroupStaffingDetailed, setCoachAssignment, type Coach, type GroupStaffingDetailed } from "../../lib/api/coaches";
+import {
+  listCoaches, getGroupStaffingDetailed, setCoachAssignment, getAllCoachBranches,
+  type Coach, type GroupStaffingDetailed, type CoachBranchInfo,
+} from "../../lib/api/coaches";
 import { listBranches, type Branch } from "../../lib/api/branches";
 
 export default function CoachAssignmentsPage() {
@@ -8,6 +11,7 @@ export default function CoachAssignmentsPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [staffing, setStaffing] = useState<Record<string, GroupStaffingDetailed>>({});
+  const [coachBranches, setCoachBranches] = useState<Record<string, CoachBranchInfo[]>>({});
   const [branchFilter, setBranchFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,12 +19,13 @@ export default function CoachAssignmentsPage() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([listGroups(), listBranches(), listCoaches(), getGroupStaffingDetailed()])
-      .then(([g, br, c, s]) => {
+    Promise.all([listGroups(), listBranches(), listCoaches(), getGroupStaffingDetailed(), getAllCoachBranches()])
+      .then(([g, br, c, s, cb]) => {
         setGroups(g);
         setBranches(br);
         setCoaches(c);
         setStaffing(s);
+        setCoachBranches(cb);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -32,6 +37,12 @@ export default function CoachAssignmentsPage() {
     () => (branchFilter ? groups.filter((g) => g.branch === branchFilter) : groups),
     [groups, branchFilter]
   );
+
+  // Sadece o grubun branşında uzman olan antrenörler seçilebilir — aksi
+  // halde hiç ilgisi olmayan bir antrenör herhangi bir branşa atanabilirdi
+  // (mobildeki CoachesOverviewScreen ile aynı kısıtlama).
+  const eligibleCoachesFor = (branch: string) =>
+    coaches.filter((c) => (coachBranches[c.id] ?? []).some((b) => b.branch_name === branch));
 
   const handleHeadChange = async (groupId: string, coachId: string) => {
     setBusyGroupId(groupId);
@@ -89,6 +100,7 @@ export default function CoachAssignmentsPage() {
           const s = staffing[g.id] ?? { headCoachId: null, headCoachName: null, assistants: [] };
           const assistantIds = new Set(s.assistants.map((a) => a.id));
           const busy = busyGroupId === g.id;
+          const eligibleCoaches = eligibleCoachesFor(g.branch);
           return (
             <div key={g.id} className="rounded-xl border border-line bg-surface p-4">
               <div className="mb-3">
@@ -105,18 +117,21 @@ export default function CoachAssignmentsPage() {
                   onChange={(e) => handleHeadChange(g.id, e.target.value)}
                 >
                   <option value="">Yok</option>
-                  {coaches.map((c) => (
+                  {eligibleCoaches.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>
                   ))}
                 </select>
+                {eligibleCoaches.length === 0 && (
+                  <p className="mt-1 text-xs text-muted">{g.branch} branşında uzman antrenör yok.</p>
+                )}
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted">Yardımcı Antrenörler</label>
                 <div className="flex flex-wrap gap-2">
-                  {coaches
+                  {eligibleCoaches
                     .filter((c) => c.id !== s.headCoachId)
                     .map((c) => {
                       const active = assistantIds.has(c.id);
