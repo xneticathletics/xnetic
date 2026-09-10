@@ -5,8 +5,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../lib/fitnessExercises";
 import { listCustomExercisesByCategory } from "../lib/api/customFitnessExercises";
-import { listGroups, listMyCoachedGroups, type Group } from "../lib/api/groups";
 import { listFitnessGroups, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
+import { getCoachBranches } from "../lib/api/coaches";
 import { publishFitnessProgram, type FitnessProgramItemInput } from "../lib/api/fitnessPrograms";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -33,10 +33,7 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
 
   const [finalizing, setFinalizing] = useState(false);
   const [name, setName] = useState("");
-  const [groups, setGroups] = useState<Group[]>([]);
   const [fitnessGroups, setFitnessGroups] = useState<FitnessGroupSummary[]>([]);
-  // "group:<id>" ya da "fitness:<id>" — tek bir seçimde iki farklı hedef
-  // türünü ayırt etmek için önek kullanılıyor.
   const [targetValue, setTargetValue] = useState<string | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -61,31 +58,31 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
       .catch(() => setExerciseOptions(staticOptions));
   }, [category]);
 
-  // Antrenör (branş koordinatörü dahil) sadece kendi gruplarına ve kendi
-  // branşındaki fitness gruplarına program gönderebilsin — club_admin
-  // hâlâ kulübün tüm gruplarını görür. getMyCoachedGroupIds zaten
-  // koordinatörü kendi branşının tamamına genişletiyor (bkz. myGroups.ts).
-  // Hedef grup listesi ayrıca sadece MÜSABIK gruplarla sınırlandı — fitness
-  // programı spor okulu gruplarına gönderilmiyor (kullanıcı kararı).
-  // fitness_groups (ad-hoc, elle seçilmiş sporcu grupları) bu filtreye
-  // dahil değil — myBranches BİLEREK filtrelenmemiş "g" üzerinden
-  // hesaplanıyor, yoksa sadece spor okulu grubu olan bir branşın fitness
-  // gruplarını da yanlışlıkla gizlerdi.
+  // Fitness programının hedefi artık SADECE Fitness Grupları (ad-hoc, elle
+  // seçilmiş sporcu grupları) — kullanıcı kararı: normal antrenman
+  // gruplarını buradan kaldırdık, program her zaman bir fitness grubuna
+  // sergilenir. Antrenör (branş koordinatörü dahil) sadece kendi
+  // branş(lar)ındaki fitness gruplarını görür — club_admin tümünü görür.
   useEffect(() => {
     if (!finalizing) return;
     setLoadingGroups(true);
-    Promise.all([isCoach ? listMyCoachedGroups() : listGroups(), listFitnessGroups()])
-      .then(([g, fg]) => {
-        setGroups(g.filter((x) => x.athlete_type === "musabik"));
+    (async () => {
+      try {
+        const fg = await listFitnessGroups();
         if (isCoach) {
-          const myBranches = new Set(g.map((x) => x.branch));
+          const myUserId = await getCurrentAppUserId();
+          const myBranchInfo = myUserId ? await getCoachBranches(myUserId) : [];
+          const myBranches = new Set(myBranchInfo.map((b) => b.branch_name));
           setFitnessGroups(fg.filter((x) => myBranches.has(x.branch)));
         } else {
           setFitnessGroups(fg);
         }
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoadingGroups(false));
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoadingGroups(false);
+      }
+    })();
   }, [finalizing, isCoach]);
 
   const selectedExerciseName = exerciseOptions.find((e) => e.key === exerciseKey)?.name ?? null;
@@ -112,9 +109,9 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   const handlePublish = async () => {
     if (savingRef.current) return;
     if (!name.trim()) return Alert.alert("Eksik bilgi", "Program adı girmelisin.", [{ text: "Tamam" }]);
-    if (!targetValue) return Alert.alert("Eksik bilgi", "Bir grup ya da fitness grubu seçmelisin.", [{ text: "Tamam" }]);
+    if (!targetValue) return Alert.alert("Eksik bilgi", "Bir fitness grubu seçmelisin.", [{ text: "Tamam" }]);
 
-    const [targetType, targetId] = targetValue.split(":");
+    const [, targetId] = targetValue.split(":");
 
     savingRef.current = true;
     setSaving(true);
@@ -123,8 +120,8 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
       const myUserId = await getCurrentAppUserId();
       await publishFitnessProgram({
         name: name.trim(),
-        group_id: targetType === "group" ? targetId : null,
-        fitness_group_id: targetType === "fitness" ? targetId : null,
+        group_id: null,
+        fitness_group_id: targetId,
         created_by: myUserId,
         items,
       });
@@ -219,22 +216,12 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
               placeholderTextColor={colors.muted}
             />
 
-            <Text style={[styles.label, { marginTop: spacing.md }]}>Hangi Gruba Sergilenecek? *</Text>
+            <Text style={[styles.label, { marginTop: spacing.md }]}>Hangi Fitness Grubuna Sergilenecek? *</Text>
             {loadingGroups && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.sm }} />}
+            {!loadingGroups && fitnessGroups.length === 0 && (
+              <Text style={styles.hint}>Henüz bir fitness grubu yok — önce Fitness Grupları'ndan bir grup oluşturmalısın.</Text>
+            )}
             <View style={styles.chipGrid}>
-              {groups.map((g) => {
-                const value = `group:${g.id}`;
-                const active = targetValue === value;
-                return (
-                  <TouchableOpacity
-                    key={value}
-                    style={[styles.chip, styles.chipNeutral, active && styles.chipNeutralActive]}
-                    onPress={() => setTargetValue(value)}
-                  >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.name} · {g.branch}</Text>
-                  </TouchableOpacity>
-                );
-              })}
               {fitnessGroups.map((g) => {
                 const value = `fitness:${g.id}`;
                 const active = targetValue === value;

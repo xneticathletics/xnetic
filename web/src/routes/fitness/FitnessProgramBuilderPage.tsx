@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import FormField, { inputClass } from "../../components/FormField";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../../lib/fitnessExercises";
 import { listCustomExercisesByCategory } from "../../lib/api/fitnessExercises";
-import { listGroups, type Group } from "../../lib/api/groups";
 import { listFitnessGroups, type FitnessGroupSummary } from "../../lib/api/fitnessGroups";
 import { publishFitnessProgram, type FitnessProgramItemInput } from "../../lib/api/fitnessPrograms";
 import { getCurrentAppUserId } from "../../lib/api/currentUser";
@@ -24,16 +23,12 @@ export default function FitnessProgramBuilderPage() {
   const [reps, setReps] = useState("");
 
   const [name, setName] = useState("");
-  const [groups, setGroups] = useState<Group[]>([]);
   const [fitnessGroups, setFitnessGroups] = useState<FitnessGroupSummary[]>([]);
-  // "group:<id>" ya da "fitness:<id>" — tek bir seçim kutusunda iki farklı
-  // hedef türünü ayırt etmek için önek kullanılıyor.
   const [targetValue, setTargetValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listGroups().then(setGroups).catch(() => {});
     listFitnessGroups().then(setFitnessGroups).catch(() => {});
   }, []);
 
@@ -73,10 +68,10 @@ export default function FitnessProgramBuilderPage() {
 
   const handlePublish = async () => {
     if (!name.trim()) return setError("Program adı girmelisin.");
-    if (!targetValue) return setError("Bir grup ya da fitness grubu seçmelisin.");
+    if (!targetValue) return setError("Bir fitness grubu seçmelisin.");
     if (items.length === 0) return setError("En az bir hareket eklemelisin.");
 
-    const [targetType, targetId] = targetValue.split(":");
+    const [, targetId] = targetValue.split(":");
 
     setSaving(true);
     setError(null);
@@ -84,8 +79,8 @@ export default function FitnessProgramBuilderPage() {
       const myUserId = await getCurrentAppUserId();
       const program = await publishFitnessProgram({
         name: name.trim(),
-        group_id: targetType === "group" ? targetId : null,
-        fitness_group_id: targetType === "fitness" ? targetId : null,
+        group_id: null,
+        fitness_group_id: targetId,
         created_by: myUserId,
         items,
       });
@@ -186,24 +181,24 @@ export default function FitnessProgramBuilderPage() {
             <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Örn. Haftalık Kuvvet Programı" />
           </FormField>
 
-          <FormField label="Hangi Gruba Sergilenecek? *">
+          <FormField label="Hangi Fitness Grubuna Sergilenecek? *">
             <select className={inputClass} value={targetValue} onChange={(e) => setTargetValue(e.target.value)}>
-              <option value="">Bir grup ya da fitness grubu seç</option>
-              <optgroup label="Normal Gruplar">
-                {groups.map((g) => (
-                  <option key={g.id} value={`group:${g.id}`}>
-                    {g.name} · {g.branch}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Fitness Grupları">
-                {fitnessGroups.map((g) => (
-                  <option key={g.id} value={`fitness:${g.id}`}>
-                    🎯 {g.name} · {g.branch}
-                  </option>
-                ))}
-              </optgroup>
+              <option value="">Bir fitness grubu seç</option>
+              {fitnessGroups.map((g) => (
+                <option key={g.id} value={`fitness:${g.id}`}>
+                  🎯 {g.name} · {g.branch}
+                </option>
+              ))}
             </select>
+            {fitnessGroups.length === 0 && (
+              <p className="mt-1 text-xs text-muted">
+                Henüz bir fitness grubu yok — önce{" "}
+                <Link to="/fitness/groups" className="font-semibold text-teal hover:underline">
+                  Fitness Grupları
+                </Link>
+                'ndan bir grup oluşturmalısın.
+              </p>
+            )}
           </FormField>
 
           {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}
