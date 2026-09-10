@@ -67,11 +67,11 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center gap-3 border-b border-line px-5 py-5">
-          <img src="/xnetic-logo.png" alt="X-NETIC" className="h-12 w-12 rounded-lg object-contain" />
+        <div className="flex items-center gap-2.5 border-b border-line px-4 py-3">
+          <img src="/xnetic-logo.png" alt="X-NETIC" className="h-9 w-9 rounded-lg object-contain" />
           <div>
-            <div className="text-base font-extrabold text-ink">X-NETIC</div>
-            <div className="text-xs font-semibold text-muted">Yönetim Paneli</div>
+            <div className="text-sm font-extrabold text-ink">X-NETIC</div>
+            <div className="text-[11px] font-semibold text-muted">Yönetim Paneli</div>
           </div>
           <button
             onClick={onClose}
@@ -82,7 +82,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
           {visibleItems.map((item) => (
             <NavLink
               key={item.to}
@@ -90,7 +90,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
               end={item.end}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+                `flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold transition-colors ${
                   isActive ? "bg-yellow text-bg" : "text-muted hover:bg-bg hover:text-ink"
                 }`
               }
@@ -101,10 +101,10 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           ))}
         </nav>
 
-        <div className="border-t border-line p-3">
+        <div className="border-t border-line p-2">
           <button
             onClick={() => signOut()}
-            className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-coral hover:bg-bg"
+            className="w-full rounded-lg px-2.5 py-2 text-left text-sm font-semibold text-coral hover:bg-bg"
           >
             Çıkış Yap
           </button>
