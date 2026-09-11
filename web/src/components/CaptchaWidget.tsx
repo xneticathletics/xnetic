@@ -16,7 +16,13 @@ declare global {
     turnstile?: {
       render: (
         container: HTMLElement,
-        options: { sitekey: string; theme?: string; callback: (token: string) => void; "expired-callback"?: () => void }
+        options: {
+          sitekey: string;
+          theme?: string;
+          size?: "normal" | "compact" | "flexible";
+          callback: (token: string) => void;
+          "expired-callback"?: () => void;
+        }
       ) => string;
       reset: (widgetId?: string) => void;
       remove: (widgetId: string) => void;
@@ -41,6 +47,12 @@ export default function CaptchaWidget({ onToken }: { onToken: (token: string) =>
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: SITE_KEY,
         theme: "dark",
+        // "normal" boyutu sabit 300px genişlikte, esnemiyor — dar telefon
+        // ekranlarında (ör. 375px genişlikli bir cihazda formun kendi
+        // padding'i düşüldüğünde kalan alan 300px'in altına iniyor) widget
+        // konteynerinden taşıp yatay kaymaya/kırpılmaya yol açıyordu.
+        // "flexible" konteyner genişliğine göre daralıp genişliyor.
+        size: "flexible",
         callback: (token) => onToken(token),
         "expired-callback": () => window.turnstile?.reset(widgetIdRef.current ?? undefined),
       });
@@ -57,5 +69,5 @@ export default function CaptchaWidget({ onToken }: { onToken: (token: string) =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} className="w-full" />;
 }

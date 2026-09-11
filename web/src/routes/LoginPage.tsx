@@ -31,7 +31,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8"
+        className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 sm:p-8"
       >
         <a href={MARKETING_URL} className="mb-1 inline-block text-xl font-extrabold text-ink hover:text-yellow">
           X-NETIC
