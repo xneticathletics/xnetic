@@ -102,6 +102,7 @@ export default function CreateClubPage() {
     if (password.length < 6) return setError("Şifre en az 6 karakter olmalı.");
     if (password !== passwordConfirm) return setError("Şifreler eşleşmiyor.");
     if (!consentAccepted) return setError("Devam etmek için KVKK Aydınlatma Metni ve Kullanım Şartları'nı kabul etmelisin.");
+    if (!captchaToken) return setError("Lütfen doğrulamayı tamamla.");
 
     setSubmitting(true);
     setError(null);
@@ -114,6 +115,7 @@ export default function CreateClubPage() {
         password,
         billingPeriod,
         consentAccepted,
+        captchaToken,
       });
       // Hesap oluşturulduktan hemen sonra aynı bilgilerle giriş yapılır —
       // LoginPage'deki yönlendirme, oturum gelince otomatik olarak

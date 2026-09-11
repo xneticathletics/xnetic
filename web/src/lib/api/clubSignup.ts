@@ -14,6 +14,10 @@ export type CreateClubInput = {
   // edge function bu true olmadan hesap oluşturmuyor ve kabul anını
   // user_consents'e kaydediyor (bkz. supabase/functions/create-club).
   consentAccepted: boolean;
+  // CreateClubPage'deki CaptchaWidget'tan gelen token — edge function bunu
+  // Cloudflare'e karşı doğrulamadan hesap oluşturmuyor (bkz. verifyCaptcha
+  // in supabase/functions/create-club).
+  captchaToken: string | null;
 };
 
 // create-club Edge Function'ını ham fetch ile çağırıyoruz (inviteUser.ts'deki

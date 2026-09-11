@@ -45,6 +45,27 @@ async function checkRateLimit(
   return true;
 }
 
+// CreateClubPage bir CaptchaWidget render edip token'ı topluyordu ama
+// createClub() çağrısına hiç iletmiyordu (token sadece sonraki signIn()
+// çağrısında kullanılıyordu) — yani bu uç noktanın tek koruması IP başına
+// hız sınırıydı. Bu fonksiyon admin.auth.admin.createUser() (service-role)
+// kullandığı için Supabase'in Attack Protection/Turnstile entegrasyonu
+// (sadece public GoTrue signup/signin uçlarını kapsıyor) buraya hiç
+// uygulanmıyor — token'ı burada AYRICA, doğrudan Cloudflare'e karşı
+// doğrulamak gerekiyor.
+async function verifyCaptcha(token: string | undefined, remoteIp: string): Promise<boolean> {
+  if (!token) return false;
+  const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
+  if (!secret) return true; // secret tanımlı değilse (yerel/test ortamı) doğrulamayı atla
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ secret, response: token, remoteip: remoteIp }),
+  });
+  const json = await res.json().catch(() => ({ success: false }));
+  return json.success === true;
+}
+
 // Push gönderimi best-effort: hatası ana akışı bozmamalı, bu yüzden
 // await edilmeden fire-and-forget çağrılıyor.
 function triggerPushNotification(supabaseUrl: string, notificationId: string) {
@@ -80,7 +101,10 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { clubName, adminName, email, phone, password, billingPeriod, consentAccepted } = body;
+    const { clubName, adminName, email, phone, password, billingPeriod, consentAccepted, captchaToken } = body;
+
+    const captchaOk = await verifyCaptcha(captchaToken, clientIp);
+    if (!captchaOk) throw new Error("Doğrulama başarısız oldu. Lütfen tekrar dene.");
 
     if (!clubName || !String(clubName).trim()) throw new Error("Kulüp adı zorunludur.");
     if (!adminName || !String(adminName).trim()) throw new Error("Ad soyad zorunludur.");
