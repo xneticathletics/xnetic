@@ -44,6 +44,18 @@ export async function listNutritionFoodsByCategory(category: FoodCategoryKey): P
   return (data as unknown as NutritionFood[]) ?? [];
 }
 
+// Süper Admin'in "İçerik Kütüphanesi" ekranındaki "Mevcut İçerik" listesi
+// için — kategoriden bağımsız, TÜM global (club_id NULL) besinler.
+export async function listGlobalFoods(): Promise<NutritionFood[]> {
+  const { data, error } = await supabase
+    .from("nutrition_foods")
+    .select(NUTRITION_FOOD_FIELDS)
+    .is("club_id", null)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data as unknown as NutritionFood[]) ?? [];
+}
+
 export async function getNutritionFood(id: string): Promise<NutritionFood> {
   const { data, error } = await supabase.from("nutrition_foods").select(`${NUTRITION_FOOD_FIELDS}, clubs(name)`).eq("id", id).single();
   if (error) throw error;

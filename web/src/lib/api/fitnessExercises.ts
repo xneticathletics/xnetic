@@ -70,6 +70,14 @@ export async function listAllCustomExercises(): Promise<CustomFitnessExercise[]>
   return data ?? [];
 }
 
+// Süper Admin'in "İçerik Kütüphanesi" ekranındaki "Mevcut İçerik" listesi
+// için — kategoriden bağımsız, TÜM global (club_id NULL) hareketler.
+export async function listGlobalExercises(): Promise<CustomFitnessExercise[]> {
+  const { data, error } = await supabase.from("fitness_exercises").select(FIELDS).is("club_id", null).order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getCustomExercise(id: string): Promise<CustomFitnessExercise | null> {
   const { data, error } = await supabase.from("fitness_exercises").select(FIELDS).eq("id", id).maybeSingle();
   if (error) throw error;

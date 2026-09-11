@@ -35,6 +35,18 @@ export async function listNutritionRecipesByCategory(category: FoodCategoryKey):
   return (data as unknown as NutritionRecipe[]) ?? [];
 }
 
+// Süper Admin'in "İçerik Kütüphanesi" ekranındaki "Mevcut İçerik" listesi
+// için — kategoriden bağımsız, TÜM global (club_id NULL) tarifler.
+export async function listGlobalRecipes(): Promise<NutritionRecipe[]> {
+  const { data, error } = await supabase
+    .from("nutrition_recipes")
+    .select(NUTRITION_RECIPE_FIELDS)
+    .is("club_id", null)
+    .order("title", { ascending: true });
+  if (error) throw error;
+  return (data as unknown as NutritionRecipe[]) ?? [];
+}
+
 export async function getNutritionRecipe(id: string): Promise<NutritionRecipe> {
   const { data, error } = await supabase.from("nutrition_recipes").select(`${NUTRITION_RECIPE_FIELDS}, clubs(name)`).eq("id", id).single();
   if (error) throw error;

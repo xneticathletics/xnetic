@@ -35,7 +35,7 @@ export default function ExerciseModal({
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = async (file: File | undefined) => {
-    if (!file || !clubId) return;
+    if (!file) return;
     setUploading(true);
     setError(null);
     try {
