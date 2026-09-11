@@ -1,21 +1,21 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getProduct, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
+import { useMediaWidth } from "../hooks/useMediaWidth";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "ShopProductDetail">;
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
 
-const screenWidth = Dimensions.get("window").width;
-
 export default function ShopProductDetailScreen({ route, navigation }: Props) {
   const { productId } = route.params;
   const { role } = useAuth();
+  const photoWidth = useMediaWidth();
 
   const [product, setProduct] = useState<ShopProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,31 +50,34 @@ export default function ShopProductDetailScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        {product.photo_urls.length > 0 ? (
-          <>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(e) => setActivePhoto(Math.round(e.nativeEvent.contentOffset.x / screenWidth))}
-            >
-              {product.photo_urls.map((url, i) => (
-                <Image key={i} source={{ uri: url }} style={{ width: screenWidth, height: screenWidth }} />
-              ))}
-            </ScrollView>
-            {product.photo_urls.length > 1 && (
-              <View style={styles.dotsRow}>
-                {product.photo_urls.map((_, i) => (
-                  <View key={i} style={[styles.dot, i === activePhoto && styles.dotActive]} />
+        <View style={{ alignItems: "center" }}>
+          {product.photo_urls.length > 0 ? (
+            <>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                style={{ width: photoWidth }}
+                onMomentumScrollEnd={(e) => setActivePhoto(Math.round(e.nativeEvent.contentOffset.x / photoWidth))}
+              >
+                {product.photo_urls.map((url, i) => (
+                  <Image key={i} source={{ uri: url }} style={{ width: photoWidth, height: photoWidth }} />
                 ))}
-              </View>
-            )}
-          </>
-        ) : (
-          <View style={[styles.photoPlaceholder, { width: screenWidth, height: screenWidth }]}>
-            <Text style={{ fontSize: 48 }}>🛍️</Text>
-          </View>
-        )}
+              </ScrollView>
+              {product.photo_urls.length > 1 && (
+                <View style={styles.dotsRow}>
+                  {product.photo_urls.map((_, i) => (
+                    <View key={i} style={[styles.dot, i === activePhoto && styles.dotActive]} />
+                  ))}
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={[styles.photoPlaceholder, { width: photoWidth, height: photoWidth }]}>
+              <Text style={{ fontSize: 48 }}>🛍️</Text>
+            </View>
+          )}
+        </View>
 
         <View style={{ padding: spacing.lg }}>
           {(product.category || product.gender) && (

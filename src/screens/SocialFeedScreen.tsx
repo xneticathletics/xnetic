@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Alert,
-  Modal, ScrollView, Dimensions,
+  Modal, ScrollView, useWindowDimensions,
 } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useFocusEffect } from "@react-navigation/native";
@@ -13,15 +13,13 @@ import {
 } from "../lib/api/socialPosts";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import { useAuth } from "../context/AuthContext";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "SocialFeed">;
 type Tab = "feed" | "pending";
 
-const screenWidth = Dimensions.get("window").width;
-const COLUMNS = 2;
 const GRID_GAP = spacing.sm;
-const THUMB_SIZE = (screenWidth - spacing.lg * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS;
 
 type FeedRow =
   | { type: "header"; key: string; label: string }
@@ -52,13 +50,13 @@ function formatPostDateTime(iso: string): string {
   return `${date} · ${time}`;
 }
 
-function buildFeedRows(posts: SocialPost[]): FeedRow[] {
+function buildFeedRows(posts: SocialPost[], columns: number): FeedRow[] {
   const rows: FeedRow[] = [];
   let currentLabel: string | null = null;
   let buffer: SocialPost[] = [];
   const flush = () => {
-    for (let i = 0; i < buffer.length; i += COLUMNS) {
-      const chunk = buffer.slice(i, i + COLUMNS);
+    for (let i = 0; i < buffer.length; i += columns) {
+      const chunk = buffer.slice(i, i + columns);
       rows.push({ type: "photos", key: `row-${chunk[0].id}`, posts: chunk });
     }
     buffer = [];
@@ -81,6 +79,9 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
   // Herhangi bir antrenör (sadece koordinatör değil) branşındaki bekleyen
   // paylaşımları onaylayabilir — bkz. is_branch_moderator RLS helper'ı.
   const canModerate = role === "coach" || role === "club_admin";
+  const { width: windowWidth } = useWindowDimensions();
+  const columns = useResponsiveColumns(2);
+  const thumbSize = (windowWidth - spacing.lg * 2 - GRID_GAP * (columns - 1)) / columns;
 
   const [tab, setTab] = useState<Tab>(route.params?.initialTab === "pending" && canModerate ? "pending" : "feed");
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -122,7 +123,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
     }, [load])
   );
 
-  const feedRows = useMemo(() => buildFeedRows(posts), [posts]);
+  const feedRows = useMemo(() => buildFeedRows(posts, columns), [posts, columns]);
 
   const handleApprove = (post: SocialPost) => {
     setApproving(true);
@@ -208,11 +209,11 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
                 const globalIndex = posts.indexOf(item);
                 const isPending = item.status === "pending";
                 return (
-                  <TouchableOpacity key={item.id} style={styles.thumbWrap} onPress={() => setViewerIndex(globalIndex)}>
+                  <TouchableOpacity key={item.id} style={[styles.thumbWrap, { width: thumbSize }]} onPress={() => setViewerIndex(globalIndex)}>
                     {item.media_type === "photo" ? (
-                      <Image source={{ uri: item.media_url }} style={[styles.thumb, isPending && styles.thumbPending]} />
+                      <Image source={{ uri: item.media_url }} style={[styles.thumb, { width: thumbSize }, isPending && styles.thumbPending]} />
                     ) : (
-                      <View style={[styles.thumb, styles.videoThumb, isPending && styles.thumbPending]}>
+                      <View style={[styles.thumb, styles.videoThumb, { width: thumbSize }, isPending && styles.thumbPending]}>
                         <Text style={styles.videoThumbIcon}>▶</Text>
                       </View>
                     )}
@@ -225,7 +226,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
                   </TouchableOpacity>
                 );
               })}
-              {row.posts.length < COLUMNS && <View style={{ width: THUMB_SIZE }} />}
+              {row.posts.length < columns && <View style={{ width: thumbSize }} />}
             </View>
           );
         }}
@@ -237,19 +238,19 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            contentOffset={{ x: (viewerIndex ?? 0) * screenWidth, y: 0 }}
+            contentOffset={{ x: (viewerIndex ?? 0) * windowWidth, y: 0 }}
             onMomentumScrollEnd={(e) => {
               // Bir sayfa geçişinin momentum'u hâlâ sönümlenirken "Kapat"a
               // basılırsa, bu olay kapatmadan SONRA gecikmeli tetiklenip
               // viewerIndex'i tekrar dolduruyor ve görüntüleyici kapanır
               // kapanmaz yeniden açılıyordu. Zaten kapatılmışsa (null)
               // gecikmeli olayı yok sayıyoruz.
-              const newIndex = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+              const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
               setViewerIndex((current) => (current === null ? null : newIndex));
             }}
           >
             {posts.map((item, index) => (
-              <ViewerPage key={item.id} post={item} active={index === viewerIndex} />
+              <ViewerPage key={item.id} post={item} active={index === viewerIndex} width={windowWidth} />
             ))}
           </ScrollView>
 
@@ -297,18 +298,18 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
 // için useVideoPlayer/<VideoView>. Player SADECE aktif sayfa için
 // oluşturulur (tüm liste için değil), aksi halde paging listesindeki her
 // video aynı anda bir player'a bağlanmaya çalışırdı.
-function ViewerPage({ post, active }: { post: SocialPost; active: boolean }) {
+function ViewerPage({ post, active, width }: { post: SocialPost; active: boolean; width: number }) {
   if (post.media_type === "photo") {
     return (
-      <View style={styles.viewerPage}>
-        <Image source={{ uri: post.media_url }} style={styles.fullImage} resizeMode="contain" />
+      <View style={[styles.viewerPage, { width }]}>
+        <Image source={{ uri: post.media_url }} style={[styles.fullImage, { width }]} resizeMode="contain" />
       </View>
     );
   }
-  return <VideoViewerPage uri={post.media_url} active={active} />;
+  return <VideoViewerPage uri={post.media_url} active={active} width={width} />;
 }
 
-function VideoViewerPage({ uri, active }: { uri: string; active: boolean }) {
+function VideoViewerPage({ uri, active, width }: { uri: string; active: boolean; width: number }) {
   const player = useVideoPlayer(uri, (p) => {
     p.loop = false;
   });
@@ -319,9 +320,9 @@ function VideoViewerPage({ uri, active }: { uri: string; active: boolean }) {
   }, [active, player]);
 
   return (
-    <View style={styles.viewerPage}>
+    <View style={[styles.viewerPage, { width }]}>
       <VideoView
-        style={styles.fullVideo}
+        style={[styles.fullVideo, { width }]}
         player={player}
         contentFit="contain"
         // Video zaten kendi tam ekran görüntüleyicimizde (Modal) oynuyor —
@@ -363,8 +364,8 @@ const styles = StyleSheet.create({
     color: colors.ink, fontSize: 14, fontWeight: "800", marginTop: spacing.md, marginBottom: spacing.sm,
   },
   photoRow: { flexDirection: "row", gap: GRID_GAP, marginBottom: GRID_GAP },
-  thumbWrap: { width: THUMB_SIZE },
-  thumb: { width: THUMB_SIZE, aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.surface },
+  thumbWrap: {},
+  thumb: { aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.surface },
   thumbPending: { opacity: 0.45 },
   videoThumb: { alignItems: "center", justifyContent: "center" },
   videoThumbIcon: { color: colors.ink, fontSize: 28 },
@@ -375,11 +376,11 @@ const styles = StyleSheet.create({
   pendingBadgeText: { color: colors.yellow, fontSize: 10, fontWeight: "700" },
   thumbAuthor: { color: colors.muted, fontSize: 11, marginTop: 4 },
   viewerContainer: { flex: 1, backgroundColor: "#000" },
-  viewerPage: { width: screenWidth, alignItems: "center", justifyContent: "center" },
-  fullImage: { width: screenWidth, height: "100%" },
+  viewerPage: { alignItems: "center", justifyContent: "center" },
+  fullImage: { height: "100%" },
   // Fotoğraftan farklı olarak biraz küçük ve dikeyde ortalı — video ekranın
   // en tepesinden (status bar'a yakın) başlamasın diye (kullanıcı isteği).
-  fullVideo: { width: screenWidth, height: "70%" },
+  fullVideo: { height: "70%" },
   viewerInfoBar: {
     backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xs,
   },

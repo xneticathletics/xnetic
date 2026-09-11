@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Dimensions } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -9,16 +9,16 @@ import {
 } from "../lib/api/events";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useMediaWidth } from "../hooks/useMediaWidth";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "EventDetail">;
-
-const screenWidth = Dimensions.get("window").width;
 
 export default function EventDetailScreen({ route, navigation }: Props) {
   const { eventId } = route.params;
   const { role } = useAuth();
   const { selectedBranch, isLocked } = useBranchSelect();
+  const bannerWidth = useMediaWidth();
 
   const [event, setEvent] = useState<EventRow | null>(null);
   const [myRegistration, setMyRegistration] = useState<EventRegistrationRow | null>(null);
@@ -128,13 +128,15 @@ export default function EventDetailScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        {event.banner_url ? (
-          <Image source={{ uri: event.banner_url }} style={{ width: screenWidth, height: screenWidth * 0.56 }} resizeMode="cover" />
-        ) : (
-          <View style={[styles.bannerPlaceholder, { width: screenWidth, height: screenWidth * 0.56 }]}>
-            <Text style={{ fontSize: 48 }}>🏆</Text>
-          </View>
-        )}
+        <View style={{ alignItems: "center" }}>
+          {event.banner_url ? (
+            <Image source={{ uri: event.banner_url }} style={{ width: bannerWidth, height: bannerWidth * 0.56 }} resizeMode="cover" />
+          ) : (
+            <View style={[styles.bannerPlaceholder, { width: bannerWidth, height: bannerWidth * 0.56 }]}>
+              <Text style={{ fontSize: 48 }}>🏆</Text>
+            </View>
+          )}
+        </View>
 
         <View style={{ padding: spacing.lg }}>
           <View style={styles.badgeRow}>
