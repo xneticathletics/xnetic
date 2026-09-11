@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
 
     const { data: targetRow, error: targetRowError } = await admin
       .from("users")
-      .select("auth_user_id, club_id")
+      .select("auth_user_id, club_id, role")
       .eq("id", userId)
       .single();
     if (targetRowError || !targetRow) throw new Error("Kullanıcı bulunamadı.");
@@ -74,6 +74,15 @@ Deno.serve(async (req) => {
     // club_admin sadece kendi kulübündeki bir kullanıcının şifresini
     // sıfırlayabilir — aksi halde başka bir kulübün hesabına erişebilirdi.
     if (callerRow.role === "club_admin" && targetRow.club_id !== callerRow.club_id) {
+      throw new Error("Bu kullanıcı üzerinde yetkiniz yok.");
+    }
+
+    // super_admin'in tek ulaşabildiği kişi kategorisi kulüp adminleridir —
+    // gerçek bir kulübün veli/sporcu/antrenör hesabına asla erişimi olmamalı
+    // (bkz. superAdmin.ts'deki aynı prensip). Bu kısıtlama olmadan super_admin
+    // platformdaki HERHANGİ bir kullanıcının şifresini sıfırlayıp hesabını
+    // ele geçirebilirdi.
+    if (callerRow.role === "super_admin" && targetRow.role !== "club_admin") {
       throw new Error("Bu kullanıcı üzerinde yetkiniz yok.");
     }
 
