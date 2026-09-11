@@ -164,7 +164,7 @@ export default function PerformanceTestDetailPage() {
             <div className="text-xs font-bold uppercase text-muted">Sporcu</div>
             <div className="text-sm font-bold text-ink">{athlete ? athlete.full_name : "Henüz seçilmedi"}</div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setPickerOpen((v) => !v)}
               className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-ink hover:bg-bg"

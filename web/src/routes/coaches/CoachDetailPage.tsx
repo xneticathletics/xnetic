@@ -267,7 +267,7 @@ export default function CoachDetailPage() {
 
           <h2 className="mb-3 mt-6 text-sm font-bold text-ink">İzin İşlemleri</h2>
           <div className="mb-3 rounded-xl border border-line bg-surface p-4">
-            <div className="mb-2 grid grid-cols-2 gap-2">
+            <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-[10px] font-bold text-muted">Başlangıç</label>
                 <input

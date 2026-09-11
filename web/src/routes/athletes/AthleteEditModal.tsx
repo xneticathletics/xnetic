@@ -193,7 +193,7 @@ export default function AthleteEditModal({
               />
             </FormField>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField label="Branş">
                 <select
                   className={inputClass}
@@ -236,7 +236,7 @@ export default function AthleteEditModal({
               </FormField>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField label="Sporcu Tipi">
                 <div className={`${inputClass} flex items-center bg-bg text-sm`}>
                   {(() => {
@@ -263,7 +263,7 @@ export default function AthleteEditModal({
               </FormField>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <FormField label="Boy (cm)">
                 <input
                   type="number"
@@ -290,7 +290,7 @@ export default function AthleteEditModal({
               </FormField>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <FormField label="Lisans No">
                 <input
                   className={inputClass}
@@ -354,7 +354,7 @@ export default function AthleteEditModal({
               />
             </FormField>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField label="Veli Adı Soyadı *">
                 <input
                   className={inputClass}

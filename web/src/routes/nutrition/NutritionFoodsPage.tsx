@@ -249,7 +249,7 @@ export default function NutritionFoodsPage() {
             />
           </FormField>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <FormField label="Kalori">
               <input className={inputClass} value={caloriesText} onChange={(e) => setCaloriesText(e.target.value)} placeholder="Örn. 389" inputMode="decimal" />
             </FormField>

@@ -289,7 +289,7 @@ export default function AthleteDetailPage() {
                 placeholder="Sakatlık türü *"
                 className="mb-2 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-coral"
               />
-              <div className="mb-2 grid grid-cols-2 gap-2">
+              <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-[10px] font-bold text-muted">Tarih *</label>
                   <input

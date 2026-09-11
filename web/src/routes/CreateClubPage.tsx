@@ -138,7 +138,7 @@ export default function CreateClubPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 sm:p-8">
         <div className="mb-4 flex items-center justify-between">
           <button onClick={handleBack} className="text-sm font-semibold text-muted hover:text-ink">
             ‹ Geri

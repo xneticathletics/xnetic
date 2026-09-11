@@ -109,7 +109,11 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-4 lg:h-[calc(100vh-6rem)]">
-      <div className="flex w-full max-w-xs flex-col rounded-xl border border-line bg-surface lg:max-w-sm">
+      {/* Dar ekranda (lg altı) liste ve sohbet aynı anda sığmadığı için
+          birbirini dışlıyor — sohbet seçilince liste gizlenip sohbet tam
+          genişlik alıyor, "‹ Geri" ile listeye dönülüyor. lg ve üstünde
+          eskisi gibi iki panel yan yana. */}
+      <div className={`${selected ? "hidden lg:flex" : "flex"} w-full flex-col rounded-xl border border-line bg-surface lg:max-w-sm`}>
         <div className="flex items-center justify-between border-b border-line p-4">
           <h1 className="text-lg font-bold text-ink">Mesajlar</h1>
           <button
@@ -202,7 +206,7 @@ export default function MessagesPage() {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col rounded-xl border border-line bg-surface">
+      <div className={`${selected ? "flex" : "hidden lg:flex"} flex-1 flex-col rounded-xl border border-line bg-surface`}>
         {!selected ? (
           <div className="flex flex-1 items-center justify-center">
             <p className="text-sm text-muted">Bir konuşma seç ya da yeni mesaj başlat.</p>
@@ -210,6 +214,13 @@ export default function MessagesPage() {
         ) : (
           <>
             <div className="flex items-center gap-3 border-b border-line p-4">
+              <button
+                onClick={() => setSelected(null)}
+                aria-label="Konuşma listesine dön"
+                className="-ml-1 rounded-lg p-1.5 text-lg font-bold text-muted hover:bg-bg hover:text-ink lg:hidden"
+              >
+                ‹
+              </button>
               <Avatar name={selected.name} photoUrl={selected.photo_url} size={36} />
               <h2 className="text-sm font-bold text-ink">{selected.name}</h2>
             </div>

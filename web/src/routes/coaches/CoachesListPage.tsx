@@ -146,7 +146,7 @@ export default function CoachesListPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">Antrenörler</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link to="/coaches/assignments" className="rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal">
             Grup Atamaları
           </Link>

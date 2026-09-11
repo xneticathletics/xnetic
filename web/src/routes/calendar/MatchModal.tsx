@@ -231,7 +231,7 @@ export default function MatchModal({
         </FormField>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField label="Tarih *">
           <input type="date" className={inputClass} value={form.match_date} onChange={(e) => set("match_date", e.target.value)} />
         </FormField>
@@ -298,7 +298,7 @@ export default function MatchModal({
             </FormField>
           ) : (
             <>
-              <div className="mb-2 grid grid-cols-2 gap-3">
+              <div className="mb-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <FormField label="Bizim Skor">
                   <input
                     className={`${inputClass} text-center font-bold`}

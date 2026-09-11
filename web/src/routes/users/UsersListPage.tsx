@@ -222,14 +222,14 @@ export default function UsersListPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">Kullanıcılar</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Kullanıcı ara..."
             aria-label="Kullanıcı ara"
-            className="w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
+            className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow sm:w-64"
           />
           <button
             onClick={() => setInviting(true)}

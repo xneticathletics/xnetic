@@ -211,18 +211,18 @@ export default function FinancialDocumentsPage() {
         )}
       </div>
 
-      <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3">
-        <div>
+      <div className="mb-4 grid grid-cols-3 gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+        <div className="min-w-0">
           <p className="text-[11px] font-semibold text-muted">Gelir</p>
-          <p className="text-base font-extrabold text-teal">{formatTL(totals.income)}</p>
+          <p className="truncate text-base font-extrabold text-teal">{formatTL(totals.income)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-[11px] font-semibold text-muted">Gider</p>
-          <p className="text-base font-extrabold text-coral">{formatTL(totals.expense)}</p>
+          <p className="truncate text-base font-extrabold text-coral">{formatTL(totals.expense)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-[11px] font-semibold text-muted">Toplam</p>
-          <p className="text-base font-extrabold text-yellow">{formatTL(totals.net)}</p>
+          <p className="truncate text-base font-extrabold text-yellow">{formatTL(totals.net)}</p>
         </div>
       </div>
 

@@ -68,7 +68,7 @@ export default function SubscriptionPendingPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8 text-center">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 text-center sm:p-8">
         <div className="mb-3 text-4xl">{copyInfo.icon}</div>
         <h1 className="mb-2 text-xl font-extrabold text-ink">{copyInfo.title}</h1>
         <p className="mb-6 text-sm leading-relaxed text-muted">{copyInfo.text}</p>

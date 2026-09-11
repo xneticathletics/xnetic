@@ -103,7 +103,7 @@ export default function SessionModal({
         <input type="date" className={inputClass} value={form.session_date} onChange={(e) => set("session_date", e.target.value)} />
       </FormField>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField label="Başlangıç *">
           <input type="time" className={inputClass} value={form.start_time} onChange={(e) => set("start_time", e.target.value)} />
         </FormField>

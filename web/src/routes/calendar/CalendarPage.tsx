@@ -103,7 +103,7 @@ export default function CalendarPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">Antrenman ve Müsabaka Takvimi</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSessionModal({ session: null })}
             className="rounded-lg bg-yellow px-4 py-2 text-sm font-bold text-bg"

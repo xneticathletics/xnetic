@@ -206,7 +206,7 @@ export default function AdminGlobalContentModal({
           <FormField label="Nerede Bulunur">
             <textarea className={`${inputClass} h-16`} value={foodFoundIn} onChange={(e) => setFoodFoundIn(e.target.value)} placeholder="Örn. Portakal, kivi, kırmızı biber" />
           </FormField>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <FormField label="Kalori">
               <input className={inputClass} value={foodCalories} onChange={(e) => setFoodCalories(e.target.value)} inputMode="decimal" />
             </FormField>

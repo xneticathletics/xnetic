@@ -108,7 +108,7 @@ export default function ShopProductsListPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-ink">Mağaza — Ürünler</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link to="/shop/orders" className="rounded-lg border border-violet px-4 py-2 text-sm font-bold text-violet">
             📦 Siparişler
           </Link>
