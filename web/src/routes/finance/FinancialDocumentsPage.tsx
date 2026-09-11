@@ -137,7 +137,14 @@ export default function FinancialDocumentsPage() {
       alert("Seçili filtrelerle eşleşen kayıt bulunamadı.");
       return;
     }
-    const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    // Excel/Sheets, hücrenin =/+/-/@ ile başlamasını bir formül olarak
+    // yorumluyor — açıklama gibi serbest metin alanları teorik olarak böyle
+    // başlayabilir, önüne bir tek tırnak koyarak formül olarak çalışmasını
+    // engelliyoruz.
+    const escapeCsv = (v: string) => {
+      const safe = /^[=+\-@]/.test(v) ? `'${v}` : v;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     const header = ["Tür", "Açıklama", "Branş", "Tutar (₺)", "Tarih"].join(";");
     const rows = filtered.map((item) => {
       const isAidat = item.kind === "income";
