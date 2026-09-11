@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform,
@@ -51,6 +51,22 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
   const [expandedCompletionId, setExpandedCompletionId] = useState<string | null>(null);
   const [completionDetails, setCompletionDetails] = useState<Record<string, FitnessMeasurement[]>>({});
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+
+  // Set kayıtlarını hareket anahtarına göre gruplar — sadece açılan
+  // "Tamamlayanlar" satırı için gerekiyor, ama her render'da tüm
+  // completionDetails'i yeniden gruplamak yerine burada tek seferde hesaplanır.
+  const groupedDetailsByCompletion = useMemo(() => {
+    const result: Record<string, Map<string, FitnessMeasurement[]>> = {};
+    for (const [id, details] of Object.entries(completionDetails)) {
+      const byExercise = new Map<string, FitnessMeasurement[]>();
+      details.forEach((m) => {
+        if (!byExercise.has(m.exercise_key)) byExercise.set(m.exercise_key, []);
+        byExercise.get(m.exercise_key)!.push(m);
+      });
+      result[id] = byExercise;
+    }
+    return result;
+  }, [completionDetails]);
 
   // "Bir Sporcu İçin Gir" kaldırıldı — program artık her zaman bir Fitness
   // Grubuna atanıyor, admin/koordinatörün ayrıca tek tek sporcu seçip
@@ -275,6 +291,9 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
                     key={n}
                     style={[styles.difficultyChip, active && styles.difficultyChipActive]}
                     onPress={() => setDifficulty(active ? null : n)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={String(n)}
                   >
                     <Text style={[styles.difficultyChipText, active && styles.difficultyChipTextActive]}>{n}</Text>
                   </TouchableOpacity>
@@ -314,13 +333,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
               completions.map((c) => {
                 const expanded = expandedCompletionId === c.id;
                 const details = completionDetails[c.id] ?? [];
-                // Set kayıtlarını hareket adına göre grupla — her hareketin
-                // altında girilen tüm setler (kaç kg × kaç tekrar) sırayla listelensin.
-                const byExercise = new Map<string, FitnessMeasurement[]>();
-                details.forEach((m) => {
-                  if (!byExercise.has(m.exercise_key)) byExercise.set(m.exercise_key, []);
-                  byExercise.get(m.exercise_key)!.push(m);
-                });
+                const byExercise = groupedDetailsByCompletion[c.id] ?? new Map<string, FitnessMeasurement[]>();
                 return (
                   <TouchableOpacity key={c.id} style={styles.completionRow} onPress={() => handleToggleCompletion(c)}>
                     <View style={styles.completionRowTop}>

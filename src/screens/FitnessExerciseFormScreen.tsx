@@ -118,6 +118,8 @@ export default function FitnessExerciseFormScreen({ route, navigation }: Props) 
                 key={cat.key}
                 style={[styles.chip, { borderColor: cat.color }, active && { backgroundColor: cat.color }]}
                 onPress={() => setCategory(cat.key)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
               >
                 <Text style={[styles.chipText, active && styles.chipTextActive]}>{cat.icon} {cat.label}</Text>
               </TouchableOpacity>

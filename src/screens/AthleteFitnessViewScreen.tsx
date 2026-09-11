@@ -7,7 +7,7 @@ import { listAllMeasurementsForAthlete, type FitnessMeasurement } from "../lib/a
 import { listAllCompletionsForAthlete, type FitnessProgramCompletion } from "../lib/api/fitnessPrograms";
 import { listMyIndividualPrograms, type IndividualFitnessProgram } from "../lib/api/individualFitnessPrograms";
 import { getFitnessExercise, getFitnessCategory } from "../lib/fitnessExercises";
-import { getCustomExercise } from "../lib/api/customFitnessExercises";
+import { getCustomExercisesByIds, type CustomFitnessExercise } from "../lib/api/customFitnessExercises";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteFitnessView">;
@@ -30,10 +30,12 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-async function resolveExercise(exerciseKey: string): Promise<{ name: string; color: string; icon: string } | null> {
+function resolveExercise(
+  exerciseKey: string,
+  customById: Map<string, CustomFitnessExercise>
+): { name: string; color: string; icon: string } | null {
   if (exerciseKey.startsWith(CUSTOM_PREFIX)) {
-    const id = exerciseKey.slice(CUSTOM_PREFIX.length);
-    const ex = await getCustomExercise(id);
+    const ex = customById.get(exerciseKey.slice(CUSTOM_PREFIX.length));
     if (!ex) return null;
     const category = getFitnessCategory(ex.category);
     if (!category) return null;
@@ -72,13 +74,16 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
             list.push(m);
             byKey.set(m.exercise_key, list);
           });
-          const resolved = await Promise.all(
-            Array.from(byKey.entries()).map(async ([exerciseKey, items]) => {
-              const info = await resolveExercise(exerciseKey);
-              if (!info) return null;
-              return { exerciseKey, items, ...info };
-            })
-          );
+          const customIds = Array.from(byKey.keys())
+            .filter((k) => k.startsWith(CUSTOM_PREFIX))
+            .map((k) => k.slice(CUSTOM_PREFIX.length));
+          const customExercises = await getCustomExercisesByIds(customIds);
+          const customById = new Map(customExercises.map((ex) => [ex.id, ex]));
+          const resolved = Array.from(byKey.entries()).map(([exerciseKey, items]) => {
+            const info = resolveExercise(exerciseKey, customById);
+            if (!info) return null;
+            return { exerciseKey, items, ...info };
+          });
           const valid = resolved.filter((g): g is Group => !!g);
           valid.sort((a, b) => new Date(b.items[0].measured_at).getTime() - new Date(a.items[0].measured_at).getTime());
           if (!cancelled) {

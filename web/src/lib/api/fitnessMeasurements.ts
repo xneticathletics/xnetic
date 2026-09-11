@@ -37,6 +37,20 @@ export async function listMeasurementsForAthleteExercise(athleteId: string, exer
 // (TR saatiyle 00:00-03:00 arası) tamamlanan bir antrenmanda bu iki tarih
 // FARKLI güne denk gelip kaydı "yok" gibi gösterebiliyordu (canlıda tam
 // bu şekilde yaşandı — mobildeki aynı düzeltmeyle birebir aynı).
+// Bir sporcunun TÜM hareketlerdeki geçmişini döner — bireysel program
+// detayında her hareket için ayrı sorgu atmak yerine (N+1) tek seferde
+// çekip client-side gruplamak için. Mobildeki listAllMeasurementsForAthlete
+// ile birebir aynı.
+export async function listAllMeasurementsForAthlete(athleteId: string): Promise<FitnessMeasurement[]> {
+  const { data, error } = await supabase
+    .from("fitness_measurements")
+    .select(FIELDS)
+    .eq("athlete_id", athleteId)
+    .order("measured_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function listMeasurementsNearCompletion(athleteId: string, completedAtIso: string): Promise<FitnessMeasurement[]> {
   const center = new Date(completedAtIso).getTime();
   const windowMs = 10 * 60 * 1000;

@@ -188,7 +188,13 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
           {filteredAthletes.map((a) => {
             const selected = selectedIds.has(a.id);
             return (
-              <TouchableOpacity key={a.id} style={styles.athleteRow} onPress={() => toggleAthlete(a.id)}>
+              <TouchableOpacity
+                key={a.id}
+                style={styles.athleteRow}
+                onPress={() => toggleAthlete(a.id)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: selected }}
+              >
                 <View style={[styles.checkbox, selected && styles.checkboxChecked]}>
                   {selected && <Text style={styles.checkboxMark}>✓</Text>}
                 </View>

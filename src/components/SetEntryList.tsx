@@ -39,6 +39,7 @@ export default function SetEntryList({ value, onChange, onFocus }: Props) {
             keyboardType="numeric"
             placeholder="kg"
             placeholderTextColor={colors.muted}
+            accessibilityLabel={`${index + 1}. set ağırlık (kg)`}
           />
           <TextInput
             onFocus={onFocus}
@@ -48,8 +49,14 @@ export default function SetEntryList({ value, onChange, onFocus }: Props) {
             keyboardType="numeric"
             placeholder="tekrar"
             placeholderTextColor={colors.muted}
+            accessibilityLabel={`${index + 1}. set tekrar sayısı`}
           />
-          <TouchableOpacity style={styles.removeButton} onPress={() => removeRow(index)}>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => removeRow(index)}
+            accessibilityLabel={`${index + 1}. seti kaldır`}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
             <Text style={styles.removeButtonText}>✕</Text>
           </TouchableOpacity>
         </View>

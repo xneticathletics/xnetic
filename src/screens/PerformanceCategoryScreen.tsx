@@ -135,7 +135,12 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
               </TouchableOpacity>
             )}
             {item.canDelete && (
-              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item)}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDelete(item)}
+                accessibilityLabel={`${item.name} testini sil`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={styles.deleteButtonText}>🗑</Text>
               </TouchableOpacity>
             )}

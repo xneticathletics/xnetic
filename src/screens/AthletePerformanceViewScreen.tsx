@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAllMeasurementsForAthlete, type PerformanceMeasurement } from "../lib/api/performanceMeasurements";
 import { getPerformanceCategory } from "../lib/performanceTests";
-import { getCustomTest } from "../lib/api/customPerformanceTests";
+import { getCustomTestsByIds, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useAuth } from "../context/AuthContext";
 
@@ -41,9 +41,13 @@ type Group = {
   categoryColor: string;
 };
 
-async function resolveGroup(testKey: string, items: PerformanceMeasurement[]): Promise<Group | null> {
+function resolveGroup(
+  testKey: string,
+  items: PerformanceMeasurement[],
+  customById: Map<string, CustomPerformanceTest>
+): Group | null {
   if (!testKey.startsWith(CUSTOM_PREFIX)) return null;
-  const test = await getCustomTest(testKey.slice(CUSTOM_PREFIX.length));
+  const test = customById.get(testKey.slice(CUSTOM_PREFIX.length));
   if (!test) return null;
   const category = getPerformanceCategory(test.category);
   if (!category) return null;
@@ -74,9 +78,12 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
             list.push(m);
             byKey.set(m.test_key, list);
           });
-          const resolved = await Promise.all(
-            Array.from(byKey.entries()).map(([testKey, items]) => resolveGroup(testKey, items))
-          );
+          const customIds = Array.from(byKey.keys())
+            .filter((k) => k.startsWith(CUSTOM_PREFIX))
+            .map((k) => k.slice(CUSTOM_PREFIX.length));
+          const customTests = await getCustomTestsByIds(customIds);
+          const customById = new Map(customTests.map((t) => [t.id, t]));
+          const resolved = Array.from(byKey.entries()).map(([testKey, items]) => resolveGroup(testKey, items, customById));
           const valid = resolved.filter((g): g is Group => !!g);
           valid.sort((a, b) => new Date(b.items[0].measured_at).getTime() - new Date(a.items[0].measured_at).getTime());
           if (!cancelled) setGroups(valid);

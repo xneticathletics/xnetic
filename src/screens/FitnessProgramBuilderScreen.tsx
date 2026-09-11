@@ -165,6 +165,8 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
                     key={cat.key}
                     style={[styles.chip, { borderColor: cat.color }, active && { backgroundColor: cat.color }]}
                     onPress={() => { setCategory(cat.key); setExerciseKey(null); }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[styles.chipText, active && styles.chipTextActive]}>{cat.icon} {cat.label}</Text>
                   </TouchableOpacity>
@@ -189,6 +191,8 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
                         key={ex.key}
                         style={[styles.chip, styles.chipNeutral, added && styles.chipAdded, active && styles.chipNeutralActive]}
                         onPress={() => setExerciseKey(ex.key)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: active }}
                       >
                         <Text style={[styles.chipText, added && styles.chipTextAdded, active && styles.chipTextActive]}>
                           {added ? "✓ " : ""}{ex.name}

@@ -118,6 +118,8 @@ export default function IndividualFitnessProgramBuilderScreen({ route, navigatio
                     key={cat.key}
                     style={[styles.chip, { borderColor: cat.color }, active && { backgroundColor: cat.color }]}
                     onPress={() => { setCategory(cat.key); setExerciseKey(null); }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[styles.chipText, active && styles.chipTextActive]}>{cat.icon} {cat.label}</Text>
                   </TouchableOpacity>
@@ -136,6 +138,8 @@ export default function IndividualFitnessProgramBuilderScreen({ route, navigatio
                         key={ex.key}
                         style={[styles.chip, styles.chipNeutral, active && styles.chipNeutralActive]}
                         onPress={() => setExerciseKey(ex.key)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: active }}
                       >
                         <Text style={[styles.chipText, active && styles.chipTextActive]}>{ex.name}</Text>
                       </TouchableOpacity>

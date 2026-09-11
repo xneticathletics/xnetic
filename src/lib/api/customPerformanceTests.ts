@@ -49,6 +49,16 @@ export async function getCustomTest(id: string): Promise<CustomPerformanceTest |
   return data;
 }
 
+// getCustomTest'in çoklu-id karşılığı — bir sporcunun geçmişindeki TÜM
+// testleri tek sorguda çözmek için (AthletePerformanceViewScreen gibi
+// ekranlarda her test için ayrı ayrı getCustomTest çağırmak yerine).
+export async function getCustomTestsByIds(ids: string[]): Promise<CustomPerformanceTest[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("performance_test_catalog").select(FIELDS).in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function createCustomTest(input: CustomPerformanceTestInput) {
   const { data, error } = await supabase.from("performance_test_catalog").insert(input).select().single();
   if (error) throw error;

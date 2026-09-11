@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   getProgram, listProgramItems, deleteProgram, listCompletionsForProgram,
@@ -23,6 +23,19 @@ export default function FitnessProgramDetailPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, FitnessMeasurement[]>>({});
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+
+  const groupedDetailsByCompletion = useMemo(() => {
+    const result: Record<string, Map<string, FitnessMeasurement[]>> = {};
+    for (const [cid, rows] of Object.entries(details)) {
+      const byExercise = new Map<string, FitnessMeasurement[]>();
+      rows.forEach((m) => {
+        if (!byExercise.has(m.exercise_key)) byExercise.set(m.exercise_key, []);
+        byExercise.get(m.exercise_key)!.push(m);
+      });
+      result[cid] = byExercise;
+    }
+    return result;
+  }, [details]);
 
   useEffect(() => {
     if (!id) return;
@@ -105,11 +118,7 @@ export default function FitnessProgramDetailPage() {
             {completions.map((c) => {
               const expanded = expandedId === c.id;
               const rows = details[c.id] ?? [];
-              const byExercise = new Map<string, FitnessMeasurement[]>();
-              rows.forEach((m) => {
-                if (!byExercise.has(m.exercise_key)) byExercise.set(m.exercise_key, []);
-                byExercise.get(m.exercise_key)!.push(m);
-              });
+              const byExercise = groupedDetailsByCompletion[c.id] ?? new Map<string, FitnessMeasurement[]>();
               return (
                 <button
                   key={c.id}

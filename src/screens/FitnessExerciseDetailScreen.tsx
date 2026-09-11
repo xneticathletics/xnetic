@@ -228,7 +228,12 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
           <View style={styles.instructionsCard}>
             <View style={styles.instructionsHeader}>
               <Text style={styles.instructionsTitle}>Nasıl Yapılır?</Text>
-              <TouchableOpacity style={styles.videoButton} onPress={handleVideoPress}>
+              <TouchableOpacity
+                style={styles.videoButton}
+                onPress={handleVideoPress}
+                accessibilityLabel="Hareket videosunu göster"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={styles.videoButtonIcon}>🎥</Text>
               </TouchableOpacity>
             </View>
@@ -253,6 +258,7 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
                 keyboardType="numeric"
                 placeholder="Örn. 60"
                 placeholderTextColor={colors.muted}
+                accessibilityLabel="Ağırlık (kg)"
               />
 
               <View style={styles.row}>
@@ -266,6 +272,7 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
                     keyboardType="numeric"
                     placeholder="Örn. 3"
                     placeholderTextColor={colors.muted}
+                    accessibilityLabel="Set sayısı"
                   />
                 </View>
                 <View style={styles.rowItem}>
@@ -278,6 +285,7 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
                     keyboardType="numeric"
                     placeholder="Örn. 10"
                     placeholderTextColor={colors.muted}
+                    accessibilityLabel="Tekrar sayısı"
                   />
                 </View>
               </View>

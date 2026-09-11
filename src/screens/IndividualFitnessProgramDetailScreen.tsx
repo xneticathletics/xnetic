@@ -9,7 +9,7 @@ import {
   type IndividualFitnessProgram, type IndividualFitnessProgramItem,
 } from "../lib/api/individualFitnessPrograms";
 import {
-  listMeasurementsForAthleteExercise, createFitnessMeasurement, type FitnessMeasurement,
+  listAllMeasurementsForAthlete, createFitnessMeasurement, type FitnessMeasurement,
 } from "../lib/api/fitnessMeasurements";
 import SetEntryList, { type SetEntry } from "../components/SetEntryList";
 import { getMyAthletes } from "../lib/api/myAthletes";
@@ -62,10 +62,16 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
   const [savingItem, setSavingItem] = useState<string | null>(null);
 
   const loadHistory = useCallback(async (currentItems: IndividualFitnessProgramItem[]) => {
-    const entries = await Promise.all(
-      currentItems.map(async (item) => [item.id, await listMeasurementsForAthleteExercise(athleteId, item.exercise_key)] as const)
-    );
-    setHistory(Object.fromEntries(entries));
+    // Sporcunun TÜM ölçümlerini TEK sorguda çekip programdaki hareketlere
+    // göre burada grupluyoruz — her hareket için ayrı sorgu atmak yerine
+    // (N+1) tek seferde çekmek, hareket sayısı arttıkça ölçekleniyor.
+    const all = await listAllMeasurementsForAthlete(athleteId);
+    const byExerciseKey = new Map<string, FitnessMeasurement[]>();
+    all.forEach((m) => {
+      if (!byExerciseKey.has(m.exercise_key)) byExerciseKey.set(m.exercise_key, []);
+      byExerciseKey.get(m.exercise_key)!.push(m);
+    });
+    setHistory(Object.fromEntries(currentItems.map((item) => [item.id, byExerciseKey.get(item.exercise_key) ?? []])));
   }, [athleteId]);
 
   useFocusEffect(

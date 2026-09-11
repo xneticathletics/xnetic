@@ -52,6 +52,16 @@ export async function getCustomExercise(id: string): Promise<CustomFitnessExerci
   return data;
 }
 
+// getCustomExercise'in çoklu-id karşılığı — bir sporcunun geçmişindeki
+// TÜM özel (custom:) hareketleri tek sorguda çözmek için (AthleteFitnessViewScreen
+// gibi ekranlarda her hareket için ayrı ayrı getCustomExercise çağırmak yerine).
+export async function getCustomExercisesByIds(ids: string[]): Promise<CustomFitnessExercise[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("fitness_exercises").select(FIELDS).in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function createCustomExercise(input: CustomFitnessExerciseInput) {
   const { data, error } = await supabase.from("fitness_exercises").insert(input).select().single();
   if (error) throw error;

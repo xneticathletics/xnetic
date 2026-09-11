@@ -5,7 +5,7 @@ import {
   getIndividualProgram, listIndividualProgramItems, deleteIndividualProgram,
   type IndividualFitnessProgram, type IndividualFitnessProgramItem,
 } from "../../lib/api/individualFitnessPrograms";
-import { listMeasurementsForAthleteExercise, type FitnessMeasurement } from "../../lib/api/fitnessMeasurements";
+import { listAllMeasurementsForAthlete, type FitnessMeasurement } from "../../lib/api/fitnessMeasurements";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
@@ -31,10 +31,16 @@ export default function IndividualFitnessProgramDetailPage() {
       .then(async ([p, i]) => {
         setProgram(p);
         setItems(i);
-        const entries = await Promise.all(
-          i.map(async (item) => [item.id, await listMeasurementsForAthleteExercise(athleteId, item.exercise_key)] as const)
-        );
-        setHistory(Object.fromEntries(entries));
+        // Sporcunun TÜM ölçümlerini TEK sorguda çekip programdaki
+        // hareketlere göre burada grupluyoruz — her hareket için ayrı
+        // sorgu (N+1) yerine tek seferde çekmek daha ölçeklenebilir.
+        const all = await listAllMeasurementsForAthlete(athleteId);
+        const byExerciseKey = new Map<string, FitnessMeasurement[]>();
+        all.forEach((m) => {
+          if (!byExerciseKey.has(m.exercise_key)) byExerciseKey.set(m.exercise_key, []);
+          byExerciseKey.get(m.exercise_key)!.push(m);
+        });
+        setHistory(Object.fromEntries(i.map((item) => [item.id, byExerciseKey.get(item.exercise_key) ?? []])));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

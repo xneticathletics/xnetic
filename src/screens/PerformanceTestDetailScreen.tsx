@@ -210,7 +210,12 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
           <View style={styles.instructionsCard}>
             <View style={styles.instructionsHeader}>
               <Text style={styles.instructionsTitle}>Nasıl Yapılır?</Text>
-              <TouchableOpacity style={styles.videoButton} onPress={handleVideoPress}>
+              <TouchableOpacity
+                style={styles.videoButton}
+                onPress={handleVideoPress}
+                accessibilityLabel="Test videosunu göster"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={styles.videoButtonIcon}>🎥</Text>
               </TouchableOpacity>
             </View>
@@ -235,6 +240,7 @@ export default function PerformanceTestDetailScreen({ route, navigation }: Props
                 keyboardType="numeric"
                 placeholder={`Örn. 4.5`}
                 placeholderTextColor={colors.muted}
+                accessibilityLabel={`Değer (${test.unit})`}
               />
 
               <Text style={styles.formLabel}>Tarih *</Text>

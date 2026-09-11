@@ -27,6 +27,9 @@ export default function ScaleSelector({
               key={n}
               style={[styles.chip, active && { backgroundColor: activeColor, borderColor: activeColor }]}
               onPress={() => onChange(n)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={String(n)}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{n}</Text>
             </TouchableOpacity>

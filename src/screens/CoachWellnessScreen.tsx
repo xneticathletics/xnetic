@@ -131,6 +131,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
         placeholderTextColor={colors.muted}
         value={query}
         onChangeText={setQuery}
+        accessibilityLabel="Sporcu ara"
       />
 
       {branches.length > 1 && (
@@ -141,6 +142,8 @@ export default function CoachWellnessScreen({ navigation }: Props) {
               setBranchFilter(null);
               setGroupFilter(null);
             }}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: !branchFilter }}
           >
             <Text style={[styles.filterChipText, !branchFilter && styles.filterChipTextActive]}>Tüm Branşlar</Text>
           </TouchableOpacity>
@@ -152,6 +155,8 @@ export default function CoachWellnessScreen({ navigation }: Props) {
                 setBranchFilter(b);
                 setGroupFilter(null);
               }}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: branchFilter === b }}
             >
               <Text style={[styles.filterChipText, branchFilter === b && styles.filterChipTextActive]}>{b}</Text>
             </TouchableOpacity>
@@ -164,6 +169,8 @@ export default function CoachWellnessScreen({ navigation }: Props) {
           <TouchableOpacity
             style={[styles.filterChipGroup, !groupFilter && styles.filterChipGroupActive]}
             onPress={() => setGroupFilter(null)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: !groupFilter }}
           >
             <Text style={[styles.filterChipText, !groupFilter && styles.filterChipTextActive]}>Tüm Gruplar</Text>
           </TouchableOpacity>
@@ -172,6 +179,8 @@ export default function CoachWellnessScreen({ navigation }: Props) {
               key={g.id}
               style={[styles.filterChipGroup, groupFilter === g.id && styles.filterChipGroupActive]}
               onPress={() => setGroupFilter(g.id)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: groupFilter === g.id }}
             >
               <Text style={[styles.filterChipText, groupFilter === g.id && styles.filterChipTextActive]}>{g.name}</Text>
             </TouchableOpacity>
