@@ -186,6 +186,7 @@ export default function PersonalInfoScreen() {
             onPress={handlePickPhoto}
             disabled={!canUploadPhoto || uploadingPhoto}
             activeOpacity={canUploadPhoto ? 0.7 : 1}
+            accessibilityLabel="Profil fotoğrafını değiştir"
           >
             {photoUrl ? (
               <Image source={{ uri: photoUrl }} style={styles.avatarImage} />
@@ -245,6 +246,8 @@ export default function PersonalInfoScreen() {
                     key={opt.value}
                     style={[styles.chip, educationLevel === opt.value && styles.chipActive]}
                     onPress={() => setEducationLevel(educationLevel === opt.value ? null : opt.value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: educationLevel === opt.value }}
                   >
                     <Text style={[styles.chipText, educationLevel === opt.value && styles.chipTextActive]}>{opt.label}</Text>
                   </TouchableOpacity>

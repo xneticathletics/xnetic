@@ -60,6 +60,7 @@ export default function ResetPasswordScreen({ onDone }: { onDone: () => void }) 
           style={styles.input}
           placeholder="Yeni şifre (en az 6 karakter)"
           placeholderTextColor={colors.muted}
+          accessibilityLabel="Yeni şifre"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -69,6 +70,7 @@ export default function ResetPasswordScreen({ onDone }: { onDone: () => void }) 
           style={styles.input}
           placeholder="Yeni şifre (tekrar)"
           placeholderTextColor={colors.muted}
+          accessibilityLabel="Yeni şifre tekrar"
           secureTextEntry
           value={password2}
           onChangeText={setPassword2}

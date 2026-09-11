@@ -243,11 +243,21 @@ function PasswordField({
           placeholderTextColor={colors.muted}
         />
         {value.length > 0 && (
-          <TouchableOpacity style={styles.passwordIconButton} onPress={() => onChangeText("")}>
+          <TouchableOpacity
+            style={styles.passwordIconButton}
+            onPress={() => onChangeText("")}
+            accessibilityLabel="Temizle"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Text style={styles.passwordIconText}>✕</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.passwordIconButton} onPress={() => setVisible((v) => !v)}>
+        <TouchableOpacity
+          style={styles.passwordIconButton}
+          onPress={() => setVisible((v) => !v)}
+          accessibilityLabel={visible ? "Şifreyi gizle" : "Şifreyi göster"}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Text style={styles.passwordIconText}>{visible ? "🙈" : "👁️"}</Text>
         </TouchableOpacity>
       </View>

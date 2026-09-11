@@ -77,6 +77,7 @@ export default function ForgotPasswordScreen({ onBack }: { onBack: () => void })
               style={styles.input}
               placeholder="E-posta, telefon veya kullanıcı adı"
               placeholderTextColor={colors.muted}
+              accessibilityLabel="E-posta, telefon veya kullanıcı adı"
               autoCapitalize="none"
               value={email}
               onChangeText={setEmail}

@@ -167,6 +167,8 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
                 key={opt.value}
                 style={[styles.chip, educationLevel === opt.value && styles.chipActive]}
                 onPress={() => setEducationLevel(opt.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: educationLevel === opt.value }}
               >
                 <Text style={[styles.chipText, educationLevel === opt.value && styles.chipTextActive]}>{opt.label}</Text>
               </TouchableOpacity>
@@ -200,6 +202,9 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
                   key={level}
                   style={[styles.levelChip, sel.level === level && styles.chipActive]}
                   onPress={() => setBranchLevel(sel.branch.id, level)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${level}. Kademe`}
+                  accessibilityState={{ selected: sel.level === level }}
                 >
                   <Text style={[styles.chipText, sel.level === level && styles.chipTextActive]}>{level}</Text>
                 </TouchableOpacity>

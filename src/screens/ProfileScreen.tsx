@@ -151,6 +151,7 @@ export default function ProfileScreen({
           onPress={handlePickPhoto}
           disabled={!canUpload || uploading}
           activeOpacity={canUpload ? 0.7 : 1}
+          accessibilityLabel="Profil fotoğrafını değiştir"
         >
           {photoUrl ? (
             <Image source={{ uri: photoUrl }} style={styles.avatarImage} />

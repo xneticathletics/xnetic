@@ -84,6 +84,7 @@ export default function InviteUserScreen({ route }: Props) {
               style={styles.passwordRow}
               onPress={() => copy("invite", result.tempPassword)}
               activeOpacity={0.7}
+              accessibilityLabel="Geçici şifreyi kopyala"
             >
               <Text selectable style={styles.passwordText}>{result.tempPassword}</Text>
               <Text style={styles.copyIcon}>{copiedKey === "invite" ? "✓" : "📋"}</Text>
@@ -116,6 +117,8 @@ export default function InviteUserScreen({ route }: Props) {
                   key={opt.value}
                   style={[styles.roleChip, role === opt.value && styles.roleChipActive]}
                   onPress={() => setRole(opt.value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: role === opt.value }}
                 >
                   <Text style={[styles.roleChipText, role === opt.value && styles.roleChipTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>

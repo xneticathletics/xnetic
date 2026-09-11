@@ -81,7 +81,12 @@ export default function ClubBankInfoScreen({}: Props) {
                       <Text style={styles.copiedLabelText} numberOfLines={1}>Kopyalandı</Text>
                     </View>
                   )}
-                  <TouchableOpacity style={styles.inlineCopyButton} onPress={() => copy("name", bankAccountName)}>
+                  <TouchableOpacity
+                    style={styles.inlineCopyButton}
+                    onPress={() => copy("name", bankAccountName)}
+                    accessibilityLabel="Hesap adını kopyala"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
                     <Text style={styles.copyIcon}>📋</Text>
                   </TouchableOpacity>
                 </View>
@@ -106,7 +111,12 @@ export default function ClubBankInfoScreen({}: Props) {
                       <Text style={styles.copiedLabelText} numberOfLines={1}>Kopyalandı</Text>
                     </View>
                   )}
-                  <TouchableOpacity style={styles.inlineCopyButton} onPress={() => copy("iban", bankIban)}>
+                  <TouchableOpacity
+                    style={styles.inlineCopyButton}
+                    onPress={() => copy("iban", bankIban)}
+                    accessibilityLabel="IBAN'ı kopyala"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
                     <Text style={styles.copyIcon}>📋</Text>
                   </TouchableOpacity>
                 </View>

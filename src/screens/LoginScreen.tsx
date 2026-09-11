@@ -61,12 +61,18 @@ export default function LoginScreen({
             style={[styles.input, styles.inputWithButton]}
             placeholder="E-posta, telefon veya kullanıcı adı"
             placeholderTextColor={colors.muted}
+            accessibilityLabel="E-posta, telefon veya kullanıcı adı"
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
           />
           {!!email && (
-            <TouchableOpacity style={styles.singleButtonSlot} onPress={() => setEmail("")}>
+            <TouchableOpacity
+              style={styles.singleButtonSlot}
+              onPress={() => setEmail("")}
+              accessibilityLabel="Temizle"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={styles.clearButtonText}>✕</Text>
             </TouchableOpacity>
           )}
@@ -78,18 +84,29 @@ export default function LoginScreen({
             style={[styles.input, styles.inputWithTwoButtons]}
             placeholder="Şifre"
             placeholderTextColor={colors.muted}
+            accessibilityLabel="Şifre"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
           />
           <View style={styles.passwordButtonsRow}>
             {!!password && (
-              <TouchableOpacity style={styles.clearButton} onPress={() => setPassword("")}>
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setPassword("")}
+                accessibilityLabel="Temizle"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={styles.clearButtonText}>✕</Text>
               </TouchableOpacity>
             )}
             {!!password && (
-              <TouchableOpacity style={styles.clearButton} onPress={() => setShowPassword((v) => !v)}>
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setShowPassword((v) => !v)}
+                accessibilityLabel={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={styles.eyeButtonText}>{showPassword ? "🙈" : "👁"}</Text>
               </TouchableOpacity>
             )}
