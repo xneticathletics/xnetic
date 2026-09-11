@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import { createExpense } from "../../lib/api/expenses";
@@ -15,12 +15,15 @@ export default function ExpenseModal({ onClose, onSaved }: { onClose: () => void
   const [expenseDate, setExpenseDate] = useState(todayKey());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!description.trim()) return setError("Açıklama girmelisin.");
     const amt = Number(amount);
     if (!amt || amt <= 0) return setError("Geçerli bir tutar girmelisin.");
 
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -29,6 +32,7 @@ export default function ExpenseModal({ onClose, onSaved }: { onClose: () => void
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

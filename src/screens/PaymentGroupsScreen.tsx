@@ -77,11 +77,15 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
   // klavyenin altında neredeyse hiç yer kalmıyordu.
   const collapseChrome = searchFocused || searching;
   const branchGroupIds = useMemo(() => new Set(groups.map((g) => g.id)), [groups]);
-  const filteredAthletes = allAthletes.filter((a) => {
-    if (!a.full_name.toLowerCase().includes(query.trim().toLowerCase())) return false;
-    if (branchFilter) return !!a.group_id && branchGroupIds.has(a.group_id);
-    return true;
-  });
+  const filteredAthletes = useMemo(
+    () =>
+      allAthletes.filter((a) => {
+        if (!a.full_name.toLowerCase().includes(query.trim().toLowerCase())) return false;
+        if (branchFilter) return !!a.group_id && branchGroupIds.has(a.group_id);
+        return true;
+      }),
+    [allAthletes, query, branchFilter, branchGroupIds]
+  );
 
   return (
     <View style={styles.container}>
@@ -156,7 +160,12 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
           onBlur={() => setSearchFocused(false)}
         />
         {query.length > 0 && (
-          <TouchableOpacity style={styles.clearSearchButton} onPress={() => setQuery("")}>
+          <TouchableOpacity
+            style={styles.clearSearchButton}
+            onPress={() => setQuery("")}
+            accessibilityLabel="Aramayı temizle"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Text style={styles.clearSearchButtonText}>✕</Text>
           </TouchableOpacity>
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert, ScrollView } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -30,6 +30,7 @@ export default function ShopPurchaseScreen({ route, navigation }: Props) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const { copy, copiedKey } = useCopyToast();
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     if (!clubId) { setBankInfoLoading(false); return; }
@@ -50,7 +51,9 @@ export default function ShopPurchaseScreen({ route, navigation }: Props) {
   const total = price * quantity;
 
   const handleSubmit = async () => {
+    if (sendingRef.current) return;
     if (!selected || !matchedVariant) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       await createOrder(
@@ -71,6 +74,7 @@ export default function ShopPurchaseScreen({ route, navigation }: Props) {
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Sipariş oluşturulamadı", [{ text: "Tamam" }]);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -80,11 +84,21 @@ export default function ShopPurchaseScreen({ route, navigation }: Props) {
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>{title}</Text>
         <View style={styles.qtyRow}>
-          <TouchableOpacity style={styles.qtyButton} onPress={() => setQuantity((q) => Math.max(1, q - 1))}>
+          <TouchableOpacity
+            style={styles.qtyButton}
+            onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+            accessibilityLabel="Adedi azalt"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Text style={styles.qtyButtonText}>−</Text>
           </TouchableOpacity>
           <Text style={styles.qtyValue}>{quantity}</Text>
-          <TouchableOpacity style={styles.qtyButton} onPress={() => setQuantity((q) => q + 1)}>
+          <TouchableOpacity
+            style={styles.qtyButton}
+            onPress={() => setQuantity((q) => q + 1)}
+            accessibilityLabel="Adedi artır"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Text style={styles.qtyButtonText}>+</Text>
           </TouchableOpacity>
         </View>
@@ -175,7 +189,12 @@ export default function ShopPurchaseScreen({ route, navigation }: Props) {
                           <Text style={styles.copiedLabelText} numberOfLines={1}>Kopyalandı</Text>
                         </View>
                       )}
-                      <TouchableOpacity style={styles.copyButton} onPress={() => copy("name", bankInfo.bankAccountName!)}>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={() => copy("name", bankInfo.bankAccountName!)}
+                        accessibilityLabel="Hesap adını kopyala"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <Text style={styles.copyIcon}>📋</Text>
                       </TouchableOpacity>
                     </View>
@@ -193,7 +212,12 @@ export default function ShopPurchaseScreen({ route, navigation }: Props) {
                           <Text style={styles.copiedLabelText} numberOfLines={1}>Kopyalandı</Text>
                         </View>
                       )}
-                      <TouchableOpacity style={styles.copyButton} onPress={() => copy("iban", bankInfo.bankIban!)}>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={() => copy("iban", bankInfo.bankIban!)}
+                        accessibilityLabel="IBAN'ı kopyala"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <Text style={styles.copyIcon}>📋</Text>
                       </TouchableOpacity>
                     </View>

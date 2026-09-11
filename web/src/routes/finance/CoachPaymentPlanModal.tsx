@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import { createCoachPaymentPlan } from "../../lib/api/coachPaymentPlans";
@@ -11,18 +11,21 @@ export default function CoachPaymentPlanModal({ onClose, onSaved }: { onClose: (
   const [dayOfMonth, setDayOfMonth] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     listCoaches().then(setCoaches).catch(() => {});
   }, []);
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!coachId) return setError("Antrenör seçmelisiniz.");
     const amt = Number(amount);
     if (!amt || amt <= 0) return setError("Geçerli bir tutar girin.");
     const day = Number(dayOfMonth);
     if (!day || day < 1 || day > 31) return setError("Ayın günü 1 ile 31 arasında olmalı.");
 
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -31,6 +34,7 @@ export default function CoachPaymentPlanModal({ onClose, onSaved }: { onClose: (
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

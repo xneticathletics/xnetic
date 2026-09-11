@@ -56,6 +56,7 @@ export default function ShopStockModal({
                     type="button"
                     onClick={() => adjust(v, -1)}
                     disabled={savingId === v.id}
+                    aria-label={`${label} stoğunu azalt`}
                     className="flex h-7 w-7 items-center justify-center rounded-md border border-line text-base font-bold text-ink disabled:opacity-50"
                   >
                     −
@@ -65,6 +66,7 @@ export default function ShopStockModal({
                     type="button"
                     onClick={() => adjust(v, 1)}
                     disabled={savingId === v.id}
+                    aria-label={`${label} stoğunu artır`}
                     className="flex h-7 w-7 items-center justify-center rounded-md border border-line text-base font-bold text-ink disabled:opacity-50"
                   >
                     +

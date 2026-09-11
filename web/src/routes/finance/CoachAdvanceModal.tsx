@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import { createCoachAdvance } from "../../lib/api/coachAdvances";
@@ -26,6 +26,7 @@ export default function CoachAdvanceModal({ onClose, onSaved }: { onClose: () =>
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     listCoaches().then(setCoaches).catch(() => {});
@@ -52,9 +53,11 @@ export default function CoachAdvanceModal({ onClose, onSaved }: { onClose: () =>
   const deductedFromNext = nextPayment ? Math.min(advanceAmount, Number(nextPayment.amount)) : 0;
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!coachId) return setError("Bir antrenör seçmelisin.");
     if (!advanceAmount || advanceAmount <= 0) return setError("Geçerli bir avans tutarı girmelisin.");
 
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -66,6 +69,7 @@ export default function CoachAdvanceModal({ onClose, onSaved }: { onClose: () =>
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

@@ -126,7 +126,12 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
                           <Text style={styles.copiedLabelText} numberOfLines={1}>Kopyalandı</Text>
                         </View>
                       )}
-                      <TouchableOpacity style={styles.copyButton} onPress={() => copy("name", bankInfo.bankAccountName!)}>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={() => copy("name", bankInfo.bankAccountName!)}
+                        accessibilityLabel="Hesap adını kopyala"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <Text style={styles.copyIcon}>📋</Text>
                       </TouchableOpacity>
                     </View>
@@ -144,7 +149,12 @@ export default function MakePaymentScreen({ route, navigation }: Props) {
                           <Text style={styles.copiedLabelText} numberOfLines={1}>Kopyalandı</Text>
                         </View>
                       )}
-                      <TouchableOpacity style={styles.copyButton} onPress={() => copy("iban", bankInfo.bankIban!)}>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={() => copy("iban", bankInfo.bankIban!)}
+                        accessibilityLabel="IBAN'ı kopyala"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <Text style={styles.copyIcon}>📋</Text>
                       </TouchableOpacity>
                     </View>

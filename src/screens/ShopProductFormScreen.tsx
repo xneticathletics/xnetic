@@ -218,7 +218,12 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
             {displayPhotos.map((url) => (
               <TouchableOpacity key={url} style={styles.photoSlot} onLongPress={() => removePhoto(url)}>
                 <Image source={{ uri: url }} style={styles.photoImage} />
-                <TouchableOpacity style={styles.photoRemove} onPress={() => removePhoto(url)}>
+                <TouchableOpacity
+                  style={styles.photoRemove}
+                  onPress={() => removePhoto(url)}
+                  accessibilityLabel="Fotoğrafı kaldır"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
                   <Text style={styles.photoRemoveText}>✕</Text>
                 </TouchableOpacity>
               </TouchableOpacity>

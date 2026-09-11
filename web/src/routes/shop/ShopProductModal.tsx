@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import {
@@ -67,6 +67,7 @@ export default function ShopProductModal({
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (isNew || !product) return;
@@ -141,6 +142,7 @@ export default function ShopProductModal({
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     const trimmedTitle = title.trim();
     const parsedPrice = parseFloat(price.replace(",", "."));
     if (!trimmedTitle) return setError("Başlık zorunludur.");
@@ -156,6 +158,7 @@ export default function ShopProductModal({
       variantCombos.push({ color: c.color, size: c.size, stock: parsedStock });
     }
 
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -186,6 +189,7 @@ export default function ShopProductModal({
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -205,6 +209,7 @@ export default function ShopProductModal({
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(url)}
+                      aria-label="Fotoğrafı kaldır"
                       className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white"
                     >
                       ✕

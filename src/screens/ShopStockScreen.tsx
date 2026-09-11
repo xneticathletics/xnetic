@@ -111,11 +111,21 @@ export default function ShopStockScreen({}: Props) {
                         <View key={v.id} style={styles.variantRow}>
                           <Text style={styles.variantLabel}>{label}</Text>
                           <View style={styles.stepper}>
-                            <TouchableOpacity style={styles.stepperButton} onPress={() => adjustStock(item.id, v, -1)}>
+                            <TouchableOpacity
+                              style={styles.stepperButton}
+                              onPress={() => adjustStock(item.id, v, -1)}
+                              accessibilityLabel={`${label} stoğunu azalt`}
+                              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                            >
                               <Text style={styles.stepperButtonText}>−</Text>
                             </TouchableOpacity>
                             <Text style={styles.stepperValue}>{v.stock}</Text>
-                            <TouchableOpacity style={styles.stepperButton} onPress={() => adjustStock(item.id, v, 1)}>
+                            <TouchableOpacity
+                              style={styles.stepperButton}
+                              onPress={() => adjustStock(item.id, v, 1)}
+                              accessibilityLabel={`${label} stoğunu artır`}
+                              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                            >
                               <Text style={styles.stepperButtonText}>+</Text>
                             </TouchableOpacity>
                           </View>

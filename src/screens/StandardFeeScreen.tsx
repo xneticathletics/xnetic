@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -23,6 +23,7 @@ export default function StandardFeeScreen() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -44,7 +45,7 @@ export default function StandardFeeScreen() {
   );
 
   const handleSave = (branch: BranchFee) => {
-    if (savingId) return;
+    if (savingRef.current) return;
     const newFee = Number(amounts[branch.id]);
     if (!amounts[branch.id] || isNaN(newFee) || newFee <= 0) {
       Alert.alert("Eksik bilgi", "Geçerli bir tutar gir.", [{ text: "Tamam" }]);
@@ -60,6 +61,7 @@ export default function StandardFeeScreen() {
           text: "Güncelle",
           style: "destructive",
           onPress: async () => {
+            savingRef.current = true;
             setSavingId(branch.id);
             try {
               const result = await updateBranchStandardFee(branch.id, newFee);
@@ -72,6 +74,7 @@ export default function StandardFeeScreen() {
             } catch (e: any) {
               Alert.alert("Hata", e.message ?? "Güncellenemedi", [{ text: "Tamam" }]);
             } finally {
+              savingRef.current = false;
               setSavingId(null);
             }
           },

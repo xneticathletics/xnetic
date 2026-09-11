@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useMemo, useState, useRef } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -62,8 +62,14 @@ export default function AthletePaymentsScreen({ route, navigation }: Props) {
     );
   };
 
-  const upcoming = payments.filter((p) => p.status !== "paid").sort((a, b) => a.due_date.localeCompare(b.due_date));
-  const history = payments.filter((p) => p.status === "paid").sort((a, b) => b.due_date.localeCompare(a.due_date));
+  const upcoming = useMemo(
+    () => payments.filter((p) => p.status !== "paid").sort((a, b) => a.due_date.localeCompare(b.due_date)),
+    [payments]
+  );
+  const history = useMemo(
+    () => payments.filter((p) => p.status === "paid").sort((a, b) => b.due_date.localeCompare(a.due_date)),
+    [payments]
+  );
 
   const renderRow = (item: Payment) => {
     const overdue = isOverdue(item, settings.payment_overdue_grace_days);
