@@ -11,6 +11,7 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import NotificationResponseHandler from "./src/components/NotificationResponseHandler";
 import BiometricLockGate from "./src/components/BiometricLockGate";
+import { useDeviceOrientationLock } from "./src/hooks/useDeviceOrientationLock";
 import { colors } from "./src/theme/tokens";
 
 // Geliştirme sırasında kendi hatalarımız Sentry'yi kirletmesin diye sadece
@@ -75,6 +76,11 @@ function App() {
   });
 
   if (fontsLoaded) patchDefaultFont("Inter");
+
+  // Telefonda dikey kilit hâlâ aynen devam ediyor — sadece tablette
+  // (masaüstünde/resepsiyonda yatay tutmak yaygın) serbest dönüşe izin
+  // veriyoruz. bkz. useDeviceOrientationLock.ts.
+  useDeviceOrientationLock();
 
   // Android'de klavye açıkken uygulama arka plana alınıp geri dönülünce,
   // native taraf klavye/layout durumunu doğru senkronlamıyor — ekran boş
