@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import { getClubSettings } from "./clubSettings";
 import { getCurrentClubId } from "./currentUser";
+import { assertRowAffected } from "./assertAffected";
 
 export type Coach = {
   id: string;
@@ -34,8 +35,9 @@ export async function getCoach(id: string): Promise<Coach> {
 }
 
 export async function updateCoach(id: string, input: Partial<Omit<Coach, "id" | "is_active">>) {
-  const { error } = await supabase.from("users").update(input).eq("id", id);
+  const { data, error } = await supabase.from("users").update(input).eq("id", id).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 export async function getCoachGroups(coachId: string): Promise<{ id: string; name: string; branch: string }[]> {
@@ -124,8 +126,9 @@ export async function uploadCoachPhoto(coachId: string, file: File): Promise<str
 }
 
 export async function deactivateCoach(userId: string) {
-  const { error } = await supabase.from("users").update({ is_active: false }).eq("id", userId);
+  const { data, error } = await supabase.from("users").update({ is_active: false }).eq("id", userId).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 export async function reactivateCoach(userId: string) {

@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import { getClubSettings } from "./clubSettings";
 import { getCurrentClubId } from "./currentUser";
+import { assertRowAffected } from "./assertAffected";
 
 export type Coach = {
   id: string;
@@ -54,8 +55,9 @@ export type CoachInput = {
 // bir antrenörün kendi hesabından girmesi gereken kişisel bilgilerini
 // (ad, telefon, doğum tarihi, öğrenim durumu) onun adına düzenleyebilir.
 export async function updateCoach(id: string, input: Partial<CoachInput>) {
-  const { error } = await supabase.from("users").update(input).eq("id", id);
+  const { data, error } = await supabase.from("users").update(input).eq("id", id).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 // Bir antrenörün Baş Antrenör OLDUĞU ve Yardımcı Antrenör OLARAK atandığı
@@ -166,8 +168,9 @@ export async function listCoachesForBranch(branchId: string): Promise<Coach[]> {
 // Bunun yerine hesabı pasifleştiriyoruz: listCoaches() zaten is_active=true
 // filtresiyle çalıştığı için pasifleşen antrenör listeden otomatik kalkar.
 export async function deactivateCoach(userId: string) {
-  const { error } = await supabase.from("users").update({ is_active: false }).eq("id", userId);
+  const { data, error } = await supabase.from("users").update({ is_active: false }).eq("id", userId).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 export type CoachWithGroups = Coach & { groupNames: string[]; groupIds: string[] };

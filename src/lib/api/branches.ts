@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { assertRowAffected } from "./assertAffected";
 
 export type Branch = {
   id: string;
@@ -58,8 +59,9 @@ export async function createBranch(name: string, isIndividual: boolean = false) 
 }
 
 export async function deleteBranch(id: string) {
-  const { error } = await supabase.from("branches").delete().eq("id", id);
+  const { data, error } = await supabase.from("branches").delete().eq("id", id).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 export async function updateBranch(id: string, name: string, isIndividual: boolean) {
@@ -75,8 +77,9 @@ export async function updateBranch(id: string, name: string, isIndividual: boole
 
 // Bir branşın koordinatörünü atar (ya da userId=null ile kaldırır).
 export async function setBranchCoordinator(branchId: string, userId: string | null) {
-  const { error } = await supabase.from("branches").update({ coordinator_user_id: userId }).eq("id", branchId);
+  const { data, error } = await supabase.from("branches").update({ coordinator_user_id: userId }).eq("id", branchId).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 export type BranchStats = { activeAthleteCount: number; coachCount: number; venueCount: number };

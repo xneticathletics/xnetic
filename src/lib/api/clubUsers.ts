@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import type { UserRole } from "../../context/AuthContext";
+import { assertRowAffected } from "./assertAffected";
 
 export type ClubUser = {
   id: string;
@@ -29,6 +30,7 @@ export async function listClubUsers(): Promise<ClubUser[]> {
 // notları). Kalıcı veri silme/anonimleştirme KVKK sürecine göre ayrıca
 // ele alınmalı, bu fonksiyonun kapsamında değil.
 export async function deactivateUser(userId: string): Promise<void> {
-  const { error } = await supabase.from("users").update({ is_active: false }).eq("id", userId);
+  const { data, error } = await supabase.from("users").update({ is_active: false }).eq("id", userId).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }

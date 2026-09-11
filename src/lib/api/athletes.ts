@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import * as FileSystem from "expo-file-system/legacy";
 import { decode } from "base64-arraybuffer";
+import { assertRowAffected } from "./assertAffected";
 
 export type AthleteStatus = "active" | "passive";
 export type AthleteType = "spor_okulu" | "musabik";
@@ -211,8 +212,9 @@ export async function deleteAthlete(id: string) {
 // Detay ekranından hızlı Spor Okulu ⇄ Müsabık geçişi için — tüm formu
 // açmaya gerek kalmadan.
 export async function setAthleteType(id: string, type: AthleteType) {
-  const { error } = await supabase.from("athletes").update({ athlete_type: type }).eq("id", id);
+  const { data, error } = await supabase.from("athletes").update({ athlete_type: type }).eq("id", id).select("id");
   if (error) throw error;
+  assertRowAffected(data);
 }
 
 export type LinkedUser = { id: string; name: string; email: string | null };
