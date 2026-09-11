@@ -78,6 +78,7 @@ export default function AdminContentPromotionPage() {
           <button
             key={t.table}
             onClick={() => setTable(t.table)}
+            aria-pressed={table === t.table}
             className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
               table === t.table ? "bg-yellow text-bg" : "border border-line text-muted hover:text-ink"
             }`}

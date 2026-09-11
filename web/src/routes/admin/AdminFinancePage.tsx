@@ -44,15 +44,17 @@ export default function AdminFinancePage() {
     setSaving(true);
     setError(null);
     try {
-      await createPlatformTransaction({
+      const created = await createPlatformTransaction({
         type: form.type,
         amount_try: amount,
         description: form.description.trim(),
         category: form.category.trim() || null,
         transaction_date: form.transaction_date,
       });
+      // Platformun TÜM işlem geçmişini yeniden çekmek yerine (load()), yeni
+      // satırı yerinde ekliyoruz.
+      setRows((prev) => [created as PlatformTransaction, ...prev]);
       setForm({ ...emptyForm, type: form.type });
-      load();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
@@ -64,7 +66,7 @@ export default function AdminFinancePage() {
     if (!confirm(`"${row.description}" kaydını silmek istediğine emin misin?`)) return;
     try {
       await deletePlatformTransaction(row.id);
-      load();
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
     } catch (e: any) {
       alert(e.message ?? "Silinemedi");
     }
@@ -136,12 +138,14 @@ export default function AdminFinancePage() {
         <div className="mb-3 flex gap-2">
           <button
             onClick={() => set("type", "income")}
+            aria-pressed={form.type === "income"}
             className={`flex-1 rounded-lg border py-2 text-sm font-bold ${form.type === "income" ? "border-teal bg-teal text-bg" : "border-line text-muted"}`}
           >
             Gelir
           </button>
           <button
             onClick={() => set("type", "expense")}
+            aria-pressed={form.type === "expense"}
             className={`flex-1 rounded-lg border py-2 text-sm font-bold ${form.type === "expense" ? "border-coral bg-coral text-bg" : "border-line text-muted"}`}
           >
             Gider

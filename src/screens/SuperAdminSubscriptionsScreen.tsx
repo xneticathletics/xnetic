@@ -92,8 +92,17 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
         status: editStatus,
         amount_try: amount,
       });
+      // Kaydettikten sonra platformdaki TÜM kulüplerin aboneliğini yeniden
+      // çekmek yerine (load()), sadece değişen satırı yerinde güncelliyoruz —
+      // tek bir kulüp güncellendi diye tüm listeyi baştan yüklemeye gerek yok.
+      setRows((prev) =>
+        prev.map((r) =>
+          r.club_id === editing.club_id
+            ? { ...r, billing_period: editPeriod, status: editStatus, amount_try: amount }
+            : r
+        )
+      );
       setEditing(null);
-      await load();
     } catch (e: any) {
       setFormError(e.message ?? "Kaydedilemedi");
     } finally {
@@ -151,6 +160,8 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
                   key={opt.value}
                   style={[styles.chip, editStatus === opt.value && styles.chipActive]}
                   onPress={() => setEditStatus(opt.value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: editStatus === opt.value }}
                 >
                   <Text style={[styles.chipText, editStatus === opt.value && styles.chipTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>
@@ -164,6 +175,8 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
                   key={opt.value}
                   style={[styles.chip, editPeriod === opt.value && styles.chipActive]}
                   onPress={() => setEditPeriod(opt.value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: editPeriod === opt.value }}
                 >
                   <Text style={[styles.chipText, editPeriod === opt.value && styles.chipTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>

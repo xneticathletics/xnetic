@@ -66,17 +66,20 @@ export default function SuperAdminFinanceScreen({ navigation }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await createPlatformTransaction({
+      const created = await createPlatformTransaction({
         type,
         amount_try: amountNum,
         description: description.trim(),
         category: category.trim() || null,
         transaction_date: date,
       });
+      // Platformun TÜM işlem geçmişini yeniden çekmek yerine (load()),
+      // yeni satırı yerinde ekliyoruz — tek bir kayıt eklendi diye tüm
+      // listeyi baştan yüklemeye gerek yok.
+      setRows((prev) => [created as PlatformTransaction, ...prev]);
       setDescription("");
       setAmount("");
       setCategory("");
-      await load();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
@@ -93,7 +96,7 @@ export default function SuperAdminFinanceScreen({ navigation }: Props) {
         onPress: async () => {
           try {
             await deletePlatformTransaction(row.id);
-            await load();
+            setRows((prev) => prev.filter((r) => r.id !== row.id));
           } catch (e: any) {
             Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);
           }
@@ -144,12 +147,16 @@ export default function SuperAdminFinanceScreen({ navigation }: Props) {
                 <TouchableOpacity
                   style={[styles.typeButton, type === "income" && styles.typeButtonIncomeActive]}
                   onPress={() => setType("income")}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: type === "income" }}
                 >
                   <Text style={[styles.typeButtonText, type === "income" && styles.typeButtonTextActive]}>Gelir</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.typeButton, type === "expense" && styles.typeButtonExpenseActive]}
                   onPress={() => setType("expense")}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: type === "expense" }}
                 >
                   <Text style={[styles.typeButtonText, type === "expense" && styles.typeButtonTextActive]}>Gider</Text>
                 </TouchableOpacity>

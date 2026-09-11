@@ -73,8 +73,16 @@ export default function AdminSubscriptionsPage() {
         status: editStatus,
         amount_try: amount,
       });
+      // Kaydettikten sonra platformdaki TÜM kulüplerin aboneliğini yeniden
+      // çekmek yerine (load()), sadece değişen satırı yerinde güncelliyoruz.
+      setRows((prev) =>
+        prev.map((r) =>
+          r.club_id === editing.club_id
+            ? { ...r, billing_period: editPeriod, status: editStatus, amount_try: amount }
+            : r
+        )
+      );
       setEditing(null);
-      load();
     } catch (e: any) {
       setFormError(e.message ?? "Kaydedilemedi");
     } finally {

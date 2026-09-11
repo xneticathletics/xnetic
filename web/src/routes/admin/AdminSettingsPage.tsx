@@ -95,6 +95,9 @@ export default function AdminSettingsPage() {
           </div>
           <button
             onClick={() => setMaintenanceMode((v) => !v)}
+            role="switch"
+            aria-checked={maintenanceMode}
+            aria-label={`Bakım modu ${maintenanceMode ? "açık" : "kapalı"}`}
             className={`h-7 w-12 shrink-0 rounded-full transition-colors ${maintenanceMode ? "bg-coral" : "bg-line"}`}
           >
             <span className={`block h-5 w-5 translate-y-1 rounded-full bg-white transition-transform ${maintenanceMode ? "translate-x-6" : "translate-x-1"}`} />

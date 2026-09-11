@@ -54,6 +54,18 @@ export default function DataTable<T>({
               <tr
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                role={onRowClick ? "button" : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
                 className={`border-b border-line last:border-0 hover:bg-surface/60 ${onRowClick ? "cursor-pointer" : ""}`}
               >
                 {columns.map((c) => (
