@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import { createSession, updateSession, deleteSession, type TrainingSession, type TrainingSessionInput } from "../../lib/api/trainingSessions";
@@ -35,16 +35,21 @@ export default function SessionModal({
       : { group_id: "", venue_id: null, session_date: defaultDate, start_time: "", end_time: "", topic: null, notes: null }
   );
   const [saving, setSaving] = useState(false);
+  // disabled={saving} tek başına hızlı bir çift tıklamayı engellemiyor —
+  // mobildeki aynı düzeltme deseni (savingRef), senkron bir bayrak.
+  const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const set = <K extends keyof TrainingSessionInput>(key: K, value: TrainingSessionInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!form.group_id || !form.session_date || !form.start_time || !form.end_time) {
       setError("Grup, tarih ve saat alanları zorunludur.");
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -54,6 +59,7 @@ export default function SessionModal({
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

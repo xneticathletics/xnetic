@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import {
@@ -64,6 +64,9 @@ export default function MatchModal({
   const [ourScoreText, setOurScoreText] = useState(match?.our_score != null ? String(match.our_score) : "");
   const [oppScoreText, setOppScoreText] = useState(match?.opponent_score != null ? String(match.opponent_score) : "");
   const [saving, setSaving] = useState(false);
+  // disabled={saving} tek başına hızlı bir çift tıklamayı engellemiyor —
+  // mobildeki aynı düzeltme deseni (savingRef), senkron bir bayrak.
+  const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const [roster, setRoster] = useState<MatchRosterEntry[]>([]);
@@ -138,6 +141,7 @@ export default function MatchModal({
   const liveResult = getMatchResult({ our_score: liveOur, opponent_score: liveOpp });
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!form.group_id || !form.match_date || !form.start_time) {
       setError("Grup, tarih ve saat alanları zorunludur.");
       return;
@@ -146,6 +150,7 @@ export default function MatchModal({
       setError("Rakip takım adı zorunludur.");
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -186,6 +191,7 @@ export default function MatchModal({
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

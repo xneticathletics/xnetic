@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import FormField, { inputClass } from "../../components/FormField";
 import {
@@ -25,6 +25,9 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [isImportant, setIsImportant] = useState(false);
   const [saving, setSaving] = useState(false);
+  // disabled={saving} tek başına hızlı bir çift tıklamayı engellemiyor —
+  // mobildeki aynı düzeltme deseni (savingRef), senkron bir bayrak.
+  const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const handlePickAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,10 +54,12 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!title.trim() || !body.trim()) return setError("Başlık ve içerik zorunludur.");
     if (targetTypes.length === 0) return setError("En az bir hedef kitle seçmelisin.");
     if (targetTypes.includes("group") && selectedGroupIds.length === 0) return setError("En az bir grup seçmelisin.");
 
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -74,6 +79,7 @@ export default function AnnouncementModal({ onClose, onSaved }: { onClose: () =>
     } catch (e: any) {
       setError(e.message ?? "Yayınlanamadı");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

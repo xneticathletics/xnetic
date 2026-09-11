@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import { getSessionRoster, saveAttendance, type AttendanceStatus, type RosterEntry } from "../../lib/api/attendance";
 import { listExcusesForSession, type SessionExcuse } from "../../lib/api/sessionExcuses";
@@ -17,6 +17,11 @@ export default function AttendanceModal({
   const [excusesByAthlete, setExcusesByAthlete] = useState<Record<string, SessionExcuse>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // disabled={saving} tek başına hızlı bir çift tıklamayı engellemiyor —
+  // React state güncellemesi bir sonraki render'a kadar gecikebiliyor,
+  // bu sırada ikinci tıklama da geçebiliyor. Mobildeki aynı düzeltme
+  // deseni (savingRef) — senkron bir bayrak, render'ı beklemiyor.
+  const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,11 +47,13 @@ export default function AttendanceModal({
   const markedCount = roster.filter((r) => r.status !== null).length;
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     const entries = roster.filter((r) => r.status !== null) as { athlete_id: string; status: AttendanceStatus }[];
     if (entries.length === 0) {
       setError("En az bir sporcu için durum seçmelisiniz.");
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -55,6 +62,7 @@ export default function AttendanceModal({
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
