@@ -186,26 +186,32 @@ export default function CoachPaymentsScreen({ navigation }: Props) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Kayıt bulunamadı.</Text> : null}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.row, item.status === "paid" ? styles.rowPaid : styles.rowPending]}
-            onPress={() => handleTogglePaid(item)}
-            onLongPress={() => handleDelete(item)}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowName}>{item.users?.name ?? "Antrenör"}</Text>
-              <Text style={styles.rowSub}>
-                Vade: {formatDate(item.due_date)}
-                {item.status === "paid" ? ` · Ödeme: ${formatDate(item.paid_at)}` : ""}
-              </Text>
-              {!!item.notes && <Text style={styles.rowNotes}>{item.notes}</Text>}
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.rowAmount}>{formatTL(item.amount)}</Text>
-              <Text style={[styles.badge, item.status === "paid" ? styles.badgePaid : styles.badgePending]}>
-                {item.status === "paid" ? "Ödendi" : "Bekliyor"}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <View style={[styles.row, item.status === "paid" ? styles.rowPaid : styles.rowPending]}>
+            <TouchableOpacity style={{ flex: 1, flexDirection: "row" }} onPress={() => handleTogglePaid(item)}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowName}>{item.users?.name ?? "Antrenör"}</Text>
+                <Text style={styles.rowSub}>
+                  Vade: {formatDate(item.due_date)}
+                  {item.status === "paid" ? ` · Ödeme: ${formatDate(item.paid_at)}` : ""}
+                </Text>
+                {!!item.notes && <Text style={styles.rowNotes}>{item.notes}</Text>}
+              </View>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text style={styles.rowAmount}>{formatTL(item.amount)}</Text>
+                <Text style={[styles.badge, item.status === "paid" ? styles.badgePaid : styles.badgePending]}>
+                  {item.status === "paid" ? "Ödendi" : "Bekliyor"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleDelete(item)}
+              accessibilityLabel="Ödeme kaydını sil"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={{ marginLeft: spacing.sm }}
+            >
+              <Text style={styles.rowDeleteIcon}>🗑</Text>
+            </TouchableOpacity>
+          </View>
         )}
       />
     </View>
@@ -254,4 +260,5 @@ const styles = StyleSheet.create({
   badge: { fontSize: 10, fontWeight: "700", marginTop: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full, overflow: "hidden" },
   badgePending: { color: colors.bg, backgroundColor: colors.yellow },
   badgePaid: { color: colors.bg, backgroundColor: colors.teal },
+  rowDeleteIcon: { fontSize: 15 },
 });

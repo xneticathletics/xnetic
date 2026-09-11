@@ -148,12 +148,22 @@ export default function CoachLeaveScreen({ route }: Props) {
         }
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz izin kaydı yok.</Text> : null}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.leaveRow} onLongPress={() => handleDeleteLeave(item)}>
-            <Text style={styles.leaveDates}>
-              {new Date(item.start_date).toLocaleDateString("tr-TR")} – {new Date(item.end_date).toLocaleDateString("tr-TR")}
-            </Text>
-            {!!item.reason && <Text style={styles.leaveReason}>{item.reason}</Text>}
-          </TouchableOpacity>
+          <View style={styles.leaveRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.leaveDates}>
+                {new Date(item.start_date).toLocaleDateString("tr-TR")} – {new Date(item.end_date).toLocaleDateString("tr-TR")}
+              </Text>
+              {!!item.reason && <Text style={styles.leaveReason}>{item.reason}</Text>}
+            </View>
+            <TouchableOpacity
+              onPress={() => handleDeleteLeave(item)}
+              accessibilityLabel="İzin kaydını sil"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={{ marginLeft: spacing.sm }}
+            >
+              <Text style={styles.leaveDeleteIcon}>🗑</Text>
+            </TouchableOpacity>
+          </View>
         )}
       />
 
@@ -203,9 +213,11 @@ const styles = StyleSheet.create({
   sectionLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: spacing.sm },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.lg },
   leaveRow: {
+    flexDirection: "row", alignItems: "center",
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
   leaveDates: { color: colors.ink, fontSize: 13, fontWeight: "600" },
   leaveReason: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  leaveDeleteIcon: { fontSize: 15 },
 });

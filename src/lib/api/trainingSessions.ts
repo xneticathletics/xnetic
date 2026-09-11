@@ -142,6 +142,19 @@ export async function completeSession(id: string, rating?: number, ratingNote?: 
   if (error) throw error;
 }
 
+// completeSession'ın toplu karşılığı — rating/not almıyor (sadece arka
+// planda "bitişinden belirli süre geçmiş" oturumları sessizce tamamlamak
+// için, bkz. TrainingSessionsScreen'deki auto-complete). Tek tek
+// completeSession çağırmak yerine TÜM id'leri tek UPDATE sorgusunda tamamlar.
+export async function completeSessions(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabase
+    .from("training_sessions")
+    .update({ status: "completed", completed_at: new Date().toISOString() })
+    .in("id", ids);
+  if (error) throw error;
+}
+
 export async function deleteSession(id: string) {
   const { error } = await supabase.from("training_sessions").delete().eq("id", id);
   if (error) throw error;

@@ -253,16 +253,24 @@ export default function MembershipFreezeScreen({ route, navigation }: Props) {
           <>
             <Text style={styles.historyLabel}>Geçmiş Dondurmalar</Text>
             {history.map((f) => (
-              <TouchableOpacity
-                key={f.id}
-                style={styles.historyRow}
-                onLongPress={canDeleteFreeze ? () => handleDelete(f) : undefined}
-              >
-                <Text style={styles.historyRange}>{formatDate(f.start_date)} - {formatDate(f.end_date)}</Text>
-                <Text style={styles.historyBy}>
-                  {f.requested_by_role === "admin" ? "Admin" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
-                </Text>
-              </TouchableOpacity>
+              <View key={f.id} style={styles.historyRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.historyRange}>{formatDate(f.start_date)} - {formatDate(f.end_date)}</Text>
+                  <Text style={styles.historyBy}>
+                    {f.requested_by_role === "admin" ? "Admin" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
+                  </Text>
+                </View>
+                {canDeleteFreeze && (
+                  <TouchableOpacity
+                    onPress={() => handleDelete(f)}
+                    accessibilityLabel="Dondurma kaydını sil"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={{ marginLeft: spacing.sm }}
+                  >
+                    <Text style={styles.historyDeleteIcon}>🗑</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             ))}
           </>
         )}
@@ -317,4 +325,5 @@ const styles = StyleSheet.create({
   },
   historyRange: { color: colors.ink, fontSize: 13, fontWeight: "600" },
   historyBy: { color: colors.muted, fontSize: 11 },
+  historyDeleteIcon: { fontSize: 15 },
 });

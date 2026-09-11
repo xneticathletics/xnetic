@@ -323,8 +323,8 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
         athlete && !loadingHistory ? <Text style={styles.empty}>Bu sporcu için henüz kayıt yok.</Text> : null
       }
       renderItem={({ item }) => (
-        <TouchableOpacity style={styles.historyRow} onLongPress={canDelete ? () => handleDelete(item) : undefined}>
-          <View>
+        <View style={styles.historyRow}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.historyValue}>
               {item.weight_kg != null ? `${item.weight_kg} kg` : "Vücut ağırlığı"}
               {item.sets != null ? ` × ${item.sets} set` : ""}
@@ -333,7 +333,17 @@ export default function FitnessExerciseDetailScreen({ route, navigation }: Props
             {!!item.notes && <Text style={styles.historyNotes}>{item.notes}</Text>}
           </View>
           <Text style={styles.historyDate}>{formatDate(item.measured_at)}</Text>
-        </TouchableOpacity>
+          {canDelete && (
+            <TouchableOpacity
+              onPress={() => handleDelete(item)}
+              accessibilityLabel="Kaydı sil"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={{ marginLeft: spacing.sm }}
+            >
+              <Text style={styles.historyDeleteIcon}>🗑</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )}
     />
 
@@ -429,4 +439,5 @@ const styles = StyleSheet.create({
   historyValue: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   historyNotes: { color: colors.muted, fontSize: 11, marginTop: 2 },
   historyDate: { color: colors.muted, fontSize: 12 },
+  historyDeleteIcon: { fontSize: 15 },
 });

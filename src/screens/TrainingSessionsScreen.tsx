@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  listSessions, listSessionsForGroups, completeSession, deleteSession, shouldAutoComplete,
+  listSessions, listSessionsForGroups, completeSession, completeSessions, deleteSession, shouldAutoComplete,
   type TrainingSession,
 } from "../lib/api/trainingSessions";
 import { listMatches, listMatchesForGroups, type MatchRow } from "../lib/api/matches";
@@ -166,7 +166,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       // kurulana kadar bu, ekran her açıldığında/yenilendiğinde çalışır.
       const toAutoComplete = fetched.filter((s) => shouldAutoComplete(s, settings.auto_complete_after_minutes));
       if (toAutoComplete.length > 0) {
-        await Promise.all(toAutoComplete.map((s) => completeSession(s.id).catch(() => {})));
+        await completeSessions(toAutoComplete.map((s) => s.id)).catch(() => {});
         fetched = fetched.map((s) =>
           toAutoComplete.some((a) => a.id === s.id) ? { ...s, status: "completed" as const } : s
         );

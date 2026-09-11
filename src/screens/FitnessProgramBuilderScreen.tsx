@@ -145,12 +145,20 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
               <>
                 <Text style={styles.sectionTitle}>Eklenen Hareketler</Text>
                 {items.map((item, index) => (
-                  <TouchableOpacity key={index} style={[styles.itemRow, styles.itemRowAdded]} onLongPress={() => handleRemoveItem(index)}>
-                    <Text style={[styles.itemName, styles.itemNameAdded]}>✓ {item.exercise_name}</Text>
-                    <Text style={styles.itemDetail}>{item.sets} set × {item.reps} tekrar</Text>
-                  </TouchableOpacity>
+                  <View key={index} style={[styles.itemRow, styles.itemRowAdded]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.itemName, styles.itemNameAdded]}>✓ {item.exercise_name}</Text>
+                      <Text style={styles.itemDetail}>{item.sets} set × {item.reps} tekrar</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleRemoveItem(index)}
+                      accessibilityLabel={`${item.exercise_name} hareketini kaldır`}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.removeIcon}>🗑</Text>
+                    </TouchableOpacity>
+                  </View>
                 ))}
-                <Text style={styles.hint}>Bir hareketi silmek için üzerine uzun bas.</Text>
               </>
             )}
 
@@ -333,6 +341,7 @@ const styles = StyleSheet.create({
   itemName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   itemNameAdded: { color: colors.violet },
   itemDetail: { color: colors.muted, fontSize: 12 },
+  removeIcon: { fontSize: 16, marginLeft: spacing.sm },
   hint: { color: colors.muted, fontSize: 11, fontStyle: "italic", marginBottom: spacing.sm },
   completeButton: { backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.xl },
   completeButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

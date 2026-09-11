@@ -98,12 +98,20 @@ export default function IndividualFitnessProgramBuilderScreen({ route, navigatio
               <>
                 <Text style={styles.sectionTitle}>Eklenen Hareketler</Text>
                 {items.map((item, index) => (
-                  <TouchableOpacity key={index} style={styles.itemRow} onLongPress={() => handleRemoveItem(index)}>
-                    <Text style={styles.itemName}>{item.exercise_name}</Text>
-                    <Text style={styles.itemDetail}>{item.sets} set × {item.reps} tekrar</Text>
-                  </TouchableOpacity>
+                  <View key={index} style={styles.itemRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.itemName}>{item.exercise_name}</Text>
+                      <Text style={styles.itemDetail}>{item.sets} set × {item.reps} tekrar</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleRemoveItem(index)}
+                      accessibilityLabel={`${item.exercise_name} hareketini kaldır`}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.removeIcon}>🗑</Text>
+                    </TouchableOpacity>
+                  </View>
                 ))}
-                <Text style={styles.hint}>Bir hareketi silmek için üzerine uzun bas.</Text>
               </>
             )}
 
@@ -250,7 +258,7 @@ const styles = StyleSheet.create({
   },
   itemName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   itemDetail: { color: colors.muted, fontSize: 12 },
-  hint: { color: colors.muted, fontSize: 11, fontStyle: "italic", marginBottom: spacing.sm },
+  removeIcon: { fontSize: 16, marginLeft: spacing.sm },
   completeButton: { backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.xl },
   completeButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
   backLink: { color: colors.teal, fontSize: 13, fontWeight: "600", marginBottom: spacing.md },

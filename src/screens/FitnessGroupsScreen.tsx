@@ -90,19 +90,29 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
         keyExtractor={(g) => g.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz fitness grubu yok.</Text> : null}
-        ListFooterComponent={groups.length > 0 && canDelete ? <Text style={styles.hint}>Silmek için bir gruba uzun bas.</Text> : null}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate("FitnessGroupForm", { fitnessGroupId: item.id })}
-            onLongPress={canDelete ? () => handleDelete(item) : undefined}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardName}>🎯 {item.name}</Text>
-              <Text style={styles.cardSub}>{item.branch} · {item.member_count} sporcu</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.sm }}
+              onPress={() => navigation.navigate("FitnessGroupForm", { fitnessGroupId: item.id })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardName}>🎯 {item.name}</Text>
+                <Text style={styles.cardSub}>{item.branch} · {item.member_count} sporcu</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+            {canDelete && (
+              <TouchableOpacity
+                onPress={() => handleDelete(item)}
+                accessibilityLabel={`${item.name} grubunu sil`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{ marginLeft: spacing.sm }}
+              >
+                <Text style={styles.cardDeleteIcon}>🗑</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       />
     </View>
@@ -127,5 +137,5 @@ const styles = StyleSheet.create({
   cardName: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   cardSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   chevron: { color: colors.yellow, fontSize: 20, fontWeight: "700" },
-  hint: { color: colors.muted, fontSize: 11, fontStyle: "italic", textAlign: "center", marginTop: spacing.xs },
+  cardDeleteIcon: { fontSize: 16 },
 });
