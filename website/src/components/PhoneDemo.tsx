@@ -409,7 +409,9 @@ export default function PhoneDemo() {
             <TabIcon icon="🏠" label="Ana Menü" active={screen.kind === "home"} onClick={goHome} />
             <TabIcon icon="💬" label="Mesajlar" />
             <div className="-mt-3 flex flex-col items-center gap-0.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow text-sm font-black text-bg shadow-lg">X</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow p-1.5 shadow-lg">
+                <img src="/xnetic-mark-blue.png" alt="X-NETIC" className="h-full w-full object-contain" />
+              </div>
               <span className="text-[8px] font-semibold text-muted">Asistan</span>
             </div>
             <TabIcon icon="⚙️" label="Kulüp Ayarları" />
@@ -426,7 +428,9 @@ function HomeScreen({ onSelect }: { onSelect: (s: Screen) => void }) {
   return (
     <div>
       <div className="mb-3 flex items-center gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow text-2xl font-black text-bg">X</div>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow p-2">
+          <img src="/xnetic-mark-blue.png" alt="X-NETIC" className="h-full w-full object-contain" />
+        </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-extrabold text-ink">
             Hoş geldin, <span className="text-yellow">Demo</span>
