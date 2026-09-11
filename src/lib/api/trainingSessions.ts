@@ -65,7 +65,7 @@ function formatSessionDate(iso: string) {
 // koordinatörüne ve gruptaki aktif sporcuların veli/kendi hesaplarına
 // bildirim gider. matches.ts'teki notifyMatchResult ile aynı alıcı toplama
 // deseni (grup → antrenörler + koordinatör + aktif sporcular).
-async function notifySessionCreated(session: Pick<TrainingSession, "group_id" | "venue_id" | "session_date" | "start_time">) {
+async function notifySessionCreated(session: Pick<TrainingSession, "id" | "group_id" | "venue_id" | "session_date" | "start_time">) {
   try {
     const [groupResult, assistantResult, venueResult, athletesResult] = await Promise.all([
       supabase.from("groups").select("name, branch, head_coach_id").eq("id", session.group_id).single(),
@@ -102,7 +102,8 @@ async function notifySessionCreated(session: Pick<TrainingSession, "group_id" | 
     const title = "Yeni Antrenman";
     const body = `${group.name} için ${formatSessionDate(session.session_date)} tarihinde ${session.start_time.slice(0, 5)} antrenman planlandı.${venueName ? ` 🏟 ${venueName}` : ""}`;
 
-    await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "training_session").catch(() => {})));
+    const payload = { sessionId: session.id, groupId: session.group_id, groupName: group.name };
+    await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "training_session", payload).catch(() => {})));
   } catch {
     // Bildirim gönderimi antrenman oluşturmayı asla bloklamamalı.
   }

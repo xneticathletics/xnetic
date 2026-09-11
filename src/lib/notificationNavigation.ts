@@ -35,11 +35,30 @@ export function getNotificationTarget(
     case "absence":
     case "consecutive_absence":
       return { tab: "Ana Menü", screen: isPlanner ? "TodayAttendance" : "MyAttendance" };
-    case "training_session":
     case "match_scheduled":
-    case "match_result":
-    case "session_excuse":
+    case "match_result": {
+      // Maç bildirimine dokununca ilgili maça gidiyor (sonuç ekranı hem
+      // maçı görüntülemeye hem sonuç girmeye/düzenlemeye yarıyor) — sadece
+      // antrenör/admin için, çünkü MatchResult ekranı onlara özel. Payload'da
+      // matchId yoksa (eski bir bildirim) eskisi gibi genel listeye düşer.
+      const matchId = payload?.matchId as string | undefined;
+      if (isPlanner && matchId) return { tab: "Ana Menü", screen: "MatchResult", params: { matchId } };
       return { tab: "Ana Menü", screen: isPlanner ? "TrainingSessions" : "MySchedule" };
+    }
+    case "training_session":
+    case "session_excuse": {
+      // Antrenman/mazeret bildirimine dokununca (antrenör/admin için) o
+      // antrenmanın yoklama listesine gidiyor — SessionRoster hem sporcu
+      // listesini hem mazeretleri gösteriyor. Payload eksikse (eski bir
+      // bildirim ya da veli/sporcu tarafı) eskisi gibi genel listeye düşer.
+      const sessionId = payload?.sessionId as string | undefined;
+      const groupId = payload?.groupId as string | undefined;
+      const groupName = payload?.groupName as string | undefined;
+      if (isPlanner && sessionId && groupId) {
+        return { tab: "Ana Menü", screen: "SessionRoster", params: { sessionId, groupId, groupName: groupName ?? "" } };
+      }
+      return { tab: "Ana Menü", screen: isPlanner ? "TrainingSessions" : "MySchedule" };
+    }
     case "fitness_program": {
       // "Fitness" ekranı sadece antrenör/admin'in Ana Sayfa'sında var (bkz.
       // HomeScreen.tsx TILES_BY_ROLE) — veli/sporcu buraya gönderilirse

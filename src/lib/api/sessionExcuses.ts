@@ -31,7 +31,7 @@ async function notifyCoachesOfExcuse(sessionId: string, athleteName: string, rea
   if (!session) return;
 
   const [headResult, assistantResult] = await Promise.all([
-    supabase.from("groups").select("head_coach_id").eq("id", session.group_id).maybeSingle(),
+    supabase.from("groups").select("name, head_coach_id").eq("id", session.group_id).maybeSingle(),
     supabase.from("group_coaches").select("coach_id").eq("group_id", session.group_id),
   ]);
 
@@ -41,9 +41,10 @@ async function notifyCoachesOfExcuse(sessionId: string, athleteName: string, rea
 
   const title = "Antrenmana Katılamayacak";
   const body = `${athleteName}, ${session.session_date} tarihli antrenmana katılamayacağını bildirdi: "${reason}"`;
+  const payload = { sessionId, groupId: session.group_id, groupName: headResult.data?.name };
 
   await Promise.all(
-    Array.from(recipients).map((uid) => sendNotification(uid, title, body, "session_excuse").catch(() => {}))
+    Array.from(recipients).map((uid) => sendNotification(uid, title, body, "session_excuse", payload).catch(() => {}))
   );
 }
 

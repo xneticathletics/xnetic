@@ -79,7 +79,7 @@ function formatMatchDate(iso: string) {
 // grubun antrenörlerine, branş koordinatörüne ve gruptaki aktif sporcuların
 // veli/kendi hesaplarına bildirim gider. notifyMatchResult ile aynı alıcı
 // toplama deseni, farklı başlık/metin.
-async function notifyMatchCreated(match: Pick<MatchRow, "group_id" | "opponent_name" | "match_date" | "start_time" | "location">) {
+async function notifyMatchCreated(match: Pick<MatchRow, "id" | "group_id" | "opponent_name" | "match_date" | "start_time" | "location">) {
   if (!match.group_id) return;
   try {
     const [groupResult, assistantCoachesResult, athletesResult] = await Promise.all([
@@ -113,7 +113,7 @@ async function notifyMatchCreated(match: Pick<MatchRow, "group_id" | "opponent_n
     const title = "Yeni Maç Programı";
     const body = `${group.name}, ${formatMatchDate(match.match_date)} tarihinde ${match.start_time.slice(0, 5)}'de ${match.opponent_name} ile karşılaşacak.${match.location ? ` 📍 ${match.location}` : ""}`;
 
-    await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "match_scheduled").catch(() => {})));
+    await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "match_scheduled", { matchId: match.id }).catch(() => {})));
   } catch {
     // Bildirim gönderimi maç oluşturmayı asla bloklamamalı.
   }
@@ -321,5 +321,5 @@ export async function notifyMatchResult(match: MatchRow) {
   });
   if (recipients.size === 0) return;
 
-  await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "match_result").catch(() => {})));
+  await Promise.all(Array.from(recipients).map((id) => sendNotification(id, title, body, "match_result", { matchId: match.id }).catch(() => {})));
 }
