@@ -2,6 +2,9 @@ import { supabase } from "../supabase";
 import * as FileSystem from "expo-file-system/legacy";
 import { decode } from "base64-arraybuffer";
 
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+
 let cachedUser: { id: string; name: string; phone: string | null; photo_url: string | null } | null = null;
 
 // Çıkış yapılınca veya farklı bir hesapla giriş yapılınca önbellek
@@ -197,14 +200,30 @@ export async function getMyMustChangePassword(): Promise<boolean> {
   return data?.must_change_password ?? false;
 }
 
-// İlk girişte zorunlu şifre değiştirme ekranından çağrılır.
+// İlk girişte zorunlu şifre değiştirme ekranından çağrılır. Eskiden burada
+// önce auth.updateUser() sonra ayrı bir client update ile
+// must_change_password=false yapılıyordu — ikinci adım kendi başına da
+// çağrılabildiği için (RLS bunu ayırt edemez), admin'in verdiği geçici
+// şifre hiç değiştirilmeden zorunlu rotasyon kalıcı atlatılabiliyordu. Artık
+// tek bir service-role edge function çağrısı: şifre gerçekten değişmeden
+// bayrak asla temizlenmiyor.
 export async function changeMyPasswordFirstLogin(newPassword: string) {
-  const { error: authError } = await supabase.auth.updateUser({ password: newPassword });
-  if (authError) throw authError;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
 
-  const userId = await getCurrentAppUserId();
-  if (userId) {
-    const { error: flagError } = await supabase.from("users").update({ must_change_password: false }).eq("id", userId);
-    if (flagError) throw flagError;
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/self-change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ newPassword }),
+  });
+
+  const json = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(json?.error || `İstek başarısız oldu (kod: ${response.status}).`);
   }
 }
