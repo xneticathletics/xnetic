@@ -17,17 +17,89 @@ type Screen =
   | { kind: "fitnessProgram" }
   | { kind: "performansCategories" }
   | { kind: "performansDetail" }
+  | { kind: "clubStructure" }
+  | { kind: "clubStructureList"; listType: "gruplar" | "branslar" | "salonlar" }
+  | { kind: "beslenme" }
   | { kind: "placeholder"; label: string; icon: string; note: string };
 
 const ATHLETES = [
-  { id: "zeynep", name: "Zeynep Kaya", group: "U15 Yıldızlar", branch: "Yüzme", musabik: true, age: 15, height: 162, weight: 52 },
   { id: "mehmet-y", name: "Mehmet Yılmaz", group: "U13 Filizler", branch: "Basketbol", musabik: false, age: 13, height: 158, weight: 48 },
+  { id: "elif-k", name: "Elif Kaya", group: "U13 Filizler", branch: "Basketbol", musabik: false, age: 13, height: 155, weight: 46 },
+  { id: "can-oz", name: "Can Öztürk", group: "U16 Umutlar", branch: "Basketbol", musabik: true, age: 16, height: 179, weight: 68 },
   { id: "ayse", name: "Ayşe Demir", group: "U17 Gençler", branch: "Voleybol", musabik: true, age: 17, height: 171, weight: 60 },
+  { id: "deniz", name: "Deniz Arslan", group: "U17 Gençler", branch: "Voleybol", musabik: false, age: 17, height: 168, weight: 57 },
+  { id: "zeynep", name: "Zeynep Kaya", group: "U15 Yıldızlar", branch: "Yüzme", musabik: true, age: 15, height: 162, weight: 52 },
+  { id: "berk", name: "Berk Yıldız", group: "U11 Minikler", branch: "Yüzme", musabik: false, age: 11, height: 142, weight: 36 },
+  { id: "kaan", name: "Kaan Şahin", group: "U14 Kartallar", branch: "Futbol", musabik: true, age: 14, height: 163, weight: 51 },
+  { id: "ece", name: "Ece Aydın", group: "U14 Kartallar", branch: "Futbol", musabik: false, age: 14, height: 160, weight: 49 },
 ];
 
-const COACHES = [
-  { id: "mehmet-d", name: "Mehmet Demir", branch: "Yüzme", level: 1, groups: ["U15 Yıldızlar", "U11 Minikler"] },
-  { id: "elif", name: "Elif Çelik", branch: "Basketbol", level: 2, groups: ["U13 Filizler"] },
+const BRANCHES = Array.from(new Set(ATHLETES.map((a) => a.branch)));
+
+const GROUPS = Array.from(
+  new Map(ATHLETES.map((a) => [`${a.branch}__${a.group}`, { group: a.group, branch: a.branch }])).values()
+);
+
+const VENUES = ["Gül Spor Salonu", "Merkez Spor Salonu", "Deniz Yüzme Havuzu"];
+
+type CoachField = { label: string; value: string | null };
+type CoachData = {
+  id: string;
+  name: string;
+  branch: string;
+  level: number;
+  groups: string[];
+  venue: string | null;
+  brans: CoachField[];
+  kisisel: CoachField[];
+  acil: CoachField[];
+};
+
+const COACHES: CoachData[] = [
+  {
+    id: "mehmet-d",
+    name: "Mehmet Demir",
+    branch: "Yüzme",
+    level: 1,
+    groups: ["U11 Minikler", "U15 Yıldızlar"],
+    venue: "Gül Spor Salonu",
+    brans: [
+      { label: "Kademe", value: "1. Kademe" },
+      { label: "Belge numarası", value: null },
+      { label: "Deneyim yılı", value: null },
+      { label: "Kulübe başlama", value: null },
+    ],
+    kisisel: [
+      { label: "Telefon", value: "0532 111 22 33" },
+      { label: "E-posta", value: null },
+    ],
+    acil: [
+      { label: "Acil durum kişisi", value: null },
+      { label: "Telefon", value: null },
+    ],
+  },
+  {
+    id: "elif-c",
+    name: "Elif Çelik",
+    branch: "Basketbol",
+    level: 2,
+    groups: ["U13 Filizler", "U16 Umutlar"],
+    venue: null,
+    brans: [
+      { label: "Kademe", value: "2. Kademe" },
+      { label: "Belge numarası", value: null },
+      { label: "Deneyim yılı", value: "7 yıl" },
+      { label: "Kulübe başlama", value: "Eylül 2022" },
+    ],
+    kisisel: [
+      { label: "Telefon", value: "0555 222 33 44" },
+      { label: "E-posta", value: "elif@example.com" },
+    ],
+    acil: [
+      { label: "Acil durum kişisi", value: "Ali Çelik (Eş)" },
+      { label: "Telefon", value: null },
+    ],
+  },
 ];
 
 const PAYMENTS = [
@@ -52,10 +124,10 @@ const HOME_TILES: { key: Screen; icon: string; label: string; sub: string }[] = 
   { key: { kind: "sporcuList" }, icon: "👥", label: "Sporcu Yönetimi", sub: "Sporcular, gruplar" },
   { key: { kind: "antrenorList" }, icon: "🧑‍🏫", label: "Antrenörler", sub: "Kadro ve atamalar" },
   { key: { kind: "placeholder", label: "Takvim", icon: "📅", note: "Antrenman ve müsabaka programı, yoklama." }, icon: "📅", label: "Takvim", sub: "Antrenman ve Müsabakalar" },
-  { key: { kind: "placeholder", label: "Kulüp Yapısı", icon: "🏛️", note: "Branş, grup ve salon tanımları." }, icon: "🏛️", label: "Kulüp Yapısı", sub: "Grup, branş, salon" },
+  { key: { kind: "clubStructure" }, icon: "🏛️", label: "Kulüp Yapısı", sub: "Grup, branş, salon" },
   { key: { kind: "finans" }, icon: "💰", label: "Finans", sub: "Aidat ve giderler" },
   { key: { kind: "performansCategories" }, icon: "⏱️", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet" },
-  { key: { kind: "placeholder", label: "Beslenme", icon: "🥗", note: "Besin ve tarif rehberi." }, icon: "🥗", label: "Beslenme", sub: "Besinler ve Rehber" },
+  { key: { kind: "beslenme" }, icon: "🥗", label: "Beslenme", sub: "Besinler ve Rehber" },
   { key: { kind: "fitnessHub" }, icon: "💪", label: "Fitness", sub: "Check-in ve çalışma takibi" },
   { key: { kind: "placeholder", label: "Mağaza", icon: "🛍️", note: "Forma ve ekipman satışı." }, icon: "🛍️", label: "Mağaza", sub: "Ürünler ve siparişler" },
   { key: { kind: "placeholder", label: "Etkinlik/Turnuva/Kamp", icon: "🏆", note: "Etkinlik oluştur ve kayıtları yönet." }, icon: "🏆", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet" },
@@ -74,6 +146,29 @@ function BackHeader({ label, onBack }: { label: string; onBack: () => void }) {
   return (
     <button onClick={onBack} className="mb-3 flex items-center gap-1 text-xs font-bold text-muted">
       <span aria-hidden="true">←</span> {label}
+    </button>
+  );
+}
+
+function GridTile({ icon, label, sub, border, onClick }: { icon: string; label: string; sub: string; border: string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className={`rounded-xl border ${border} bg-surface p-3 text-left transition-colors active:opacity-80`}>
+      <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-bg text-base">{icon}</div>
+      <p className="text-xs font-bold leading-tight text-ink">{label}</p>
+      <p className="mt-0.5 text-[10px] leading-tight text-muted">{sub}</p>
+    </button>
+  );
+}
+
+function StructureRow({ icon, label, sub, border, onClick }: { icon: string; label: string; sub: string; border: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={`mb-3 flex w-full items-center gap-3 rounded-xl border ${border} bg-surface p-3 text-left`}>
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg text-lg">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-ink">{label}</p>
+        <p className="truncate text-[10px] text-muted">{sub}</p>
+      </div>
+      <span className="text-muted">›</span>
     </button>
   );
 }
@@ -97,10 +192,13 @@ export default function PhoneDemo() {
           {screen.kind === "antrenorList" && <CoachListScreen onBack={back} onSelect={(id) => push({ kind: "antrenorDetail", id })} />}
           {screen.kind === "antrenorDetail" && <CoachDetailScreen id={screen.id} onBack={back} />}
           {screen.kind === "finans" && <FinanceScreen onBack={back} />}
-          {screen.kind === "fitnessHub" && <FitnessHubScreen onBack={back} onSelect={() => push({ kind: "fitnessProgram" })} />}
+          {screen.kind === "fitnessHub" && <FitnessHubScreen onBack={back} onSelect={push} />}
           {screen.kind === "fitnessProgram" && <FitnessProgramScreen onBack={back} />}
           {screen.kind === "performansCategories" && <PerformanceCategoriesScreen onBack={back} onSelect={() => push({ kind: "performansDetail" })} />}
           {screen.kind === "performansDetail" && <PerformanceDetailScreen onBack={back} />}
+          {screen.kind === "clubStructure" && <ClubStructureScreen onBack={back} onSelect={(listType) => push({ kind: "clubStructureList", listType })} />}
+          {screen.kind === "clubStructureList" && <ClubStructureListScreen listType={screen.listType} onBack={back} />}
+          {screen.kind === "beslenme" && <BeslenmeScreen onBack={back} onSelect={push} />}
           {screen.kind === "placeholder" && <PlaceholderScreen label={screen.label} icon={screen.icon} note={screen.note} onBack={back} />}
         </div>
         <div className="mx-auto mt-2 h-1 w-24 rounded-full bg-line" />
@@ -137,26 +235,77 @@ function HomeScreen({ onSelect }: { onSelect: (s: Screen) => void }) {
 }
 
 function AthleteListScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (id: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"all" | "okul" | "musabik">("all");
+
+  const filtered = ATHLETES.filter((a) => {
+    if (branchFilter && a.branch !== branchFilter) return false;
+    if (typeFilter === "okul" && a.musabik) return false;
+    if (typeFilter === "musabik" && !a.musabik) return false;
+    if (query.trim() && !a.name.toLowerCase().includes(query.trim().toLowerCase())) return false;
+    return true;
+  }).sort((a, b) => {
+    const branchCmp = a.branch.localeCompare(b.branch, "tr");
+    if (branchCmp !== 0) return branchCmp;
+    const groupCmp = a.group.localeCompare(b.group, "tr");
+    if (groupCmp !== 0) return groupCmp;
+    return a.name.localeCompare(b.name, "tr");
+  });
+
   return (
     <div>
       <BackHeader label="Ana Ekran" onBack={onBack} />
-      <h3 className="mb-3 text-base font-extrabold text-ink">Sporcular</h3>
-      <div className="mb-3 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-muted">Sporcu ara…</div>
-      <div className="space-y-2">
-        {ATHLETES.map((a) => (
+      <h3 className="text-base font-extrabold text-ink">Tüm Sporcular</h3>
+      <p className="mb-3 text-[11px] text-muted">{filtered.length} sporcu — Gruba göre</p>
+
+      <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
+        <button
+          onClick={() => setBranchFilter(null)}
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${!branchFilter ? "border-yellow bg-yellow text-bg" : "border-line text-muted"}`}
+        >
+          Tüm Branşlar
+        </button>
+        {BRANCHES.map((b) => (
           <button
-            key={a.id}
-            onClick={() => onSelect(a.id)}
-            className="flex w-full items-center gap-3 rounded-xl border border-line bg-surface p-3 text-left"
+            key={b}
+            onClick={() => setBranchFilter(b)}
+            className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${branchFilter === b ? "border-yellow bg-yellow text-bg" : "border-line text-muted"}`}
           >
-            <Avatar letter={a.name[0]} color="bg-yellow/20 text-yellow" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-ink">{a.name}</p>
-              <p className="truncate text-[11px] text-muted">{a.group} · {a.branch}</p>
-            </div>
-            {a.musabik && <span className="shrink-0 text-sm">🏆</span>}
+            {b}
           </button>
         ))}
+      </div>
+
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Sporcu ara…"
+        className="mb-2 w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs text-ink placeholder:text-muted focus:outline-none"
+      />
+
+      <div className="mb-3 flex gap-1.5">
+        {([["all", "Tümü"], ["okul", "Spor Okulu"], ["musabik", "🏆 Müsabık"]] as const).map(([val, label]) => (
+          <button
+            key={val}
+            onClick={() => setTypeFilter(val)}
+            className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${typeFilter === val ? "border-teal bg-teal text-bg" : "border-line text-muted"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {filtered.map((a) => (
+          <button key={a.id} onClick={() => onSelect(a.id)} className="rounded-xl border border-line bg-surface p-2.5 text-left">
+            <Avatar letter={a.name[0]} color="bg-yellow/20 text-yellow text-xs h-9 w-9" />
+            <p className="mt-1.5 truncate text-xs font-bold text-ink">{a.name}</p>
+            <p className="truncate text-[10px] text-muted">{a.group}</p>
+            {a.musabik && <p className="mt-0.5 text-[9px] font-bold text-yellow">🏆 Müsabık</p>}
+          </button>
+        ))}
+        {filtered.length === 0 && <p className="col-span-2 py-6 text-center text-xs text-muted">Eşleşen sporcu bulunamadı.</p>}
       </div>
     </div>
   );
@@ -229,12 +378,24 @@ function CoachListScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (
 
 function CoachDetailScreen({ id, onBack }: { id: string; onBack: () => void }) {
   const c = COACHES.find((x) => x.id === id) ?? COACHES[0];
+  const [tab, setTab] = useState<"brans" | "kisisel" | "acil">("brans");
+
+  const missing = {
+    brans: c.brans.filter((f) => f.value === null).length,
+    kisisel: c.kisisel.filter((f) => f.value === null).length,
+    acil: c.acil.filter((f) => f.value === null).length,
+  };
+  const totalFields = c.brans.length + c.kisisel.length + c.acil.length;
+  const missingTotal = missing.brans + missing.kisisel + missing.acil;
+  const profile = Math.round(((totalFields - missingTotal) / totalFields) * 100);
+  const activeFields = c[tab];
+
   return (
     <div>
       <BackHeader label="Antrenörler" onBack={onBack} />
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-3 flex items-center gap-3">
         <Avatar letter={c.name[0]} color="bg-teal/20 text-teal text-2xl h-16 w-16" />
-        <div>
+        <div className="min-w-0">
           <p className="text-base font-extrabold text-ink">{c.name}</p>
           <p className="text-xs text-muted">Antrenör</p>
           <span className="mt-1 inline-block rounded-full bg-teal px-2 py-0.5 text-[10px] font-bold text-bg">
@@ -242,17 +403,60 @@ function CoachDetailScreen({ id, onBack }: { id: string; onBack: () => void }) {
           </span>
         </div>
       </div>
-      <p className="mb-1.5 text-xs font-bold text-ink">Sorumlu Gruplar</p>
-      <div className="mb-4 rounded-lg border border-line bg-surface">
-        {c.groups.map((g, i) => (
-          <div key={g} className={`flex items-center justify-between px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
-            <span className="text-xs font-semibold text-ink">{g}</span>
-            <span className="text-[10px] text-muted">{c.branch}</span>
+      <p className="mb-3 text-[11px] text-muted">{c.groups.join(", ")}</p>
+      {c.venue && (
+        <div className="mb-4">
+          <span className="inline-block rounded-full bg-violet px-2.5 py-1 text-[10px] font-bold text-bg">🏛️ SALON YETKİLİSİ</span>
+          <p className="mt-1 text-[11px] text-muted">{c.venue}</p>
+        </div>
+      )}
+
+      <div className="mb-4 grid grid-cols-3 gap-1.5">
+        <div className="rounded-lg border border-teal py-2 text-center text-[10px] font-bold text-teal">📞 Ara</div>
+        <div className="rounded-lg border border-violet py-2 text-center text-[10px] font-bold text-violet">💬 Mesaj</div>
+        <div className="rounded-lg border border-yellow py-2 text-center text-[10px] font-bold text-yellow">📌 Atamalar</div>
+      </div>
+
+      <div className="mb-4 rounded-xl border border-line bg-surface p-3">
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-xs font-bold text-ink">Profil tamamlanma</p>
+          <p className="text-xs font-extrabold text-yellow">%{profile}</p>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+          <div className="h-full rounded-full bg-yellow" style={{ width: `${profile}%` }} />
+        </div>
+        {missingTotal > 0 && <p className="mt-1.5 text-[10px] text-muted">{missingTotal} alan eksik.</p>}
+      </div>
+
+      <div className="mb-3 flex gap-1.5">
+        {([["brans", "Branş"], ["kisisel", "Kişisel"], ["acil", "Acil"]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+              tab === key ? "border-yellow bg-yellow text-bg" : "border-line text-muted"
+            }`}
+          >
+            {label}
+            <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] ${tab === key ? "bg-bg text-yellow" : "bg-line text-ink"}`}>
+              {missing[key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-lg border border-line bg-surface">
+        {activeFields.map((f, i) => (
+          <div key={f.label} className={`flex items-center justify-between px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
+            <span className="text-xs text-muted">{f.label}</span>
+            {f.value ? (
+              <span className="text-xs font-bold text-ink">{f.value}</span>
+            ) : (
+              <span className="rounded-full border border-dashed border-yellow px-2 py-0.5 text-[10px] font-bold text-yellow">+ Ekle</span>
+            )}
           </div>
         ))}
       </div>
-      <p className="mb-1.5 text-xs font-bold text-ink">İzin İşlemleri</p>
-      <div className="rounded-lg border border-line bg-surface p-3 text-xs text-muted">Henüz izin kaydı yok.</div>
     </div>
   );
 }
@@ -298,29 +502,33 @@ function FinanceScreen({ onBack }: { onBack: () => void }) {
   );
 }
 
-function FitnessHubScreen({ onBack, onSelect }: { onBack: () => void; onSelect: () => void }) {
-  const tiles = [
-    { icon: "🏋️", label: "Egzersiz Kütüphanesi" },
-    { icon: "🎯", label: "Fitness Grupları" },
-    { icon: "📋", label: "Programlar", action: onSelect },
-    { icon: "📝", label: "Bireysel Programlar" },
-    { icon: "🌡️", label: "Wellness Check-in" },
+function FitnessHubScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
+  const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
+    {
+      icon: "🌡️", label: "Wellness Check-in", sub: "Uyku, enerji ve ruh hâli takibi", border: "border-teal",
+      target: { kind: "placeholder", label: "Wellness Check-in", icon: "🌡️", note: "Sporcunun günlük uyku, enerji ve ruh hâli takibi." },
+    },
+    {
+      icon: "🏋️", label: "Çalışma", sub: "Göğüs, sırt, bacak, kol, omuz", border: "border-coral",
+      target: { kind: "placeholder", label: "Çalışma", icon: "🏋️", note: "Bölgeye göre hareket kütüphanesi ve ağırlık/tekrar geçmişi." },
+    },
+    {
+      icon: "🎯", label: "Fitness Grupları", sub: "Branştaki müsabık sporculardan özel gruplar", border: "border-yellow",
+      target: { kind: "placeholder", label: "Fitness Grupları", icon: "🎯", note: "Branştaki müsabık sporculardan oluşturulan özel fitness grupları." },
+    },
+    { icon: "📋", label: "Program", sub: "Örnek Programlar", border: "border-teal", target: { kind: "fitnessProgram" } },
+    {
+      icon: "📝", label: "Bireysel Programlar", sub: "Sporcuların kendi yazdığı programlar", border: "border-coral",
+      target: { kind: "placeholder", label: "Bireysel Programlar", icon: "📝", note: "Sporcunun kulüpten bağımsız kendi oluşturduğu program ve set/tekrar günlüğü." },
+    },
   ];
   return (
     <div>
       <BackHeader label="Ana Ekran" onBack={onBack} />
       <h3 className="mb-3 text-base font-extrabold text-ink">Fitness</h3>
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2.5">
         {tiles.map((t) => (
-          <button
-            key={t.label}
-            onClick={t.action}
-            className="flex w-full items-center gap-3 rounded-xl border border-line bg-surface p-3 text-left"
-          >
-            <span className="text-lg">{t.icon}</span>
-            <span className="text-sm font-bold text-ink">{t.label}</span>
-            <span className="ml-auto text-muted">›</span>
-          </button>
+          <GridTile key={t.label} icon={t.icon} label={t.label} sub={t.sub} border={t.border} onClick={() => onSelect(t.target)} />
         ))}
       </div>
     </div>
@@ -390,6 +598,92 @@ function PerformanceDetailScreen({ onBack }: { onBack: () => void }) {
             <span className="text-xs text-muted">{h.date}</span>
             <span className="text-xs font-bold text-ink">{h.value}</span>
           </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ClubStructureScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (t: "gruplar" | "branslar" | "salonlar") => void }) {
+  return (
+    <div>
+      <BackHeader label="Ana Ekran" onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">Kulüp Yapısı</h3>
+      <StructureRow icon="🏷️" label="Gruplar" sub="Yaş grupları / takımlar" border="border-yellow" onClick={() => onSelect("gruplar")} />
+      <StructureRow icon="🥇" label="Branşlar" sub="Voleybol, basketbol vb." border="border-teal" onClick={() => onSelect("branslar")} />
+      <StructureRow icon="🏟️" label="Salonlar" sub="Antrenman ve maç salonları" border="border-coral" onClick={() => onSelect("salonlar")} />
+    </div>
+  );
+}
+
+function ClubStructureListScreen({ listType, onBack }: { listType: "gruplar" | "branslar" | "salonlar"; onBack: () => void }) {
+  const title = listType === "gruplar" ? "Gruplar" : listType === "branslar" ? "Branşlar" : "Salonlar";
+  return (
+    <div>
+      <BackHeader label="Kulüp Yapısı" onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">{title}</h3>
+      <div className="rounded-lg border border-line bg-surface">
+        {listType === "gruplar" &&
+          GROUPS.map((g, i) => {
+            const count = ATHLETES.filter((a) => a.group === g.group && a.branch === g.branch).length;
+            return (
+              <div key={`${g.branch}-${g.group}`} className={`flex items-center justify-between px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
+                <div>
+                  <p className="text-xs font-semibold text-ink">{g.group}</p>
+                  <p className="text-[10px] text-muted">{g.branch}</p>
+                </div>
+                <span className="text-[10px] font-bold text-yellow">{count} sporcu</span>
+              </div>
+            );
+          })}
+        {listType === "branslar" &&
+          BRANCHES.map((b, i) => {
+            const athleteCount = ATHLETES.filter((a) => a.branch === b).length;
+            const coachCount = COACHES.filter((c) => c.branch === b).length;
+            return (
+              <div key={b} className={`flex items-center justify-between px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
+                <p className="text-xs font-semibold text-ink">{b}</p>
+                <p className="text-[10px] text-muted">{athleteCount} sporcu · {coachCount} antrenör</p>
+              </div>
+            );
+          })}
+        {listType === "salonlar" &&
+          VENUES.map((v, i) => (
+            <div key={v} className={`flex items-center gap-2 px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
+              <span className="text-sm">🏟️</span>
+              <p className="text-xs font-semibold text-ink">{v}</p>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function BeslenmeScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
+  const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
+    {
+      icon: "🍎", label: "Besinler", sub: "Besin değerleri ve faydaları", border: "border-teal",
+      target: { kind: "placeholder", label: "Besinler", icon: "🍎", note: "Besin değerleri, faydaları ve porsiyon önerileri — kaynakçalı." },
+    },
+    {
+      icon: "🍳", label: "Sporcu Tarifleri", sub: "Pratik ve besleyici tarifler", border: "border-yellow",
+      target: { kind: "placeholder", label: "Sporcu Tarifleri", icon: "🍳", note: "Antrenman öncesi/sonrası pratik ve besleyici tarifler." },
+    },
+    {
+      icon: "📖", label: "Beslenme Rehberi", sub: "Bilimsel kaynaklı yazılar", border: "border-teal",
+      target: { kind: "placeholder", label: "Beslenme Rehberi", icon: "📖", note: "Bilimsel makalelere dayanan beslenme yazıları." },
+    },
+  ];
+  return (
+    <div>
+      <BackHeader label="Ana Ekran" onBack={onBack} />
+      <h3 className="mb-2 text-base font-extrabold text-ink">Beslenme</h3>
+      <p className="mb-4 text-[11px] leading-relaxed text-muted">
+        Buradaki bilgiler bilimsel makalelere ve büyük kuruluşlara dayanır; her içerikte kaynakça belirtilir.
+      </p>
+      <div className="grid grid-cols-2 gap-2.5">
+        {tiles.map((t) => (
+          <GridTile key={t.label} icon={t.icon} label={t.label} sub={t.sub} border={t.border} onClick={() => onSelect(t.target)} />
         ))}
       </div>
     </div>
