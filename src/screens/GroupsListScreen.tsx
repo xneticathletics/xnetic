@@ -1,11 +1,18 @@
 import React, { useCallback, useMemo, useState, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, SectionList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listGroups, type Group } from "../lib/api/groups";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
 
 // Bu ekran hem ClubSettingsStack'ten (Kulüp Ayarları) hem de HomeStack'ten
 // (Ana Sayfa → Kulüp Yapısı) açılabiliyor — belirli bir stack'in
@@ -24,6 +31,7 @@ export default function GroupsListScreen({ navigation }: Props) {
   // is_my_coordinated_group). Salonlar bunun aksine hâlâ salt okunur, branşlar
   // hiç gösterilmiyor (bkz. VenuesListScreen.tsx / ClubStructureScreen.tsx).
   const isCoordinator = role === "coach" && isLocked;
+  const columns = useResponsiveColumns(4);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,6 +76,16 @@ export default function GroupsListScreen({ navigation }: Props) {
       }));
   }, [groups, isCoordinator, selectedBranch]);
 
+  // SectionList sanallaştırması için her branşın grid'i satırlara (chunk)
+  // bölünüyor — her renderItem çağrısı tek bir satırı (columns kadar kart)
+  // render ediyor, ScrollView+.map() ile TÜM kartları aynı anda mount
+  // etmek yerine.
+  const listSections = useMemo(
+    () => sections.map(({ branch, groupsInBranch }) => ({ title: branch, data: chunk(groupsInBranch, columns) })),
+    [sections, columns]
+  );
+  const cardWidthPercent = `${100 / columns - 2}%` as const;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -80,30 +98,33 @@ export default function GroupsListScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
       {!loading && sections.length === 0 && <Text style={styles.empty}>Henüz grup eklenmemiş.</Text>}
 
-      <ScrollView
+      <SectionList
+        sections={listSections}
+        keyExtractor={(row) => row.map((g) => g.id).join("-")}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
-      >
-        {sections.map(({ branch, groupsInBranch }) => (
-          <View key={branch} style={{ marginBottom: spacing.md }}>
-            <View style={styles.branchHeaderRow}>
-              <View style={styles.branchHeaderBar} />
-              <Text style={styles.branchHeaderText}>{branch}</Text>
-            </View>
-            <View style={styles.grid}>
-              {groupsInBranch.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.card}
-                  onPress={() => navigation.navigate("GroupForm", { groupId: item.id })}
-                >
-                  <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+        renderSectionHeader={({ section }) => (
+          <View style={styles.branchHeaderRow}>
+            <View style={styles.branchHeaderBar} />
+            <Text style={styles.branchHeaderText}>{section.title}</Text>
           </View>
-        ))}
-      </ScrollView>
+        )}
+        renderSectionFooter={() => <View style={{ height: spacing.md }} />}
+        renderItem={({ item: row }) => (
+          <View style={styles.grid}>
+            {row.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.card, { width: cardWidthPercent }]}
+                onPress={() => navigation.navigate("GroupForm", { groupId: item.id })}
+              >
+                <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        stickySectionHeadersEnabled={false}
+      />
     </View>
   );
 }
@@ -118,9 +139,9 @@ const styles = StyleSheet.create({
   branchHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.xs },
   branchHeaderBar: { width: 3, height: 12, borderRadius: 2, backgroundColor: colors.yellow },
   branchHeaderText: { color: colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  grid: { flexDirection: "row", gap: spacing.xs, marginBottom: spacing.xs },
   card: {
-    width: "23%", minHeight: 52, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    minHeight: 52, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, padding: 6, alignItems: "center", justifyContent: "center",
   },
   cardName: { color: colors.ink, fontSize: 11, fontWeight: "700", textAlign: "center" },

@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Alert,
-  Modal, ScrollView, useWindowDimensions,
+  Modal, useWindowDimensions,
 } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useFocusEffect } from "@react-navigation/native";
@@ -161,6 +161,16 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
   const activePost = viewerIndex !== null ? posts[viewerIndex] : null;
   const canDeleteActivePost = !!activePost && (canModerate || activePost.author_id === myUserId);
 
+  // Görüntüleyici (viewer) Modal'ı her açılışta yeniden mount edilmiyor
+  // (RN Modal alt ağacını gizliyken bile ayakta tutuyor) — bu yüzden
+  // FlatList'in initialScrollIndex'i sadece İLK açılışta işe yarar. Her
+  // viewerIndex değişiminde imperatif olarak doğru sayfaya kaydırıyoruz.
+  const viewerListRef = useRef<FlatList<SocialPost>>(null);
+  useEffect(() => {
+    if (viewerIndex === null) return;
+    viewerListRef.current?.scrollToIndex({ index: viewerIndex, animated: false });
+  }, [viewerIndex]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -234,25 +244,35 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
 
       <Modal visible={viewerIndex !== null} animationType="fade" transparent={false} onRequestClose={() => setViewerIndex(null)}>
         <View style={styles.viewerContainer}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            contentOffset={{ x: (viewerIndex ?? 0) * windowWidth, y: 0 }}
-            onMomentumScrollEnd={(e) => {
-              // Bir sayfa geçişinin momentum'u hâlâ sönümlenirken "Kapat"a
-              // basılırsa, bu olay kapatmadan SONRA gecikmeli tetiklenip
-              // viewerIndex'i tekrar dolduruyor ve görüntüleyici kapanır
-              // kapanmaz yeniden açılıyordu. Zaten kapatılmışsa (null)
-              // gecikmeli olayı yok sayıyoruz.
-              const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
-              setViewerIndex((current) => (current === null ? null : newIndex));
-            }}
-          >
-            {posts.map((item, index) => (
-              <ViewerPage key={item.id} post={item} active={index === viewerIndex} width={windowWidth} />
-            ))}
-          </ScrollView>
+          {viewerIndex !== null && (
+            <FlatList
+              ref={viewerListRef}
+              data={posts}
+              keyExtractor={(item) => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={viewerIndex}
+              getItemLayout={(_, index) => ({ length: windowWidth, offset: windowWidth * index, index })}
+              // Aktif sayfanın hemen komşularını (bir önceki/sonraki) mount
+              // eder, TÜM paylaşımları değil — foto/video sayısı arttıkça
+              // (özellikle her aktif sayfanın kendi video player'ı olduğu
+              // için) hepsini aynı anda bellekte tutmak yerine.
+              windowSize={3}
+              initialNumToRender={1}
+              maxToRenderPerBatch={1}
+              onMomentumScrollEnd={(e) => {
+                // Bir sayfa geçişinin momentum'u hâlâ sönümlenirken "Kapat"a
+                // basılırsa, bu olay kapatmadan SONRA gecikmeli tetiklenip
+                // viewerIndex'i tekrar dolduruyor ve görüntüleyici kapanır
+                // kapanmaz yeniden açılıyordu. Zaten kapatılmışsa (null)
+                // gecikmeli olayı yok sayıyoruz.
+                const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
+                setViewerIndex((current) => (current === null ? null : newIndex));
+              }}
+              renderItem={({ item, index }) => <ViewerPage post={item} active={index === viewerIndex} width={windowWidth} />}
+            />
+          )}
 
           {activePost && (
             <View style={styles.viewerInfoBar}>

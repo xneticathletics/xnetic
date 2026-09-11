@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef } from "react";
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
+import { View, Text, SectionList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -105,6 +105,16 @@ export default function UsersListScreen({}: Props) {
       usersInRole: byRole[role]!,
     }));
   }, [filteredUsers, isPinned]);
+
+  // SectionList için: "Bekleyen Talepler" (varsa) + rol bazlı bölümler tek
+  // dizide birleştiriliyor — ScrollView+.map() yerine büyük kullanıcı
+  // listelerinde de sanallaştırma (virtualization) sağlıyor.
+  const listSections = useMemo(() => {
+    const out: { title: string; highlighted: boolean; data: ClubUser[] }[] = [];
+    if (pendingUsers.length > 0) out.push({ title: "Bekleyen Talepler", highlighted: true, data: pendingUsers });
+    sections.forEach(({ role, usersInRole }) => out.push({ title: ROLE_LABEL[role], highlighted: false, data: usersInRole }));
+    return out;
+  }, [pendingUsers, sections]);
 
   const handleReset = (user: ClubUser) => {
     Alert.alert(
@@ -265,30 +275,21 @@ export default function UsersListScreen({}: Props) {
         <Text style={styles.empty}>{query ? "Eşleşen kullanıcı bulunamadı." : "Henüz kullanıcı yok."}</Text>
       )}
 
-      <ScrollView
+      <SectionList
+        sections={listSections}
+        keyExtractor={(u) => u.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
-      >
-        {pendingUsers.length > 0 && (
-          <View style={{ marginBottom: spacing.md }}>
-            <View style={styles.roleHeaderRow}>
-              <View style={[styles.roleHeaderBar, { backgroundColor: colors.coral }]} />
-              <Text style={styles.roleHeaderText}>Bekleyen Talepler</Text>
-            </View>
-            {pendingUsers.map((u) => renderUserCard(u, true))}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.roleHeaderRow}>
+            <View style={[styles.roleHeaderBar, section.highlighted && { backgroundColor: colors.coral }]} />
+            <Text style={styles.roleHeaderText}>{section.title}</Text>
           </View>
         )}
-
-        {sections.map(({ role, usersInRole }) => (
-          <View key={role} style={{ marginBottom: spacing.md }}>
-            <View style={styles.roleHeaderRow}>
-              <View style={styles.roleHeaderBar} />
-              <Text style={styles.roleHeaderText}>{ROLE_LABEL[role]}</Text>
-            </View>
-            {usersInRole.map((u) => renderUserCard(u, false))}
-          </View>
-        ))}
-      </ScrollView>
+        renderSectionFooter={() => <View style={{ height: spacing.md }} />}
+        renderItem={({ item, section }) => renderUserCard(item, section.highlighted)}
+        stickySectionHeadersEnabled={false}
+      />
     </View>
   );
 }
