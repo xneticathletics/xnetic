@@ -160,7 +160,12 @@ export default function BranchesListScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.individualToggle} onPress={() => setNewIsIndividual((v) => !v)}>
+          <TouchableOpacity
+            style={styles.individualToggle}
+            onPress={() => setNewIsIndividual((v) => !v)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: newIsIndividual }}
+          >
             <View style={[styles.checkbox, newIsIndividual && styles.checkboxChecked]}>
               {newIsIndividual && <Text style={styles.checkmark}>✓</Text>}
             </View>
@@ -221,7 +226,12 @@ export default function BranchesListScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.individualToggle} onPress={() => setEditingIsIndividual((v) => !v)}>
+                <TouchableOpacity
+                  style={styles.individualToggle}
+                  onPress={() => setEditingIsIndividual((v) => !v)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: editingIsIndividual }}
+                >
                   <View style={[styles.checkbox, editingIsIndividual && styles.checkboxChecked]}>
                     {editingIsIndividual && <Text style={styles.checkmark}>✓</Text>}
                   </View>

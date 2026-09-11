@@ -181,6 +181,7 @@ export default function CoachesListScreen({ navigation }: Props) {
         style={styles.search}
         placeholder="Antrenör ara..."
         placeholderTextColor={colors.muted}
+        accessibilityLabel="Antrenör ara"
         value={query}
         onChangeText={setQuery}
       />

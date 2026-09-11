@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl, Image,
 } from "react-native";
@@ -48,8 +48,9 @@ export default function AthletesListScreen({ navigation, route }: Props) {
     }, [load])
   );
 
-  const filtered = athletes.filter((a) =>
-    a.full_name.toLowerCase().includes(query.trim().toLowerCase())
+  const filtered = useMemo(
+    () => athletes.filter((a) => a.full_name.toLowerCase().includes(query.trim().toLowerCase())),
+    [athletes, query]
   );
 
   return (
@@ -58,6 +59,7 @@ export default function AthletesListScreen({ navigation, route }: Props) {
         style={styles.search}
         placeholder="Sporcu ara..."
         placeholderTextColor={colors.muted}
+        accessibilityLabel="Sporcu ara"
         value={query}
         onChangeText={setQuery}
       />

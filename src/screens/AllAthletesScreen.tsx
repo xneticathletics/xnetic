@@ -128,6 +128,7 @@ export default function AllAthletesScreen({ navigation }: Props) {
         style={styles.search}
         placeholder="Sporcu ara..."
         placeholderTextColor={colors.muted}
+        accessibilityLabel="Sporcu ara"
         value={query}
         onChangeText={setQuery}
       />

@@ -306,7 +306,11 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         contentContainerStyle={{ padding: spacing.lg }}
         keyboardShouldPersistTaps="handled"
       >
-      <TouchableOpacity style={styles.photoPicker} onPress={pickPhoto}>
+      <TouchableOpacity
+        style={styles.photoPicker}
+        onPress={pickPhoto}
+        accessibilityLabel={previewUri ? "Fotoğrafı değiştir" : "Fotoğraf seç"}
+      >
         {previewUri ? (
           <Image source={{ uri: previewUri }} style={styles.photoPreview} />
         ) : (

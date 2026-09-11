@@ -234,6 +234,7 @@ export default function UsersListScreen({}: Props) {
             style={styles.passwordRow}
             onPress={() => copy(u.id, results[u.id])}
             activeOpacity={0.7}
+            accessibilityLabel="Geçici şifreyi kopyala"
           >
             <Text selectable style={styles.passwordText}>{results[u.id]}</Text>
             <Text style={styles.copyIcon}>{copiedKey === u.id ? "✓" : "📋"}</Text>
@@ -253,6 +254,7 @@ export default function UsersListScreen({}: Props) {
         style={styles.search}
         placeholder="Kullanıcı ara..."
         placeholderTextColor={colors.muted}
+        accessibilityLabel="Kullanıcı ara"
         value={query}
         onChangeText={setQuery}
       />

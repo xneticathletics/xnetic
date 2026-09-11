@@ -358,6 +358,8 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
                   style={[styles.venueRow, i === venues.length - 1 && { borderBottomWidth: 0 }]}
                   onPress={() => canManageVenueAuthority && handleToggleVenue(v.id, on)}
                   disabled={!canManageVenueAuthority || venueTogglingId === v.id}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: on, disabled: !canManageVenueAuthority || venueTogglingId === v.id }}
                 >
                   <Text style={styles.venueRowName}>{v.name}</Text>
                   {venueTogglingId === v.id ? (

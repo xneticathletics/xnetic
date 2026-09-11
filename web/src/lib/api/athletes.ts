@@ -63,6 +63,22 @@ export async function listAllAthletes(): Promise<Athlete[]> {
   return (data as unknown as Athlete[]) ?? [];
 }
 
+// Belirli grup(lar)ın (ör. bir antrenörün baş/yardımcı olduğu gruplar)
+// TÜM sporcularını tek sorguda döner — mobildeki listAthletesInGroups ile
+// birebir aynı. Sadece o antrenörün sayfası için gerekirken listAllAthletes()
+// (kulübün TÜM sporcuları, sağlık verisi dahil ağır bir sorgu) kullanmak
+// yerine bunu tercih et.
+export async function listAthletesInGroups(groupIds: string[]): Promise<Athlete[]> {
+  if (groupIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("athletes")
+    .select(`${ATHLETE_FIELDS}, groups!group_id(name, branch)`)
+    .in("group_id", groupIds)
+    .order("full_name", { ascending: true });
+  if (error) throw error;
+  return (data as unknown as Athlete[]) ?? [];
+}
+
 export async function getAthlete(id: string): Promise<Athlete> {
   const { data, error } = await supabase
     .from("athletes")

@@ -114,7 +114,11 @@ export default function CoachFormScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
         <Field label="Profil Fotoğrafı">
-          <TouchableOpacity style={styles.photoPicker} onPress={pickPhoto}>
+          <TouchableOpacity
+            style={styles.photoPicker}
+            onPress={pickPhoto}
+            accessibilityLabel={photoUri || coach?.photo_url ? "Fotoğrafı değiştir" : "Fotoğraf seç"}
+          >
             {photoUri || coach?.photo_url ? (
               <Image source={{ uri: photoUri ?? coach!.photo_url! }} style={styles.photoPreview} />
             ) : (

@@ -14,7 +14,7 @@ import { listBranches, setBranchCoordinator, type Branch } from "../../lib/api/b
 import { listCoachLeaves, createCoachLeave, deleteCoachLeave, type CoachLeave } from "../../lib/api/coachLeaves";
 import { listVenues, type Venue } from "../../lib/api/venues";
 import { getCoachVenueIds, setCoachVenue } from "../../lib/api/venueCoaches";
-import { listAllAthletes } from "../../lib/api/athletes";
+import { listAthletesInGroups } from "../../lib/api/athletes";
 import CoachEditModal from "./CoachEditModal";
 import CoachPersonalInfoModal from "./CoachPersonalInfoModal";
 
@@ -66,9 +66,9 @@ export default function CoachDetailPage() {
     setError(null);
     Promise.all([
       getCoach(id), getAllCoachBranches(), getCoachGroups(id), listBranches(), listCoachLeaves(id),
-      listVenues(), getCoachVenueIds(id), listAllAthletes(),
+      listVenues(), getCoachVenueIds(id),
     ])
-      .then(([c, allCoachBranches, g, b, l, v, venueIds, athletes]) => {
+      .then(([c, allCoachBranches, g, b, l, v, venueIds]) => {
         setCoach(c);
         setBranches(allCoachBranches[id] ?? []);
         setGroups(g);
@@ -76,6 +76,13 @@ export default function CoachDetailPage() {
         setLeaves(l);
         setVenues(v);
         setAuthorizedVenueIds(venueIds);
+        // Bu antrenörün grup başına aktif sporcu sayısı için, kulübün TÜM
+        // sporcularını (sağlık verisi dahil ağır bir sorgu — listAllAthletes())
+        // çekmek yerine sadece bu antrenörün gruplarına scope'lu bir sorgu
+        // yeterli.
+        return listAthletesInGroups(g.map((x) => x.id));
+      })
+      .then((athletes) => {
         const counts: Record<string, number> = {};
         athletes.forEach((a) => {
           if (a.group_id && a.status === "active") counts[a.group_id] = (counts[a.group_id] ?? 0) + 1;

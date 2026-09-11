@@ -133,6 +133,7 @@ export default function AthletesListPage() {
         <input
           className={`${inputClass} max-w-sm`}
           placeholder="Sporcu ara…"
+          aria-label="Sporcu ara"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

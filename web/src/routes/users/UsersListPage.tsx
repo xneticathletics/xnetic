@@ -228,6 +228,7 @@ export default function UsersListPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Kullanıcı ara..."
+            aria-label="Kullanıcı ara"
             className="w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-yellow"
           />
           <button

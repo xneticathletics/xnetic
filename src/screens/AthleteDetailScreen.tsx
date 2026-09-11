@@ -294,6 +294,8 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
               style={[styles.badgeOutline, athlete.athlete_type === "musabik" && styles.badgeOutlineYellow]}
               onPress={isStaff && !athlete.group_id ? handleTypeToggle : undefined}
               disabled={typeSaving || !isStaff || !!athlete.group_id}
+              accessibilityRole={isStaff && !athlete.group_id ? "switch" : "text"}
+              accessibilityState={isStaff && !athlete.group_id ? { checked: athlete.athlete_type === "musabik" } : undefined}
             >
               <Text style={[styles.badgeOutlineText, athlete.athlete_type === "musabik" && styles.badgeOutlineYellowText]}>
                 {athlete.athlete_type === "musabik" ? "MÜSABIK" : "SPOR OKULU"}
