@@ -92,8 +92,8 @@ export default function MessagesPage() {
     setSending(true);
     setDraft("");
     try {
-      await sendMessage(selected.id, body);
-      setMessages(await listMessagesWithUser(selected.id));
+      const sent = await sendMessage(selected.id, body);
+      setMessages((prev) => [...prev, sent]);
       loadConversations();
     } catch (e: any) {
       setError(e.message ?? "Gönderilemedi");
@@ -223,7 +223,11 @@ export default function MessagesPage() {
                 messages.map((m) => {
                   const isMine = m.sender_id !== selected.id;
                   return (
-                    <div key={m.id} className={`mb-2 flex ${isMine ? "justify-end" : "justify-start"}`}>
+                    <div
+                      key={m.id}
+                      className={`mb-2 flex ${isMine ? "justify-end" : "justify-start"}`}
+                      aria-label={`${isMine ? "Sen" : selected.name}, saat ${formatTime(m.sent_at)}: ${m.body}`}
+                    >
                       <div
                         className={`max-w-[70%] rounded-xl px-3 py-2 ${
                           isMine ? "rounded-br-sm bg-yellow text-bg" : "rounded-bl-sm border border-line bg-bg text-ink"
@@ -252,6 +256,7 @@ export default function MessagesPage() {
                   }
                 }}
                 placeholder="Mesaj yaz..."
+                aria-label="Mesaj yaz"
                 rows={1}
                 className="flex-1 resize-none rounded-lg border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-yellow"
               />

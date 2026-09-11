@@ -131,12 +131,11 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
     }
     setSavingRow(true);
     try {
-      await createTemplate({
+      const created = await createTemplate({
         group_id: groupId, day_of_week: newRow.dayOfWeek,
         start_time: newRow.startTime, end_time: newRow.endTime, venue_id: newRow.venueId,
       });
-      const fresh = await listTemplatesForGroups(manageableGroupIds);
-      setTemplates(fresh);
+      setTemplates((prev) => [...prev, created]);
       setAddFormGroupId(null);
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Eklenemedi", [{ text: "Tamam" }]);
@@ -250,7 +249,12 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
                   <TouchableOpacity style={styles.smallButton} onPress={() => handleToggleActive(t)}>
                     <Text style={styles.smallButtonText}>{t.active ? "Pasifleştir" : "Aktifleştir"}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteIconButton} onPress={() => handleDeleteRow(t.id)}>
+                  <TouchableOpacity
+                    style={styles.deleteIconButton}
+                    onPress={() => handleDeleteRow(t.id)}
+                    accessibilityLabel="Şablonu sil"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
                     <Text style={styles.deleteIconText}>🗑</Text>
                   </TouchableOpacity>
                 </View>

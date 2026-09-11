@@ -163,18 +163,24 @@ export default function AttendanceScreen({ route, navigation }: Props) {
               <TouchableOpacity
                 style={[styles.statusButton, { borderColor: colors.teal }, item.status === "geldi" && { backgroundColor: colors.teal }]}
                 onPress={() => setStatus(item.athlete_id, "geldi")}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: item.status === "geldi" }}
               >
                 <Text style={[styles.statusButtonText, { color: item.status === "geldi" ? colors.bg : colors.teal }]}>Geldi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, { borderColor: colors.coral }, item.status === "gelmedi" && { backgroundColor: colors.coral }]}
                 onPress={() => setStatus(item.athlete_id, "gelmedi")}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: item.status === "gelmedi" }}
               >
                 <Text style={[styles.statusButtonText, { color: item.status === "gelmedi" ? colors.bg : colors.coral }]}>Gelmedi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, { borderColor: colors.violet }, item.status === "izinli" && { backgroundColor: colors.violet }]}
                 onPress={() => setStatus(item.athlete_id, "izinli")}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: item.status === "izinli" }}
               >
                 <Text style={[styles.statusButtonText, { color: item.status === "izinli" ? colors.bg : colors.violet }]}>İzinli</Text>
               </TouchableOpacity>

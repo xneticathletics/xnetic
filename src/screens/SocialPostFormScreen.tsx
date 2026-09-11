@@ -96,7 +96,11 @@ export default function SocialPostFormScreen({ navigation }: Props) {
         keyboardShouldPersistTaps="handled"
       >
         <Field label="Fotoğraf / Video *">
-          <TouchableOpacity style={styles.mediaSlot} onPress={pickMedia}>
+          <TouchableOpacity
+            style={styles.mediaSlot}
+            onPress={pickMedia}
+            accessibilityLabel={localUri ? "Fotoğrafı/videoyu değiştir" : "Fotoğraf veya video seç"}
+          >
             {localUri && mediaType === "photo" ? (
               <Image source={{ uri: localUri }} style={styles.mediaPreviewImage} resizeMode="cover" />
             ) : localUri && mediaType === "video" ? (

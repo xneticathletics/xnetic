@@ -154,11 +154,21 @@ export default function MyScheduleScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <View style={styles.monthNav}>
-        <TouchableOpacity onPress={goPrevMonth} style={styles.monthNavButton}>
+        <TouchableOpacity
+          onPress={goPrevMonth}
+          style={styles.monthNavButton}
+          accessibilityLabel="Önceki ay"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Text style={styles.monthNavIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_LABELS[viewMonth]} {viewYear}</Text>
-        <TouchableOpacity onPress={goNextMonth} style={styles.monthNavButton}>
+        <TouchableOpacity
+          onPress={goNextMonth}
+          style={styles.monthNavButton}
+          accessibilityLabel="Sonraki ay"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Text style={styles.monthNavIcon}>›</Text>
         </TouchableOpacity>
       </View>
@@ -194,8 +204,16 @@ export default function MyScheduleScreen({ navigation }: Props) {
             }
           };
 
+          const dayLabel = `${day} ${MONTH_LABELS[viewMonth]}${isToday ? ", bugün" : ""}${hasSessions ? ", antrenman var" : ""}`;
+
           return (
-            <TouchableOpacity key={idx} style={styles.dayCell} onPress={handleDayPress}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.dayCell}
+              onPress={handleDayPress}
+              accessibilityLabel={dayLabel}
+              accessibilityState={{ selected: isSelected }}
+            >
               <View
                 style={[
                   styles.dayCircle,

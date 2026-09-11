@@ -95,7 +95,10 @@ export default function ChatScreen({ route, navigation }: Props) {
           renderItem={({ item }) => {
             const isMine = item.sender_id === myUserId;
             return (
-              <View style={[styles.bubbleRow, isMine ? styles.bubbleRowMine : styles.bubbleRowTheirs]}>
+              <View
+                style={[styles.bubbleRow, isMine ? styles.bubbleRowMine : styles.bubbleRowTheirs]}
+                accessibilityLabel={`${isMine ? "Sen" : "Karşı taraf"}, saat ${formatTime(item.sent_at)}: ${item.body}`}
+              >
                 <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
                   <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{item.body}</Text>
                   <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>{formatTime(item.sent_at)}</Text>
@@ -113,6 +116,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             placeholder="Mesaj yaz..."
             placeholderTextColor={colors.muted}
             multiline
+            accessibilityLabel="Mesaj yaz"
           />
           <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={sending || !draft.trim()}>
             {sending ? <ActivityIndicator size="small" color={colors.bg} /> : <Text style={styles.sendButtonText}>Gönder</Text>}

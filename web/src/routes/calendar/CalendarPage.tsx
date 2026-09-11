@@ -140,13 +140,13 @@ export default function CalendarPage() {
         {/* Ay takvimi */}
         <div className="rounded-xl border border-line bg-surface p-4">
           <div className="mb-3 flex items-center justify-between">
-            <button onClick={goPrevMonth} className="px-2 text-lg font-bold text-yellow">
+            <button onClick={goPrevMonth} aria-label="Önceki ay" className="px-2 text-lg font-bold text-yellow">
               ‹
             </button>
             <span className="text-sm font-bold">
               {MONTH_LABELS[viewMonth]} {viewYear}
             </span>
-            <button onClick={goNextMonth} className="px-2 text-lg font-bold text-yellow">
+            <button onClick={goNextMonth} aria-label="Sonraki ay" className="px-2 text-lg font-bold text-yellow">
               ›
             </button>
           </div>
@@ -173,10 +173,16 @@ export default function CalendarPage() {
               else if (hasSessions) circleClass = "bg-yellow text-bg font-extrabold";
               else if (hasMatches) circleClass = "bg-coral text-bg font-extrabold";
 
+              const dayLabel = `${day} ${MONTH_LABELS[viewMonth]}${isToday ? ", bugün" : ""}${
+                hasBoth ? ", antrenman ve müsabaka var" : hasSessions ? ", antrenman var" : hasMatches ? ", müsabaka var" : ""
+              }`;
+
               return (
                 <div key={idx} className="flex justify-center py-0.5">
                   <button
                     onClick={() => setSelectedDate(dateKey)}
+                    aria-label={dayLabel}
+                    aria-pressed={isSelected}
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xs ${circleClass} ${
                       isToday && !isSelected ? "ring-1 ring-muted" : ""
                     }`}

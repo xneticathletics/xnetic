@@ -148,7 +148,12 @@ export default function EventFormScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
         <Field label="Banner Görseli">
-          <TouchableOpacity style={styles.bannerSlot} onPress={pickBanner} disabled={uploadingBanner}>
+          <TouchableOpacity
+            style={styles.bannerSlot}
+            onPress={pickBanner}
+            disabled={uploadingBanner}
+            accessibilityLabel={displayBanner ? "Banner görselini değiştir" : "Banner görseli ekle"}
+          >
             {uploadingBanner ? (
               <ActivityIndicator color={colors.yellow} />
             ) : displayBanner ? (

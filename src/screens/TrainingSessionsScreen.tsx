@@ -439,11 +439,21 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       )}
 
       <View style={styles.monthNav}>
-        <TouchableOpacity onPress={goPrevMonth} style={styles.monthNavButton}>
+        <TouchableOpacity
+          onPress={goPrevMonth}
+          style={styles.monthNavButton}
+          accessibilityLabel="Önceki ay"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Text style={styles.monthNavIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_LABELS[viewMonth]} {viewYear}</Text>
-        <TouchableOpacity onPress={goNextMonth} style={styles.monthNavButton}>
+        <TouchableOpacity
+          onPress={goNextMonth}
+          style={styles.monthNavButton}
+          accessibilityLabel="Sonraki ay"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Text style={styles.monthNavIcon}>›</Text>
         </TouchableOpacity>
       </View>
@@ -491,12 +501,18 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
             }
           };
 
+          const dayLabel = `${day} ${MONTH_LABELS[viewMonth]}${isToday ? ", bugün" : ""}${
+            hasBoth ? ", antrenman ve müsabaka var" : hasSessions ? ", antrenman var" : hasMatches ? ", müsabaka var" : ""
+          }`;
+
           return (
             <TouchableOpacity
               key={idx}
               style={styles.dayCell}
               onPress={handleDayPress}
               activeOpacity={0.7}
+              accessibilityLabel={dayLabel}
+              accessibilityState={{ selected: isSelected }}
             >
               {/* Dış halka SADECE "bugün"ü işaretler — dolgu rengini (antrenman/
                   müsabaka/ikisi de) hiç etkilemez, üstüne binmez. */}

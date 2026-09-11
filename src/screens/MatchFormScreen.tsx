@@ -334,7 +334,13 @@ export default function MatchFormScreen({ route, navigation }: Props) {
               </Text>
             ) : (
               roster.map((r) => (
-                <TouchableOpacity key={r.athlete_id} style={styles.rosterRow} onPress={() => toggleRoster(r.athlete_id)}>
+                <TouchableOpacity
+                  key={r.athlete_id}
+                  style={styles.rosterRow}
+                  onPress={() => toggleRoster(r.athlete_id)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: r.selected }}
+                >
                   <View style={[styles.checkbox, r.selected && styles.checkboxChecked]}>
                     {r.selected && <Text style={styles.checkmark}>✓</Text>}
                   </View>

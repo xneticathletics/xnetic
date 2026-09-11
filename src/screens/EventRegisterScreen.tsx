@@ -155,7 +155,12 @@ export default function EventRegisterScreen({ route, navigation }: Props) {
                   <Text style={styles.bankFieldLabel}>Hesap Sahibi</Text>
                   <View style={styles.bankFieldRow}>
                     <Text style={styles.bankFieldValue}>{bankInfo.bankAccountName}</Text>
-                    <TouchableOpacity style={styles.copyButton} onPress={() => copy("name", bankInfo.bankAccountName!)}>
+                    <TouchableOpacity
+                      style={styles.copyButton}
+                      onPress={() => copy("name", bankInfo.bankAccountName!)}
+                      accessibilityLabel="Hesap adını kopyala"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
                       <Text style={styles.copyIcon}>{copiedKey === "name" ? "✓" : "📋"}</Text>
                     </TouchableOpacity>
                   </View>
@@ -166,7 +171,12 @@ export default function EventRegisterScreen({ route, navigation }: Props) {
                   <Text style={styles.bankFieldLabel}>IBAN</Text>
                   <View style={styles.bankFieldRow}>
                     <Text style={styles.bankFieldValue}>{bankInfo.bankIban}</Text>
-                    <TouchableOpacity style={styles.copyButton} onPress={() => copy("iban", bankInfo.bankIban!)}>
+                    <TouchableOpacity
+                      style={styles.copyButton}
+                      onPress={() => copy("iban", bankInfo.bankIban!)}
+                      accessibilityLabel="IBAN'ı kopyala"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
                       <Text style={styles.copyIcon}>{copiedKey === "iban" ? "✓" : "📋"}</Text>
                     </TouchableOpacity>
                   </View>

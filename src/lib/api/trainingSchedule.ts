@@ -38,9 +38,14 @@ export async function listTemplatesForGroups(groupIds: string[]): Promise<Schedu
   return (data as unknown as ScheduleTemplate[]) ?? [];
 }
 
-export async function createTemplate(input: ScheduleTemplateInput): Promise<void> {
-  const { error } = await supabase.from("training_schedule_templates").insert(input);
+export async function createTemplate(input: ScheduleTemplateInput): Promise<ScheduleTemplate> {
+  const { data, error } = await supabase
+    .from("training_schedule_templates")
+    .insert(input)
+    .select(TEMPLATE_FIELDS)
+    .single();
   if (error) throw error;
+  return data as unknown as ScheduleTemplate;
 }
 
 export async function deleteTemplate(id: string): Promise<void> {
