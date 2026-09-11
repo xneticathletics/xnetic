@@ -22,18 +22,45 @@ type Screen =
   | { kind: "clubStructure" }
   | { kind: "clubStructureList"; listType: "gruplar" | "branslar" | "salonlar" }
   | { kind: "beslenme" }
-  | { kind: "placeholder"; label: string; icon: string; note: string };
+  | { kind: "wellness" }
+  | { kind: "calisma" }
+  | { kind: "individualProgram" }
+  | { kind: "sosyalAlan" }
+  | { kind: "infoList"; title: string; backLabel: string; items: ListItem[] };
+
+type ListItem = { icon?: string; title: string; sub: string; tag?: string };
 
 const ATHLETES = [
-  { id: "mehmet-y", name: "Mehmet Yılmaz", group: "U13 Filizler", branch: "Basketbol", musabik: false, age: 13, height: 158, weight: 48 },
-  { id: "elif-k", name: "Elif Kaya", group: "U13 Filizler", branch: "Basketbol", musabik: false, age: 13, height: 155, weight: 46 },
+  // Basketbol
+  { id: "mert-c", name: "Mert Coşkun", group: "U10 Erkek", branch: "Basketbol", musabik: false, age: 10, height: 140, weight: 33 },
+  { id: "baris-k", name: "Barış Kılıç", group: "U10 Erkek", branch: "Basketbol", musabik: false, age: 10, height: 138, weight: 32 },
+  { id: "elif-k", name: "Elif Kaya", group: "U12 Kız", branch: "Basketbol", musabik: false, age: 12, height: 151, weight: 40 },
+  { id: "su-y", name: "Su Yılmaz", group: "U12 Kız", branch: "Basketbol", musabik: false, age: 12, height: 149, weight: 39 },
+  { id: "defne-a", name: "Defne Arık", group: "U14 Kız", branch: "Basketbol", musabik: true, age: 14, height: 162, weight: 50 },
+  { id: "mehmet-y", name: "Mehmet Yılmaz", group: "U11 Erkek", branch: "Basketbol", musabik: false, age: 11, height: 146, weight: 36 },
+  { id: "kerem-u", name: "Kerem Uslu", group: "U11 Erkek", branch: "Basketbol", musabik: false, age: 11, height: 144, weight: 35 },
   { id: "can-oz", name: "Can Öztürk", group: "U16 Umutlar", branch: "Basketbol", musabik: true, age: 16, height: 179, weight: 68 },
-  { id: "ayse", name: "Ayşe Demir", group: "U17 Gençler", branch: "Voleybol", musabik: true, age: 17, height: 171, weight: 60 },
-  { id: "deniz", name: "Deniz Arslan", group: "U17 Gençler", branch: "Voleybol", musabik: false, age: 17, height: 168, weight: 57 },
-  { id: "zeynep", name: "Zeynep Kaya", group: "U15 Yıldızlar", branch: "Yüzme", musabik: true, age: 15, height: 162, weight: 52 },
-  { id: "berk", name: "Berk Yıldız", group: "U11 Minikler", branch: "Yüzme", musabik: false, age: 11, height: 142, weight: 36 },
-  { id: "kaan", name: "Kaan Şahin", group: "U14 Kartallar", branch: "Futbol", musabik: true, age: 14, height: 163, weight: 51 },
+  // Futbol
+  { id: "kaan", name: "Kaan Şahin", group: "U10 Spor Okulu", branch: "Futbol", musabik: false, age: 10, height: 139, weight: 32 },
+  { id: "efe-k", name: "Efe Korkmaz", group: "U10 Spor Okulu", branch: "Futbol", musabik: false, age: 10, height: 141, weight: 33 },
   { id: "ece", name: "Ece Aydın", group: "U14 Kartallar", branch: "Futbol", musabik: false, age: 14, height: 160, weight: 49 },
+  { id: "arda-b", name: "Arda Bulut", group: "U15 Erkek", branch: "Futbol", musabik: true, age: 15, height: 168, weight: 58 },
+  // Voleybol
+  { id: "ayse", name: "Ayşe Demir", group: "Genç Kız", branch: "Voleybol", musabik: true, age: 16, height: 171, weight: 60 },
+  { id: "deniz", name: "Deniz Arslan", group: "Genç Kız", branch: "Voleybol", musabik: false, age: 16, height: 168, weight: 57 },
+  { id: "naz-g", name: "Naz Güneş", group: "Midi Kız", branch: "Voleybol", musabik: false, age: 12, height: 155, weight: 42 },
+  { id: "ela-t", name: "Ela Turan", group: "Mini Kız", branch: "Voleybol", musabik: false, age: 9, height: 135, weight: 30 },
+  { id: "irem-s", name: "İrem Şahin", group: "2012-13 Spor Okulu", branch: "Voleybol", musabik: false, age: 13, height: 158, weight: 45 },
+  // Yüzme
+  { id: "zeynep", name: "Zeynep Kaya", group: "Balinalar", branch: "Yüzme", musabik: true, age: 15, height: 162, weight: 52 },
+  { id: "asli-e", name: "Aslı Er", group: "Balinalar", branch: "Yüzme", musabik: false, age: 15, height: 160, weight: 50 },
+  { id: "berk", name: "Berk Yıldız", group: "Foklar", branch: "Yüzme", musabik: false, age: 11, height: 142, weight: 36 },
+  { id: "onur-a", name: "Onur Aydın", group: "Köpek Balıkları", branch: "Yüzme", musabik: true, age: 13, height: 156, weight: 44 },
+  { id: "mira-c", name: "Mira Çelik", group: "U15 Yıldızlar", branch: "Yüzme", musabik: false, age: 14, height: 159, weight: 48 },
+  // Cimnastik
+  { id: "selin-a", name: "Selin Acar", group: "Canlar", branch: "Cimnastik", musabik: false, age: 7, height: 118, weight: 21 },
+  { id: "yaren-d", name: "Yaren Doğan", group: "Çılgınlar", branch: "Cimnastik", musabik: true, age: 9, height: 128, weight: 25 },
+  { id: "lina-k", name: "Lina Kurt", group: "Şirinler", branch: "Cimnastik", musabik: false, age: 6, height: 112, weight: 19 },
 ];
 
 const BRANCHES = Array.from(new Set(ATHLETES.map((a) => a.branch)));
@@ -42,7 +69,7 @@ const GROUPS = Array.from(
   new Map(ATHLETES.map((a) => [`${a.branch}__${a.group}`, { group: a.group, branch: a.branch }])).values()
 );
 
-const VENUES = ["Gül Spor Salonu", "Merkez Spor Salonu", "Deniz Yüzme Havuzu"];
+const VENUES = ["Gül Spor Salonu", "Kaktüs Halı Saha", "Lale Spor Salonu", "Merkez Spor Salonu"];
 
 type CoachField = { label: string; value: string | null };
 type CoachData = {
@@ -60,15 +87,15 @@ type CoachData = {
 
 const COACHES: CoachData[] = [
   {
-    id: "mehmet-d",
-    name: "Mehmet Demir",
-    branch: "Yüzme",
-    level: 1,
-    groups: ["U11 Minikler", "U15 Yıldızlar"],
+    id: "ahmet-y",
+    name: "Ahmet Yılmaz",
+    branch: "Basketbol",
+    level: 3,
+    groups: ["U10 Erkek", "U12 Kız", "U14 Kız"],
     venue: "Gül Spor Salonu",
     isCoordinator: false,
     brans: [
-      { label: "Kademe", value: "1. Kademe" },
+      { label: "Kademe", value: "3. Kademe" },
       { label: "Belge numarası", value: null },
       { label: "Deneyim yılı", value: null },
       { label: "Kulübe başlama", value: null },
@@ -83,34 +110,11 @@ const COACHES: CoachData[] = [
     ],
   },
   {
-    id: "elif-c",
-    name: "Elif Çelik",
-    branch: "Basketbol",
-    level: 2,
-    groups: ["U13 Filizler", "U16 Umutlar"],
-    venue: null,
-    isCoordinator: false,
-    brans: [
-      { label: "Kademe", value: "2. Kademe" },
-      { label: "Belge numarası", value: null },
-      { label: "Deneyim yılı", value: "7 yıl" },
-      { label: "Kulübe başlama", value: "Eylül 2022" },
-    ],
-    kisisel: [
-      { label: "Telefon", value: "0555 222 33 44" },
-      { label: "E-posta", value: "elif@example.com" },
-    ],
-    acil: [
-      { label: "Acil durum kişisi", value: "Ali Çelik (Eş)" },
-      { label: "Telefon", value: null },
-    ],
-  },
-  {
     id: "caner-s",
     name: "Caner Şahinkaya",
     branch: "Basketbol",
     level: 2,
-    groups: ["U13 Filizler", "U16 Umutlar"],
+    groups: ["U12 Erkek", "U14 Erkek", "U16 Erkek", "U11 Erkek"],
     venue: null,
     isCoordinator: true,
     brans: [
@@ -129,12 +133,35 @@ const COACHES: CoachData[] = [
     ],
   },
   {
+    id: "cem-p",
+    name: "Cem Polater",
+    branch: "Futbol",
+    level: 1,
+    groups: ["U10 Spor Okulu", "U14 Erkek", "U16 Erkek", "U15 Erkek"],
+    venue: "Kaktüs Halı Saha",
+    isCoordinator: false,
+    brans: [
+      { label: "Kademe", value: "1. Kademe" },
+      { label: "Belge numarası", value: "TR-2021-077" },
+      { label: "Deneyim yılı", value: null },
+      { label: "Kulübe başlama", value: "Şubat 2023" },
+    ],
+    kisisel: [
+      { label: "Telefon", value: "0536 222 11 00" },
+      { label: "E-posta", value: null },
+    ],
+    acil: [
+      { label: "Acil durum kişisi", value: "Derya Polater (Eş)" },
+      { label: "Telefon", value: null },
+    ],
+  },
+  {
     id: "ece-c",
     name: "Ece Çelikbaş",
     branch: "Voleybol",
     level: 1,
-    groups: ["U17 Gençler"],
-    venue: "Merkez Spor Salonu",
+    groups: ["2012-13 Spor Okulu", "Küçük Kız", "Mini Kız", "Genç Kız", "Midi Kız"],
+    venue: "Lale Spor Salonu",
     isCoordinator: false,
     brans: [
       { label: "Kademe", value: "1. Kademe" },
@@ -151,6 +178,52 @@ const COACHES: CoachData[] = [
       { label: "Telefon", value: null },
     ],
   },
+  {
+    id: "ege-a",
+    name: "Ege Aydınlı",
+    branch: "Basketbol",
+    level: 1,
+    groups: ["U13 Kız", "U15 Erkek", "U13 Erkek"],
+    venue: null,
+    isCoordinator: false,
+    brans: [
+      { label: "Kademe", value: "1. Kademe" },
+      { label: "Belge numarası", value: null },
+      { label: "Deneyim yılı", value: "3 yıl" },
+      { label: "Kulübe başlama", value: "Eylül 2023" },
+    ],
+    kisisel: [
+      { label: "Telefon", value: "0538 999 00 11" },
+      { label: "E-posta", value: "ege@example.com" },
+    ],
+    acil: [
+      { label: "Acil durum kişisi", value: null },
+      { label: "Telefon", value: null },
+    ],
+  },
+  {
+    id: "emre-d",
+    name: "Emre Demiröz",
+    branch: "Voleybol",
+    level: 1,
+    groups: ["2014-15-16 Spor Okulu", "Midi Kız", "Yıldız Kız"],
+    venue: null,
+    isCoordinator: false,
+    brans: [
+      { label: "Kademe", value: "1. Kademe" },
+      { label: "Belge numarası", value: "TR-2022-133" },
+      { label: "Deneyim yılı", value: "2 yıl" },
+      { label: "Kulübe başlama", value: "Ocak 2025" },
+    ],
+    kisisel: [
+      { label: "Telefon", value: "0541 333 22 11" },
+      { label: "E-posta", value: "emre@example.com" },
+    ],
+    acil: [
+      { label: "Acil durum kişisi", value: "Aylin Demiröz (Anne)" },
+      { label: "Telefon", value: "0541 333 22 11" },
+    ],
+  },
 ];
 
 const PROGRAM_EXERCISES = [
@@ -165,6 +238,45 @@ const SPEED_HISTORY = [
   { date: "02.01.2026", value: "3.55 sn" },
 ];
 
+const BESINLER_ITEMS: ListItem[] = [
+  { icon: "🍗", title: "Tavuk Göğsü", sub: "165 kcal · 31g protein — kas onarımı için ideal, yağsız bir protein kaynağı.", tag: "100g" },
+  { icon: "🥣", title: "Yulaf", sub: "389 kcal · 17g protein · 66g karbonhidrat — uzun süreli enerji için düşük glisemik indeksli tahıl.", tag: "100g" },
+  { icon: "🍌", title: "Muz", sub: "89 kcal · yüksek potasyum — antrenman öncesi hızlı enerji ve kramp önleme.", tag: "1 adet" },
+  { icon: "🥚", title: "Yumurta", sub: "78 kcal · 6g protein — tüm amino asitleri içeren tam bir protein kaynağı.", tag: "1 adet" },
+  { icon: "🥑", title: "Avokado", sub: "160 kcal · sağlıklı yağlar — iltihap karşıtı omega-3 kaynağı.", tag: "100g" },
+];
+
+const TARIFLER_ITEMS: ListItem[] = [
+  { icon: "🥤", title: "Proteinli Muzlu Smoothie", sub: "Süt, muz, yulaf ve protein tozu — antrenman sonrası toparlanma için.", tag: "5 dk" },
+  { icon: "🍗", title: "Izgara Tavuklu Kinoa Salatası", sub: "Yüksek proteinli, dengeli bir öğün — maç öncesi ideal.", tag: "20 dk" },
+  { icon: "🥣", title: "Yulaf ve Meyveli Kahvaltı", sub: "Yavaş sindirilen karbonhidrat — sabah antrenmanları için enerji deposu.", tag: "10 dk" },
+];
+
+const BESLENME_REHBERI_ITEMS: ListItem[] = [
+  { title: "Antrenman Öncesi Beslenme", sub: "Performansı en üst düzeye çıkaran öğün zamanlaması ve içerik önerileri.", tag: "3 dk okuma" },
+  { title: "Su Tüketimi ve Performans", sub: "Sıvı kaybının odaklanma ve dayanıklılığa etkisi.", tag: "4 dk okuma" },
+  { title: "Büyüme Çağında Protein İhtiyacı", sub: "Genç sporcular için günlük protein hedefleri.", tag: "5 dk okuma" },
+];
+
+const FITNESS_GRUPLARI_ITEMS: ListItem[] = [
+  { icon: "🏀", title: "Basketbol Kuvvet Grubu", sub: "Branştaki müsabık sporculardan oluşan özel kuvvet antrenmanı grubu.", tag: "3 sporcu" },
+  { icon: "🏊", title: "Yüzme Sürat Grubu", sub: "Patlayıcı güç ve sürat odaklı ek çalışma grubu.", tag: "2 sporcu" },
+  { icon: "🤸", title: "Cimnastik Esneklik Grubu", sub: "Genç müsabık sporcular için esneklik ve denge çalışması grubu.", tag: "1 sporcu" },
+];
+
+const MAGAZA_ITEMS: ListItem[] = [
+  { icon: "👕", title: "Kulüp Forması", sub: "Nefes alabilen kumaş, isim/numara baskı seçeneği.", tag: "450 ₺" },
+  { icon: "🩳", title: "Antrenman Şortu", sub: "Hafif ve esnek, tüm branşlara uygun.", tag: "180 ₺" },
+  { icon: "🧴", title: "Su Matarası", sub: "1L, kulüp logolu, sızdırmaz kapak.", tag: "90 ₺" },
+  { icon: "🎒", title: "Spor Çantası", sub: "Ayakkabı bölmeli, geniş iç hacim.", tag: "320 ₺" },
+];
+
+const ETKINLIK_ITEMS: ListItem[] = [
+  { icon: "🏀", title: "Yaz Basketbol Kampı", sub: "15–20 Temmuz · Gül Spor Salonu", tag: "24 kayıt" },
+  { icon: "🏆", title: "Bahar Turnuvası", sub: "3 Mayıs · Tüm branşlar", tag: "Kayıtlar açık" },
+  { icon: "🏊", title: "Yüzme Deplasmanı", sub: "12 Eylül · Deniz Yüzme Havuzu", tag: "9 kayıt" },
+];
+
 const HOME_TILES: { key: Screen; icon: string; label: string; sub: string }[] = [
   { key: { kind: "sporcuList" }, icon: "👥", label: "Sporcu Yönetimi", sub: "Sporcular, gruplar" },
   { key: { kind: "antrenorList" }, icon: "🧑‍🏫", label: "Antrenörler", sub: "Kadro ve atamalar" },
@@ -174,9 +286,9 @@ const HOME_TILES: { key: Screen; icon: string; label: string; sub: string }[] = 
   { key: { kind: "performansCategories" }, icon: "⏱️", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet" },
   { key: { kind: "beslenme" }, icon: "🥗", label: "Beslenme", sub: "Besinler ve Rehber" },
   { key: { kind: "fitnessHub" }, icon: "💪", label: "Fitness", sub: "Check-in ve çalışma takibi" },
-  { key: { kind: "placeholder", label: "Mağaza", icon: "🛍️", note: "Forma ve ekipman satışı." }, icon: "🛍️", label: "Mağaza", sub: "Ürünler ve siparişler" },
-  { key: { kind: "placeholder", label: "Etkinlik/Turnuva/Kamp", icon: "🏆", note: "Etkinlik oluştur ve kayıtları yönet." }, icon: "🏆", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet" },
-  { key: { kind: "placeholder", label: "Sosyal Alan", icon: "📸", note: "Fotoğraf ve video paylaşımı." }, icon: "📸", label: "Sosyal Alan", sub: "Fotoğraf ve videolar" },
+  { key: { kind: "infoList", title: "Mağaza", backLabel: "Ana Ekran", items: MAGAZA_ITEMS }, icon: "🛍️", label: "Mağaza", sub: "Ürünler ve siparişler" },
+  { key: { kind: "infoList", title: "Etkinlik/Turnuva/Kamp", backLabel: "Ana Ekran", items: ETKINLIK_ITEMS }, icon: "🏆", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet" },
+  { key: { kind: "sosyalAlan" }, icon: "📸", label: "Sosyal Alan", sub: "Fotoğraf ve videolar" },
 ];
 
 function Avatar({ letter, color }: { letter: string; color: string }) {
@@ -242,6 +354,15 @@ function StatPill({ icon, value, label }: { icon: string; value: string | number
   );
 }
 
+function TabIcon({ icon, label, active, onClick }: { icon: string; label: string; active?: boolean; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className="flex flex-col items-center gap-0.5 px-1">
+      <span className={`text-sm ${active ? "" : "opacity-60"}`}>{icon}</span>
+      <span className={`text-[8px] font-semibold ${active ? "text-yellow" : "text-muted"}`}>{label}</span>
+    </button>
+  );
+}
+
 export default function PhoneDemo() {
   const [stack, setStack] = useState<Screen[]>([{ kind: "home" }]);
   const screen = stack[stack.length - 1];
@@ -254,7 +375,15 @@ export default function PhoneDemo() {
     <div className="mx-auto w-[300px] select-none">
       <div className="relative rounded-[2.5rem] border-[6px] border-line bg-[#0a0b1c] p-2 shadow-2xl shadow-black/40">
         <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-[#0a0b1c]" />
-        <div className="h-[560px] overflow-y-auto rounded-[2rem] bg-bg px-4 pb-4 pt-7">
+        <div className="flex flex-col overflow-hidden rounded-[2rem] bg-bg">
+          <div className="flex items-center justify-between px-5 pb-1 pt-3 text-[11px] font-bold text-ink">
+            <span>08:41</span>
+            <span className="flex items-center gap-1 text-[10px]">
+              <span>📶</span>
+              <span>🔋</span>
+            </span>
+          </div>
+          <div className="h-[452px] overflow-y-auto px-4 pb-4 pt-2">
           {screen.kind === "home" && <HomeScreen onSelect={push} />}
           {screen.kind === "sporcuList" && <AthleteListScreen onBack={back} onSelect={(id) => push({ kind: "sporcuDetail", id })} />}
           {screen.kind === "sporcuDetail" && <AthleteDetailScreen id={screen.id} onBack={back} />}
@@ -270,15 +399,25 @@ export default function PhoneDemo() {
           {screen.kind === "clubStructure" && <ClubStructureScreen onBack={back} onSelect={(listType) => push({ kind: "clubStructureList", listType })} />}
           {screen.kind === "clubStructureList" && <ClubStructureListScreen listType={screen.listType} onBack={back} />}
           {screen.kind === "beslenme" && <BeslenmeScreen onBack={back} onSelect={push} />}
-          {screen.kind === "placeholder" && <PlaceholderScreen label={screen.label} icon={screen.icon} note={screen.note} onBack={back} />}
+          {screen.kind === "wellness" && <WellnessScreen onBack={back} />}
+          {screen.kind === "calisma" && <CalismaScreen onBack={back} />}
+          {screen.kind === "individualProgram" && <IndividualProgramScreen onBack={back} />}
+          {screen.kind === "sosyalAlan" && <SocialFeedScreen onBack={back} />}
+          {screen.kind === "infoList" && <InfoListScreen title={screen.title} backLabel={screen.backLabel} items={screen.items} onBack={back} />}
+          </div>
+          <div className="flex items-end justify-around border-t border-line bg-bg px-2 pb-2 pt-1.5">
+            <TabIcon icon="🏠" label="Ana Menü" active={screen.kind === "home"} onClick={goHome} />
+            <TabIcon icon="💬" label="Mesajlar" />
+            <div className="-mt-3 flex flex-col items-center gap-0.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow text-sm font-black text-bg shadow-lg">X</div>
+              <span className="text-[8px] font-semibold text-muted">Asistan</span>
+            </div>
+            <TabIcon icon="⚙️" label="Kulüp Ayarları" />
+            <TabIcon icon="👤" label="Profil" />
+          </div>
         </div>
         <div className="mx-auto mt-2 h-1 w-24 rounded-full bg-line" />
       </div>
-      {screen.kind !== "home" && (
-        <button onClick={goHome} className="mx-auto mt-4 block text-xs font-bold text-teal hover:underline">
-          ⌂ Ana Ekrana Dön
-        </button>
-      )}
     </div>
   );
 }
@@ -765,8 +904,8 @@ type CalEvent = { title: string; time: string; coaches?: string; venue: string; 
 function eventsForDay(day: number, type: "antrenman" | "musabaka" | null): CalEvent[] {
   if (day === 11) {
     return [
-      { title: "Genç Kız", time: "16:00–17:00", coaches: "Merve Kayacan, Ece Çelikbaş", venue: "Lale Spor Salonu", note: "Maç Öncesi Hazırlık", status: "Planlandı", branch: "Voleybol" },
-      { title: "U13 Erkek", time: "16:00–17:00", coaches: "Gizem Yıldıztepe, Ege Aydınlı", venue: "Gül Spor Salonu", status: "Planlandı", branch: "Basketbol" },
+      { title: "Genç Kız", time: "16:00–17:00", coaches: "Ece Çelikbaş, Emre Demiröz", venue: "Lale Spor Salonu", note: "Maç Öncesi Hazırlık", status: "Planlandı", branch: "Voleybol" },
+      { title: "U13 Erkek", time: "16:00–17:00", coaches: "Ege Aydınlı, Caner Şahinkaya", venue: "Gül Spor Salonu", status: "Planlandı", branch: "Basketbol" },
     ];
   }
   if (type === "antrenman") {
@@ -888,23 +1027,14 @@ function CalendarScreen({ onBack }: { onBack: () => void }) {
 
 function FitnessHubScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
   const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
-    {
-      icon: "🌡️", label: "Wellness Check-in", sub: "Uyku, enerji ve ruh hâli takibi", border: "border-teal",
-      target: { kind: "placeholder", label: "Wellness Check-in", icon: "🌡️", note: "Sporcunun günlük uyku, enerji ve ruh hâli takibi." },
-    },
-    {
-      icon: "🏋️", label: "Çalışma", sub: "Göğüs, sırt, bacak, kol, omuz", border: "border-coral",
-      target: { kind: "placeholder", label: "Çalışma", icon: "🏋️", note: "Bölgeye göre hareket kütüphanesi ve ağırlık/tekrar geçmişi." },
-    },
+    { icon: "🌡️", label: "Wellness Check-in", sub: "Uyku, enerji ve ruh hâli takibi", border: "border-teal", target: { kind: "wellness" } },
+    { icon: "🏋️", label: "Çalışma", sub: "Göğüs, sırt, bacak, kol, omuz", border: "border-coral", target: { kind: "calisma" } },
     {
       icon: "🎯", label: "Fitness Grupları", sub: "Branştaki müsabık sporculardan özel gruplar", border: "border-yellow",
-      target: { kind: "placeholder", label: "Fitness Grupları", icon: "🎯", note: "Branştaki müsabık sporculardan oluşturulan özel fitness grupları." },
+      target: { kind: "infoList", title: "Fitness Grupları", backLabel: "Fitness", items: FITNESS_GRUPLARI_ITEMS },
     },
     { icon: "📋", label: "Program", sub: "Örnek Programlar", border: "border-teal", target: { kind: "fitnessProgram" } },
-    {
-      icon: "📝", label: "Bireysel Programlar", sub: "Sporcuların kendi yazdığı programlar", border: "border-coral",
-      target: { kind: "placeholder", label: "Bireysel Programlar", icon: "📝", note: "Sporcunun kulüpten bağımsız kendi oluşturduğu program ve set/tekrar günlüğü." },
-    },
+    { icon: "📝", label: "Bireysel Programlar", sub: "Sporcuların kendi yazdığı programlar", border: "border-coral", target: { kind: "individualProgram" } },
   ];
   return (
     <div>
@@ -1045,18 +1175,9 @@ function ClubStructureListScreen({ listType, onBack }: { listType: "gruplar" | "
 
 function BeslenmeScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
   const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
-    {
-      icon: "🍎", label: "Besinler", sub: "Besin değerleri ve faydaları", border: "border-teal",
-      target: { kind: "placeholder", label: "Besinler", icon: "🍎", note: "Besin değerleri, faydaları ve porsiyon önerileri — kaynakçalı." },
-    },
-    {
-      icon: "🍳", label: "Sporcu Tarifleri", sub: "Pratik ve besleyici tarifler", border: "border-yellow",
-      target: { kind: "placeholder", label: "Sporcu Tarifleri", icon: "🍳", note: "Antrenman öncesi/sonrası pratik ve besleyici tarifler." },
-    },
-    {
-      icon: "📖", label: "Beslenme Rehberi", sub: "Bilimsel kaynaklı yazılar", border: "border-teal",
-      target: { kind: "placeholder", label: "Beslenme Rehberi", icon: "📖", note: "Bilimsel makalelere dayanan beslenme yazıları." },
-    },
+    { icon: "🍎", label: "Besinler", sub: "Besin değerleri ve faydaları", border: "border-teal", target: { kind: "infoList", title: "Besinler", backLabel: "Beslenme", items: BESINLER_ITEMS } },
+    { icon: "🍳", label: "Sporcu Tarifleri", sub: "Pratik ve besleyici tarifler", border: "border-yellow", target: { kind: "infoList", title: "Sporcu Tarifleri", backLabel: "Beslenme", items: TARIFLER_ITEMS } },
+    { icon: "📖", label: "Beslenme Rehberi", sub: "Bilimsel kaynaklı yazılar", border: "border-teal", target: { kind: "infoList", title: "Beslenme Rehberi", backLabel: "Beslenme", items: BESLENME_REHBERI_ITEMS } },
   ];
   return (
     <div>
@@ -1074,14 +1195,163 @@ function BeslenmeScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s
   );
 }
 
-function PlaceholderScreen({ label, icon, note, onBack }: { label: string; icon: string; note: string; onBack: () => void }) {
+function InfoListScreen({ title, backLabel, items, onBack }: { title: string; backLabel: string; items: ListItem[]; onBack: () => void }) {
+  return (
+    <div>
+      <BackHeader label={backLabel} onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">{title}</h3>
+      <div className="space-y-2">
+        {items.map((it) => (
+          <div key={it.title} className="rounded-lg border border-line bg-surface p-3">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-bold text-ink">
+                {it.icon ? `${it.icon} ` : ""}
+                {it.title}
+              </p>
+              {it.tag && <span className="shrink-0 rounded-full bg-line px-2 py-0.5 text-[9px] font-bold text-muted">{it.tag}</span>}
+            </div>
+            <p className="mt-1 text-[10px] leading-relaxed text-muted">{it.sub}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const WELLNESS_HISTORY = [
+  { date: "11 Eylül", sleep: 7, energy: 8, mood: 9 },
+  { date: "10 Eylül", sleep: 6, energy: 6, mood: 7 },
+  { date: "09 Eylül", sleep: 8, energy: 9, mood: 8 },
+];
+
+function WellnessScreen({ onBack }: { onBack: () => void }) {
+  const today = WELLNESS_HISTORY[0];
+  return (
+    <div>
+      <BackHeader label="Fitness" onBack={onBack} />
+      <h3 className="mb-1 text-base font-extrabold text-ink">Wellness Check-in</h3>
+      <p className="mb-4 text-[11px] text-muted">Zeynep Kaya · Bugün</p>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="rounded-lg border border-teal py-3 text-center">
+          <p className="text-lg">😴</p>
+          <p className="text-sm font-extrabold text-teal">{today.sleep}/10</p>
+          <p className="text-[9px] font-semibold text-muted">Uyku</p>
+        </div>
+        <div className="rounded-lg border border-yellow py-3 text-center">
+          <p className="text-lg">⚡</p>
+          <p className="text-sm font-extrabold text-yellow">{today.energy}/10</p>
+          <p className="text-[9px] font-semibold text-muted">Enerji</p>
+        </div>
+        <div className="rounded-lg border border-coral py-3 text-center">
+          <p className="text-lg">🙂</p>
+          <p className="text-sm font-extrabold text-coral">{today.mood}/10</p>
+          <p className="text-[9px] font-semibold text-muted">Ruh Hali</p>
+        </div>
+      </div>
+      <p className="mb-1.5 text-xs font-bold text-ink">Geçmiş</p>
+      <div className="rounded-lg border border-line bg-surface">
+        {WELLNESS_HISTORY.slice(1).map((h, i) => (
+          <div key={h.date} className={`flex items-center justify-between px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
+            <span className="text-xs text-muted">{h.date}</span>
+            <span className="text-[10px] font-semibold text-ink">
+              😴{h.sleep} ⚡{h.energy} 🙂{h.mood}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const CALISMA_CATEGORIES = ["Göğüs", "Sırt", "Bacak", "Kol", "Omuz"];
+const CALISMA_EXERCISE: Record<string, string> = { "Göğüs": "Bench Press", "Sırt": "Lat Pulldown", "Bacak": "Squat", "Kol": "Biceps Curl", "Omuz": "Shoulder Press" };
+const CALISMA_HISTORY = [
+  { date: "09.09.2026", sets: "3 set", detail: "40kg×10, 42kg×8, 45kg×6" },
+  { date: "02.09.2026", sets: "3 set", detail: "38kg×10, 40kg×8, 42kg×6" },
+  { date: "26.08.2026", sets: "3 set", detail: "36kg×10, 38kg×8, 40kg×6" },
+];
+
+function CalismaScreen({ onBack }: { onBack: () => void }) {
+  const [category, setCategory] = useState("Göğüs");
+  return (
+    <div>
+      <BackHeader label="Fitness" onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">Çalışma</h3>
+      <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+        {CALISMA_CATEGORIES.map((c) => (
+          <button
+            key={c}
+            onClick={() => setCategory(c)}
+            className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${category === c ? "border-yellow bg-yellow text-bg" : "border-line text-muted"}`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+      <p className="mb-1.5 text-xs font-bold text-ink">{CALISMA_EXERCISE[category]} · {category}</p>
+      <div className="rounded-lg border border-line bg-surface">
+        {CALISMA_HISTORY.map((h, i) => (
+          <div key={h.date} className={`px-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-ink">{h.date}</span>
+              <span className="text-[10px] text-muted">{h.sets}</span>
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted">{h.detail}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const INDIVIDUAL_PROGRAM_EXERCISES = [
+  { name: "Mekik", sets: "4x20" },
+  { name: "Burpee", sets: "3x12" },
+  { name: "Jump Squat", sets: "4x15" },
+];
+
+function IndividualProgramScreen({ onBack }: { onBack: () => void }) {
+  return (
+    <div>
+      <BackHeader label="Fitness" onBack={onBack} />
+      <h3 className="text-base font-extrabold text-ink">Yaz Formu Programı</h3>
+      <p className="mb-4 text-[11px] text-muted">Zeynep Kaya'nın kendi oluşturduğu program</p>
+      <div className="space-y-2">
+        {INDIVIDUAL_PROGRAM_EXERCISES.map((e) => (
+          <div key={e.name} className="flex items-center justify-between rounded-lg border border-line bg-surface p-3">
+            <span className="text-sm font-semibold text-ink">{e.name}</span>
+            <span className="text-xs font-bold text-violet">{e.sets}</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-[10px] leading-relaxed text-muted">
+        Kulüp tarafından atanmadı — sporcu bu programı ve set/tekrar günlüğünü tamamen kendisi oluşturup takip ediyor.
+      </p>
+    </div>
+  );
+}
+
+const SOCIAL_POSTS = [
+  { emoji: "🏀", caption: "Basketbol antrenmanı", color: "bg-yellow/20" },
+  { emoji: "🏆", caption: "Turnuva kupası", color: "bg-coral/20" },
+  { emoji: "🏊", caption: "Yüzme yarışı", color: "bg-teal/20" },
+  { emoji: "🤸", caption: "Cimnastik gösterisi", color: "bg-violet/20" },
+  { emoji: "⚽", caption: "Maç günü", color: "bg-yellow/20" },
+  { emoji: "🏐", caption: "Voleybol maçı", color: "bg-teal/20" },
+];
+
+function SocialFeedScreen({ onBack }: { onBack: () => void }) {
   return (
     <div>
       <BackHeader label="Ana Ekran" onBack={onBack} />
-      <div className="flex flex-col items-center rounded-xl border border-line bg-surface p-8 text-center">
-        <div className="mb-3 text-3xl">{icon}</div>
-        <p className="mb-1.5 text-sm font-extrabold text-ink">{label}</p>
-        <p className="text-xs leading-relaxed text-muted">{note}</p>
+      <h3 className="mb-3 text-base font-extrabold text-ink">Sosyal Alan</h3>
+      <div className="grid grid-cols-2 gap-2">
+        {SOCIAL_POSTS.map((p) => (
+          <div key={p.caption} className={`flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-line ${p.color} p-3 text-center`}>
+            <span className="text-3xl">{p.emoji}</span>
+            <p className="text-[10px] font-semibold text-ink">{p.caption}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
