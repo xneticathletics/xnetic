@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listActiveProducts, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
 import { useHomeButton } from "../hooks/useHomeButton";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Shop">;
@@ -15,6 +16,7 @@ const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erke
 export default function ShopScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const { role } = useAuth();
+  const columns = useResponsiveColumns(2);
 
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -111,9 +113,10 @@ export default function ShopScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
+        key={`cols-${columns}`}
         data={filteredProducts}
         keyExtractor={(p) => p.id}
-        numColumns={2}
+        numColumns={columns}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}

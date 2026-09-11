@@ -7,11 +7,13 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAthletes, type Athlete } from "../lib/api/athletes";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthletesList">;
 
 export default function AthletesListScreen({ navigation, route }: Props) {
   const { groupId, groupName } = route.params;
+  const columns = useResponsiveColumns(2);
 
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [query, setQuery] = useState("");
@@ -64,9 +66,10 @@ export default function AthletesListScreen({ navigation, route }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
+        key={`cols-${columns}`}
         data={filtered}
         keyExtractor={(a) => a.id}
-        numColumns={2}
+        numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}

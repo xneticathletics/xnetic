@@ -12,6 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useAuth } from "../context/AuthContext";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachesList">;
 
@@ -20,6 +21,7 @@ export default function CoachesListScreen({ navigation }: Props) {
   const { role } = useAuth();
   const { selectedBranch, setSelectedBranch, isLocked } = useBranchSelect();
   const isBranchCoordinator = role === "coach" && isLocked;
+  const columns = useResponsiveColumns(2);
 
   const [coaches, setCoaches] = useState<CoachWithGroups[]>([]);
   const [coachBranches, setCoachBranches] = useState<Record<string, CoachBranchInfo[]>>({});
@@ -187,9 +189,10 @@ export default function CoachesListScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
+        key={`cols-${columns}`}
         data={filteredCoaches}
         keyExtractor={(c) => c.id}
-        numColumns={2}
+        numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ paddingBottom: spacing.md, gap: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}

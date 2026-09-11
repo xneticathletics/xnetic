@@ -12,6 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useAuth } from "../context/AuthContext";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PaymentGroups">;
 
@@ -20,6 +21,7 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
   const { selectedBranch: globalBranch, isLocked } = useBranchSelect();
   const { settings } = useClubSettings();
   const { role } = useAuth();
+  const columns = useResponsiveColumns(4);
 
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -207,10 +209,10 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
         />
       ) : (
         <FlatList
-          key="grid-list"
+          key={`grid-list-cols-${columns}`}
           data={groups}
           keyExtractor={(g) => g.id}
-          numColumns={4}
+          numColumns={columns}
           columnWrapperStyle={{ gap: spacing.xs }}
           contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.xs }}
           ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz grup yok.</Text> : null}

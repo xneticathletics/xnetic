@@ -9,12 +9,14 @@ import { listBranches, type Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AllAthletes">;
 
 export default function AllAthletesScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const { selectedBranch, isLocked } = useBranchSelect();
+  const columns = useResponsiveColumns(2);
 
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -148,9 +150,10 @@ export default function AllAthletesScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
+        key={`cols-${columns}`}
         data={filtered}
         keyExtractor={(a) => a.id}
-        numColumns={2}
+        numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
