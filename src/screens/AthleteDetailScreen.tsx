@@ -180,7 +180,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   const recentSessions = attendance.slice(0, 2);
 
   const handleTypeToggle = async () => {
-    if (!athlete) return;
+    if (!athlete || athlete.group_id) return;
     const next: AthleteType = athlete.athlete_type === "musabik" ? "spor_okulu" : "musabik";
     setTypeSaving(true);
     try {
@@ -292,14 +292,21 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             </View>
             <TouchableOpacity
               style={[styles.badgeOutline, athlete.athlete_type === "musabik" && styles.badgeOutlineYellow]}
-              onPress={isStaff ? handleTypeToggle : undefined}
-              disabled={typeSaving || !isStaff}
+              onPress={isStaff && !athlete.group_id ? handleTypeToggle : undefined}
+              disabled={typeSaving || !isStaff || !!athlete.group_id}
             >
               <Text style={[styles.badgeOutlineText, athlete.athlete_type === "musabik" && styles.badgeOutlineYellowText]}>
                 {athlete.athlete_type === "musabik" ? "MÜSABIK" : "SPOR OKULU"}
               </Text>
             </TouchableOpacity>
           </View>
+          {isStaff && !!athlete.group_id && (
+            // Grubu olan bir sporcunun tipi grubunkinden otomatik belirleniyor
+            // (bkz. sync_athlete_type_from_group tetikleyicisi) — buradaki
+            // rozete dokunmak eskiden hiçbir hata vermeden sessizce hiçbir şey
+            // değiştirmiyordu, artık AthleteFormScreen'deki gibi salt okunur.
+            <Text style={styles.typeReadOnlyHint}>Sporcu tipi grubuna göre otomatik belirleniyor.</Text>
+          )}
           {extraGroups.length > 0 && (
             <Text style={styles.extraGroupsText}>
               + {extraGroups.map((eg) => `${eg.branch} · ${eg.group_name}`).join(", ")}
@@ -578,6 +585,7 @@ const styles = StyleSheet.create({
   badgeOutlineText: { color: colors.ink, fontSize: 11, fontWeight: "700" },
   badgeOutlineYellowText: { color: colors.yellow },
   extraGroupsText: { color: colors.teal, fontSize: 11, marginTop: spacing.sm },
+  typeReadOnlyHint: { color: colors.muted, fontSize: 10, marginTop: spacing.xs },
   statsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   statBox: {
     flex: 1, alignItems: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
