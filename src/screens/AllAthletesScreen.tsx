@@ -59,6 +59,19 @@ export default function AllAthletesScreen({ navigation }: Props) {
     return map;
   }, [groups]);
 
+  // Grup grup sıralama için gruplara sıra numarası veriyoruz — branşa, sonra
+  // grup adına göre (groups zaten API'den ada göre sıralı geliyor, burada
+  // sadece branşı da öne alıyoruz ki aynı branştaki gruplar bitişik dursun).
+  const groupOrderIndex = useMemo(() => {
+    const ordered = [...groups].sort((a, b) => {
+      const branchCmp = a.branch.localeCompare(b.branch, "tr");
+      return branchCmp !== 0 ? branchCmp : a.name.localeCompare(b.name, "tr");
+    });
+    const map: Record<string, number> = {};
+    ordered.forEach((g, i) => { map[g.id] = i; });
+    return map;
+  }, [groups]);
+
   const filtered = useMemo(() => {
     let list = athletes;
     if (branchFilter) {
@@ -71,13 +84,18 @@ export default function AllAthletesScreen({ navigation }: Props) {
     if (q) {
       list = list.filter((a) => a.full_name.toLowerCase().includes(q));
     }
-    // A'dan Z'ye sırala.
-    return [...list].sort((x, y) => x.full_name.localeCompare(y.full_name, "tr"));
-  }, [athletes, branchFilter, typeFilter, query, branchByGroupId]);
+    // Grup grup sırala (grubu olmayanlar en sona) — aynı grup içinde A'dan Z'ye.
+    return [...list].sort((x, y) => {
+      const xOrder = x.group_id != null ? groupOrderIndex[x.group_id] ?? Infinity : Infinity;
+      const yOrder = y.group_id != null ? groupOrderIndex[y.group_id] ?? Infinity : Infinity;
+      if (xOrder !== yOrder) return xOrder - yOrder;
+      return x.full_name.localeCompare(y.full_name, "tr");
+    });
+  }, [athletes, branchFilter, typeFilter, query, branchByGroupId, groupOrderIndex]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.subtitle}>{filtered.length} sporcu — A'dan Z'ye</Text>
+      <Text style={styles.subtitle}>{filtered.length} sporcu — Gruba göre</Text>
 
       {!isLocked && branches.length > 1 && (
         <ScrollView

@@ -41,6 +41,9 @@ export default function AthletesListPage() {
       const ga = a.groups?.name ?? "";
       const gb = b.groups?.name ?? "";
       if (!ga !== !gb) return ga ? -1 : 1;
+      // Aynı branştaki gruplar bitişik dursun (mobildeki AllAthletesScreen ile aynı sıralama).
+      const branchCompare = (a.groups?.branch ?? "").localeCompare(b.groups?.branch ?? "", "tr");
+      if (branchCompare !== 0) return branchCompare;
       const groupCompare = ga.localeCompare(gb, "tr");
       if (groupCompare !== 0) return groupCompare;
       return a.full_name.localeCompare(b.full_name, "tr");
