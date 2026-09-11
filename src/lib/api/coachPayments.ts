@@ -17,11 +17,22 @@ export type CoachPayment = {
 
 const COACH_PAYMENT_FIELDS = "id, coach_id, plan_id, amount, due_date, paid_at, status, notes, created_at";
 
-export async function listCoachPayments(): Promise<CoachPayment[]> {
-  const { data, error } = await supabase
+function monthsAgoISO(months: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
+// monthsBack: geriye dönük kaç ay getirilsin — varsayılan 24 ay, tüm
+// geçmişi görmek isteyen ekran null geçer (bkz. payments.ts listClubPayments).
+export async function listCoachPayments(monthsBack: number | null = 24): Promise<CoachPayment[]> {
+  let query = supabase
     .from("coach_payments")
     .select(`${COACH_PAYMENT_FIELDS}, users:coach_id(name)`)
     .order("due_date", { ascending: false });
+  if (monthsBack != null) query = query.gte("due_date", monthsAgoISO(monthsBack));
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data as unknown as CoachPayment[]) ?? [];
 }

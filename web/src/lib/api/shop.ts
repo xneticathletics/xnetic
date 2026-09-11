@@ -197,11 +197,22 @@ export async function removeProductPhoto(productId: string, url: string, existin
 // --- Siparişler ---
 
 // Admin/muhasebe — kulübün tüm siparişlerini görür.
-export async function listAllOrders(): Promise<ShopOrder[]> {
-  const { data, error } = await supabase
+function monthsAgoISO(months: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
+// monthsBack: geriye dönük kaç ay getirilsin — varsayılan 24 ay (mobildeki
+// aynı fonksiyonla aynı desen).
+export async function listAllOrders(monthsBack: number | null = 24): Promise<ShopOrder[]> {
+  let query = supabase
     .from("shop_orders")
     .select(`${ORDER_FIELDS}, shop_products(title), shop_product_variants(color, size), users:parent_user_id(name, phone)`)
     .order("created_at", { ascending: false });
+  if (monthsBack != null) query = query.gte("created_at", monthsAgoISO(monthsBack));
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data as unknown as ShopOrder[]) ?? [];
 }

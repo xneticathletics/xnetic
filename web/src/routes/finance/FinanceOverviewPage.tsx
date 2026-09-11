@@ -47,7 +47,11 @@ export default function FinanceOverviewPage() {
       const settings = await getClubSettings(clubId);
       setGraceDays(settings.payment_overdue_grace_days);
       await topUpAllActivePlans();
-      const [all, s] = await Promise.all([listClubPayments(), getMonthlyFinanceSummary(settings.payment_overdue_grace_days)]);
+      // "Vadesi Geçmiş" filtresi ay sınırı olmadan TÜM gecikmiş ödemeleri
+      // göstermesi gerektiğinden (mobildeki PaymentsListScreen ile aynı
+      // gereksinim) bu tek sorgu bilerek varsayılan 24 aylık pencereyi
+      // atlayıp (null) tüm geçmişi çekiyor.
+      const [all, s] = await Promise.all([listClubPayments(null), getMonthlyFinanceSummary(settings.payment_overdue_grace_days)]);
       setPayments(all);
       setSummary(s);
     } catch (e: any) {

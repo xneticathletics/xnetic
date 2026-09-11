@@ -14,11 +14,22 @@ export type ExpenseInput = {
   expense_date: string;
 };
 
-export async function listExpenses(): Promise<Expense[]> {
-  const { data, error } = await supabase
+function monthsAgoISO(months: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
+// monthsBack: geriye dönük kaç ay getirilsin — varsayılan 24 ay, tüm
+// geçmişi görmek isteyen ekran null geçer (bkz. payments.ts listClubPayments).
+export async function listExpenses(monthsBack: number | null = 24): Promise<Expense[]> {
+  let query = supabase
     .from("expenses")
     .select("id, description, amount, expense_date, created_at")
     .order("expense_date", { ascending: false });
+  if (monthsBack != null) query = query.gte("expense_date", monthsAgoISO(monthsBack));
+
+  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
 }

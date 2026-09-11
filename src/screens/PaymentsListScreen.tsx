@@ -42,7 +42,11 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
       // Ekran her açıldığında aktif planların önümüzdeki 3 aylık ufkunu
       // tazeler — zaman ne kadar geçmiş olursa olsun otomatik tamamlanır.
       await topUpAllActivePlans();
-      const all = await listClubPayments();
+      // "Vadesi Geçmiş" ay sınırı olmadan TÜM gecikmiş ödemeleri göstermesi
+      // gerektiğinden (aşağıdaki not), o filtre için varsayılan 24 aylık
+      // pencereyi atlayıp tüm geçmişi çekiyoruz — diğer filtreler (bu ayı
+      // gösteren "Bekleyen"/"Tahsil Edilen") için 24 ay fazlasıyla yeterli.
+      const all = await listClubPayments(filter === "overdue" ? null : 24);
       const graceDays = settings.payment_overdue_grace_days;
       // "Bekleyen" listesi Finans ana ekranındaki özet kartla AYNI ay
       // penceresini (bu ayın 1'i - son günü, due_date'e göre) kullanır —

@@ -41,11 +41,15 @@ export default function FinancialDocumentsPage() {
   const load = async () => {
     try {
       setError(null);
+      // Bu sayfa kullanıcının kendi seçtiği (isteğe göre yıllar öncesine
+      // gidebilen) bir tarih aralığında döküman/rapor çıkarmak için var —
+      // bu yüzden bilerek varsayılan 24 aylık pencereyi atlayıp (null)
+      // TÜM geçmişi çekiyoruz; aralık filtresi zaten aşağıda client-side yapılıyor.
       const [allPayments, allExpenses, allExtraIncome, allCoachPayments] = await Promise.all([
-        listClubPayments(),
-        listExpenses(),
-        listExtraIncome(),
-        listCoachPayments(),
+        listClubPayments(null),
+        listExpenses(null),
+        listExtraIncome(null),
+        listCoachPayments(null),
       ]);
       setPayments(allPayments.filter((p) => p.status === "paid"));
       setExpenses(allExpenses);

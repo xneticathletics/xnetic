@@ -57,8 +57,12 @@ export default function FinancialDocumentsScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
+      // Bu ekran kullanıcının kendi seçtiği (isteğe göre yıllar öncesine
+      // gidebilen) bir tarih aralığında döküman/rapor çıkarmak için var —
+      // bu yüzden bilerek varsayılan 24 aylık pencereyi atlayıp (null)
+      // TÜM geçmişi çekiyoruz; aralık filtresi zaten aşağıda client-side yapılıyor.
       const [allPayments, allExpenses, allExtraIncome, allCoachPayments] = await Promise.all([
-        listClubPayments(), listExpenses(), listExtraIncome(), listCoachPayments(),
+        listClubPayments(null), listExpenses(null), listExtraIncome(null), listCoachPayments(null),
       ]);
       // Finansal Dökümanlarım = geçmişte fiilen YAPILMIŞ (ödenmiş) aidatların,
       // aidat dışı gelirlerin (forma/malzeme satışı vb.), girilen giderlerin

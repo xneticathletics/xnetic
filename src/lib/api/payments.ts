@@ -48,12 +48,24 @@ export const PAYMENT_METHOD_DB_LABEL: Record<string, string> = {
   qr: "QR",
 };
 
-export async function listClubPayments(): Promise<Payment[]> {
-  const { data, error } = await supabase
+function monthsAgoISO(months: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
+// monthsBack: geriye dönük kaç ay getirilsin — varsayılan 24 ay (kulüp
+// yıllar içinde birikince TÜM geçmişi tek seferde çekmek yavaşlıyordu).
+// Vadesi ileride olan (henüz doğmamış) kayıtlar bu filtreden etkilenmez,
+// sadece ESKİ geçmiş kesiliyor. Tüm geçmişi görmek isteyen ekran null geçer.
+export async function listClubPayments(monthsBack: number | null = 24): Promise<Payment[]> {
+  let query = supabase
     .from("payments")
     .select(`${PAYMENT_FIELDS}, athletes(full_name, parent_name, parent_phone, parent_user_id, groups!group_id(branch))`)
     .order("due_date", { ascending: true });
+  if (monthsBack != null) query = query.gte("due_date", monthsAgoISO(monthsBack));
 
+  const { data, error } = await query;
   if (error) throw error;
   return (data as unknown as Payment[]) ?? [];
 }
