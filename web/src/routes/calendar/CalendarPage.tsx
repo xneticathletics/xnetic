@@ -16,7 +16,18 @@ export default function CalendarPage() {
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState(todayKey());
+  // Branş → grup iki adımlı filtre (mobildeki TrainingSessionsScreen.tsx
+  // ile aynı desen): çok branşlı bir kulüpte TÜM grupları tek bir uzun
+  // listede göstermek yerine önce branş seçilir, grup listesi ancak
+  // BELİRLİ bir branş seçilince (o branşınkilerle sınırlı) açılır —
+  // "Tüm Branşlar" seçiliyken grup filtresi hiç gösterilmez.
+  const [branchFilter, setBranchFilter] = useState<string>("");
   const [groupFilter, setGroupFilter] = useState<string>("");
+
+  const handleBranchChange = (branch: string) => {
+    setBranchFilter(branch);
+    setGroupFilter("");
+  };
 
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [matches, setMatches] = useState<MatchRow[]>([]);
@@ -46,14 +57,23 @@ export default function CalendarPage() {
 
   useEffect(load, []);
 
-  const filteredSessions = useMemo(
-    () => (groupFilter ? sessions.filter((s) => s.group_id === groupFilter) : sessions),
-    [sessions, groupFilter]
+  const groupsInBranch = useMemo(
+    () => (branchFilter ? groups.filter((g) => g.branch === branchFilter) : []),
+    [groups, branchFilter]
   );
-  const filteredMatches = useMemo(
-    () => (groupFilter ? matches.filter((m) => m.group_id === groupFilter) : matches),
-    [matches, groupFilter]
-  );
+
+  const filteredSessions = useMemo(() => {
+    let list = sessions;
+    if (groupFilter) list = list.filter((s) => s.group_id === groupFilter);
+    else if (branchFilter) list = list.filter((s) => s.groups?.branch === branchFilter);
+    return list;
+  }, [sessions, branchFilter, groupFilter]);
+  const filteredMatches = useMemo(() => {
+    let list = matches;
+    if (groupFilter) list = list.filter((m) => m.group_id === groupFilter);
+    else if (branchFilter) list = list.filter((m) => m.groups?.branch === branchFilter);
+    return list;
+  }, [matches, branchFilter, groupFilter]);
 
   const sessionsByDate = useMemo(() => {
     const map: Record<string, TrainingSession[]> = {};
@@ -121,7 +141,38 @@ export default function CalendarPage() {
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
 
-      {groups.length > 1 && (
+      {branches.length > 1 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <select
+            className="w-full max-w-xs rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink"
+            value={branchFilter}
+            onChange={(e) => handleBranchChange(e.target.value)}
+          >
+            <option value="">Tüm Branşlar</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.name}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+
+          {branchFilter && groupsInBranch.length > 1 && (
+            <select
+              className="w-full max-w-xs rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink"
+              value={groupFilter}
+              onChange={(e) => setGroupFilter(e.target.value)}
+            >
+              <option value="">Tüm Gruplar</option>
+              {groupsInBranch.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+      {branches.length <= 1 && groups.length > 1 && (
         <select
           className="mb-4 w-full max-w-xs rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink"
           value={groupFilter}
