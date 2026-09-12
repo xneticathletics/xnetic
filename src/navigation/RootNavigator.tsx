@@ -21,6 +21,7 @@ import { parseRecoveryUrl, startRecoverySession } from "../lib/api/passwordReset
 import { getPlatformSettings } from "../lib/api/platformSettings";
 import { getMySubscriptionStatus, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
 import RoleTabs from "../navigation/RoleTabs";
+import { logBoot } from "../lib/bootLog";
 
 const Stack = createNativeStackNavigator();
 
@@ -221,8 +222,10 @@ export default function RootNavigator() {
   }, []);
 
   if (loading || !minTimeElapsed) {
+    logBoot(`RootNavigator: bekleniyor (loading=${loading}, minTimeElapsed=${minTimeElapsed})`);
     return <SplashScreen />;
   }
+  logBoot("RootNavigator: loading bitti, geçiyor");
 
   const stillChecking =
     !isRecovering &&

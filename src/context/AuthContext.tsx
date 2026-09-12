@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/react-native";
+import { logBoot } from "../lib/bootLog";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
 import { resolveLoginEmail } from "../lib/loginIdentifier";
@@ -87,24 +88,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // .catch() ZORUNLU: bu reddedilirse (ör. SecureStore/Keychain okuması
-    // bu cihazda/build'de başarısız olursa) setLoading(false) hiç
-    // çağrılmıyordu — RootNavigator "loading" true kaldığı sürece süresiz
-    // SplashScreen gösterdiği için, uygulama hiçbir hata/çökme olmadan
-    // sonsuza kadar açılış ekranında kilitli kalıyordu. Hata durumunda
-    // "oturum yok" varsayıp normal giriş ekranına düşmek, süresiz
-    // takılı kalmaktan kesinlikle daha iyi.
+    // Sadece .catch() eklemek yetmedi (bir cihazda hâlâ süresiz takılı
+    // kalınıyordu) — demek ki bu çağrı bazen REDDEDİLMİYOR, hiç
+    // SONUÇLANMIYOR (ör. SecureStore/Keychain native köprüsünde bir
+    // kilitlenme). Ne .then ne .catch hiç tetiklenmeyen bir promise'a
+    // karşı tek gerçek çözüm bir zaman aşımı yarışı: 5 saniyede
+    // sonuçlanmazsa "oturum yok" varsayıp devam ediyoruz. Bu, gerçek
+    // neden ne olursa olsun uygulamanın süresiz açılış ekranında
+    // kilitli kalmasını KESİN olarak engelliyor.
+    logBoot("AuthContext: getSession() çağrılıyor");
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      logBoot("AuthContext: getSession() 5sn'de sonuçlanmadı, ZAMAN AŞIMI");
+      Sentry.captureMessage("getSession() 5sn içinde hiç sonuçlanmadı, oturumsuz devam edildi.");
+      initialSessionWasRestoredRef.current = false;
+      setSession(null);
+      setLoading(false);
+    }, 5000);
+
     supabase.auth.getSession()
       .then(({ data }) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        logBoot(`AuthContext: getSession() sonuçlandı (session=${!!data.session})`);
         initialSessionWasRestoredRef.current = !!data.session;
         setSession(data.session);
+        setLoading(false);
       })
       .catch((e) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        logBoot(`AuthContext: getSession() REDDEDİLDİ: ${e?.message ?? e}`);
         Sentry.captureException(e);
         initialSessionWasRestoredRef.current = false;
         setSession(null);
-      })
-      .finally(() => setLoading(false));
+        setLoading(false);
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       // Her oturum değişikliğinde (giriş/çıkış/hesap değişimi) önbelleklenen

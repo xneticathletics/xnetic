@@ -13,6 +13,10 @@ import NotificationResponseHandler from "./src/components/NotificationResponseHa
 import BiometricLockGate from "./src/components/BiometricLockGate";
 import { useDeviceOrientationLock } from "./src/hooks/useDeviceOrientationLock";
 import { colors } from "./src/theme/tokens";
+import { logBoot } from "./src/lib/bootLog";
+import BootLogOverlay from "./src/components/BootLogOverlay";
+
+logBoot("App.tsx modülü yüklendi");
 
 // Geliştirme sırasında kendi hatalarımız Sentry'yi kirletmesin diye sadece
 // gerçek (production/preview) build'lerde etkin — dev modda __DEV__ true.
@@ -70,7 +74,15 @@ function patchDefaultFont(fontFamily: string) {
   };
 }
 
+const loggedOnce = new Set<string>();
+function logBootOnce(step: string) {
+  if (loggedOnce.has(step)) return;
+  loggedOnce.add(step);
+  logBoot(step);
+}
+
 function App() {
+  logBootOnce("App() ilk render");
   const [fontsLoaded, fontError] = useFonts({
     Inter: require("./src/assets/fonts/Inter-Variable.ttf"),
   });
@@ -96,6 +108,7 @@ function App() {
   const fontsReady = fontsLoaded || !!fontError || fontTimedOut;
 
   if (fontsLoaded) patchDefaultFont("Inter");
+  if (fontsReady) logBootOnce(`Font hazır (loaded=${fontsLoaded}, error=${!!fontError}, timeout=${fontTimedOut})`);
 
   // Telefonda dikey kilit hâlâ aynen devam ediyor — sadece tablette
   // (masaüstünde/resepsiyonda yatay tutmak yaygın) serbest dönüşe izin
@@ -115,11 +128,18 @@ function App() {
   }, []);
 
   if (!fontsReady) {
-    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <BootLogOverlay />
+      </View>
+    );
   }
+
+  logBootOnce("Ana ağaç render ediliyor (SafeAreaProvider...)");
 
   return (
     <SafeAreaProvider>
+      <BootLogOverlay />
       <ErrorBoundary>
         <AuthProvider>
           <BranchSelectProvider>
