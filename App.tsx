@@ -26,9 +26,15 @@ logBoot("App.tsx modülü yüklendi");
 // olacak. Kişisel veri gönderimini bilerek KAPALI tutuyoruz (sendDefaultPii
 // varsayılanı zaten false) — KVKK incelemesi tamamlanmadan IP/kullanıcı
 // bilgisi gibi ek veri toplamaya başlamıyoruz.
+// TEŞHİS: development build'de (Sentry zaten __DEV__ nedeniyle kapalı)
+// uygulama sorunsuz açılıyor, preview/production build'de (Sentry aktif)
+// süresiz siyah ekranda kalıyor — tek gerçek fark bu. Sentry'nin native
+// başlatmasının bu cihazda/build'de hiç dönmediğinden şüpheleniyoruz.
+// Kesin olarak ayırt etmek için burada TAMAMEN kapatıp aynı build'i
+// tekrar deniyoruz.
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enabled: !__DEV__,
+  enabled: false,
   environment: __DEV__ ? "development" : "production",
   tracesSampleRate: 0.2,
 });
