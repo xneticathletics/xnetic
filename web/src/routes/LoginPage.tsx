@@ -28,15 +28,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 sm:p-8"
-      >
-        <a href={MARKETING_URL} className="mb-1 inline-block text-xl font-extrabold text-ink hover:text-yellow">
-          X-NETIC
+    <div className="flex min-h-dvh items-center justify-center bg-bg px-4 py-8">
+      <div className="w-full max-w-sm">
+        <a href={MARKETING_URL} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink">
+          ‹ Anasayfa
         </a>
-        <p className="mb-6 text-sm text-muted">Yönetim Paneli Girişi</p>
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl border border-line bg-surface p-6 sm:p-8"
+        >
+          <a href={MARKETING_URL} className="mb-1 inline-block text-xl font-extrabold text-ink hover:text-yellow">
+            X-NETIC
+          </a>
+          <p className="mb-6 text-sm text-muted">Yönetim Paneli Girişi</p>
 
         <label className="mb-3 block">
           <span className="mb-1 block text-xs font-semibold text-muted">E-posta</span>
@@ -79,7 +83,8 @@ export default function LoginPage() {
         <p className="mt-4 text-center text-xs text-muted">
           Kulübün yok mu? <Link to="/kulup-olustur" className="font-semibold text-teal hover:underline">Kulüp Oluştur</Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

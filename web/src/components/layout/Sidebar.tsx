@@ -62,7 +62,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 shrink-0 flex-col border-r border-line bg-surface transition-transform duration-200 lg:static lg:z-auto lg:w-60 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface transition-transform duration-200 lg:static lg:z-auto lg:h-screen lg:w-60 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -81,7 +81,12 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           </button>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
+        {/* min-h-0 olmadan flex öğeleri varsayılan min-height:auto ile içeriği
+            kadar büyümeye çalışıyor — bu da menü öğeleri ekrandan uzun
+            olduğunda nav kendi overflow-y-auto'sunu hiç tetiklemeden aside'ın
+            dışına taşıp alttaki "Çıkış Yap" butonunu görünmez kılıyordu
+            (sayfa fixed olduğu için normal kaydırma da onu geri getirmiyordu). */}
+        <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
           {visibleItems.map((item) => (
             <NavLink
               key={item.to}
