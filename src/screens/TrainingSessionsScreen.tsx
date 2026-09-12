@@ -489,6 +489,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
                 matches: dayMatches,
                 staffing,
                 isAdminOrCoordinator: !isCoach,
+                isAdmin: role === "club_admin",
                 authorizedVenueIds,
                 individualBranchNames: Array.from(individualBranchNames),
                 branchByGroupId,
@@ -579,6 +580,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
             navigation={navigation}
             staffing={staffing}
             isAdminOrCoordinator={!isCoach}
+            isAdmin={role === "club_admin"}
             authorizedVenueIds={authorizedVenueIds}
             individualBranchNames={individualBranchNames}
             branchByGroupId={branchByGroupId}

@@ -26,6 +26,7 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
   const { role } = useAuth();
   const { settings } = useClubSettings();
   const isCoach = role === "coach";
+  const isAdmin = role === "club_admin";
 
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +75,7 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
         }
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Bugün için planlanmış antrenman yok.</Text> : null}
         renderItem={({ item }) => {
-          const attendanceOpen = isAttendanceWindowOpen(
+          const attendanceOpen = isAdmin || isAttendanceWindowOpen(
             item, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes
           );
           return (

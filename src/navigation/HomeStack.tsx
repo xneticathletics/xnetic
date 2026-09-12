@@ -148,6 +148,7 @@ export type HomeStackParamList = {
     matches: import("../lib/api/matches").MatchRow[];
     staffing: Record<string, import("../lib/api/coaches").GroupStaffing>;
     isAdminOrCoordinator: boolean;
+    isAdmin: boolean;
     authorizedVenueIds: string[];
     individualBranchNames: string[];
     branchByGroupId: Record<string, string>;

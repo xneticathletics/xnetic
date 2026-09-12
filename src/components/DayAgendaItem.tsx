@@ -19,6 +19,7 @@ export default function DayAgendaItem({
   navigation,
   staffing,
   isAdminOrCoordinator,
+  isAdmin,
   authorizedVenueIds,
   individualBranchNames,
   branchByGroupId,
@@ -37,6 +38,10 @@ export default function DayAgendaItem({
   // salon yetkilisine BAŞKA salonların antrenmanlarında da Sil butonu
   // gösterip RLS'in sessizce reddettiği bir tıklamaya yol açıyordu).
   isAdminOrCoordinator: boolean;
+  // Yoklama penceresi kısıtlamasından SADECE kulüp admini muaf (koordinatör
+  // dahil değil — sahada gerçek zamanlı yoklama alan hâlâ koordinatör de
+  // olabilir, bu yüzden isAdminOrCoordinator'dan ayrı bir bayrak).
+  isAdmin: boolean;
   authorizedVenueIds: string[];
   individualBranchNames: Set<string>;
   branchByGroupId: Record<string, string>;
@@ -81,7 +86,7 @@ export default function DayAgendaItem({
   const s = session.group_id ? staffing[session.group_id] : undefined;
   const coachNames = s ? ([s.headName, ...s.assistantNames].filter(Boolean) as string[]) : [];
   const isCompleted = session.status === "completed";
-  const attendanceOpen = isAttendanceWindowOpen(session, attendanceWindowBeforeMinutes, attendanceWindowAfterMinutes);
+  const attendanceOpen = isAdmin || isAttendanceWindowOpen(session, attendanceWindowBeforeMinutes, attendanceWindowAfterMinutes);
   const completionOpen = isCompletionWindowOpen(session, completionWindowBeforeMinutes);
   const isPast = isSessionPast(session);
   const canDeleteThis = isAdminOrCoordinator || (!!session.venue_id && authorizedVenueIds.includes(session.venue_id));

@@ -7,12 +7,20 @@ import { getSessionRoster, saveAttendance, type AttendanceStatus, type RosterEnt
 import { completeSession, getSession, isAttendanceWindowOpen, isCompletionWindowOpen, type TrainingSession } from "../lib/api/trainingSessions";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Attendance">;
 
 export default function AttendanceScreen({ route, navigation }: Props) {
   const { sessionId, groupId, groupName } = route.params;
   const { settings } = useClubSettings();
+  const { role } = useAuth();
+  // Kulüp admini yoklama penceresi dışında da (ör. ofisten geriye dönük
+  // düzeltme yaparken) yoklama alabilmeli — pencere kısıtlaması sadece
+  // sahadaki antrenör/koordinatör için anlamlı (web zaten sadece admin
+  // girişine izin verdiği için orada bu kısıtlama hiç yok, mobildeki
+  // AYNI davranışı burada da admin için tekrarlıyoruz).
+  const isAdmin = role === "club_admin";
 
   const [session, setSession] = useState<TrainingSession | null>(null);
   const [roster, setRoster] = useState<RosterEntry[]>([]);
@@ -53,7 +61,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
 
   const handleSave = async () => {
     if (savingRef.current) return;
-    if (session && !isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)) {
+    if (!isAdmin && session && !isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)) {
       Alert.alert(
         "Henüz zamanı değil",
         `Yoklama Al, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır ve başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`,
@@ -101,9 +109,11 @@ export default function AttendanceScreen({ route, navigation }: Props) {
     }
   };
 
-  const attendanceOpen = session
-    ? isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)
-    : false;
+  const attendanceOpen =
+    isAdmin ||
+    (session
+      ? isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)
+      : false);
   const completionOpen = session ? isCompletionWindowOpen(session, settings.completion_window_before_minutes) : false;
 
   if (loading) {
