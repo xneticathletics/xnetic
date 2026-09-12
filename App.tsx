@@ -71,9 +71,32 @@ function patchDefaultFont(fontFamily: string) {
 }
 
 function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter: require("./src/assets/fonts/Inter-Variable.ttf"),
   });
+
+  // useFonts bazı cihazlarda (gözlemlenen: yeni kayıt edilen bir iOS
+  // cihazında) hiçbir zaman true/false'a çözülmeyip sonsuza kadar
+  // "yükleniyor" durumunda kalabiliyor — bu da aşağıdaki boş View'in
+  // (colors.bg neredeyse siyah) SÜRESİZ ekranda kalmasına, yani
+  // kullanıcının "siyah ekranda takılı kalıyor" dediği duruma yol açıyor.
+  // Fontlar birkaç saniyede yüklenmesi gereken küçük bir dosya olduğu
+  // için, bu süreyi aşan bir bekleme gerçek bir arıza — sistem fontuyla
+  // devam etmek (özensiz ama ÇALIŞAN bir uygulama), süresiz siyah ekranda
+  // kalmaktan (tamamen kullanılamaz) kesinlikle daha iyi.
+  const [fontTimedOut, setFontTimedOut] = React.useState(false);
+  useEffect(() => {
+    if (fontsLoaded || fontError) return;
+    const timer = setTimeout(() => {
+      Sentry.captureMessage("Font yükleme 4sn içinde tamamlanmadı, sistem fontuyla devam edildi.");
+      setFontTimedOut(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [fontsLoaded, fontError]);
+
+  if (fontError) Sentry.captureException(fontError);
+
+  const fontsReady = fontsLoaded || !!fontError || fontTimedOut;
 
   if (fontsLoaded) patchDefaultFont("Inter");
 
@@ -94,7 +117,7 @@ function App() {
     return () => subscription.remove();
   }, []);
 
-  if (!fontsLoaded) {
+  if (!fontsReady) {
     return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
   }
 
