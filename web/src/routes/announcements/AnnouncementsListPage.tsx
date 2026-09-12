@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listAnnouncements, getAnnouncementReaders, type Announcement, type AnnouncementReader } from "../../lib/api/announcements";
+import { useClubSettings } from "../../context/ClubSettingsContext";
 import AnnouncementModal from "./AnnouncementModal";
 
 const TARGET_LABEL: Record<string, string> = {
@@ -25,6 +26,7 @@ function AnnouncementAttachment({ url }: { url: string }) {
 }
 
 export default function AnnouncementsListPage() {
+  const { settings } = useClubSettings();
   const [items, setItems] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +38,20 @@ export default function AnnouncementsListPage() {
   const load = () => {
     setLoading(true);
     listAnnouncements()
-      .then(setItems)
+      .then((all) => {
+        // Mobildeki AnnouncementsScreen.tsx ile aynı filtre — bir duyuru
+        // kulübün kendi "Duyuru Görünürlük Süresi" ayarını geçince TÜM
+        // rollerden (admin dahil) gizleniyor. Web bu filtreyi hiç
+        // uygulamıyordu, bu yüzden mobilde artık görünmeyen eski bir
+        // duyuru admin panelinde hâlâ görünüyordu.
+        const visibilityMs = settings.announcement_visibility_days * 24 * 60 * 60 * 1000;
+        setItems(all.filter((a) => Date.now() - new Date(a.created_at).getTime() <= visibilityMs));
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(load, [settings.announcement_visibility_days]);
 
   const toggleReaders = async (id: string) => {
     if (readersFor === id) {

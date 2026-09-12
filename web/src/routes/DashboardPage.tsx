@@ -12,6 +12,7 @@ import { getPendingOrderCount } from "../lib/api/shop";
 import { listPendingPasswordResetRequests } from "../lib/api/notifications";
 import { getClubName } from "../lib/api/clubSettings";
 import { getClubLogoUrl } from "../lib/api/clubLogo";
+import { useClubSettings } from "../context/ClubSettingsContext";
 import { todayKey } from "../lib/date";
 
 function formatTry(n: number) {
@@ -30,6 +31,7 @@ const NO_BRANCH_LABEL = "Branşsız";
 
 export default function DashboardPage() {
   const { clubId } = useAuth();
+  const { settings } = useClubSettings();
   const [clubName, setClubName] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -75,15 +77,20 @@ export default function DashboardPage() {
             .map((m): DayItem => ({ kind: "match", time: m.start_time, branch: m.groups?.branch ?? NO_BRANCH_LABEL, data: m })),
         ].sort((x, y) => x.time.localeCompare(y.time));
         setTodayItems(items);
-        setAnnouncements(ann.slice(0, 4));
-        setImportantAnnouncementCount(ann.filter((a) => a.is_important).length);
+        // Mobildeki AnnouncementsScreen.tsx ile aynı filtre — kulübün
+        // görünürlük süresini geçmiş duyurular Ana Sayfa özetinde de
+        // görünmemeli (AnnouncementsListPage.tsx'te de aynı düzeltme var).
+        const visibilityMs = settings.announcement_visibility_days * 24 * 60 * 60 * 1000;
+        const recentAnn = ann.filter((a) => Date.now() - new Date(a.created_at).getTime() <= visibilityMs);
+        setAnnouncements(recentAnn.slice(0, 4));
+        setImportantAnnouncementCount(recentAnn.filter((a) => a.is_important).length);
         setFinance(fin);
         setPendingOrders(orders);
         setPendingResets(resets.length);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [settings.announcement_visibility_days]);
 
   // Karışık, tek bir zaman çizelgesi yerine branşa göre gruplanmış başlıklar
   // altında gösteriyoruz — çok branşlı bir kulüpte "hangi antrenman hangi
