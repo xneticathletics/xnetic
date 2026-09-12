@@ -70,20 +70,22 @@ function patchDefaultFont(fontFamily: string) {
   };
 }
 
-function App() {
-  const [fontsLoaded, fontError] = useFonts({
-    Inter: require("./src/assets/fonts/Inter-Variable.ttf"),
-  });
+// TEŞHİS AMAÇLI GEÇİCİ ANAHTAR: gerçek bir cihazda (yeni kayıt edilen bir
+// iOS cihazı) uygulama açılışta süresiz siyah ekranda takılı kalıyor,
+// 4sn'lik zaman aşımı güvenlik ağı (aşağıdaki commit'te eklendi) bile
+// devreye giremedi — bu da sorunun "font yavaş yükleniyor" değil, font
+// require()/useFonts çağrısının SENKRON olarak bir yerde patladığı ve
+// App() hiç render tamamlayamadığı ihtimalini güçlendiriyor. Bunu kesin
+// olarak ayırt etmek için özel fontu tamamen devre dışı bırakıp aynı
+// build'i tekrar test ediyoruz — açılırsa suçlu font, açılmazsa başka bir
+// yerde arıyoruz. Sorun çözülünce false'a çekilip normal font geri gelecek.
+const DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS = true;
 
-  // useFonts bazı cihazlarda (gözlemlenen: yeni kayıt edilen bir iOS
-  // cihazında) hiçbir zaman true/false'a çözülmeyip sonsuza kadar
-  // "yükleniyor" durumunda kalabiliyor — bu da aşağıdaki boş View'in
-  // (colors.bg neredeyse siyah) SÜRESİZ ekranda kalmasına, yani
-  // kullanıcının "siyah ekranda takılı kalıyor" dediği duruma yol açıyor.
-  // Fontlar birkaç saniyede yüklenmesi gereken küçük bir dosya olduğu
-  // için, bu süreyi aşan bir bekleme gerçek bir arıza — sistem fontuyla
-  // devam etmek (özensiz ama ÇALIŞAN bir uygulama), süresiz siyah ekranda
-  // kalmaktan (tamamen kullanılamaz) kesinlikle daha iyi.
+function App() {
+  const [fontsLoaded, fontError] = useFonts(
+    DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS ? {} : { Inter: require("./src/assets/fonts/Inter-Variable.ttf") }
+  );
+
   const [fontTimedOut, setFontTimedOut] = React.useState(false);
   useEffect(() => {
     if (fontsLoaded || fontError) return;
@@ -96,9 +98,9 @@ function App() {
 
   if (fontError) Sentry.captureException(fontError);
 
-  const fontsReady = fontsLoaded || !!fontError || fontTimedOut;
+  const fontsReady = DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS || fontsLoaded || !!fontError || fontTimedOut;
 
-  if (fontsLoaded) patchDefaultFont("Inter");
+  if (!DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS && fontsLoaded) patchDefaultFont("Inter");
 
   // Telefonda dikey kilit hâlâ aynen devam ediyor — sadece tablette
   // (masaüstünde/resepsiyonda yatay tutmak yaygın) serbest dönüşe izin
