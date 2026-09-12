@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import * as Sentry from "@sentry/react-native";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
 import { resolveLoginEmail } from "../lib/loginIdentifier";
@@ -86,11 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      initialSessionWasRestoredRef.current = !!data.session;
-      setSession(data.session);
-      setLoading(false);
-    });
+    // .catch() ZORUNLU: bu reddedilirse (ör. SecureStore/Keychain okuması
+    // bu cihazda/build'de başarısız olursa) setLoading(false) hiç
+    // çağrılmıyordu — RootNavigator "loading" true kaldığı sürece süresiz
+    // SplashScreen gösterdiği için, uygulama hiçbir hata/çökme olmadan
+    // sonsuza kadar açılış ekranında kilitli kalıyordu. Hata durumunda
+    // "oturum yok" varsayıp normal giriş ekranına düşmek, süresiz
+    // takılı kalmaktan kesinlikle daha iyi.
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        initialSessionWasRestoredRef.current = !!data.session;
+        setSession(data.session);
+      })
+      .catch((e) => {
+        Sentry.captureException(e);
+        initialSessionWasRestoredRef.current = false;
+        setSession(null);
+      })
+      .finally(() => setLoading(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       // Her oturum değişikliğinde (giriş/çıkış/hesap değişimi) önbelleklenen

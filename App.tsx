@@ -70,22 +70,17 @@ function patchDefaultFont(fontFamily: string) {
   };
 }
 
-// TEŞHİS AMAÇLI GEÇİCİ ANAHTAR: gerçek bir cihazda (yeni kayıt edilen bir
-// iOS cihazı) uygulama açılışta süresiz siyah ekranda takılı kalıyor,
-// 4sn'lik zaman aşımı güvenlik ağı (aşağıdaki commit'te eklendi) bile
-// devreye giremedi — bu da sorunun "font yavaş yükleniyor" değil, font
-// require()/useFonts çağrısının SENKRON olarak bir yerde patladığı ve
-// App() hiç render tamamlayamadığı ihtimalini güçlendiriyor. Bunu kesin
-// olarak ayırt etmek için özel fontu tamamen devre dışı bırakıp aynı
-// build'i tekrar test ediyoruz — açılırsa suçlu font, açılmazsa başka bir
-// yerde arıyoruz. Sorun çözülünce false'a çekilip normal font geri gelecek.
-const DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS = true;
-
 function App() {
-  const [fontsLoaded, fontError] = useFonts(
-    DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS ? {} : { Inter: require("./src/assets/fonts/Inter-Variable.ttf") }
-  );
+  const [fontsLoaded, fontError] = useFonts({
+    Inter: require("./src/assets/fonts/Inter-Variable.ttf"),
+  });
 
+  // Gerçek çökme nedeni asıl AuthContext'teki oturum geri yükleme
+  // çağrısında bulundu (bkz. o dosyadaki yorum) — font yüklemesi hiçbir
+  // zaman suçlu değildi (bir teşhis build'inde tamamen kapatılıp aynı
+  // sonuç alındı, sonra geri açıldı). Yine de küçük bir dosya birkaç
+  // saniyede yüklenmesi gerekirken hiç yüklenmezse sistem fontuyla devam
+  // etmek makul bir güvenlik ağı olarak kalıyor.
   const [fontTimedOut, setFontTimedOut] = React.useState(false);
   useEffect(() => {
     if (fontsLoaded || fontError) return;
@@ -98,9 +93,9 @@ function App() {
 
   if (fontError) Sentry.captureException(fontError);
 
-  const fontsReady = DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS || fontsLoaded || !!fontError || fontTimedOut;
+  const fontsReady = fontsLoaded || !!fontError || fontTimedOut;
 
-  if (!DISABLE_CUSTOM_FONT_FOR_DIAGNOSIS && fontsLoaded) patchDefaultFont("Inter");
+  if (fontsLoaded) patchDefaultFont("Inter");
 
   // Telefonda dikey kilit hâlâ aynen devam ediyor — sadece tablette
   // (masaüstünde/resepsiyonda yatay tutmak yaygın) serbest dönüşe izin
