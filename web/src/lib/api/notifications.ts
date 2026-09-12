@@ -31,7 +31,10 @@ export type NotificationEventType =
   | "event_reminder"
   // Sosyal Alan modülü — bkz. src/lib/api/socialPosts.ts (mobil).
   | "social_post_submitted"
-  | "social_post_approved";
+  | "social_post_approved"
+  // Doğum günü kutlama bildirimi — bkz. send_birthday_notifications()
+  // migration'ı (pg_cron, her sabah). Yönlendirmesi yok.
+  | "birthday";
 
 export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
   { key: "match_result", label: "Maç Sonucu" },
@@ -53,6 +56,7 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "event_reminder", label: "Etkinlik Hatırlatması" },
   { key: "social_post_submitted", label: "Sosyal Alan Onay Bekliyor" },
   { key: "social_post_approved", label: "Paylaşımın Onaylandı" },
+  { key: "birthday", label: "Doğum Günü Mesajı" },
 ];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç
