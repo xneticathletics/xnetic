@@ -25,20 +25,10 @@ Verileriniz; hesabınızın oluşturulması ve kulüp yönetim panelinin kulland
 KVKK'nın 11. maddesi uyarınca kişisel verinizin işlenip işlenmediğini öğrenme, buna ilişkin bilgi talep etme, düzeltilmesini/silinmesini isteme ve kanuna aykırı işleme nedeniyle uğradığınız zararın giderilmesini talep etme haklarına sahipsiniz.
 
 5. Sporcu/Veli Verilerine Erişiminiz Hakkında Önemli Not
-Kulüp admini olarak, kulübünüze kaydettiğiniz sporcu ve velilere ait kişisel veriye — ve antrenörleriniz aracılığıyla sağlık verisi gibi özel nitelikli kişisel veriye — erişebilirsiniz. Bu verilerin KVKK'ya uygun şekilde, yalnızca kulüp yönetimi amacınızla sınırlı olarak kullanılması ve yetkisiz üçüncü kişilere aktarılmaması sizin sorumluluğunuzdadır.
+Kulüp admini olarak, kulübünüze kaydettiğiniz sporcu ve velilere ait kişisel veriye erişebilirsiniz. Bu verilerin KVKK'ya uygun şekilde, yalnızca kulüp yönetimi amacınızla sınırlı olarak kullanılması ve yetkisiz üçüncü kişilere aktarılmaması sizin sorumluluğunuzdadır.
 
 6. Beyan
 Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; kendi kişisel verilerimin yukarıda belirtilen amaç ve kapsamla işlenmesine açık rızam olduğunu ve kulüp adına erişeceğim sporcu/veli verilerini KVKK'ya uygun şekilde koruyacağımı beyan ve taahhüt ederim.`,
-  },
-  {
-    title: "Sporcu Sağlık Verilerine Erişim — Gizlilik Taahhüdü",
-    body: (clubName) => `SPORCU SAĞLIK VERİLERİNE ERİŞİM — GİZLİLİK TAAHHÜDÜ
-
-${clubName} yönetimi sırasında, kulübünüze kayıtlı sporculara ait kan grubu, sakatlık geçmişi, alerji, kronik rahatsızlık ve ilaç kullanımı gibi özel nitelikli sağlık verilerine erişebilirsiniz. Bu veriler KVKK'nın 6. maddesi uyarınca özel nitelikli kişisel veri olup, sporcunun/velisinin açık rızasıyla ve sınırlı amaçlarla toplanmıştır.
-
-Bu verilere yalnızca; sporcuya olası bir sağlık sorununda doğru müdahale edilebilmesi, antrenman programının planlanması ve sakatlık takibi amaçlarıyla erişebilir, bu amaçlar dışında kullanamaz, acil durum dışında hiçbir üçüncü kişi veya kurumla paylaşamazsınız.
-
-Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; erişebileceğim sporcu sağlık verilerini yukarıdaki ilkelere uygun şekilde, gizlilik içinde kullanacağımı beyan ve taahhüt ederim.`,
   },
   {
     title: "Fotoğraf ve Video Kullanım İzni",

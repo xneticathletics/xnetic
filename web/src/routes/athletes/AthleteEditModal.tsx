@@ -27,7 +27,6 @@ const emptyForm: AthleteInput = {
   full_name: "",
   birth_date: null,
   group_id: null,
-  blood_type: null,
   height_cm: null,
   weight_kg: null,
   license_no: null,
@@ -39,9 +38,6 @@ const emptyForm: AthleteInput = {
   photo_url: null,
   parent_name: null,
   parent_phone: null,
-  health_info: null,
-  allergies: null,
-  medications: null,
 };
 
 // Sporcular listesinde "+ Sporcu Ekle"/"Düzenle" ve Sporcu Profili
@@ -98,7 +94,6 @@ export default function AthleteEditModal({
             full_name: a.full_name,
             birth_date: a.birth_date,
             group_id: a.group_id,
-            blood_type: a.blood_type,
             height_cm: a.height_cm,
             weight_kg: a.weight_kg,
             license_no: a.license_no,
@@ -110,9 +105,6 @@ export default function AthleteEditModal({
             photo_url: a.photo_url,
             parent_name: a.parent_name,
             parent_phone: a.parent_phone,
-            health_info: a.health_info,
-            allergies: a.allergies,
-            medications: a.medications,
           });
         } else {
           setForm(emptyForm);
@@ -263,7 +255,7 @@ export default function AthleteEditModal({
               </FormField>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField label="Boy (cm)">
                 <input
                   type="number"
@@ -278,14 +270,6 @@ export default function AthleteEditModal({
                   className={inputClass}
                   value={form.weight_kg ?? ""}
                   onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value ? Number(e.target.value) : null }))}
-                />
-              </FormField>
-              <FormField label="Kan Grubu">
-                <input
-                  className={inputClass}
-                  value={form.blood_type ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, blood_type: e.target.value || null }))}
-                  placeholder="Örn. A Rh+"
                 />
               </FormField>
             </div>
@@ -315,36 +299,6 @@ export default function AthleteEditModal({
                 />
               </FormField>
             </div>
-
-            <FormField label="Alerjiler">
-              <textarea
-                className={inputClass}
-                value={form.allergies ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, allergies: e.target.value || null }))}
-                placeholder="Örn. Fıstık, polen — yoksa boş bırak"
-                rows={2}
-              />
-            </FormField>
-
-            <FormField label="Kullandığı İlaçlar">
-              <textarea
-                className={inputClass}
-                value={form.medications ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, medications: e.target.value || null }))}
-                placeholder="Düzenli kullandığı bir ilaç varsa yaz"
-                rows={2}
-              />
-            </FormField>
-
-            <FormField label="Sağlık Notu">
-              <textarea
-                className={inputClass}
-                value={form.health_info ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, health_info: e.target.value || null }))}
-                placeholder="Kronik rahatsızlık, geçmiş ameliyat vb. antrenörün bilmesi gereken bilgi"
-                rows={2}
-              />
-            </FormField>
 
             <FormField label="Okul">
               <input

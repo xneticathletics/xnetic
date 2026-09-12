@@ -172,13 +172,14 @@ Deno.serve(async (req) => {
       .single();
     if (userError) throw userError;
 
-    // Formdaki tek onay kutusu, web/src/lib/consentTexts.ts'teki 4 bölümün
-    // (KVKK, sağlık verisi erişim taahhüdü, foto/video, görev beyanı)
-    // TAMAMINI kapsıyor — mobildeki ConsentScreen.tsx ile aynı 4 consent_type
-    // anahtarı burada da tek seferde kaydediliyor (kulüp admini mobile
-    // uygulamayı da açarsa tekrar sorulmasın diye).
+    // Formdaki tek onay kutusu, web/src/lib/consentTexts.ts'teki bölümlerin
+    // (KVKK, foto/video, görev beyanı) TAMAMINI kapsıyor — mobildeki
+    // ConsentScreen.tsx ile aynı consent_type anahtarları burada da tek
+    // seferde kaydediliyor (kulüp admini mobil uygulamayı da açarsa tekrar
+    // sorulmasın diye). "saglik" 2026-09-12'de kaldırıldı — artık sağlık
+    // verisi hiç toplanmadığı için ayrı bir rıza maddesi de yok.
     await admin.from("user_consents").insert(
-      ["kvkk", "saglik", "foto_video", "sorumluluk"].map((consent_type) => ({ user_id: createdUser.id, consent_type }))
+      ["kvkk", "foto_video", "sorumluluk"].map((consent_type) => ({ user_id: createdUser.id, consent_type }))
     );
 
     // Abonelik kaydı: 'pending_review' — Süper Admin havaleyi görüp

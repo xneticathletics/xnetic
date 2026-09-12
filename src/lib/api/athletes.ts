@@ -11,7 +11,6 @@ export type Athlete = {
   full_name: string;
   birth_date: string | null;
   group_id: string | null;
-  blood_type: string | null;
   height_cm: number | null;
   weight_kg: number | null;
   license_no: string | null;
@@ -25,11 +24,6 @@ export type Athlete = {
   parent_phone: string | null;
   parent_user_id: string | null;
   registered_at: string | null;
-  // KVKK kapsamında ayrı "Sağlık Verisi İşleme İzni" onayı alındıktan
-  // sonra eklendi (bkz. src/lib/consentTexts.ts).
-  health_info: string | null;
-  allergies: string | null;
-  medications: string | null;
   groups?: { name: string; branch?: string } | null;
   // true ise: bu sporcunun BİRİNCİL grubu bu değil — farklı bir branştaki
   // birincil grubuna EK olarak bu gruba (branşa) da bağlanmış. Sadece
@@ -41,7 +35,6 @@ export type AthleteInput = {
   full_name: string;
   birth_date: string | null;
   group_id: string | null;
-  blood_type: string | null;
   height_cm: number | null;
   weight_kg: number | null;
   license_no: string | null;
@@ -53,18 +46,15 @@ export type AthleteInput = {
   photo_url: string | null;
   parent_name: string | null;
   parent_phone: string | null;
-  health_info: string | null;
-  allergies: string | null;
-  medications: string | null;
 };
 
 const ATHLETE_FIELDS =
-  "id, full_name, birth_date, group_id, blood_type, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, parent_user_id, registered_at, health_info, allergies, medications";
+  "id, full_name, birth_date, group_id, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, parent_user_id, registered_at";
 
-// Not: national_id (T.C. Kimlik No) bilerek hâlâ yok — health_info/
-// allergies/medications'tan farklı bir kategori (kimlik verisi) ve ayrı
-// bir şifreleme geçişi gerektiriyor; sadece sağlık alanları, "Sağlık
-// Verisi İşleme İzni" onayı alındığı için eklendi (bkz. consentTexts.ts).
+// Not: national_id (T.C. Kimlik No) ve sağlık verileri (kan grubu, alerji,
+// ilaç, sağlık notu) bilerek yok — sağlık verileri daha önce ayrı bir
+// "Sağlık Verisi İşleme İzni" onayıyla toplanıyordu, 2026-09-12'de kaldırıldı
+// (KVKK md. 6 özel nitelikli veri + gereksiz uyum riski).
 // Bir grubun sporcu listesi: birincil olarak bu gruba kayıtlı sporcular
 // + FARKLI bir branştan bu gruba "ek grup" olarak eklenmiş sporcular
 // (ör. birincil branşı basketbol ama voleybolda da oynuyorsa, voleybol
@@ -147,9 +137,9 @@ export async function listAllAthletes(): Promise<Athlete[]> {
 export type AthleteSearchResult = { id: string; full_name: string; group_id: string | null; groups?: { name: string } | null };
 
 // Sporcu Yönetimi'ndeki "sporcu ara" kutusu için — listAllAthletes()'in
-// tüm sağlık/veli alanlarını (health_info, allergies, blood_type vb.)
-// içeren ağır sorgusu yerine, sadece isim aramasının ihtiyaç duyduğu
-// birkaç alanı çeker. Ayrıca çağıran ekran bunu sadece kullanıcı aramaya
+// tüm alanları (veli, lisans, forma bilgisi vb.) içeren ağır sorgusu
+// yerine, sadece isim aramasının ihtiyaç duyduğu birkaç alanı çeker.
+// Ayrıca çağıran ekran bunu sadece kullanıcı aramaya
 // BAŞLADIĞINDA (lazy) çağırıyor — her ekran açılışında değil.
 export async function searchAthleteNames(): Promise<AthleteSearchResult[]> {
   const { data, error } = await supabase

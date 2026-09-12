@@ -260,15 +260,7 @@ export default function AthleteDetailPage() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-bold text-ink">Sağlık</h2>
-          <div className="rounded-xl border border-line bg-surface p-4">
-            <InfoRow label="Kan Grubu" value={athlete.blood_type} />
-            <InfoRow label="Alerjiler" value={athlete.allergies} />
-            <InfoRow label="Kullandığı İlaçlar" value={athlete.medications} />
-            <InfoRow label="Sağlık Notu" value={athlete.health_info} />
-          </div>
-
-          <h2 id="yoklama" className="mb-3 mt-6 scroll-mt-4 text-sm font-bold text-ink">
+          <h2 id="yoklama" className="mb-3 scroll-mt-4 text-sm font-bold text-ink">
             Son Antrenmanlar
           </h2>
           {attendance.length > 0 && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Image,
-  KeyboardAvoidingView, Platform, Modal, FlatList,
+  KeyboardAvoidingView, Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -28,13 +28,10 @@ import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { formatPhoneNumber } from "../lib/phoneFormat";
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteForm">;
 
-const BLOOD_TYPE_OPTIONS = ["A Rh+", "A Rh-", "B Rh+", "B Rh-", "AB Rh+", "AB Rh-", "0 Rh+", "0 Rh-"];
-
 const emptyForm: AthleteInput = {
   full_name: "",
   birth_date: null,
   group_id: null,
-  blood_type: null,
   height_cm: null,
   weight_kg: null,
   license_no: null,
@@ -46,9 +43,6 @@ const emptyForm: AthleteInput = {
   photo_url: null,
   parent_name: null,
   parent_phone: null,
-  health_info: null,
-  allergies: null,
-  medications: null,
 };
 
 export default function AthleteFormScreen({ route, navigation }: Props) {
@@ -62,7 +56,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   });
   const [groupName, setGroupName] = useState<string | null>(initialGroupName ?? null);
   const [groupPickerVisible, setGroupPickerVisible] = useState(false);
-  const [bloodTypePickerVisible, setBloodTypePickerVisible] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
   // Branş bazlı sabit aidat ücretleri SADECE admin'e görünür (bkz.
   // listBranchesWithFees) — koordinatör/antrenör bu ekrana erişebildiği
@@ -163,7 +156,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
           full_name: a.full_name,
           birth_date: a.birth_date,
           group_id: a.group_id,
-          blood_type: a.blood_type,
           height_cm: a.height_cm,
           weight_kg: a.weight_kg,
           license_no: a.license_no,
@@ -175,9 +167,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
           photo_url: a.photo_url,
           parent_name: a.parent_name,
           parent_phone: a.parent_phone,
-          health_info: a.health_info,
-          allergies: a.allergies,
-          medications: a.medications,
         });
         setGroupName(a.groups?.name ?? null);
       })
@@ -371,50 +360,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
           />
         </Field>
       </View>
-
-      <Field label="Kan Grubu">
-        <TouchableOpacity style={styles.input} onPress={() => setBloodTypePickerVisible(true)}>
-          <Text style={{ color: form.blood_type ? colors.ink : colors.muted }}>
-            {form.blood_type ?? "Kan grubu seç"}
-          </Text>
-        </TouchableOpacity>
-      </Field>
-
-      <Field label="Alerjiler">
-        <TextInput
-          onFocus={handleFocus}
-          style={[styles.input, styles.inputMultiline]}
-          value={form.allergies ?? ""}
-          onChangeText={(v) => set("allergies", v || null)}
-          placeholder="Örn. Fıstık, polen — yoksa boş bırak"
-          placeholderTextColor={colors.muted}
-          multiline
-        />
-      </Field>
-
-      <Field label="Kullandığı İlaçlar">
-        <TextInput
-          onFocus={handleFocus}
-          style={[styles.input, styles.inputMultiline]}
-          value={form.medications ?? ""}
-          onChangeText={(v) => set("medications", v || null)}
-          placeholder="Düzenli kullandığı bir ilaç varsa yaz"
-          placeholderTextColor={colors.muted}
-          multiline
-        />
-      </Field>
-
-      <Field label="Sağlık Notu">
-        <TextInput
-          onFocus={handleFocus}
-          style={[styles.input, styles.inputMultiline]}
-          value={form.health_info ?? ""}
-          onChangeText={(v) => set("health_info", v || null)}
-          placeholder="Kronik rahatsızlık, geçmiş ameliyat vb. antrenörün bilmesi gereken bilgi"
-          placeholderTextColor={colors.muted}
-          multiline
-        />
-      </Field>
 
       <Field label="Okul">
         <TextInput
@@ -618,36 +563,6 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         }}
         onClose={() => setBranchPickerVisible(false)}
       />
-      <Modal
-        visible={bloodTypePickerVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setBloodTypePickerVisible(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Kan Grubu Seç</Text>
-            <FlatList
-              data={BLOOD_TYPE_OPTIONS}
-              keyExtractor={(bt) => bt}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[styles.modalRow, form.blood_type === item && styles.modalRowSelected]}
-                  onPress={() => {
-                    set("blood_type", item);
-                    setBloodTypePickerVisible(false);
-                  }}
-                >
-                  <Text style={styles.modalRowText}>{item}</Text>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setBloodTypePickerVisible(false)}>
-              <Text style={styles.modalCloseButtonText}>Kapat</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -685,20 +600,6 @@ const styles = StyleSheet.create({
   },
   inputMultiline: { minHeight: 70, textAlignVertical: "top" },
   row: { flexDirection: "row" },
-  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modalSheet: {
-    backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
-    padding: spacing.lg, maxHeight: "70%",
-  },
-  modalTitle: { color: colors.ink, fontSize: 18, fontWeight: "700", marginBottom: spacing.md },
-  modalRow: {
-    paddingVertical: 14, paddingHorizontal: spacing.md, borderRadius: radius.sm,
-    borderWidth: 1, borderColor: colors.line, marginBottom: spacing.sm,
-  },
-  modalRowSelected: { borderColor: colors.yellow },
-  modalRowText: { color: colors.ink, fontSize: 15, fontWeight: "600" },
-  modalCloseButton: { alignItems: "center", paddingVertical: spacing.md },
-  modalCloseButtonText: { color: colors.muted, fontWeight: "600" },
   statusChip: {
     borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
     paddingHorizontal: spacing.md, paddingVertical: 8, marginRight: spacing.sm,

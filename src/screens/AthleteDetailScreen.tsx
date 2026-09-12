@@ -50,7 +50,7 @@ const TRACKING_TILES: {
   { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi programını oluştur ve işle", accent: colors.coral, athleteOnly: true },
 ];
 
-type TabKey = "info" | "parent" | "health";
+type TabKey = "info" | "parent";
 
 function calcAge(birthDate: string | null): number | null {
   if (!birthDate) return null;
@@ -164,10 +164,9 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
     ].filter((v) => v === null || v === undefined || v === "").length;
   }, [athlete]);
   const parentMissing = athlete && !athlete.parent_phone ? 1 : 0;
-  const healthMissing = athlete && !athlete.blood_type ? 1 : 0;
 
-  const totalFields = 8;
-  const totalMissing = infoMissing + parentMissing + healthMissing;
+  const totalFields = 7;
+  const totalMissing = infoMissing + parentMissing;
   const completionPct = Math.round(((totalFields - totalMissing) / totalFields) * 100);
 
   const attendancePct = useMemo(() => {
@@ -407,7 +406,6 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         {([
           { key: "info", label: "Bilgiler", missing: infoMissing },
           { key: "parent", label: "Veli", missing: parentMissing },
-          { key: "health", label: "Sağlık", missing: healthMissing },
         ] as { key: TabKey; label: string; missing: number }[]).map((t) => {
           const active = activeTab === t.key;
           return (
@@ -443,14 +441,6 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
           <>
             <InfoRow label="Veli Adı Soyadı" value={athlete.parent_name} onAdd={isStaff ? goToEditForm : undefined} />
             <InfoRow label="Veli Telefon" value={athlete.parent_phone} onAdd={isStaff ? goToEditForm : undefined} />
-          </>
-        )}
-        {activeTab === "health" && (
-          <>
-            <InfoRow label="Kan Grubu" value={athlete.blood_type} onAdd={isStaff ? goToEditForm : undefined} />
-            <InfoRow label="Alerjiler" value={athlete.allergies} onAdd={isStaff ? goToEditForm : undefined} />
-            <InfoRow label="Kullandığı İlaçlar" value={athlete.medications} onAdd={isStaff ? goToEditForm : undefined} />
-            <InfoRow label="Sağlık Notu" value={athlete.health_info} onAdd={isStaff ? goToEditForm : undefined} />
           </>
         )}
       </View>

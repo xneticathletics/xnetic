@@ -8,7 +8,6 @@ export type Athlete = {
   full_name: string;
   birth_date: string | null;
   group_id: string | null;
-  blood_type: string | null;
   height_cm: number | null;
   weight_kg: number | null;
   license_no: string | null;
@@ -21,11 +20,6 @@ export type Athlete = {
   parent_name: string | null;
   parent_phone: string | null;
   registered_at: string | null;
-  // KVKK kapsamında ayrı "Sağlık Verisi İşleme İzni" onayı alındıktan
-  // sonra eklendi (bkz. mobil src/lib/consentTexts.ts) — mobille aynı alanlar.
-  health_info: string | null;
-  allergies: string | null;
-  medications: string | null;
   groups?: { name: string; branch: string } | null;
 };
 
@@ -33,7 +27,6 @@ export type AthleteInput = {
   full_name: string;
   birth_date: string | null;
   group_id: string | null;
-  blood_type: string | null;
   height_cm: number | null;
   weight_kg: number | null;
   license_no: string | null;
@@ -45,13 +38,14 @@ export type AthleteInput = {
   photo_url: string | null;
   parent_name: string | null;
   parent_phone: string | null;
-  health_info: string | null;
-  allergies: string | null;
-  medications: string | null;
 };
 
+// Not: sağlık verileri (kan grubu, alerji, ilaç, sağlık notu) bilerek yok
+// — daha önce ayrı bir "Sağlık Verisi İşleme İzni" onayıyla toplanıyordu,
+// 2026-09-12'de kaldırıldı (KVKK md. 6 özel nitelikli veri + gereksiz
+// uyum riski, bkz. mobil src/lib/api/athletes.ts'teki aynı not).
 const ATHLETE_FIELDS =
-  "id, full_name, birth_date, group_id, blood_type, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, registered_at, health_info, allergies, medications";
+  "id, full_name, birth_date, group_id, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, registered_at";
 
 export async function listAllAthletes(): Promise<Athlete[]> {
   const { data, error } = await supabase

@@ -38,7 +38,7 @@ const KVKK_BY_BUCKET: Record<ConsentRoleBucket, (clubName: string) => string> = 
 ${clubName} ("Kulüp"), 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca "Veri Sorumlusu" sıfatıyla, sizin ve velisi/vasisi olduğunuz sporcunun kişisel verilerini aşağıda açıklanan kapsamda işlemektedir.
 
 2. İşlenen Kişisel Veriler
-Kulüp; ad-soyad, T.C. kimlik bilgisi (varsa), doğum tarihi, iletişim bilgileri (telefon, e-posta, adres), fotoğraf, veli/iletişim bilgileri, spor branşı ve grup bilgisi, antrenman/müsabaka katılım (yoklama) kayıtları, performans ve ölçüm verileri, aidat ve ödeme bilgileri ile bu Aydınlatma Metni'nden ayrı olarak açık rızanız alınan sağlık verisi ve fotoğraf/video kullanım verilerini işlemektedir.
+Kulüp; ad-soyad, T.C. kimlik bilgisi (varsa), doğum tarihi, iletişim bilgileri (telefon, e-posta, adres), fotoğraf, veli/iletişim bilgileri, spor branşı ve grup bilgisi, antrenman/müsabaka katılım (yoklama) kayıtları, performans ve ölçüm verileri, aidat ve ödeme bilgileri ile bu Aydınlatma Metni'nden ayrı olarak açık rızanız alınan fotoğraf/video kullanım verilerini işlemektedir.
 
 3. Kişisel Verilerin İşlenme Amaçları
 Kişisel verileriniz; sporcu kaydının oluşturulması ve üyelik süreçlerinin yürütülmesi, antrenman/müsabaka programının planlanması ve yoklamanın tutulması, aidat/ödeme süreçlerinin yönetilmesi, veli-antrenör-kulüp arasında iletişimin sağlanması, kulüp içi duyuru ve bilgilendirmelerin iletilmesi, yasal yükümlülüklerin yerine getirilmesi ve kulüp faaliyetlerinin planlanması/geliştirilmesi amaçlarıyla işlenmektedir.
@@ -61,7 +61,7 @@ Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; kendime ve/veya velisi
 ${clubName} ("Kulüp"), 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca "Veri Sorumlusu" sıfatıyla, kişisel verilerinizi aşağıda açıklanan kapsamda işlemektedir.
 
 2. İşlenen Kişisel Veriler
-Kulüp; ad-soyad, T.C. kimlik bilgisi (varsa), doğum tarihi, iletişim bilgileri (telefon, e-posta, adres), fotoğraf, spor branşı ve grup bilgisi, antrenman/müsabaka katılım (yoklama) kayıtları, performans ve ölçüm verileri, aidat ve ödeme bilgileri ile bu Aydınlatma Metni'nden ayrı olarak açık rızanız alınan sağlık verisi ve fotoğraf/video kullanım verilerini işlemektedir.
+Kulüp; ad-soyad, T.C. kimlik bilgisi (varsa), doğum tarihi, iletişim bilgileri (telefon, e-posta, adres), fotoğraf, spor branşı ve grup bilgisi, antrenman/müsabaka katılım (yoklama) kayıtları, performans ve ölçüm verileri, aidat ve ödeme bilgileri ile bu Aydınlatma Metni'nden ayrı olarak açık rızanız alınan fotoğraf/video kullanım verilerini işlemektedir.
 
 3. Kişisel Verilerin İşlenme Amaçları
 Kişisel verileriniz; sporcu kaydının oluşturulması ve üyelik süreçlerinin yürütülmesi, antrenman/müsabaka programının planlanması ve yoklamanın tutulması, aidat/ödeme süreçlerinin yönetilmesi, antrenör-kulüp arasında iletişimin sağlanması, kulüp içi duyuru ve bilgilendirmelerin iletilmesi, yasal yükümlülüklerin yerine getirilmesi ve kulüp faaliyetlerinin planlanması/geliştirilmesi amaçlarıyla işlenmektedir.
@@ -93,63 +93,10 @@ Verileriniz; görevlendirme ve kulüp içi organizasyonun yürütülmesi, ileti�
 KVKK'nın 11. maddesi uyarınca kişisel verinizin işlenip işlenmediğini öğrenme, buna ilişkin bilgi talep etme, düzeltilmesini/silinmesini isteme ve kanuna aykırı işleme nedeniyle uğradığınız zararın giderilmesini talep etme haklarına sahipsiniz; bu haklarınızı kulüp yönetimiyle iletişime geçerek kullanabilirsiniz.
 
 5. Sporcu Verilerine Erişiminiz Hakkında Önemli Not
-Görevinizi ifa ederken sporculara ve velilerine ait kişisel veriye (iletişim bilgisi) ve — yalnızca antrenörlük görevi gerektiriyorsa — sağlık verisi gibi özel nitelikli kişisel veriye erişebilirsiniz. Bu verilerin KVKK'ya uygun şekilde, yalnızca görev amacınızla sınırlı olarak kullanılması ve hiçbir şekilde kulüp dışına, yetkisiz üçüncü kişilere aktarılmaması veya kişisel/ticari amaçla kullanılmaması zorunludur.
+Görevinizi ifa ederken sporculara ve velilerine ait kişisel veriye (iletişim bilgisi, performans/ölçüm kayıtları vb.) erişebilirsiniz. Bu verilerin KVKK'ya uygun şekilde, yalnızca görev amacınızla sınırlı olarak kullanılması ve hiçbir şekilde kulüp dışına, yetkisiz üçüncü kişilere aktarılmaması veya kişisel/ticari amaçla kullanılmaması zorunludur.
 
 6. Beyan
 Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; kendi kişisel verilerimin yukarıda belirtilen amaç ve kapsamla ${clubName} tarafından işlenmesine açık rızam olduğunu ve görevim gereği erişebileceğim sporcu/veli verilerini yukarıdaki ilkelere uygun şekilde koruyacağımı beyan ve taahhüt ederim.`,
-};
-
-const SAGLIK_BY_BUCKET: Record<ConsentRoleBucket, (clubName: string) => string> = {
-  parent: (clubName) => `SAĞLIK VERİLERİNİN İŞLENMESİNE İLİŞKİN AÇIK RIZA METNİ
-
-KVKK'nın 6. maddesi uyarınca sağlık verileri "özel nitelikli kişisel veri" kategorisinde yer almakta olup, ancak açık rızanızın bulunması hâlinde işlenebilmektedir.
-
-1. İşlenen Sağlık Verileri
-${clubName}, velisi/vasisi olduğunuz sporcunun kan grubu, geçmiş/mevcut sakatlık ve tedavi bilgileri, bilinen alerjileri, kronik rahatsızlıkları ve varsa kullandığı düzenli ilaçlar ile antrenman/müsabaka sırasında sağlık durumuna dair kaydedilen diğer bilgileri işleyebilir.
-
-2. İşleme Amacı
-Bu veriler yalnızca; olası bir sağlık sorunu veya kaza anında sporcuya doğru ve hızlı müdahale edilebilmesi, antrenörlerin sporcunun fiziksel kapasitesine uygun bir program planlayabilmesi, sakatlık geçmişinin takip edilerek tekrarlayan sakatlıkların önlenmesi ve gerekli hâllerde sağlık kuruluşlarına doğru bilgi aktarılabilmesi amaçlarıyla işlenir. Bu veriler kulübün ticari amaçlarla kullanılmaz, reklam/pazarlama faaliyetlerinde değerlendirilmez.
-
-3. Erişim ve Paylaşım
-Sağlık verilerine yalnızca ilgili sporcunun antrenörleri, branş koordinatörü ve kulüp yönetimi, yukarıdaki amaçlarla sınırlı olarak erişebilir. Bu veriler, acil bir sağlık durumunda müdahale edecek sağlık personeli/kurumu dışında üçüncü kişilerle paylaşılmaz.
-
-4. Rıza ve Geri Alma Hakkı
-Bu verilerin işlenmesine ilişkin rızanızı istediğiniz zaman, kulüp yönetimine yazılı olarak bildirerek geri alabilirsiniz; ancak bu durumda kulübün, sporcunun sağlık durumuna dair bilgi sahibi olamaması nedeniyle bazı hizmetleri (ör. sakatlık geçmişi takibi) sunamayabileceğini kabul edersiniz.
-
-5. Açık Rıza Beyanı
-Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; velisi/vasisi olduğum sporcuya ait sağlık verilerinin, yukarıda belirtilen amaç ve kapsamla ${clubName} tarafından işlenmesine açık rızam olduğunu beyan ederim.`,
-
-  athlete: (clubName) => `SAĞLIK VERİLERİNİN İŞLENMESİNE İLİŞKİN AÇIK RIZA METNİ
-
-KVKK'nın 6. maddesi uyarınca sağlık verileri "özel nitelikli kişisel veri" kategorisinde yer almakta olup, ancak açık rızanızın bulunması hâlinde işlenebilmektedir.
-
-1. İşlenen Sağlık Verileri
-${clubName}, kan grubunuzu, geçmiş/mevcut sakatlık ve tedavi bilgilerinizi, bilinen alerjilerinizi, kronik rahatsızlıklarınızı ve varsa kullandığınız düzenli ilaçlar ile antrenman/müsabaka sırasında sağlık durumunuza dair kaydedilen diğer bilgileri işleyebilir.
-
-2. İşleme Amacı
-Bu veriler yalnızca; olası bir sağlık sorunu veya kaza anında size doğru ve hızlı müdahale edilebilmesi, antrenörlerin fiziksel kapasitenize uygun bir program planlayabilmesi, sakatlık geçmişinizin takip edilerek tekrarlayan sakatlıkların önlenmesi ve gerekli hâllerde sağlık kuruluşlarına doğru bilgi aktarılabilmesi amaçlarıyla işlenir. Bu veriler kulübün ticari amaçlarla kullanılmaz, reklam/pazarlama faaliyetlerinde değerlendirilmez.
-
-3. Erişim ve Paylaşım
-Sağlık verilerinize yalnızca antrenörleriniz, branş koordinatörü ve kulüp yönetimi, yukarıdaki amaçlarla sınırlı olarak erişebilir. Bu veriler, acil bir sağlık durumunda müdahale edecek sağlık personeli/kurumu dışında üçüncü kişilerle paylaşılmaz.
-
-4. Rıza ve Geri Alma Hakkı
-Bu verilerin işlenmesine ilişkin rızanızı istediğiniz zaman, kulüp yönetimine yazılı olarak bildirerek geri alabilirsiniz; ancak bu durumda kulübün, sağlık durumunuza dair bilgi sahibi olamaması nedeniyle bazı hizmetleri (ör. sakatlık geçmişi takibi) sunamayabileceğini kabul edersiniz.
-
-5. Açık Rıza Beyanı
-Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; kendime ait sağlık verilerinin, yukarıda belirtilen amaç ve kapsamla ${clubName} tarafından işlenmesine açık rızam olduğunu beyan ederim.`,
-
-  staff: (clubName) => `SPORCU SAĞLIK VERİLERİNE ERİŞİM — GİZLİLİK TAAHHÜDÜ
-
-Görevinizi (antrenörlük/kulüp yönetimi) ifa ederken, ${clubName} bünyesindeki sporculara ait kan grubu, sakatlık geçmişi, alerji, kronik rahatsızlık ve ilaç kullanımı gibi özel nitelikli sağlık verilerine erişebilirsiniz. Bu veriler KVKK'nın 6. maddesi uyarınca özel nitelikli kişisel veri olup, sporcunun/velisinin açık rızasıyla ve sınırlı amaçlarla toplanmıştır.
-
-1. Kullanım Sınırı
-Bu verilere yalnızca; sporcuya olası bir sağlık sorununda doğru müdahale edilebilmesi, antrenman programının sporcunun sağlık durumuna uygun planlanması ve sakatlık takibi amaçlarıyla erişebilir, bu amaçlar dışında kullanamazsınız.
-
-2. Paylaşım Yasağı
-Erişebildiğiniz sağlık verilerini, acil bir sağlık durumunda müdahale edecek sağlık personeli/kurumu dışında hiçbir üçüncü kişi veya kurumla paylaşamaz, sosyal medyada veya kulüp dışında hiçbir şekilde ifşa edemezsiniz.
-
-3. Beyan
-Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; görevim gereği erişebileceğim sporcu sağlık verilerini yukarıdaki ilkelere uygun şekilde, gizlilik içinde ve yalnızca belirtilen amaçlarla kullanacağımı beyan ve taahhüt ederim.`,
 };
 
 const FOTO_VIDEO_BY_BUCKET: Record<ConsentRoleBucket, (clubName: string) => string> = {
@@ -209,7 +156,7 @@ const SORUMLULUK_BY_BUCKET: Record<ConsentRoleBucket, (clubName: string) => stri
 Her türlü sportif faaliyetin, doğası gereği düşme, çarpışma, burkulma, kas-eklem yaralanmaları gibi fiziksel riskler taşıdığını biliyor ve velisi/vasisi olduğum sporcunun ${clubName} bünyesindeki antrenman, müsabaka ve etkinliklere bu riskleri kabul ederek katıldığını beyan ederim.
 
 2. Sağlık Beyanı
-Velisi/vasisi olduğum sporcunun bilgim dahilinde, sportif faaliyete katılımına engel teşkil edecek bilinen bir sağlık sorunu bulunmadığını; varsa bu tür durumları (Sağlık Verisi İşleme İzni kapsamında) kulübe eksiksiz bildirdiğimi beyan ederim. Sporcunun sağlık durumunda meydana gelecek değişiklikleri kulüp yönetimine bildirmeyi taahhüt ederim.
+Velisi/vasisi olduğum sporcunun bilgim dahilinde, sportif faaliyete katılımına engel teşkil edecek bilinen bir sağlık sorunu bulunmadığını beyan ederim; varsa bu tür durumları ve sporcunun sağlık durumunda meydana gelecek değişiklikleri kulüp yönetimine bildirmeyi taahhüt ederim.
 
 3. Kulübün Sorumluluğu
 ${clubName}, antrenörleri aracılığıyla gerekli özeni göstererek güvenli bir antrenman ortamı sağlamayı taahhüt eder. Buna rağmen, sporun doğasından kaynaklanan ve makul özenin gösterilmesine rağmen önlenemeyen kaza/yaralanmalardan kulübün sorumlu tutulamayacağını kabul ederim. Bu beyan, kulübün kusurundan kaynaklanan sorumluluğunu ortadan kaldırmaz.
@@ -229,7 +176,7 @@ Yukarıdaki maddeleri okuduğumu, anladığımı ve velisi/vasisi olduğum sporc
 Her türlü sportif faaliyetin, doğası gereği düşme, çarpışma, burkulma, kas-eklem yaralanmaları gibi fiziksel riskler taşıdığını biliyor ve ${clubName} bünyesindeki antrenman, müsabaka ve etkinliklere bu riskleri kabul ederek katıldığımı beyan ederim.
 
 2. Sağlık Beyanı
-Sportif faaliyete katılımıma engel teşkil edecek bilinen bir sağlık sorunum bulunmadığını; varsa bu tür durumları (Sağlık Verisi İşleme İzni kapsamında) kulübe eksiksiz bildirdiğimi beyan ederim. Sağlık durumumda meydana gelecek değişiklikleri kulüp yönetimine bildirmeyi taahhüt ederim.
+Sportif faaliyete katılımıma engel teşkil edecek bilinen bir sağlık sorunum bulunmadığını beyan ederim; varsa bu tür durumları ve sağlık durumumda meydana gelecek değişiklikleri kulüp yönetimine bildirmeyi taahhüt ederim.
 
 3. Kulübün Sorumluluğu
 ${clubName}, antrenörleri aracılığıyla gerekli özeni göstererek güvenli bir antrenman ortamı sağlamayı taahhüt eder. Buna rağmen, sporun doğasından kaynaklanan ve makul özenin gösterilmesine rağmen önlenemeyen kaza/yaralanmalardan kulübün sorumlu tutulamayacağını kabul ederim. Bu beyan, kulübün kusurundan kaynaklanan sorumluluğunu ortadan kaldırmaz.
@@ -262,7 +209,7 @@ Yukarıdaki maddeleri okuduğumu, anladığımı ve kabul ettiğimi beyan ederim
 // süreçlerine göre (ör. hangi hizmet sağlayıcılarla veri paylaşıldığı)
 // güncellenmesi ve yürürlüğe koymadan önce bir hukuk danışmanına
 // onaylatılması önerilir.
-const TITLES_AND_SUMMARIES: Record<Exclude<ConsentType, "saglik">, { title: string; summary: (bucket: ConsentRoleBucket) => string }> = {
+const TITLES_AND_SUMMARIES: Record<ConsentType, { title: string; summary: (bucket: ConsentRoleBucket) => string }> = {
   kvkk: {
     title: "KVKK Aydınlatma Metni ve Açık Rıza Beyanı",
     summary: (bucket) =>
@@ -283,21 +230,11 @@ const TITLES_AND_SUMMARIES: Record<Exclude<ConsentType, "saglik">, { title: stri
   },
 };
 
-const SAGLIK_TITLE_SUMMARY: Record<ConsentRoleBucket, { title: string; summary: string }> = {
-  parent: { title: "Sağlık Verisi İşleme İzni", summary: "Kan grubu, sakatlık geçmişi gibi özel nitelikli sağlık verilerinin işlenmesine izin." },
-  athlete: { title: "Sağlık Verisi İşleme İzni", summary: "Kan grubu, sakatlık geçmişi gibi özel nitelikli sağlık verilerinizin işlenmesine izin." },
-  staff: { title: "Sporcu Sağlık Verilerine Erişim — Gizlilik Taahhüdü", summary: "Görev gereği erişilen sporcu sağlık verilerinin gizli tutulacağına dair taahhüt." },
-};
-
 // role parametresi eklendi — metin artık kim okuyorsa ona göre (veli/
 // sporcu/personel) değişiyor. ConsentScreen.tsx bunu useAuth()'tan geçiyor.
 export function getConsentText(type: ConsentType, role: UserRole): ConsentText {
   const bucket = roleToConsentBucket(role);
 
-  if (type === "saglik") {
-    const { title, summary } = SAGLIK_TITLE_SUMMARY[bucket];
-    return { type, title, summary, body: SAGLIK_BY_BUCKET[bucket] };
-  }
   if (type === "kvkk") {
     return { type, title: TITLES_AND_SUMMARIES.kvkk.title, summary: TITLES_AND_SUMMARIES.kvkk.summary(bucket), body: KVKK_BY_BUCKET[bucket] };
   }
