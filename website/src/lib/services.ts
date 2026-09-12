@@ -27,16 +27,16 @@ export const SERVICES: ServiceDetail[] = [
     color: "text-yellow",
     desc: "Kağıt formlar ve dağınık Excel tabloları yerine — her sporcunun fotoğrafı, branşı, grubu, veli bilgisi ve gelişim geçmişi tek bir profilde.",
     intro:
-      "Bir spor kulübünde en çok zaman kaybettiren şey, aynı sporcu bilgisinin beş farklı yerde (kağıt form, WhatsApp, Excel, veli mesajları) dağınık durmasıdır. X-NETIC'te her sporcu tek bir canlı profile sahiptir: branşı, grubu, velisi, sağlık notu ve gelişim geçmişi bu profilde birleşir, antrenör sahada telefonundan aynı bilgiye anında ulaşır.",
+      "Bir spor kulübünde en çok zaman kaybettiren şey, aynı sporcu bilgisinin beş farklı yerde (kağıt form, WhatsApp, Excel, veli mesajları) dağınık durmasıdır. X-NETIC'te her sporcu tek bir canlı profile sahiptir: branşı, grubu, velisi ve gelişim geçmişi bu profilde birleşir, antrenör sahada telefonundan aynı bilgiye anında ulaşır.",
     points: [
       "Sporcuya birden fazla branş/grup bağlama (ana branş + ek branşlar)",
       "Veli ve sporcunun kendi giriş hesabını tek ekrandan açma",
-      "Sağlık notu, sakatlık kaydı ve antrenör notları — sadece yetkili personel görür",
+      "Antrenör notları ve gelişim geçmişi — sadece yetkili personel görür",
       "Kayıt dondurma talebi ve onayı uygulama içinden",
     ],
     seoTitle: "Sporcu ve Veli Yönetimi Yazılımı | X-NETIC",
     seoDescription:
-      "Spor kulübün için sporcu profili, veli bilgisi, sağlık notu ve branş/grup yönetimini tek platformda birleştir. X-NETIC ile sporcu yönetimini dijitalleştir.",
+      "Spor kulübün için sporcu profili, veli bilgisi ve branş/grup yönetimini tek platformda birleştir. X-NETIC ile sporcu yönetimini dijitalleştir.",
   },
   {
     slug: "antrenman-yoklama",
@@ -194,18 +194,18 @@ export const SERVICES: ServiceDetail[] = [
     eyebrow: "Güvenlik & Gizlilik",
     title: "Herkes sadece kendisini ilgilendireni görür",
     color: "text-yellow",
-    desc: "Satır bazlı erişim kontrolüyle her rol (admin, koordinatör, antrenör, veli, sporcu) sadece görmesi gereken veriye erişir — sağlık notları ve finansal veriler dahil.",
+    desc: "Satır bazlı erişim kontrolüyle her rol (admin, koordinatör, antrenör, veli, sporcu) sadece görmesi gereken veriye erişir — kişisel ve finansal veriler dahil.",
     intro:
-      "Bir spor kulübünde sağlık notları, sakatlık kayıtları ve finansal veriler gibi hassas bilgiler bulunur. X-NETIC'te satır bazlı erişim kontrolüyle her rol yalnızca görmesi gereken veriye erişir; veli sadece kendi çocuğunun, antrenör sadece kendi grubunun bilgisini görebilir, tüm süreç KVKK'ya uygun açık rıza akışıyla yürütülür.",
+      "Bir spor kulübünde iletişim bilgileri, aidat/ödeme kayıtları gibi hassas bilgiler bulunur. X-NETIC'te satır bazlı erişim kontrolüyle her rol yalnızca görmesi gereken veriye erişir; veli sadece kendi çocuğunun, antrenör sadece kendi grubunun bilgisini görebilir, tüm süreç KVKK'ya uygun açık rıza akışıyla yürütülür.",
     points: [
       "KVKK'ya uygun açık rıza akışı",
       "Veli sadece kendi çocuğunun, antrenör sadece kendi grubunun verisini görür",
-      "Hassas veriler (sağlık notu, sakatlık kaydı) sadece yetkili personelde",
+      "Finansal veriler ve antrenör notları sadece yetkili personelde",
       "Uygulama içinden hesap silme talebi",
     ],
     seoTitle: "Spor Kulübü Veri Güvenliği ve KVKK Uyumu | X-NETIC",
     seoDescription:
-      "Satır bazlı erişim kontrolüyle her rol sadece kendi verisini görür. Sağlık ve finansal veriler korumalı, KVKK uyumlu açık rıza akışı. X-NETIC güvenlik yaklaşımı.",
+      "Satır bazlı erişim kontrolüyle her rol sadece kendi verisini görür. Kişisel ve finansal veriler korumalı, KVKK uyumlu açık rıza akışı. X-NETIC güvenlik yaklaşımı.",
   },
 ];
 

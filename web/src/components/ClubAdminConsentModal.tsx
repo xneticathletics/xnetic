@@ -2,9 +2,8 @@ import Modal from "./Modal";
 import { CLUB_ADMIN_CONSENT_SECTIONS } from "../lib/consentTexts";
 
 // Kulüp Oluştur formundaki onay kutusunun yanındaki "Metni Görüntüle"
-// linkinden açılır — dört bölümün tamamını (KVKK, sağlık verisi erişim
-// taahhüdü, foto/video izni, görev beyanı) tek seferde, kaydırılabilir
-// şekilde gösterir.
+// linkinden açılır — üç bölümün tamamını (KVKK, foto/video izni,
+// görev beyanı) tek seferde, kaydırılabilir şekilde gösterir.
 export default function ClubAdminConsentModal({ clubName, onClose }: { clubName: string; onClose: () => void }) {
   return (
     <Modal title="KVKK Aydınlatma Metni ve Kullanım Şartları" onClose={onClose}>

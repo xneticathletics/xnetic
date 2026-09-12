@@ -46,8 +46,8 @@ const FAQS: { q: string; a: string }[] = [
     a: "Evet — Kulüp Ayarları'ndan logonu ve kulüp adını yükleyebilirsin, giriş ekranında ve Ana Sayfa'da hemen görünür.",
   },
   {
-    q: "Sporcularımızın sağlık/sakatlık bilgilerini kimler görebiliyor?",
-    a: "Sadece yetkili personel (kulüp admini, branş koordinatörü ve ilgili antrenör) — bu bilgiler veli ve sporcu hesaplarına gösterilmez.",
+    q: "Veliler sadece kendi çocuklarının bilgilerini mi görüyor?",
+    a: "Evet — bir veli yalnızca kendi çocuğunun profiline, yoklamasına ve ödemelerine erişebilir; başka sporcuların verisi hiçbir şekilde gösterilmez.",
   },
   {
     q: "İnternet bağlantısı olmadan kullanılabiliyor mu?",

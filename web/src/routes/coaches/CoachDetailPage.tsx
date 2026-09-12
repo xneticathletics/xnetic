@@ -77,7 +77,7 @@ export default function CoachDetailPage() {
         setVenues(v);
         setAuthorizedVenueIds(venueIds);
         // Bu antrenörün grup başına aktif sporcu sayısı için, kulübün TÜM
-        // sporcularını (sağlık verisi dahil ağır bir sorgu — listAllAthletes())
+        // sporcularını (ağır bir sorgu — listAllAthletes())
         // çekmek yerine sadece bu antrenörün gruplarına scope'lu bir sorgu
         // yeterli.
         return listAthletesInGroups(g.map((x) => x.id));

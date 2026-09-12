@@ -8,7 +8,7 @@ import { getCurrentClubId } from "../lib/api/currentUser";
 import { getClubName } from "../lib/api/clubSettings";
 
 // Veli/sporcu ilk girişte (şifre değişiminden sonra) bu ekrandan geçer —
-// KVKK, sağlık verisi, fotoğraf/video ve sorumluluk onaylarının HER
+// KVKK, fotoğraf/video ve sorumluluk onaylarının HER
 // BİRİNİ tek tek "Okudum, Kabul Ediyorum" ile onaylaması gerekir.
 // ForcePasswordChangeScreen ile aynı desen: onComplete çağrılana kadar
 // RootNavigator başka bir yere geçit vermez.

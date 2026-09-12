@@ -67,7 +67,7 @@ export default function KvkkPage({ settings }: { settings: PlatformSettings | nu
             <p>
               Bir kulübe kaydolduğunuzda kulüp; ad-soyad, iletişim bilgileri, doğum tarihi, fotoğraf, spor branşı ve
               grup bilgisi, antrenman/müsabaka katılım kayıtları, performans/ölçüm verileri, aidat ve ödeme bilgileri
-              ile ayrıca açık rızanız alınan sağlık verisi ve fotoğraf/video kullanım verilerini işleyebilir. Bu
+              ile ayrıca açık rızanız alınan fotoğraf/video kullanım verilerini işleyebilir. Bu
               verilerin işlenme amaçları, aktarımı ve haklarınız, uygulama içindeki role özel Aydınlatma Metni'nde
               tam olarak açıklanır.
             </p>

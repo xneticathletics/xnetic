@@ -74,7 +74,7 @@ export default function DemoPage({ settings }: { settings: PlatformSettings | nu
                 hiçbir yere kaydolman gerekmiyor.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-muted">
-                <li className="flex gap-2"><span className="text-teal">›</span> Sporcu Yönetimi — profil, sağlık notu, hızlı aksiyonlar</li>
+                <li className="flex gap-2"><span className="text-teal">›</span> Sporcu Yönetimi — profil, veli bilgisi, hızlı aksiyonlar</li>
                 <li className="flex gap-2"><span className="text-teal">›</span> Antrenörler — branş, kademe, sorumlu gruplar</li>
                 <li className="flex gap-2"><span className="text-teal">›</span> Finans — aidat tahsilatı ve gecikme takibi</li>
                 <li className="flex gap-2"><span className="text-teal">›</span> Fitness ve Performans Ölçümleri</li>

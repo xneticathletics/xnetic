@@ -54,7 +54,7 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
     try {
       setError(null);
       // Tüm sporcu listesi (arama için) burada ARTIK çekilmiyor — ağır bir
-      // sorgu (20+ alan, sağlık verisi dahil) sadece kullanıcı gerçekten
+      // sorgu (20+ alan) sadece kullanıcı gerçekten
       // arama kutusuna yazmaya başladığında, aşağıdaki lazy effect ile
       // çekiliyor. Sırf grupları görüntülemek için her ekran açılışında
       // gereksiz yere tüm kulüp sporcularını indirmeyi engelliyor.
