@@ -38,7 +38,7 @@ export default function Header() {
             href="/demo"
             className="hidden rounded-lg border border-teal px-4 py-2 text-sm font-bold text-teal transition hover:bg-teal/10 sm:inline-block"
           >
-            Demo
+            Uygulamayı Dene
           </a>
           <a
             href={`${APP_URL}/kulup-olustur`}
@@ -78,7 +78,7 @@ export default function Header() {
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-lg px-2 py-2.5 text-base font-bold text-teal hover:bg-surface"
               >
-                Demo — Kaydolmadan Dene
+                Uygulamayı Dene — Kaydolmadan
               </a>
             </li>
             <li>

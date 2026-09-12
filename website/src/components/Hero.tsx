@@ -50,6 +50,12 @@ export default function Hero() {
               Kulübünü Oluştur
             </a>
             <a
+              href="/demo"
+              className="rounded-lg border border-teal px-6 py-3 text-sm font-bold text-teal transition hover:bg-teal/10"
+            >
+              Uygulamayı Dene
+            </a>
+            <a
               href="#ozellikler"
               className="rounded-lg border border-line px-6 py-3 text-sm font-bold text-ink transition hover:border-muted"
             >
