@@ -5,6 +5,8 @@ import { listAthleteRecentAttendance, type AthleteRecentAttendance, type Attenda
 import { listAthleteNotes, createAthleteNote, type AthleteNote } from "../../lib/api/athleteNotes";
 import { listInjuries, createInjury, type Injury } from "../../lib/api/injuries";
 import AthleteEditModal from "./AthleteEditModal";
+import RadialProgress from "../../components/charts/RadialProgress";
+import StackedBar, { type StackedBarSegment } from "../../components/charts/StackedBar";
 
 const STATUS_LABEL: Record<string, string> = { active: "Aktif", passive: "Pasif" };
 const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
@@ -20,6 +22,13 @@ const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
   gec_kaldi: "text-yellow",
   raporlu: "text-violet",
   izinli: "text-violet",
+};
+const ATTENDANCE_BG: Record<AttendanceStatus, string> = {
+  geldi: "bg-teal",
+  gelmedi: "bg-coral",
+  gec_kaldi: "bg-yellow",
+  raporlu: "bg-violet",
+  izinli: "bg-violet",
 };
 
 function calcAge(birthDate: string | null): number | null {
@@ -134,6 +143,15 @@ export default function AthleteDetailPage() {
     return Math.round((attended / attendance.length) * 100);
   }, [attendance]);
   const recentSessions = attendance.slice(0, 5);
+  const attendanceBreakdown: StackedBarSegment[] = useMemo(() => {
+    const order: AttendanceStatus[] = ["geldi", "gelmedi", "gec_kaldi", "izinli", "raporlu"];
+    return order.map((status) => ({
+      key: status,
+      label: ATTENDANCE_LABEL[status],
+      count: attendance.filter((a) => a.status === status).length,
+      colorClassName: ATTENDANCE_BG[status],
+    }));
+  }, [attendance]);
 
   const handleDelete = async () => {
     if (!athlete) return;
@@ -180,8 +198,12 @@ export default function AthleteDetailPage() {
               <p className="text-base font-extrabold text-ink">{age ?? "—"}</p>
               <p className="text-[10px] font-bold text-muted">YAŞ</p>
             </div>
-            <div className="rounded-lg border border-line bg-bg px-3 py-2 text-center">
-              <p className="text-base font-extrabold text-teal">{attendancePct !== null ? `%${attendancePct}` : "—"}</p>
+            <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-line bg-bg px-3 py-2 text-center">
+              {attendancePct !== null ? (
+                <RadialProgress value={attendancePct} size={40} strokeWidth={4} labelClassName="text-[10px] font-extrabold text-ink" />
+              ) : (
+                <p className="text-base font-extrabold text-teal">—</p>
+              )}
               <p className="text-[10px] font-bold text-muted">DEVAM</p>
             </div>
             <div className="rounded-lg border border-line bg-bg px-3 py-2 text-center">
@@ -249,6 +271,11 @@ export default function AthleteDetailPage() {
           <h2 id="yoklama" className="mb-3 mt-6 scroll-mt-4 text-sm font-bold text-ink">
             Son Antrenmanlar
           </h2>
+          {attendance.length > 0 && (
+            <div className="mb-3 rounded-xl border border-line bg-surface p-4">
+              <StackedBar segments={attendanceBreakdown} />
+            </div>
+          )}
           <div className="rounded-xl border border-line bg-surface p-4">
             {recentSessions.length === 0 ? (
               <p className="text-sm text-muted">Henüz yoklama kaydı yok.</p>

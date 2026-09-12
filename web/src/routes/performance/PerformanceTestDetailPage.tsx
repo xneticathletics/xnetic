@@ -11,8 +11,20 @@ import {
   type PerformanceMeasurement,
 } from "../../lib/api/performanceMeasurements";
 import PerformanceMeasurementModal from "./PerformanceMeasurementModal";
+import TrendLine from "../../components/charts/TrendLine";
 
 const CUSTOM_PREFIX = "custom:";
+
+// Tailwind'in derleme zamanında class adlarını tarayabilmesi için (dinamik
+// `stroke-${x}` gibi ifadeleri JIT tarayıcısı yakalayamaz — bkz.
+// fitnessExercises.ts'teki CATEGORY_COLOR_CLASSES ile aynı gerekçe) SVG
+// stroke/fill renkleri burada literal string'lerle sabit tutuluyor.
+const TREND_COLOR_CLASSES: Record<string, { stroke: string; fill: string }> = {
+  yellow: { stroke: "stroke-yellow", fill: "fill-yellow" },
+  teal: { stroke: "stroke-teal", fill: "fill-teal" },
+  coral: { stroke: "stroke-coral", fill: "fill-coral" },
+  violet: { stroke: "stroke-violet", fill: "fill-violet" },
+};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
@@ -78,6 +90,14 @@ export default function PerformanceTestDetailPage() {
     const list = q ? athletes.filter((a) => a.full_name.toLowerCase().includes(q)) : athletes;
     return [...list].sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
   }, [athletes, query]);
+
+  const trendPoints = useMemo(
+    () =>
+      [...history]
+        .reverse() // history en yeniden en eskiye sıralı geliyor, grafik solda eski sağda yeni istiyor
+        .map((m) => ({ label: formatDate(m.measured_at), value: m.value })),
+    [history]
+  );
 
   const handleSelectAthlete = (a: Athlete) => {
     setAthlete(a);
@@ -214,6 +234,18 @@ export default function PerformanceTestDetailPage() {
       </div>
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}
+
+      {athlete && !loadingHistory && (
+        <div className="mb-4 rounded-xl border border-line bg-surface p-4">
+          <p className="mb-2 text-xs font-bold uppercase text-muted">Değişim ({test.unit})</p>
+          <TrendLine
+            points={trendPoints}
+            accentClassName={TREND_COLOR_CLASSES[category.color].stroke}
+            dotClassName={TREND_COLOR_CLASSES[category.color].fill}
+            formatValue={(v) => `${v} ${test.unit}`}
+          />
+        </div>
+      )}
 
       {athlete && (
         <DataTable
