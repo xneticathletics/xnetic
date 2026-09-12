@@ -12,8 +12,15 @@ import { getPendingOrderCount } from "../lib/api/shop";
 import { listPendingPasswordResetRequests } from "../lib/api/notifications";
 import { getClubName } from "../lib/api/clubSettings";
 import { getClubLogoUrl } from "../lib/api/clubLogo";
-import { useClubSettings } from "../context/ClubSettingsContext";
 import { todayKey } from "../lib/date";
+
+// Ana Sayfa'daki duyuru önizlemesi bilerek kulübün "Duyurular Listesi"
+// ayarından (10 gün gibi daha uzun bir varsayılan) BAĞIMSIZ, sabit 1
+// günlük bir pencere kullanıyor — kullanıcı isteği: Ana Sayfa sadece
+// "az önce ne oldu"yu göstersin, daha eskisini görmek isteyen zaten
+// Duyurular sayfasına gidip oradaki (görünürlük ayarına göre) tam
+// listeye baksın.
+const DASHBOARD_ANNOUNCEMENT_PREVIEW_MS = 24 * 60 * 60 * 1000;
 
 function formatTry(n: number) {
   return `${Math.round(n).toLocaleString("tr-TR")} ₺`;
@@ -31,7 +38,6 @@ const NO_BRANCH_LABEL = "Branşsız";
 
 export default function DashboardPage() {
   const { clubId } = useAuth();
-  const { settings } = useClubSettings();
   const [clubName, setClubName] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -77,11 +83,7 @@ export default function DashboardPage() {
             .map((m): DayItem => ({ kind: "match", time: m.start_time, branch: m.groups?.branch ?? NO_BRANCH_LABEL, data: m })),
         ].sort((x, y) => x.time.localeCompare(y.time));
         setTodayItems(items);
-        // Mobildeki AnnouncementsScreen.tsx ile aynı filtre — kulübün
-        // görünürlük süresini geçmiş duyurular Ana Sayfa özetinde de
-        // görünmemeli (AnnouncementsListPage.tsx'te de aynı düzeltme var).
-        const visibilityMs = settings.announcement_visibility_days * 24 * 60 * 60 * 1000;
-        const recentAnn = ann.filter((a) => Date.now() - new Date(a.created_at).getTime() <= visibilityMs);
+        const recentAnn = ann.filter((a) => Date.now() - new Date(a.created_at).getTime() <= DASHBOARD_ANNOUNCEMENT_PREVIEW_MS);
         setAnnouncements(recentAnn.slice(0, 4));
         setImportantAnnouncementCount(recentAnn.filter((a) => a.is_important).length);
         setFinance(fin);
@@ -90,7 +92,7 @@ export default function DashboardPage() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [settings.announcement_visibility_days]);
+  }, []);
 
   // Karışık, tek bir zaman çizelgesi yerine branşa göre gruplanmış başlıklar
   // altında gösteriyoruz — çok branşlı bir kulüpte "hangi antrenman hangi
@@ -145,7 +147,16 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <SectionCard title="Son Duyurular" empty={!loading && announcements.length === 0} emptyText="Henüz duyuru yok.">
+          <SectionCard
+            title="Son Duyurular"
+            empty={!loading && announcements.length === 0}
+            emptyText="Son 1 günde yeni duyuru yok."
+            action={
+              <Link to="/announcements" className="shrink-0 text-xs font-bold text-teal hover:underline">
+                Tümünü Gör ›
+              </Link>
+            }
+          >
             {announcements.map((a) => (
               <div
                 key={a.id}
@@ -242,17 +253,20 @@ function SectionCard({
   title,
   empty,
   emptyText,
+  action,
   children,
 }: {
   title: string;
   empty: boolean;
   emptyText: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
-      <div className="border-b border-line px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
         <h2 className="text-sm font-bold text-ink">{title}</h2>
+        {action}
       </div>
       {empty ? <p className="px-4 py-6 text-center text-sm text-muted">{emptyText}</p> : children}
     </div>
