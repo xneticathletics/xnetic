@@ -15,7 +15,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "club.xnetic.app",
-      "jsEngine": "jsc",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -43,14 +42,6 @@
         {
           "calendarPermission": "Antrenman ve müsabaka programını telefonunun takvimine ekleyebilmen için takvimine erişim gerekiyor.",
           "remindersPermission": "X-NETIC hatırlatıcılarına erişmiyor."
-        }
-      ],
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "organization": "xnetic",
-          "project": "react-native"
         }
       ],
       "expo-video",
