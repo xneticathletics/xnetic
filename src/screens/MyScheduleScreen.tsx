@@ -21,6 +21,7 @@ const ATTENDANCE_LABEL: Record<AttendanceStatus, { text: string; color: string }
 };
 
 const WEEKDAY_LABELS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const WEEKDAY_FULL = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 const MONTH_LABELS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
@@ -36,6 +37,35 @@ function todayKey() {
   const d = new Date();
   return toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
 }
+
+// "2026-09-13" -> "13 Eylül, Pazar"
+function formatSelectedDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const weekdayIdx = (dateObj.getDay() + 6) % 7; // Pzt=0
+  return `${d} ${MONTH_LABELS[m - 1]}, ${WEEKDAY_FULL[weekdayIdx]}`;
+}
+
+function addDays(dateKey: string, days: number): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toDateKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfWeek(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const weekday = (date.getDay() + 6) % 7; // Pzt=0
+  date.setDate(date.getDate() - weekday);
+  return toDateKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function buildWeekGrid(selectedDate: string): string[] {
+  const start = startOfWeek(selectedDate);
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
 function buildMonthGrid(year: number, month0: number): (number | null)[] {
   const firstWeekday = (new Date(year, month0, 1).getDay() + 6) % 7; // Pzt=0
   const daysInMonth = new Date(year, month0 + 1, 0).getDate();
@@ -61,6 +91,9 @@ export default function MyScheduleScreen({ navigation }: Props) {
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState<string>(todayKey());
+  // Kullanıcı seçtiği görünümde kalır (ay <-> hafta), ekran her
+  // odaklandığında sıfırlanmaz — bkz. TrainingSessionsScreen (Takvim).
+  const [calendarView, setCalendarView] = useState<"month" | "week">("month");
 
   // Ana Sayfa'ya/bu ekrana her dönüşte yükleniyor göstergesi/sayfa kaymaması için sadece İLK yüklemede gösterilecek.
   const hasLoadedOnceRef = useRef(false);
@@ -111,7 +144,14 @@ export default function MyScheduleScreen({ navigation }: Props) {
     return map;
   }, [sessions]);
 
-  const grid = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+  const monthGrid = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+  const weekDates = useMemo(() => buildWeekGrid(selectedDate), [selectedDate]);
+  const displayCells = useMemo(() => {
+    if (calendarView === "week") {
+      return weekDates.map((dateKey) => ({ day: Number(dateKey.split("-")[2]), dateKey }));
+    }
+    return monthGrid.map((day) => (day === null ? null : { day, dateKey: toDateKey(viewYear, viewMonth, day) }));
+  }, [calendarView, weekDates, monthGrid, viewYear, viewMonth]);
   const selectedSessions = sessionsByDate[selectedDate] ?? [];
 
   const goPrevMonth = () => {
@@ -122,6 +162,15 @@ export default function MyScheduleScreen({ navigation }: Props) {
     if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
     else setViewMonth((m) => m + 1);
   };
+  const shiftWeek = (deltaDays: number) => {
+    const next = addDays(selectedDate, deltaDays);
+    const [y, m] = next.split("-").map(Number);
+    setSelectedDate(next);
+    setViewYear(y);
+    setViewMonth(m - 1);
+  };
+  const goPrev = () => (calendarView === "week" ? shiftWeek(-7) : goPrevMonth());
+  const goNext = () => (calendarView === "week" ? shiftWeek(7) : goNextMonth());
 
   const handleCalendarSync = async () => {
     setSyncing(true);
@@ -155,18 +204,18 @@ export default function MyScheduleScreen({ navigation }: Props) {
 
       <View style={styles.monthNav}>
         <TouchableOpacity
-          onPress={goPrevMonth}
+          onPress={goPrev}
           style={styles.monthNavButton}
-          accessibilityLabel="Önceki ay"
+          accessibilityLabel={calendarView === "week" ? "Önceki hafta" : "Önceki ay"}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={styles.monthNavIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_LABELS[viewMonth]} {viewYear}</Text>
         <TouchableOpacity
-          onPress={goNextMonth}
+          onPress={goNext}
           style={styles.monthNavButton}
-          accessibilityLabel="Sonraki ay"
+          accessibilityLabel={calendarView === "week" ? "Sonraki hafta" : "Sonraki ay"}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={styles.monthNavIcon}>›</Text>
@@ -180,9 +229,9 @@ export default function MyScheduleScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.grid}>
-        {grid.map((day, idx) => {
-          if (day === null) return <View key={idx} style={styles.dayCell} />;
-          const dateKey = toDateKey(viewYear, viewMonth, day);
+        {displayCells.map((cell, idx) => {
+          if (cell === null) return <View key={idx} style={styles.dayCell} />;
+          const { day, dateKey } = cell;
           const daySessions = sessionsByDate[dateKey] ?? [];
           const hasSessions = daySessions.length > 0;
           const isSelected = dateKey === selectedDate;
@@ -204,7 +253,8 @@ export default function MyScheduleScreen({ navigation }: Props) {
             }
           };
 
-          const dayLabel = `${day} ${MONTH_LABELS[viewMonth]}${isToday ? ", bugün" : ""}${hasSessions ? ", antrenman var" : ""}`;
+          const cellMonth0 = Number(dateKey.split("-")[1]) - 1;
+          const dayLabel = `${day} ${MONTH_LABELS[cellMonth0]}${isToday ? ", bugün" : ""}${hasSessions ? ", antrenman var" : ""}`;
 
           return (
             <TouchableOpacity
@@ -216,21 +266,17 @@ export default function MyScheduleScreen({ navigation }: Props) {
             >
               <View
                 style={[
-                  styles.dayCircle,
-                  hasSessions && styles.dayCircleHasSession,
-                  isSelected && styles.dayCircleSelected,
-                  isToday && !isSelected && styles.dayCircleToday,
+                  styles.dayBox,
+                  isSelected && styles.dayBoxSelected,
+                  !isSelected && isToday && styles.dayBoxToday,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.dayNumber,
-                    hasSessions && styles.dayNumberHasSession,
-                    isSelected && styles.dayNumberSelected,
-                  ]}
-                >
-                  {day}
-                </Text>
+                <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
+                {hasSessions && (
+                  <View style={styles.dayDotsRow}>
+                    <View style={styles.dayDot} />
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           );
@@ -238,7 +284,15 @@ export default function MyScheduleScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.selectedDateHeader}>
-        <Text style={styles.selectedDateLabel}>{selectedDate}</Text>
+        <Text style={styles.selectedDateLabel} numberOfLines={1}>{formatSelectedDate(selectedDate)}</Text>
+        <TouchableOpacity
+          style={styles.viewToggleButton}
+          onPress={() => setCalendarView((v) => (v === "month" ? "week" : "month"))}
+          accessibilityLabel={calendarView === "month" ? "Haftalık görünüme geç" : "Aylık görünüme geç"}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.viewToggleIcon}>{calendarView === "month" ? "▴" : "▾"}</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -279,8 +333,6 @@ export default function MyScheduleScreen({ navigation }: Props) {
   );
 }
 
-const CELL_SIZE = 40;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
   title: { color: colors.ink, fontSize: 20, fontWeight: "700" },
@@ -302,23 +354,31 @@ const styles = StyleSheet.create({
   weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 11, fontWeight: "700" },
 
   grid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 3 },
-  dayCircle: {
-    width: CELL_SIZE, height: CELL_SIZE, borderRadius: CELL_SIZE / 2,
-    alignItems: "center", justifyContent: "center",
+  dayCell: { width: `${100 / 7}%`, padding: 2 },
+  // Takvim (TrainingSessionsScreen) ile aynı çerçeveli/dolgulu kutu
+  // görünümü — yalın bir daire yerine gerçek bir hücre hissi versin diye.
+  dayBox: {
+    width: "100%", aspectRatio: 1, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line,
+    backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", gap: 3,
   },
-  dayCircleHasSession: { backgroundColor: colors.yellow },
-  dayCircleToday: { borderWidth: 1, borderColor: colors.muted },
-  dayCircleSelected: { backgroundColor: colors.teal },
-  dayNumber: { color: colors.muted, fontSize: 13, fontWeight: "600" },
-  dayNumberHasSession: { color: colors.bg, fontWeight: "800" },
+  dayBoxSelected: { backgroundColor: colors.yellow, borderColor: colors.yellow },
+  dayBoxToday: { borderColor: colors.teal, borderWidth: 2 },
+  dayNumber: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   dayNumberSelected: { color: colors.bg, fontWeight: "800" },
+  dayDotsRow: { flexDirection: "row", gap: 3, height: 5, alignItems: "center" },
+  dayDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.yellow },
 
   selectedDateHeader: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     marginTop: spacing.md, marginBottom: spacing.sm,
     borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm,
   },
   selectedDateLabel: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  viewToggleButton: {
+    width: 28, height: 22, borderRadius: radius.sm, backgroundColor: colors.surface,
+    borderWidth: 1, borderColor: colors.line, alignItems: "center", justifyContent: "center",
+  },
+  viewToggleIcon: { color: colors.yellow, fontSize: 12, fontWeight: "700" },
 
   row: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
