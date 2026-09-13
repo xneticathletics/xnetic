@@ -224,7 +224,10 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
                       <Image source={{ uri: item.media_url }} style={[styles.thumb, { width: thumbSize }, isPending && styles.thumbPending]} />
                     ) : (
                       <View style={[styles.thumb, styles.videoThumb, { width: thumbSize }, isPending && styles.thumbPending]}>
-                        <Text style={styles.videoThumbIcon}>▶</Text>
+                        <VideoGridThumbnail uri={item.media_url} />
+                        <View style={styles.videoPlayBadge}>
+                          <Text style={styles.videoThumbIcon}>▶</Text>
+                        </View>
                       </View>
                     )}
                     {isPending && (
@@ -329,6 +332,35 @@ function ViewerPage({ post, active, width }: { post: SocialPost; active: boolean
   return <VideoViewerPage uri={post.media_url} active={active} width={width} />;
 }
 
+// Izgaradaki video önizlemesi — sadece bir ▶ ikonuyla boş/siyah bir kutu
+// göstermek yerine, videonun gerçek bir karesini önizleme olarak
+// çiziyoruz. Bazı cihazlarda duraklatılmış bir player hiç kare
+// çizmeden siyah kalabiliyor — bunu aşmak için görünmez şekilde çok kısa
+// bir an oynatıp hemen duraklatıyoruz (sessiz, gözle fark edilmeyecek
+// kadar kısa), böylece "videodan herhangi bir an" gerçekten görünür.
+function VideoGridThumbnail({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, (p) => {
+    p.loop = false;
+    p.muted = true;
+  });
+
+  useEffect(() => {
+    player.play();
+    const timer = setTimeout(() => player.pause(), 150);
+    return () => clearTimeout(timer);
+  }, [player]);
+
+  return (
+    <VideoView
+      style={StyleSheet.absoluteFillObject}
+      player={player}
+      contentFit="cover"
+      nativeControls={false}
+      pointerEvents="none"
+    />
+  );
+}
+
 function VideoViewerPage({ uri, active, width }: { uri: string; active: boolean; width: number }) {
   const player = useVideoPlayer(uri, (p) => {
     p.loop = false;
@@ -385,10 +417,14 @@ const styles = StyleSheet.create({
   },
   photoRow: { flexDirection: "row", gap: GRID_GAP, marginBottom: GRID_GAP },
   thumbWrap: {},
-  thumb: { aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.surface },
+  thumb: { aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.surface, overflow: "hidden" },
   thumbPending: { opacity: 0.45 },
   videoThumb: { alignItems: "center", justifyContent: "center" },
-  videoThumbIcon: { color: colors.ink, fontSize: 28 },
+  videoPlayBadge: {
+    width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center",
+  },
+  videoThumbIcon: { color: colors.ink, fontSize: 15 },
   pendingBadge: {
     position: "absolute", bottom: 6, left: 6, right: 6,
     backgroundColor: "rgba(0,0,0,0.72)", borderRadius: radius.sm, paddingVertical: 4, alignItems: "center",
