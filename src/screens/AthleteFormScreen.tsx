@@ -79,17 +79,24 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [athleteLinkedUser, setAthleteLinkedUser] = useState<LinkedUser | null>(null);
   const [parentLinkedUser, setParentLinkedUser] = useState<LinkedUser | null>(null);
+  // Edit modunda "gerçekten bir şey değişti mi" kıyaslaması için — veri
+  // yüklenince (aşağıdaki Promise.all, tüm paralel istekler bitince) dolar.
+  const initialSnapshotRef = useRef<string | null>(null);
 
-  // Yeni sporcu eklerken, form doldurulmuşken yanlışlıkla başka bir yere
-  // geçilirse (geri tuşu, kaydırma hareketi, Ana Sayfa vb.) veri kaybını
-  // önlemek için onay ister. Düzenleme modunda sormuyor (mevcut kaydın
-  // hangi alanının fiilen değiştiğini güvenilir şekilde izlemek — burada
-  // veli/sporcu hesap bağlantıları gibi paralel yüklenen alanlar da
-  // olduğu için — ayrı bir iş; şimdilik en yüksek değerli senaryu olan
-  // "yeni girilen veri kaybı"nı kapsıyoruz).
-  const hasUnsavedChanges =
-    !isEdit &&
-    (form.full_name.trim().length > 0 || !!form.group_id || !!photoUri || !!athleteLinkedUser || !!parentLinkedUser);
+  // Yeni sporcu eklerken form doldurulmuşken, ya da düzenlemede mevcut
+  // kayıt fiilen değiştirilmişken yanlışlıkla başka bir yere geçilirse
+  // (geri tuşu, kaydırma hareketi, Ana Sayfa vb.) veri kaybını önlemek
+  // için onay ister.
+  const hasUnsavedChanges = isEdit
+    ? !loading &&
+      initialSnapshotRef.current !== null &&
+      (JSON.stringify({
+        form,
+        athleteLinkedUserId: athleteLinkedUser?.id ?? null,
+        parentLinkedUserId: parentLinkedUser?.id ?? null,
+      }) !== initialSnapshotRef.current ||
+        !!photoUri)
+    : form.full_name.trim().length > 0 || !!form.group_id || !!photoUri || !!athleteLinkedUser || !!parentLinkedUser;
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
@@ -123,10 +130,19 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     if (!athleteId) return;
-    getAthlete(athleteId)
-      .then((a) => {
+    // Üçü de PARALEL ama TEK Promise.all ile bekleniyor — hasUnsavedChanges
+    // kıyaslaması için "başlangıç" anını ancak hepsi (veli/sporcu hesap
+    // bağlantıları dahil) yüklendikten sonra sabitleyebiliriz, aksi halde
+    // linked-user istekleri biraz geç bitince "değişti" yanlış pozitifi
+    // çıkardı (bkz. eski kod: ayrı ayrı .then'lerle bu senkronizasyon yoktu).
+    Promise.all([
+      getAthlete(athleteId),
+      getLinkedUser(athleteId).catch(() => null),
+      getLinkedParentUser(athleteId).catch(() => null),
+    ])
+      .then(([a, linkedAthleteUser, linkedParentUser]) => {
         if (!a) return;
-        setForm({
+        const loadedForm: AthleteInput = {
           full_name: a.full_name,
           birth_date: a.birth_date,
           group_id: a.group_id,
@@ -141,13 +157,19 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
           photo_url: a.photo_url,
           parent_name: a.parent_name,
           parent_phone: a.parent_phone,
-        });
+        };
+        setForm(loadedForm);
         setGroupName(a.groups?.name ?? null);
+        setAthleteLinkedUser(linkedAthleteUser);
+        setParentLinkedUser(linkedParentUser);
+        initialSnapshotRef.current = JSON.stringify({
+          form: loadedForm,
+          athleteLinkedUserId: linkedAthleteUser?.id ?? null,
+          parentLinkedUserId: linkedParentUser?.id ?? null,
+        });
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-    getLinkedUser(athleteId).then(setAthleteLinkedUser).catch(() => {});
-    getLinkedParentUser(athleteId).then(setParentLinkedUser).catch(() => {});
   }, [athleteId]);
 
   const set = <K extends keyof AthleteInput>(key: K, value: AthleteInput[K]) =>
