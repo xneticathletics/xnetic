@@ -12,6 +12,7 @@ import {
   listProductVariantsAdmin, saveProductVariants, type VariantCombo, type ShopGender,
 } from "../lib/api/shop";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "ShopProductForm">;
@@ -55,6 +56,12 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
   const [localPhotos, setLocalPhotos] = useState<string[]>([]);
   const [colorOptions, setColorOptions] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
+  // Stok sayıları (variantStocks) ve edit modundaki fotoğraflar (anında
+  // yükleniyor) kasıtlı olarak dışarıda — combos'tan türeyen otomatik
+  // senkron effect'iyle yarış durumu yaratmadan basit tutmak için.
+  const initialSnapshotRef = useRef(
+    JSON.stringify({ title: "", description: "", price: "", category: null, gender: null, colorOptions: [] as string[], sizes: [] as string[] })
+  );
   const [colorInput, setColorInput] = useState("");
   const [sizeInput, setSizeInput] = useState("");
   const [variantStocks, setVariantStocks] = useState<Record<string, string>>({});
@@ -73,20 +80,34 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
       if (isNew) return;
       Promise.all([getProductAdmin(productId!), listProductVariantsAdmin(productId!)])
         .then(([p, variants]) => {
+          const loadedDescription = p.description ?? "";
+          const loadedPrice = String(p.price);
+          const loadedColors = [...new Set(variants.map((v) => v.color).filter((c): c is string => !!c))];
+          const loadedSizes = [...new Set(variants.map((v) => v.size).filter((s): s is string => !!s))];
           setTitle(p.title);
-          setDescription(p.description ?? "");
-          setPrice(String(p.price));
+          setDescription(loadedDescription);
+          setPrice(loadedPrice);
           setCategory(p.category);
           setGender(p.gender);
           setPhotos(p.photo_urls);
-          setColorOptions([...new Set(variants.map((v) => v.color).filter((c): c is string => !!c))]);
-          setSizes([...new Set(variants.map((v) => v.size).filter((s): s is string => !!s))]);
+          setColorOptions(loadedColors);
+          setSizes(loadedSizes);
           setVariantStocks(Object.fromEntries(variants.map((v) => [comboKey(v.color, v.size), String(v.stock)])));
+          initialSnapshotRef.current = JSON.stringify({
+            title: p.title, description: loadedDescription, price: loadedPrice,
+            category: p.category, gender: p.gender, colorOptions: loadedColors, sizes: loadedSizes,
+          });
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [productId, isNew])
   );
+
+  const hasUnsavedChanges =
+    !loading &&
+    (JSON.stringify({ title, description, price, category, gender, colorOptions, sizes }) !== initialSnapshotRef.current ||
+      (isNew && localPhotos.length > 0));
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const combos = useMemo(() => computeCombos(colorOptions, sizes), [colorOptions, sizes]);
 
@@ -193,6 +214,7 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
         });
         await saveProductVariants(productId!, variantCombos);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

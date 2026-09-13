@@ -17,6 +17,7 @@ import { useBranchSelect } from "../context/BranchSelectContext";
 import { getMyCoachedGroupIds, getMyBranchGroupIds } from "../lib/api/myGroups";
 import { getMyAuthorizedVenueIds } from "../lib/api/venueCoaches";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 // "SS:DD" formatında, saat 00-23 ve dakika 00-59 aralığında mı kontrol eder
 // — aksi halde veritabanı "time" alanı (ör. 24:30) ham bir hata fırlatırdı.
@@ -54,6 +55,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [form, setForm] = useState<TrainingSessionInput>(emptyForm);
+  const initialFormRef = useRef(JSON.stringify(emptyForm));
   const [groupName, setGroupName] = useState<string | null>(null);
   const [venueName, setVenueName] = useState<string | null>(null);
   const [groupPickerVisible, setGroupPickerVisible] = useState(false);
@@ -112,7 +114,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
     if (!sessionId) return;
     getSession(sessionId)
       .then((s) => {
-        setForm({
+        const loaded: TrainingSessionInput = {
           group_id: s.group_id,
           venue_id: s.venue_id,
           session_date: s.session_date,
@@ -120,13 +122,18 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
           end_time: s.end_time.slice(0, 5),
           topic: s.topic,
           notes: s.notes,
-        });
+        };
+        setForm(loaded);
+        initialFormRef.current = JSON.stringify(loaded);
         setGroupName(s.groups?.name ?? null);
         setVenueName(s.venues?.name ?? null);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [sessionId]);
+
+  const hasUnsavedChanges = !loading && JSON.stringify(form) !== initialFormRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const set = <K extends keyof TrainingSessionInput>(key: K, value: TrainingSessionInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -186,6 +193,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
       } else {
         await createSession(form);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -208,6 +216,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
           onPress: async () => {
             try {
               await deleteSession(sessionId);
+              markSaved();
               navigation.goBack();
             } catch (e: any) {
               Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);

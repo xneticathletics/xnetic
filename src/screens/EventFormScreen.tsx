@@ -13,6 +13,7 @@ import {
 import BranchPickerModal from "../components/BranchPickerModal";
 import DatePickerModal from "../components/DatePickerModal";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -38,9 +39,11 @@ export default function EventFormScreen({ route, navigation }: Props) {
   // seçer veya "Kulüp Geneli" (branch=null) bırakabilir.
   const { selectedBranch, isLocked } = useBranchSelect();
 
-  const [form, setForm] = useState<EventInput>(isLocked ? { ...emptyForm, branch: selectedBranch } : emptyForm);
+  const initialForm = isLocked ? { ...emptyForm, branch: selectedBranch } : emptyForm;
+  const [form, setForm] = useState<EventInput>(initialForm);
   const [feeText, setFeeText] = useState("0");
   const [capacityText, setCapacityText] = useState("");
+  const initialSnapshotRef = useRef(JSON.stringify({ form: initialForm, feeText: "0", capacityText: "" }));
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [localBanner, setLocalBanner] = useState<string | null>(null);
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
@@ -60,19 +63,27 @@ export default function EventFormScreen({ route, navigation }: Props) {
       if (isNew) return;
       getEvent(eventId!)
         .then((e) => {
-          setForm({
+          const loaded: EventInput = {
             type: e.type, title: e.title, description: e.description, branch: e.branch, location: e.location,
             start_date: e.start_date, end_date: e.end_date, fee_try: e.fee_try, capacity: e.capacity,
             registration_deadline: e.registration_deadline,
-          });
-          setFeeText(String(e.fee_try));
-          setCapacityText(e.capacity !== null ? String(e.capacity) : "");
+          };
+          const loadedFeeText = String(e.fee_try);
+          const loadedCapacityText = e.capacity !== null ? String(e.capacity) : "";
+          setForm(loaded);
+          setFeeText(loadedFeeText);
+          setCapacityText(loadedCapacityText);
           setBannerUrl(e.banner_url);
+          initialSnapshotRef.current = JSON.stringify({ form: loaded, feeText: loadedFeeText, capacityText: loadedCapacityText });
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [eventId, isNew])
   );
+
+  const hasUnsavedChanges =
+    !loading && JSON.stringify({ form, feeText, capacityText }) !== initialSnapshotRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const set = <K extends keyof EventInput>(key: K, value: EventInput[K]) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -127,6 +138,7 @@ export default function EventFormScreen({ route, navigation }: Props) {
       } else {
         await updateEvent(eventId!, payload);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

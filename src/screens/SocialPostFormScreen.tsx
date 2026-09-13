@@ -9,6 +9,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { createSocialPost, listMyBranches } from "../lib/api/socialPosts";
 import BranchPickerModal from "../components/BranchPickerModal";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { Branch } from "../lib/api/branches";
@@ -35,6 +36,10 @@ export default function SocialPostFormScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  // branch dahil değil — koordinatör/tek-branşlı kullanıcı için otomatik
+  // dolduruluyor, dahil edilirse hiç dokunmadan "değişti" sayılırdı.
+  const hasUnsavedChanges = !!localUri || !!caption.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
     if (isBranchCoordinator) return;
@@ -70,6 +75,7 @@ export default function SocialPostFormScreen({ navigation }: Props) {
     setError(null);
     try {
       const post = await createSocialPost({ branch, localUri, mediaType, caption: caption.trim() || undefined });
+      markSaved();
       if (post.status === "pending") {
         Alert.alert(
           "Onay bekliyor",

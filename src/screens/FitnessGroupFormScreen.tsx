@@ -15,6 +15,7 @@ import {
   getFitnessGroup, createFitnessGroup, updateFitnessGroup,
   listMusabikAthletesForBranch, type MusabikAthlete,
 } from "../lib/api/fitnessGroups";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessGroupForm">;
 
@@ -28,6 +29,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
   const isCoach = role === "coach";
 
   const [name, setName] = useState("");
+  const initialSnapshotRef = useRef(JSON.stringify({ name: "", ids: [] as string[] }));
   const [branch, setBranch] = useState<string | null>(null);
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
   const [athletes, setAthletes] = useState<MusabikAthlete[]>([]);
@@ -78,12 +80,18 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
           setName(g.name);
           setBranch(g.branch);
           setSelectedIds(new Set(g.athleteIds));
+          initialSnapshotRef.current = JSON.stringify({ name: g.name, ids: [...g.athleteIds].sort() });
         })
         .catch((e) => !cancelled && setError(e.message))
         .finally(() => !cancelled && setLoading(false));
       return () => { cancelled = true; };
     }, [fitnessGroupId, isNew])
   );
+
+  const hasUnsavedChanges =
+    !loading &&
+    JSON.stringify({ name, ids: Array.from(selectedIds).sort() }) !== initialSnapshotRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
     if (!branch) {
@@ -128,6 +136,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
       } else {
         await updateFitnessGroup(fitnessGroupId!, { name: name.trim(), athleteIds: Array.from(selectedIds) });
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

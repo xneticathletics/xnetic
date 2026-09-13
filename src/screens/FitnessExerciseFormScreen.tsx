@@ -8,6 +8,7 @@ import { createCustomExercise, updateCustomExercise, getCustomExercise, uploadEx
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessExerciseForm">;
 
@@ -19,6 +20,7 @@ export default function FitnessExerciseFormScreen({ route, navigation }: Props) 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const initialSnapshotRef = useRef(JSON.stringify({ category: null, name: "", description: "", videoUrl: "" }));
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!exerciseId);
@@ -36,15 +38,24 @@ export default function FitnessExerciseFormScreen({ route, navigation }: Props) 
     getCustomExercise(exerciseId)
       .then((ex) => {
         if (cancelled || !ex) return;
+        const loadedDescription = ex.description ?? "";
+        const loadedVideoUrl = ex.video_url ?? "";
         setCategory(ex.category);
         setName(ex.name);
-        setDescription(ex.description ?? "");
-        setVideoUrl(ex.video_url ?? "");
+        setDescription(loadedDescription);
+        setVideoUrl(loadedVideoUrl);
+        initialSnapshotRef.current = JSON.stringify({
+          category: ex.category, name: ex.name, description: loadedDescription, videoUrl: loadedVideoUrl,
+        });
       })
       .catch((e) => { if (!cancelled) setError(e.message ?? "Hareket yüklenemedi"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [exerciseId, navigation]);
+
+  const hasUnsavedChanges =
+    !loading && JSON.stringify({ category, name, description, videoUrl }) !== initialSnapshotRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handlePickVideo = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -89,6 +100,7 @@ export default function FitnessExerciseFormScreen({ route, navigation }: Props) 
         await createCustomExercise(input);
         Alert.alert("Eklendi", `"${name.trim()}" hareketi eklendi.`, [{ text: "Tamam" }]);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
