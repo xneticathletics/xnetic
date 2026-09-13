@@ -159,17 +159,19 @@ export default function AttendanceScreen({ route, navigation }: Props) {
         ListEmptyComponent={<Text style={styles.empty}>Bu grupta aktif sporcu bulunamadı.</Text>}
         renderItem={({ item }) => (
           <View style={styles.athleteRow}>
-            {item.photo_url ? (
-              <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-              </View>
-            )}
+            <View style={styles.athleteHeaderRow}>
+              {item.photo_url ? (
+                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
 
-            <View style={styles.athleteInfo}>
-              <Text style={styles.athleteName} numberOfLines={2}>{item.full_name}</Text>
-              {!!item.birth_date && <Text style={styles.athleteBirth}>{item.birth_date}</Text>}
+              <View style={styles.athleteInfo}>
+                <Text style={styles.athleteName} numberOfLines={2}>{item.full_name}</Text>
+                {!!item.birth_date && <Text style={styles.athleteBirth}>{item.birth_date}</Text>}
+              </View>
             </View>
 
             <View style={styles.statusButtons}>
@@ -250,10 +252,11 @@ const styles = StyleSheet.create({
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   athleteRow: {
     flex: 1,
-    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    gap: spacing.sm,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.sm,
   },
+  athleteHeaderRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   avatar: {
     width: 56, height: 56, borderRadius: radius.full, backgroundColor: colors.line,
     alignItems: "center", justifyContent: "center",
@@ -263,9 +266,9 @@ const styles = StyleSheet.create({
   athleteInfo: { flex: 1, gap: 2 },
   athleteName: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   athleteBirth: { color: colors.muted, fontSize: 11 },
-  statusButtons: { flexDirection: "column", gap: 4 },
+  statusButtons: { flexDirection: "row", gap: 6 },
   statusButton: {
-    width: 58, borderWidth: 1.5, borderRadius: radius.sm, paddingVertical: 5, alignItems: "center",
+    flex: 1, borderWidth: 1.5, borderRadius: radius.sm, paddingVertical: 6, alignItems: "center",
   },
   statusButtonText: { fontSize: 10, fontWeight: "700" },
   footer: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm },
