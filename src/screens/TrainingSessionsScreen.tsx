@@ -603,22 +603,23 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
               accessibilityLabel={dayLabel}
               accessibilityState={{ selected: isSelected }}
             >
-              {/* Günün kutusu renkle DOLDURULMUYOR — sadece rakamın altında,
-                  türe göre (sarı=antrenman, kırmızı=müsabaka, ikisi varsa
-                  ikisi birden) küçük noktalar var. Seçili gün beyaz bir
-                  hapla, "bugün" (seçili değilken) ince bir halkayla belli olur. */}
+              {/* Her gün, çerçeveli bir kutu içinde gösteriliyor — dolgu
+                  rengi türe göre DEĞİŞMİYOR, tür bilgisi altındaki küçük
+                  noktalarla (sarı=antrenman, kırmızı=müsabaka, ikisi varsa
+                  ikisi birden) veriliyor. Seçili gün sarı dolgu, "bugün"
+                  (seçili değilken) kalın teal çerçeveyle belli olur. */}
               <View
                 style={[
-                  styles.dayNumberWrap,
-                  isSelected && styles.dayNumberWrapSelected,
-                  !isSelected && isToday && styles.dayNumberWrapToday,
+                  styles.dayBox,
+                  isSelected && styles.dayBoxSelected,
+                  !isSelected && isToday && styles.dayBoxToday,
                 ]}
               >
                 <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
-              </View>
-              <View style={styles.dayDotsRow}>
-                {hasSessions && <View style={[styles.dayDot, { backgroundColor: colors.yellow }]} />}
-                {hasMatches && <View style={[styles.dayDot, { backgroundColor: colors.coral }]} />}
+                <View style={styles.dayDotsRow}>
+                  {hasSessions && <View style={[styles.dayDot, { backgroundColor: colors.yellow }]} />}
+                  {hasMatches && <View style={[styles.dayDot, { backgroundColor: colors.coral }]} />}
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -714,8 +715,6 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   );
 }
 
-const CELL_SIZE = 28;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
@@ -740,15 +739,21 @@ const styles = StyleSheet.create({
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.lg },
 
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: spacing.xs, marginBottom: spacing.xs },
-  groupFilterRow: { flexDirection: "row", marginTop: spacing.xs, maxHeight: 32 },
-  groupChip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 4, marginRight: spacing.xs,
-    alignItems: "center", justifyContent: "center", height: 28,
+  // Üstteki Tümü/Antrenman/Müsabaka segmentiyle aynı aile: tek bir sarı
+  // "track" içine oturan haplar — her çipin kendi çerçevesi yerine, ortak
+  // bir zemin (colors.surface) üzerinde duruyorlar.
+  groupFilterRow: {
+    flexDirection: "row", marginTop: spacing.xs, maxHeight: 40,
+    backgroundColor: colors.surface, borderRadius: radius.full, paddingHorizontal: 4,
   },
-  groupChipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
-  groupChipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
-  groupChipTextActive: { color: colors.bg },
+  groupChip: {
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md, marginVertical: 4, marginRight: 4,
+    alignItems: "center", justifyContent: "center", height: 30,
+  },
+  groupChipActive: { backgroundColor: colors.yellow },
+  groupChipText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
+  groupChipTextActive: { color: colors.bg, fontWeight: "700" },
   monthNavButton: { paddingHorizontal: spacing.md, paddingVertical: 2 },
   monthNavIcon: { color: colors.yellow, fontSize: 18, fontWeight: "700" },
   monthLabel: { color: colors.ink, fontSize: 14, fontWeight: "700", minWidth: 130, textAlign: "center" },
@@ -757,16 +762,17 @@ const styles = StyleSheet.create({
   weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 10, fontWeight: "700" },
 
   grid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 1, gap: 2 },
-  // Gün rakamının etrafındaki hap: sadece "seçili" ya da "bugün" durumunu
-  // gösterir, tür bilgisini hiç taşımaz — tür bilgisi ayrı noktalarla verilir.
-  dayNumberWrap: {
-    width: CELL_SIZE, height: CELL_SIZE, borderRadius: CELL_SIZE / 2,
-    alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "transparent",
+  dayCell: { width: `${100 / 7}%`, padding: 2 },
+  // Her gün çerçeveli, dolgulu bir kutu — düz bir daire yerine gerçek bir
+  // "hücre" görünümü versin diye. Dolgu rengi türe göre DEĞİŞMEZ, sadece
+  // seçili/bugün durumunu gösterir.
+  dayBox: {
+    width: "100%", aspectRatio: 1, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line,
+    backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", gap: 3,
   },
-  dayNumberWrapSelected: { backgroundColor: colors.ink },
-  dayNumberWrapToday: { borderColor: colors.yellow },
-  dayNumber: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+  dayBoxSelected: { backgroundColor: colors.yellow, borderColor: colors.yellow },
+  dayBoxToday: { borderColor: colors.teal, borderWidth: 2 },
+  dayNumber: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   dayNumberSelected: { color: colors.bg, fontWeight: "800" },
   dayDotsRow: { flexDirection: "row", gap: 3, height: 5, alignItems: "center" },
   dayDot: { width: 5, height: 5, borderRadius: 2.5 },
