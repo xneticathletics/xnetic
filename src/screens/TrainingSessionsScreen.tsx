@@ -58,6 +58,28 @@ function todayKey() {
   return toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+function addDays(dateKey: string, days: number): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toDateKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+// Verilen günün içinde bulunduğu haftanın Pazartesi'sini bulur — haftalık
+// görünümdeki 7 günlük satırın başlangıcı için.
+function startOfWeek(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const weekday = (date.getDay() + 6) % 7; // Pzt=0
+  date.setDate(date.getDate() - weekday);
+  return toDateKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function buildWeekGrid(selectedDate: string): string[] {
+  const start = startOfWeek(selectedDate);
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
 // generateSessionsFromTemplates() iki ekstra sorgu (şablonlar + çakışma
 // kontrolü için mevcut antrenmanlar) yapıyor — ekran her odaklandığında
 // (sekmeler arası geçişte bile) çalıştırmak yerine, bu modül-seviyesi
@@ -120,6 +142,9 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   // aylık ızgaradaki noktaları hem seçili günün altındaki listeyi etkiler.
   const [typeFilter, setTypeFilter] = useState<"all" | "training" | "match">("all");
   const [addSheetVisible, setAddSheetVisible] = useState(false);
+  // Aylık ızgara (varsayılan) yerine tek satırlık haftalık görünüm —
+  // kullanıcı seçtiği görünümde kalır, ekran her odaklandığında sıfırlanmaz.
+  const [calendarView, setCalendarView] = useState<"month" | "week">("month");
 
   const selectBranch = (name: string | null) => {
     setBranchFilter(name);
@@ -322,7 +347,20 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     return map;
   }, [filteredMatches, typeFilter]);
 
-  const grid = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+  const monthGrid = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+  const weekDates = useMemo(() => buildWeekGrid(selectedDate), [selectedDate]);
+
+  // Ay görünümünde ay ızgarasındaki (null dolgulu) günleri, hafta
+  // görünümünde ise seçili günün haftasındaki 7 günü aynı hücre şekline
+  // ({ day, dateKey } | null) dönüştürür — aşağıdaki ızgara render'ı
+  // ikisi için de aynı kalır, sadece kaynak diziyi değiştiriyoruz.
+  const displayCells = useMemo(() => {
+    if (calendarView === "week") {
+      return weekDates.map((dateKey) => ({ day: Number(dateKey.split("-")[2]), dateKey }));
+    }
+    return monthGrid.map((day) => (day === null ? null : { day, dateKey: toDateKey(viewYear, viewMonth, day) }));
+  }, [calendarView, weekDates, monthGrid, viewYear, viewMonth]);
+
   const selectedSessions = sessionsByDate[selectedDate] ?? [];
   const selectedMatches = matchesByDate[selectedDate] ?? [];
 
@@ -344,6 +382,19 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
     else setViewMonth((m) => m + 1);
   };
+
+  // Haftalık görünümdeyken ‹ › butonları aya değil, 7'şer gün ileri/geri
+  // haftaya kayar — seçili gün değişince ay görünümüne dönüldüğünde doğru
+  // ay gösterilsin diye viewYear/viewMonth de aynı anda güncellenir.
+  const shiftWeek = (deltaDays: number) => {
+    const next = addDays(selectedDate, deltaDays);
+    const [y, m] = next.split("-").map(Number);
+    setSelectedDate(next);
+    setViewYear(y);
+    setViewMonth(m - 1);
+  };
+  const goPrev = () => (calendarView === "week" ? shiftWeek(-7) : goPrevMonth());
+  const goNext = () => (calendarView === "week" ? shiftWeek(7) : goNextMonth());
 
   // "Antrenman Ekle" doğrudan tek bir antrenman formuna açmıyor — önce
   // günlük (tek antrenman) mi yoksa haftalık (şablondan otomatik üretim)
@@ -477,18 +528,18 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
       <View style={styles.monthNav}>
         <TouchableOpacity
-          onPress={goPrevMonth}
+          onPress={goPrev}
           style={styles.monthNavButton}
-          accessibilityLabel="Önceki ay"
+          accessibilityLabel={calendarView === "week" ? "Önceki hafta" : "Önceki ay"}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={styles.monthNavIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_LABELS[viewMonth]} {viewYear}</Text>
         <TouchableOpacity
-          onPress={goNextMonth}
+          onPress={goNext}
           style={styles.monthNavButton}
-          accessibilityLabel="Sonraki ay"
+          accessibilityLabel={calendarView === "week" ? "Sonraki hafta" : "Sonraki ay"}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={styles.monthNavIcon}>›</Text>
@@ -502,9 +553,9 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.grid}>
-        {grid.map((day, idx) => {
-          if (day === null) return <View key={idx} style={styles.dayCell} />;
-          const dateKey = toDateKey(viewYear, viewMonth, day);
+        {displayCells.map((cell, idx) => {
+          if (cell === null) return <View key={idx} style={styles.dayCell} />;
+          const { day, dateKey } = cell;
           const daySessions = sessionsByDate[dateKey] ?? [];
           const dayMatches = matchesByDate[dateKey] ?? [];
           const hasSessions = daySessions.length > 0;
@@ -538,7 +589,8 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
             }
           };
 
-          const dayLabel = `${day} ${MONTH_LABELS[viewMonth]}${isToday ? ", bugün" : ""}${
+          const cellMonth0 = Number(dateKey.split("-")[1]) - 1;
+          const dayLabel = `${day} ${MONTH_LABELS[cellMonth0]}${isToday ? ", bugün" : ""}${
             hasBoth ? ", antrenman ve müsabaka var" : hasSessions ? ", antrenman var" : hasMatches ? ", müsabaka var" : ""
           }`;
 
@@ -585,8 +637,16 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.selectedDateHeader}>
-        <Text style={styles.selectedDateLabel}>{formatSelectedDate(selectedDate)}</Text>
-        <Text style={styles.selectedDateCount}>
+        <Text style={[styles.selectedDateLabel, { flex: 1 }]} numberOfLines={1}>{formatSelectedDate(selectedDate)}</Text>
+        <TouchableOpacity
+          style={styles.viewToggleButton}
+          onPress={() => setCalendarView((v) => (v === "month" ? "week" : "month"))}
+          accessibilityLabel={calendarView === "month" ? "Haftalık görünüme geç" : "Aylık görünüme geç"}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.viewToggleIcon}>{calendarView === "month" ? "▴" : "▾"}</Text>
+        </TouchableOpacity>
+        <Text style={[styles.selectedDateCount, { flex: 1, textAlign: "right" }]} numberOfLines={1}>
           {dayItems.length > 0 ? `${dayItems.length} etkinlik` : "Etkinlik yok"}
         </Text>
       </View>
@@ -654,7 +714,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   );
 }
 
-const CELL_SIZE = 30;
+const CELL_SIZE = 28;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
@@ -697,7 +757,7 @@ const styles = StyleSheet.create({
   weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 10, fontWeight: "700" },
 
   grid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 3, gap: 3 },
+  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 1, gap: 2 },
   // Gün rakamının etrafındaki hap: sadece "seçili" ya da "bugün" durumunu
   // gösterir, tür bilgisini hiç taşımaz — tür bilgisi ayrı noktalarla verilir.
   dayNumberWrap: {
@@ -722,6 +782,12 @@ const styles = StyleSheet.create({
   },
   selectedDateLabel: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   selectedDateCount: { color: colors.muted, fontSize: 12 },
+  viewToggleButton: {
+    width: 28, height: 22, borderRadius: radius.sm, backgroundColor: colors.surface,
+    borderWidth: 1, borderColor: colors.line, alignItems: "center", justifyContent: "center",
+    marginHorizontal: spacing.sm,
+  },
+  viewToggleIcon: { color: colors.yellow, fontSize: 12, fontWeight: "700" },
 
   fab: {
     position: "absolute", right: spacing.lg, bottom: spacing.lg,
