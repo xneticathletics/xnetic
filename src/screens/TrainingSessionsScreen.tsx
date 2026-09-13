@@ -482,7 +482,8 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           options={[{ key: null, label: "Tüm Branşlar" }, ...visibleBranches.map((b) => ({ key: b.name, label: b.name }))]}
           activeKey={branchFilter}
           onSelect={selectBranch}
-          style={{ marginTop: spacing.xs }}
+          style={{ marginTop: 2 }}
+          showScrollHint
         />
       )}
 
@@ -491,7 +492,8 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           options={[{ key: null, label: "Tüm Gruplar" }, ...groupOptions.map((g) => ({ key: g.id, label: g.name }))]}
           activeKey={groupFilter}
           onSelect={setGroupFilter}
-          style={{ marginTop: spacing.xs }}
+          style={{ marginTop: 2 }}
+          showScrollHint
         />
       )}
 
@@ -697,7 +699,7 @@ const styles = StyleSheet.create({
 
   segmentedRow: {
     flexDirection: "row", backgroundColor: colors.surface, borderRadius: radius.full,
-    padding: 3, marginBottom: spacing.sm,
+    padding: 3, marginBottom: 4,
   },
   segmentButton: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 7, borderRadius: radius.full },
   segmentButtonActive: { backgroundColor: colors.yellow },
