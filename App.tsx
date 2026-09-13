@@ -50,6 +50,13 @@ Sentry.init({
 // derlenmiş paketler) hâlâ onu doğrudan çağırabiliyor.
 // Font gerçek bir "variable font" olduğu için var olan fontWeight
 // değerleri (400/600/700/800...) aynen çalışmaya devam ediyor.
+// TEŞHİS: bu global monkeypatch mekanizması (react/jsx-runtime, jsx-dev-
+// runtime ve React.createElement'i doğrudan değiştiriyor) hiçbir zaman
+// GERÇEK bir standalone Hermes-derlenmiş build'de izole test edilmemişti
+// — şimdiye kadarki tüm teşhis build'lerinde hep aktifti. Preview build'de
+// süresiz siyah ekran sorununun kaynağı olup olmadığını kesin olarak
+// ayırt etmek için burada TAMAMEN devre dışı bırakıyoruz (fonksiyon hiç
+// çağrılmıyor, tanım kalsın diye burada duruyor).
 let fontPatched = false;
 function patchDefaultFont(fontFamily: string) {
   if (fontPatched) return;
@@ -113,7 +120,7 @@ function App() {
 
   const fontsReady = fontsLoaded || !!fontError || fontTimedOut;
 
-  if (fontsLoaded) patchDefaultFont("Inter");
+  // if (fontsLoaded) patchDefaultFont("Inter"); // TEŞHİS: geçici kapalı
   if (fontsReady) logBootOnce(`Font hazır (loaded=${fontsLoaded}, error=${!!fontError}, timeout=${fontTimedOut})`);
 
   // Telefonda dikey kilit hâlâ aynen devam ediyor — sadece tablette
