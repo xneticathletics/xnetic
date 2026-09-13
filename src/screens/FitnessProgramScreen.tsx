@@ -26,14 +26,14 @@ export default function FitnessProgramScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       {/* Fitness Grupları ve Bireysel Programlar artık ayrı üst-seviye
-          kutu değil — bu sayfanın (Program Oluştur) en üstünde, aynı
+          kutu değil — bu sayfanın (Gruba Program Oluştur) en üstünde, aynı
           bölgede toplandı. */}
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("FitnessProgramBuilder")}>
           <Text style={styles.actionBoxText}>Program Oluştur</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("FitnessGroups")}>
-          <Text style={styles.actionBoxText}>Grup Oluştur</Text>
+          <Text style={styles.actionBoxText}>Fitness Grubu Oluştur</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("IndividualFitnessProgramsHub")}>
           <Text style={styles.actionBoxText}>Bireysel Program Oluştur</Text>

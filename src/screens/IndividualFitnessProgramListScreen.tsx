@@ -12,9 +12,10 @@ type Props = NativeStackScreenProps<HomeStackParamList, "IndividualFitnessProgra
 
 // Sporcunun kendi yazdığı, kulübün atamadığı programların listesi —
 // AthleteFitnessProgramScreen'in (antrenörün yayınladığı program) kişisel
-// karşılığı. Sporcu kendi girişinde tam erişimle (oluştur/gir), antrenör/
-// admin ise SALT OKUNUR görüntüleme için buraya gelir (bkz. AthleteDetailScreen'deki
-// "Bireysel Program" aksiyonu) — RLS zaten coach/admin'e sadece SELECT veriyor.
+// karşılığı. Sporcu kendi girişinde tam erişimle (oluştur/gir); admin,
+// branş koordinatörü ve normal antrenör de artık bir sporcu adına bireysel
+// program oluşturabiliyor (bkz. IndividualFitnessProgramsHubScreen'deki
+// sporcu seçimi) — RLS ind_fit_prog_coach_all ile bunu destekliyor.
 export default function IndividualFitnessProgramListScreen({ route, navigation }: Props) {
   const { athleteId, athleteName } = route.params;
   const { role } = useAuth();
@@ -53,14 +54,12 @@ export default function IndividualFitnessProgramListScreen({ route, navigation }
         </View>
       )}
 
-      {!isStaff && (
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate("IndividualFitnessProgramBuilder", { athleteId })}
-        >
-          <Text style={styles.addButtonText}>+ Yeni Program</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate("IndividualFitnessProgramBuilder", { athleteId })}
+      >
+        <Text style={styles.addButtonText}>+ Yeni Program</Text>
+      </TouchableOpacity>
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -73,7 +72,7 @@ export default function IndividualFitnessProgramListScreen({ route, navigation }
           </Text>
           <Text style={styles.placeholderText}>
             {isStaff
-              ? "Bu sporcu henüz kendi bireysel programını oluşturmadı."
+              ? "\"+ Yeni Program\" ile bu sporcu adına bir bireysel program oluşturabilirsin."
               : "Kendi hareketlerini seçip bir program oluşturarak başla."}
           </Text>
         </View>

@@ -18,7 +18,7 @@ const TILES: {
 }[] = [
   { key: "CoachWellness", icon: "🌡️", title: "Wellness Check-in", sub: "Uyku, enerji ve ruh hâli takibi" },
   { key: "FitnessTraining", icon: "🏋️", title: "Egzersizler", sub: "Göğüs, sırt, bacak, kol, omuz" },
-  { key: "FitnessProgram", icon: "📋", title: "Program Oluştur", sub: "Örnek programlar, gruplar, bireysel programlar" },
+  { key: "FitnessProgram", icon: "📋", title: "Gruba Program Oluştur", sub: "Örnek programlar, gruplar, bireysel programlar" },
 ];
 
 export default function FitnessScreen({ navigation }: Props) {

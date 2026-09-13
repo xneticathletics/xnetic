@@ -361,11 +361,11 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="AthleteWellnessDetail" component={AthleteWellnessDetailScreen} />
       <Stack.Screen name="Fitness" component={FitnessScreen} options={{ title: "Fitness" }} />
       <Stack.Screen name="FitnessTraining" component={FitnessTrainingScreen} options={{ title: "Egzersizler" }} />
-      <Stack.Screen name="FitnessProgram" component={FitnessProgramScreen} options={{ title: "Program Oluştur" }} />
+      <Stack.Screen name="FitnessProgram" component={FitnessProgramScreen} options={{ title: "Gruba Program Oluştur" }} />
       <Stack.Screen name="FitnessProgramBuilder" component={FitnessProgramBuilderScreen} options={{ title: "Program Ekle" }} />
       <Stack.Screen name="FitnessProgramDetail" component={FitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />
       <Stack.Screen name="FitnessCategory" component={FitnessCategoryScreen} />
-      <Stack.Screen name="FitnessGroups" component={FitnessGroupsScreen} options={{ title: "Grup Oluştur" }} />
+      <Stack.Screen name="FitnessGroups" component={FitnessGroupsScreen} options={{ title: "Fitness Grubu Oluştur" }} />
       <Stack.Screen name="FitnessGroupForm" component={FitnessGroupFormScreen} options={{ title: "Fitness Grubu" }} />
       <Stack.Screen name="FitnessExerciseDetail" component={FitnessExerciseDetailScreen} />
       <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Egzersiz Ekle" }} />

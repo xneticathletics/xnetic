@@ -52,7 +52,11 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
     getMyAthletes().then((athletes) => { if (!cancelled) setMyAthleteIds(athletes.map((a) => a.id)); });
     return () => { cancelled = true; };
   }, [role]);
-  const canDelete = role === "club_admin" || (role === "athlete" && !!myAthleteIds?.includes(athleteId));
+  // Antrenör/koordinatör de artık kendi antrenörlük ettiği sporcu adına
+  // program oluşturabildiği için (ind_fit_prog_coach_all) silme yetkisi de
+  // aynı şekilde genişledi — RLS zaten yetkisiz bir silmeyi reddediyor,
+  // burası sadece butonun doğru yerde görünmesi için.
+  const canDelete = role === "club_admin" || role === "coach" || (role === "athlete" && !!myAthleteIds?.includes(athleteId));
 
   const [program, setProgram] = useState<IndividualFitnessProgram | null>(null);
   const [items, setItems] = useState<IndividualFitnessProgramItem[]>([]);
