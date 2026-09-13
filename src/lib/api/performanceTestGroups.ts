@@ -38,9 +38,13 @@ export async function getTestGroup(id: string): Promise<{ group: TestGroup; athl
     .single();
   if (groupError) throw groupError;
 
+  // groups!group_id: athletes ile groups arasında birden fazla ilişki
+  // olduğu için PostgREST'e hangi foreign key'i kullanacağını açıkça
+  // söylememiz gerekiyor (bkz. aynı desenin athletes.ts/fitnessGroups.ts/
+  // socialPosts.ts'de kullanıldığı yerler).
   const { data: athleteRows, error: athleteError } = await supabase
     .from("performance_test_group_athletes")
-    .select("athletes(id, full_name, birth_date, group_id, photo_url, groups(name, branch))")
+    .select("athletes(id, full_name, birth_date, group_id, photo_url, groups!group_id(name, branch))")
     .eq("test_group_id", id);
   if (athleteError) throw athleteError;
 
