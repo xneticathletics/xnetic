@@ -18,7 +18,7 @@ const TILES: {
   athleteOnly?: boolean;
 }[] = [
   { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri" },
-  { key: "AthleteFitnessView", icon: "🏋️", title: "Çalışma", sub: "Fitness/kuvvet antrenmanı geçmişi" },
+  { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersizler", sub: "Fitness/kuvvet antrenmanı geçmişi" },
   { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk check-in geçmişi" },
   { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı çalışma programı" },
   { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi yazdığın çalışma programı", athleteOnly: true },

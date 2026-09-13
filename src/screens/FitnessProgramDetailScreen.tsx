@@ -198,7 +198,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
       await Promise.all(logCalls);
 
       // Tamamlama formu artık ekranda kalmıyor — doğrudan Sporcu Takip
-      // Merkezi'ne (Performansım) dönülüyor, geçmiş oradaki "Çalışma"
+      // Merkezi'ne (Performansım) dönülüyor, geçmiş oradaki "Egzersizler"
       // bölümünde görünüyor (bkz. AthleteFitnessViewScreen).
       navigation.navigate("AthleteTrackingHub", { athleteId: targetAthleteId, athleteName: targetAthleteName ?? "" });
     } catch (e: any) {

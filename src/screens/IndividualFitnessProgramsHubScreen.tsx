@@ -9,10 +9,10 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "IndividualFitnessProgramsHub">;
 
-// Fitness sekmesindeki "Bireysel Programlar" girişi — sporcu bazlı bir
-// özellik olduğu için (Wellness/Program/Fitness Grupları gibi genel bir
-// liste değil) önce bir sporcu seçtiriyor, sonra o sporcunun bireysel
-// programlarını gösteren (zaten var olan, salt okunur) ekrana geçiyor.
+// Program Oluştur sayfasındaki "Bireysel Program Oluştur" girişi — sporcu
+// bazlı bir özellik olduğu için (genel bir liste değil) önce bir sporcu
+// seçtiriyor, sonra o sporcunun bireysel programlarını gösteren (zaten var
+// olan, salt okunur) ekrana geçiyor.
 export default function IndividualFitnessProgramsHubScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -25,7 +25,7 @@ export default function IndividualFitnessProgramsHubScreen({ navigation }: Props
   return (
     <View style={styles.container}>
       <Text style={styles.icon}>📝</Text>
-      <Text style={styles.title}>Bireysel Programlar</Text>
+      <Text style={styles.title}>Bireysel Program Oluştur</Text>
       <Text style={styles.subtitle}>
         Sporcuların kendi yazdığı bireysel fitness programlarını incelemek için bir sporcu seç.
       </Text>

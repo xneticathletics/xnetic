@@ -25,9 +25,18 @@ export default function FitnessProgramScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("FitnessProgramBuilder")}>
-          <Text style={styles.addButtonText}>+ Program Ekle</Text>
+      {/* Fitness Grupları ve Bireysel Programlar artık ayrı üst-seviye
+          kutu değil — bu sayfanın (Program Oluştur) en üstünde, aynı
+          bölgede toplandı. */}
+      <View style={styles.actionsRow}>
+        <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("FitnessProgramBuilder")}>
+          <Text style={styles.actionBoxText}>Program Oluştur</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("FitnessGroups")}>
+          <Text style={styles.actionBoxText}>Grup Oluştur</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("IndividualFitnessProgramsHub")}>
+          <Text style={styles.actionBoxText}>Bireysel Program Oluştur</Text>
         </TouchableOpacity>
       </View>
 
@@ -38,7 +47,7 @@ export default function FitnessProgramScreen({ navigation }: Props) {
           <Text style={styles.placeholderIcon}>📋</Text>
           <Text style={styles.placeholderTitle}>Henüz Program Yok</Text>
           <Text style={styles.placeholderText}>
-            "+ Program Ekle" ile bir gruba özel çalışma programı oluşturup yayınlayabilirsin.
+            "Program Oluştur" ile bir gruba özel çalışma programı oluşturup yayınlayabilirsin.
           </Text>
         </View>
       ) : (
@@ -70,9 +79,12 @@ export default function FitnessProgramScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
-  headerRow: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: spacing.lg },
-  addButton: { backgroundColor: colors.violet, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 13 },
+  actionsRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.lg },
+  actionBox: {
+    flexGrow: 1, flexBasis: "47%", backgroundColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 14, paddingHorizontal: spacing.sm, alignItems: "center",
+  },
+  actionBoxText: { color: colors.bg, fontWeight: "700", fontSize: 13, textAlign: "center" },
   placeholder: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.lg, padding: spacing.xl, alignItems: "center", marginTop: spacing.xl,

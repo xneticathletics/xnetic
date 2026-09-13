@@ -62,7 +62,7 @@ export async function listMeasurementsNearCompletion(athleteId: string, complete
 }
 
 // Bir sporcunun TÜM hareketlerdeki geçmişini döner — Veli/Sporcu'nun kendi
-// takip ekranındaki "Çalışma" görünümü için (salt okunur).
+// takip ekranındaki "Egzersizler" görünümü için (salt okunur).
 export async function listAllMeasurementsForAthlete(athleteId: string): Promise<FitnessMeasurement[]> {
   const { data, error } = await supabase
     .from("fitness_measurements")

@@ -116,7 +116,7 @@ export type FitnessProgramCompletion = {
 const COMPLETION_FIELDS = "id, program_id, athlete_id, completed_at, note, difficulty, duration_minutes, created_at";
 
 // Sporcu/veli tarafında — TÜM programlardaki tamamlama geçmişini (en yeni
-// önce) göstermek için — bkz. AthleteFitnessViewScreen'deki "Çalışma"
+// önce) göstermek için — bkz. AthleteFitnessViewScreen'deki "Egzersizler"
 // bölümü (mevcut fitness_measurements geçmişiyle birlikte gösteriliyor).
 export async function listAllCompletionsForAthlete(athleteId: string): Promise<FitnessProgramCompletion[]> {
   const { data, error } = await supabase

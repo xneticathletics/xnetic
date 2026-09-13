@@ -24,7 +24,7 @@ export default function FitnessTrainingScreen({ navigation }: Props) {
       {canAdd && (
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("FitnessExerciseForm")}>
-            <Text style={styles.addButtonText}>+ Çalışma Ekle</Text>
+            <Text style={styles.addButtonText}>+ Egzersiz Ekle</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -360,17 +360,17 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="CoachWellness" component={CoachWellnessScreen} options={{ title: "Sporcu Check-in'leri" }} />
       <Stack.Screen name="AthleteWellnessDetail" component={AthleteWellnessDetailScreen} />
       <Stack.Screen name="Fitness" component={FitnessScreen} options={{ title: "Fitness" }} />
-      <Stack.Screen name="FitnessTraining" component={FitnessTrainingScreen} options={{ title: "Çalışma" }} />
-      <Stack.Screen name="FitnessProgram" component={FitnessProgramScreen} options={{ title: "Program" }} />
+      <Stack.Screen name="FitnessTraining" component={FitnessTrainingScreen} options={{ title: "Egzersizler" }} />
+      <Stack.Screen name="FitnessProgram" component={FitnessProgramScreen} options={{ title: "Program Oluştur" }} />
       <Stack.Screen name="FitnessProgramBuilder" component={FitnessProgramBuilderScreen} options={{ title: "Program Ekle" }} />
       <Stack.Screen name="FitnessProgramDetail" component={FitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />
       <Stack.Screen name="FitnessCategory" component={FitnessCategoryScreen} />
-      <Stack.Screen name="FitnessGroups" component={FitnessGroupsScreen} options={{ title: "Fitness Grupları" }} />
+      <Stack.Screen name="FitnessGroups" component={FitnessGroupsScreen} options={{ title: "Grup Oluştur" }} />
       <Stack.Screen name="FitnessGroupForm" component={FitnessGroupFormScreen} options={{ title: "Fitness Grubu" }} />
       <Stack.Screen name="FitnessExerciseDetail" component={FitnessExerciseDetailScreen} />
-      <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Çalışma Ekle" }} />
+      <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Egzersiz Ekle" }} />
       <Stack.Screen name="FitnessExerciseVisibility" component={FitnessExerciseVisibilityScreen} options={{ title: "Hareketleri Yönet" }} />
-      <Stack.Screen name="IndividualFitnessProgramsHub" component={IndividualFitnessProgramsHubScreen} options={{ title: "Bireysel Programlar" }} />
+      <Stack.Screen name="IndividualFitnessProgramsHub" component={IndividualFitnessProgramsHubScreen} options={{ title: "Bireysel Program Oluştur" }} />
       <Stack.Screen name="IndividualFitnessProgramList" component={IndividualFitnessProgramListScreen} options={{ title: "Bireysel Programım" }} />
       <Stack.Screen name="IndividualFitnessProgramBuilder" component={IndividualFitnessProgramBuilderScreen} options={{ title: "Program Ekle" }} />
       <Stack.Screen name="IndividualFitnessProgramDetail" component={IndividualFitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />

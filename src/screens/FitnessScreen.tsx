@@ -9,15 +9,16 @@ type Props = NativeStackScreenProps<HomeStackParamList, "Fitness">;
 
 const ACCENTS = [colors.teal, colors.coral, colors.yellow];
 
+// Fitness Grupları ve Bireysel Programlar artık ayrı üst-seviye kutu değil
+// — Program Oluştur sayfasının en üstündeki sarı kutulardan erişiliyor
+// (bkz. FitnessProgramScreen.tsx).
 const TILES: {
-  key: "CoachWellness" | "FitnessTraining" | "FitnessGroups" | "FitnessProgram" | "IndividualFitnessProgramsHub";
+  key: "CoachWellness" | "FitnessTraining" | "FitnessProgram";
   icon: string; title: string; sub: string;
 }[] = [
   { key: "CoachWellness", icon: "🌡️", title: "Wellness Check-in", sub: "Uyku, enerji ve ruh hâli takibi" },
-  { key: "FitnessTraining", icon: "🏋️", title: "Çalışma", sub: "Göğüs, sırt, bacak, kol, omuz" },
-  { key: "FitnessGroups", icon: "🎯", title: "Fitness Grupları", sub: "Branştaki müsabık sporculardan özel gruplar" },
-  { key: "FitnessProgram", icon: "📋", title: "Program", sub: "Örnek Programlar" },
-  { key: "IndividualFitnessProgramsHub", icon: "📝", title: "Bireysel Programlar", sub: "Sporcuların kendi yazdığı programlar" },
+  { key: "FitnessTraining", icon: "🏋️", title: "Egzersizler", sub: "Göğüs, sırt, bacak, kol, omuz" },
+  { key: "FitnessProgram", icon: "📋", title: "Program Oluştur", sub: "Örnek programlar, gruplar, bireysel programlar" },
 ];
 
 export default function FitnessScreen({ navigation }: Props) {

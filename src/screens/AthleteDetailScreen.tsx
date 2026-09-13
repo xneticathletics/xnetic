@@ -44,7 +44,7 @@ const TRACKING_TILES: {
   athleteOnly?: boolean;
 }[] = [
   { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet, dayanıklılık", accent: colors.teal },
-  { key: "AthleteFitnessView", icon: "🏋️", title: "Çalışma", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
+  { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersizler", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
   { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk", accent: colors.violet },
   { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı program", accent: colors.yellow },
   { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi programını oluştur ve işle", accent: colors.coral, athleteOnly: true },

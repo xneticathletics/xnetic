@@ -58,7 +58,7 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: `${athleteName} — Çalışma` });
+      navigation.setOptions({ title: `${athleteName} — Egzersizler` });
       let cancelled = false;
       setLoading(true);
       (async () => {
