@@ -164,8 +164,10 @@ export default function AttendanceScreen({ route, navigation }: Props) {
               )}
 
               <View style={styles.athleteInfo}>
-                <Text style={styles.athleteName}>{item.full_name}</Text>
-                {!!item.birth_date && <Text style={styles.athleteBirth}>{item.birth_date}</Text>}
+                <Text style={styles.athleteName} numberOfLines={1}>
+                  {item.full_name}
+                  {!!item.birth_date && <Text style={styles.athleteBirth}> · {item.birth_date}</Text>}
+                </Text>
               </View>
             </View>
 
@@ -246,25 +248,25 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginHorizontal: spacing.lg, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   athleteRow: {
-    gap: spacing.sm,
+    gap: spacing.xs,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
+    borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.xs,
   },
   athleteHeaderRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   avatar: {
-    width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.line,
+    width: 32, height: 32, borderRadius: radius.full, backgroundColor: colors.line,
     alignItems: "center", justifyContent: "center",
   },
-  avatarImage: { width: 44, height: 44, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700" },
+  avatarImage: { width: 32, height: 32, borderRadius: radius.full },
+  avatarText: { color: colors.ink, fontWeight: "700", fontSize: 13 },
   athleteInfo: { flex: 1 },
-  athleteName: { color: colors.ink, fontSize: 14, fontWeight: "600" },
-  athleteBirth: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  athleteName: { color: colors.ink, fontSize: 13, fontWeight: "600" },
+  athleteBirth: { color: colors.muted, fontSize: 11, fontWeight: "400" },
   statusButtons: { flexDirection: "row", gap: 8 },
   statusButton: {
-    flex: 1, borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 12, alignItems: "center",
+    flex: 1, borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 8, alignItems: "center",
   },
-  statusButtonText: { fontSize: 13, fontWeight: "700" },
+  statusButtonText: { fontSize: 12, fontWeight: "700" },
   footer: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center" },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

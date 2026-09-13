@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, ScrollView, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -30,6 +30,13 @@ export default function CoachesListScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [coachVenueIds, setCoachVenueIds] = useState<Record<string, string[]>>({});
   const [venueFilter, setVenueFilter] = useState<string | null>(null);
+
+  // Salon filtresi sadece bir branş seçiliyken görünüyor — branş değişince
+  // (veya "Tüm Branşlar"a dönülünce) eskisi ekranda görünmeden aktif
+  // kalmasın diye sıfırlıyoruz.
+  useEffect(() => {
+    setVenueFilter(null);
+  }, [selectedBranch]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -115,18 +122,6 @@ export default function CoachesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Yeni antrenör DAVET ETMEK, kulüp geneli bir hesap oluşturma işlemi —
-          "branş koordinatörü kendi branşının admini" ilkesi bunu kapsamıyor,
-          koordinatör sadece kendi branşındaki antrenörleri GÖREBİLİR. */}
-      {role === "club_admin" && (
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate("InviteUser", { presetRole: "coach" })}
-        >
-          <Text style={styles.addButtonText}>+ Antrenör Ekle</Text>
-        </TouchableOpacity>
-      )}
-
       {!isBranchCoordinator && branches.length > 1 && (
         <ScrollView
           horizontal
@@ -152,7 +147,7 @@ export default function CoachesListScreen({ navigation }: Props) {
         </ScrollView>
       )}
 
-      {branchVenues.length > 1 && (
+      {selectedBranch && branchVenues.length > 1 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -259,6 +254,18 @@ export default function CoachesListScreen({ navigation }: Props) {
         }}
       />
 
+      {/* Yeni antrenör DAVET ETMEK, kulüp geneli bir hesap oluşturma işlemi —
+          "branş koordinatörü kendi branşının admini" ilkesi bunu kapsamıyor,
+          koordinatör sadece kendi branşındaki antrenörleri GÖREBİLİR. */}
+      {role === "club_admin" && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate("InviteUser", { presetRole: "coach" })}
+        >
+          <Text style={styles.addButtonText}>+ Antrenör Ekle</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.overviewButton} onPress={() => navigation.navigate("CoachesOverview")}>
         <Text style={styles.overviewButtonText}>Antrenör Atamaları</Text>
       </TouchableOpacity>
@@ -284,7 +291,7 @@ const styles = StyleSheet.create({
   error: { color: colors.coral, marginBottom: spacing.md },
   addButton: {
     backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 12,
-    alignItems: "center", marginBottom: spacing.sm,
+    alignItems: "center", marginTop: spacing.sm,
   },
   addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl, paddingHorizontal: spacing.md },
