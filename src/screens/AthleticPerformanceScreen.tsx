@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -6,6 +6,7 @@ import { PERFORMANCE_CATEGORIES } from "../lib/performanceTests";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import AthletePickerModal from "../components/AthletePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleticPerformance">;
@@ -17,9 +18,14 @@ export default function AthleticPerformanceScreen({ navigation }: Props) {
   // Test/Test Grubu ekleme: admin, branş koordinatörü, süper admin —
   // sıradan antrenör sadece var olan testleri kullanıp ölçüm girebilir.
   const canManage = role === "club_admin" || role === "super_admin" || (role === "coach" && isBranchCoordinator);
+  const [athletePickerVisible, setAthletePickerVisible] = useState(false);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
+      <TouchableOpacity style={styles.measurementsButton} onPress={() => setAthletePickerVisible(true)}>
+        <Text style={styles.measurementsButtonText}>📊 Ölçümler</Text>
+      </TouchableOpacity>
+
       {canManage && (
         <View style={styles.actionsRow}>
           <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("PerformanceTestForm")}>
@@ -49,12 +55,27 @@ export default function AthleticPerformanceScreen({ navigation }: Props) {
           </TouchableOpacity>
         ))}
       </View>
+
+      <AthletePickerModal
+        visible={athletePickerVisible}
+        selectedId={null}
+        onSelect={(athlete) => {
+          setAthletePickerVisible(false);
+          navigation.navigate("AthletePerformanceView", { athleteId: athlete.id, athleteName: athlete.full_name });
+        }}
+        onClose={() => setAthletePickerVisible(false)}
+      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  measurementsButton: {
+    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginBottom: spacing.md,
+  },
+  measurementsButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
   actionsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   actionBox: {
     flex: 1, backgroundColor: colors.yellow, borderRadius: radius.md,

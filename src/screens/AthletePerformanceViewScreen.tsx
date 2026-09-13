@@ -105,10 +105,16 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      {groups.length === 0 && <Text style={styles.empty}>Henüz kaydedilmiş bir ölçüm yok.</Text>}
+      {groups.length === 0 ? (
+        <Text style={styles.empty}>Henüz kaydedilmiş bir ölçüm yok.</Text>
+      ) : (
+        <Text style={styles.summary}>{groups.length} test takip ediliyor</Text>
+      )}
 
       {groups.map((g) => {
         const trend = computeTrend(g.items);
+        const recent = g.items.slice(0, 6);
+        const maxValue = Math.max(...recent.map((m) => m.value), 0);
         return (
           <TouchableOpacity
             key={g.testKey}
@@ -131,21 +137,39 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
               </View>
               <View style={{ alignItems: "flex-end" }}>
                 <Text style={[styles.latestValue, { color: g.categoryColor }]}>
-                  {g.items[0].value} {g.unit}
+                  {g.items[0].value} <Text style={styles.latestUnit}>{g.unit}</Text>
                 </Text>
                 {trend && (
-                  <Text style={[styles.trendText, { color: trend.dir === "up" ? colors.teal : colors.coral }]}>
-                    {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
-                  </Text>
+                  <View style={[styles.trendPill, { backgroundColor: trend.dir === "up" ? colors.tealSoft : colors.coralSoft }]}>
+                    <Text style={[styles.trendPillText, { color: trend.dir === "up" ? colors.teal : colors.coral }]}>
+                      {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
+                    </Text>
+                  </View>
                 )}
               </View>
             </View>
-            {g.items.slice(0, 5).map((m) => (
-              <View key={m.id} style={styles.historyRow}>
-                <Text style={styles.historyValue}>{m.value} {g.unit}</Text>
-                <Text style={styles.historyDate}>{formatDate(m.measured_at)}</Text>
-              </View>
-            ))}
+
+            <View style={styles.historyTable}>
+              {recent.map((m, index) => {
+                const widthPct = maxValue > 0 ? Math.max(10, (m.value / maxValue) * 100) : 10;
+                return (
+                  <View key={m.id} style={styles.historyRow}>
+                    <Text style={styles.historyDate}>{formatDate(m.measured_at)}</Text>
+                    <View style={styles.barTrack}>
+                      <View
+                        style={[
+                          styles.barFill,
+                          { width: `${widthPct}%`, backgroundColor: index === 0 ? g.categoryColor : `${g.categoryColor}55` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={[styles.historyValue, index === 0 && { color: g.categoryColor, fontWeight: "800" }]}>
+                      {m.value}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -156,20 +180,23 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
+  summary: { color: colors.muted, fontSize: 12, fontWeight: "600", marginBottom: spacing.md },
   card: {
     backgroundColor: colors.surface, borderWidth: 1, borderRadius: radius.lg,
     padding: spacing.md, marginBottom: spacing.md,
   },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm },
-  cardIcon: { fontSize: 24 },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.md },
+  cardIcon: { fontSize: 26 },
   cardTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   cardCategory: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  latestValue: { fontSize: 16, fontWeight: "800" },
-  trendText: { fontSize: 11, fontWeight: "800", marginTop: 2 },
-  historyRow: {
-    flexDirection: "row", justifyContent: "space-between",
-    borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 6,
-  },
-  historyValue: { color: colors.ink, fontSize: 12, fontWeight: "600" },
-  historyDate: { color: colors.muted, fontSize: 12 },
+  latestValue: { fontSize: 20, fontWeight: "800" },
+  latestUnit: { fontSize: 12, fontWeight: "700" },
+  trendPill: { borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4 },
+  trendPillText: { fontSize: 11, fontWeight: "800" },
+  historyTable: { gap: 6 },
+  historyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  historyDate: { color: colors.muted, fontSize: 11, width: 64 },
+  barTrack: { flex: 1, height: 10, borderRadius: radius.full, backgroundColor: colors.bg, overflow: "hidden" },
+  barFill: { height: "100%", borderRadius: radius.full },
+  historyValue: { color: colors.muted, fontSize: 12, fontWeight: "600", width: 44, textAlign: "right" },
 });
