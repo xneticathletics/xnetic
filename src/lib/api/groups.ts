@@ -23,16 +23,26 @@ export type GroupInput = {
 
 const GROUP_FIELDS = "id, name, branch, venue_id, athlete_type, fixed_schedule, venues(name)";
 
+// Sadece isme göre (Postgres'in varsayılan, Türkçe'ye duyarsız
+// sıralamasıyla) sıralamak, farklı branşların gruplarını karıştırıp
+// karmaşık bir liste oluşturuyordu (ör. grup seçim modallarında, Test
+// Grubu/Sporcu formlarında). Önce branşa, sonra grup adına göre — ikisi de
+// "tr" locale'iyle — sıralayarak aynı branşın grupları hep bir arada,
+// alfabetik sırada görünür.
+function sortGroups(groups: Group[]): Group[] {
+  return [...groups].sort((a, b) => {
+    const branchCmp = a.branch.localeCompare(b.branch, "tr");
+    return branchCmp !== 0 ? branchCmp : a.name.localeCompare(b.name, "tr");
+  });
+}
+
 // RLS sayesinde yalnızca giriş yapan kullanıcının kulübüne ait gruplar döner —
 // club_id filtresi ayrıca yazılmasına gerek yok.
 export async function listGroups(): Promise<Group[]> {
-  const { data, error } = await supabase
-    .from("groups")
-    .select(GROUP_FIELDS)
-    .order("name", { ascending: true });
+  const { data, error } = await supabase.from("groups").select(GROUP_FIELDS);
 
   if (error) throw error;
-  return (data as unknown as Group[]) ?? [];
+  return sortGroups((data as unknown as Group[]) ?? []);
 }
 
 export async function getGroup(id: string): Promise<Group> {
@@ -68,5 +78,5 @@ export async function listMyCoachedGroups(): Promise<Group[]> {
   if (ids.length === 0) return [];
   const { data, error } = await supabase.from("groups").select(GROUP_FIELDS).in("id", ids);
   if (error) throw error;
-  return (data as unknown as Group[]) ?? [];
+  return sortGroups((data as unknown as Group[]) ?? []);
 }
