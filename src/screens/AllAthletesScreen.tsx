@@ -9,7 +9,7 @@ import { listBranches, type Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
-import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AllAthletes">;
 
@@ -152,32 +152,35 @@ export default function AllAthletesScreen({ navigation }: Props) {
 
       <FlatList
         key={`cols-${columns}`}
-        data={filtered}
-        keyExtractor={(a) => a.id}
+        data={fillGridRow(filtered, columns)}
+        keyExtractor={(a, index) => a?.id ?? `filler-${index}`}
         numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Eşleşen sporcu bulunamadı.</Text> : null}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
-          >
-            {item.photo_url ? (
-              <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
+        renderItem={({ item }) => {
+          if (!item) return <View style={[styles.row, styles.rowFiller]} />;
+          return (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
+            >
+              {item.photo_url ? (
+                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
+                <Text style={styles.rowSub} numberOfLines={1}>{item.groups?.name ?? "Grup atanmadı"}</Text>
+                {item.athlete_type === "musabik" && <Text style={styles.musabikTag}>🏆 Müsabık</Text>}
               </View>
-            )}
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
-              <Text style={styles.rowSub} numberOfLines={1}>{item.groups?.name ?? "Grup atanmadı"}</Text>
-              {item.athlete_type === "musabik" && <Text style={styles.musabikTag}>🏆 Müsabık</Text>}
-            </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -215,6 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, padding: spacing.sm,
   },
+  rowFiller: { opacity: 0 },
   avatar: {
     width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.line,
     alignItems: "center", justifyContent: "center",

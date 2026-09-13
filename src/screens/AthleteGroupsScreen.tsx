@@ -12,6 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteGroups">;
 
@@ -26,6 +27,7 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
   // kendi koçluk yaptığı gruplar) mantığından hariç tutuyoruz.
   const isBranchCoordinator = role === "coach" && isLocked;
   const isCoach = role === "coach" && !isBranchCoordinator;
+  const columns = useResponsiveColumns(2);
 
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -282,9 +284,12 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
-        data={visibleGroups}
-        keyExtractor={(g) => g.id}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
+        key={`cols-${columns}`}
+        data={fillGridRow(visibleGroups, columns)}
+        keyExtractor={(g, index) => g?.id ?? `filler-${index}`}
+        numColumns={columns}
+        columnWrapperStyle={{ gap: spacing.sm }}
+        contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={
           !loading ? (
@@ -296,17 +301,18 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
           ) : null
         }
         renderItem={({ item }) => {
+          if (!item) return <View style={[styles.gridCard, styles.gridCardFiller]} />;
           const s = staffing[item.id];
           const coachNames = s ? [s.headName, ...s.assistantNames].filter(Boolean) as string[] : [];
           return (
             <TouchableOpacity
-              style={styles.row}
+              style={styles.gridCard}
               onPress={() => navigation.navigate("AthletesList", { groupId: item.id, groupName: item.name })}
             >
-              <Text style={styles.rowName}>{item.name}</Text>
-              <Text style={styles.rowSub}>{item.branch}</Text>
+              <Text style={styles.gridCardName} numberOfLines={2}>{item.name}</Text>
+              <Text style={styles.gridCardSub} numberOfLines={1}>{item.branch}</Text>
               {!isCoach && (
-                <Text style={styles.rowCoaches}>
+                <Text style={styles.gridCardCoaches} numberOfLines={2}>
                   {coachNames.length > 0 ? coachNames.join(", ") : "Antrenör atanmadı"}
                 </Text>
               )}
@@ -350,4 +356,12 @@ const styles = StyleSheet.create({
   rowSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   rowCoaches: { color: colors.teal, fontSize: 12, marginTop: 4 },
   chevron: { color: colors.yellow, fontSize: 20, fontWeight: "700" },
+  gridCard: {
+    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.md, padding: spacing.md, minHeight: 84, justifyContent: "center",
+  },
+  gridCardFiller: { opacity: 0 },
+  gridCardName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  gridCardSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  gridCardCoaches: { color: colors.teal, fontSize: 11, marginTop: 4 },
 });

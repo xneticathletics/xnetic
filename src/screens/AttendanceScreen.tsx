@@ -8,7 +8,7 @@ import { completeSession, getSession, isAttendanceWindowOpen, isCompletionWindow
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { useAuth } from "../context/AuthContext";
-import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Attendance">;
 
@@ -151,13 +151,15 @@ export default function AttendanceScreen({ route, navigation }: Props) {
 
       <FlatList
         key={`cols-${columns}`}
-        data={roster}
-        keyExtractor={(r) => r.athlete_id}
+        data={fillGridRow(roster, columns)}
+        keyExtractor={(r, index) => r?.athlete_id ?? `filler-${index}`}
         numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ padding: spacing.lg, paddingTop: 0, gap: spacing.sm }}
         ListEmptyComponent={<Text style={styles.empty}>Bu grupta aktif sporcu bulunamadı.</Text>}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          if (!item) return <View style={[styles.athleteRow, styles.athleteRowFiller]} />;
+          return (
           <View style={styles.athleteRow}>
             <View style={styles.athleteHeaderRow}>
               {item.photo_url ? (
@@ -201,7 +203,8 @@ export default function AttendanceScreen({ route, navigation }: Props) {
               </TouchableOpacity>
             </View>
           </View>
-        )}
+          );
+        }}
       />
 
       <View style={styles.footer}>
@@ -256,6 +259,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.sm,
   },
+  athleteRowFiller: { opacity: 0 },
   athleteHeaderRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   avatar: {
     width: 56, height: 56, borderRadius: radius.full, backgroundColor: colors.line,

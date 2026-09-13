@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAthletes, type Athlete } from "../lib/api/athletes";
 import type { HomeStackParamList } from "../navigation/HomeStack";
-import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthletesList">;
 
@@ -69,8 +69,8 @@ export default function AthletesListScreen({ navigation, route }: Props) {
 
       <FlatList
         key={`cols-${columns}`}
-        data={filtered}
-        keyExtractor={(a) => a.id}
+        data={fillGridRow(filtered, columns)}
+        keyExtractor={(a, index) => a?.id ?? `filler-${index}`}
         numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.sm }}
@@ -78,29 +78,32 @@ export default function AthletesListScreen({ navigation, route }: Props) {
         ListEmptyComponent={
           !loading ? <Text style={styles.empty}>Bu grupta henüz sporcu yok.</Text> : null
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
-          >
-            {item.photo_url ? (
-              <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
+        renderItem={({ item }) => {
+          if (!item) return <View style={[styles.row, styles.rowFiller]} />;
+          return (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
+            >
+              {item.photo_url ? (
+                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
+                <Text style={styles.rowSub}>
+                  {item.status === "active" ? "Aktif" : "Pasif"}
+                  {" · "}
+                  {item.athlete_type === "musabik" ? "🏆 Müsabık" : "Spor Okulu"}
+                </Text>
+                {item.isExtraGroup && <Text style={styles.extraTag}>Ek Grup</Text>}
               </View>
-            )}
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
-              <Text style={styles.rowSub}>
-                {item.status === "active" ? "Aktif" : "Pasif"}
-                {" · "}
-                {item.athlete_type === "musabik" ? "🏆 Müsabık" : "Spor Okulu"}
-              </Text>
-              {item.isExtraGroup && <Text style={styles.extraTag}>Ek Grup</Text>}
-            </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -119,6 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, padding: spacing.sm,
   },
+  rowFiller: { opacity: 0 },
   avatar: {
     width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.line,
     alignItems: "center", justifyContent: "center",

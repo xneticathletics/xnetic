@@ -12,7 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useAuth } from "../context/AuthContext";
-import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachesList">;
 
@@ -186,8 +186,8 @@ export default function CoachesListScreen({ navigation }: Props) {
 
       <FlatList
         key={`cols-${columns}`}
-        data={filteredCoaches}
-        keyExtractor={(c) => c.id}
+        data={fillGridRow(filteredCoaches, columns)}
+        keyExtractor={(c, index) => c?.id ?? `filler-${index}`}
         numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
         contentContainerStyle={{ paddingBottom: spacing.md, gap: spacing.sm }}
@@ -200,6 +200,7 @@ export default function CoachesListScreen({ navigation }: Props) {
           ) : null
         }
         renderItem={({ item, index }) => {
+          if (!item) return <View style={[styles.card, styles.cardFiller]} />;
           const myBranches = coachBranches[item.id] ?? [];
           const isCoordinator = coordinatorCoachIds.has(item.id);
           const hasVenueAuthority = (coachVenueIds[item.id]?.length ?? 0) > 0;
@@ -300,6 +301,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.sm,
   },
+  cardFiller: { opacity: 0 },
   cardTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: spacing.xs },
   avatar: {
     width: 44, height: 44, borderRadius: radius.full,

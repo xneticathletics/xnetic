@@ -12,7 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useAuth } from "../context/AuthContext";
-import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PaymentGroups">;
 
@@ -219,21 +219,24 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
       ) : (
         <FlatList
           key={`grid-list-cols-${columns}`}
-          data={groups}
-          keyExtractor={(g) => g.id}
+          data={fillGridRow(groups, columns)}
+          keyExtractor={(g, index) => g?.id ?? `filler-${index}`}
           numColumns={columns}
           columnWrapperStyle={{ gap: spacing.xs }}
           contentContainerStyle={{ paddingBottom: spacing.xl, gap: spacing.xs }}
           ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz grup yok.</Text> : null}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.gridCard}
-              onPress={() => navigation.navigate("PaymentAthletes", { groupId: item.id, groupName: item.name })}
-            >
-              <Text style={styles.gridCardName} numberOfLines={2}>{item.name}</Text>
-              <Text style={styles.gridCardSub} numberOfLines={1}>{item.branch}</Text>
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            if (!item) return <View style={[styles.gridCard, styles.gridCardFiller]} />;
+            return (
+              <TouchableOpacity
+                style={styles.gridCard}
+                onPress={() => navigation.navigate("PaymentAthletes", { groupId: item.id, groupName: item.name })}
+              >
+                <Text style={styles.gridCardName} numberOfLines={2}>{item.name}</Text>
+                <Text style={styles.gridCardSub} numberOfLines={1}>{item.branch}</Text>
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
     </View>
@@ -304,6 +307,7 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, padding: spacing.xs, minHeight: 64, justifyContent: "center",
   },
+  gridCardFiller: { opacity: 0 },
   gridCardName: { color: colors.ink, fontSize: 11, fontWeight: "700", textAlign: "center" },
   gridCardSub: { color: colors.muted, fontSize: 9, marginTop: 3, textAlign: "center" },
 });

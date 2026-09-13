@@ -6,7 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listActiveProducts, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
 import { useHomeButton } from "../hooks/useHomeButton";
-import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
+import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Shop">;
@@ -114,8 +114,8 @@ export default function ShopScreen({ navigation }: Props) {
 
       <FlatList
         key={`cols-${columns}`}
-        data={filteredProducts}
-        keyExtractor={(p) => p.id}
+        data={fillGridRow(filteredProducts, columns)}
+        keyExtractor={(p, index) => p?.id ?? `filler-${index}`}
         numColumns={columns}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
@@ -127,32 +127,35 @@ export default function ShopScreen({ navigation }: Props) {
             </Text>
           ) : null
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate("ShopProductDetail", { productId: item.id })}
-          >
-            <View style={styles.cardImageWrap}>
-              {item.photo_urls[0] ? (
-                <Image source={{ uri: item.photo_urls[0] }} style={styles.cardImage} resizeMode="cover" />
-              ) : (
-                <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
-                  <Text style={{ fontSize: 36 }}>🛍️</Text>
-                </View>
-              )}
-              {item.gender && (
-                <View style={styles.genderBadge}>
-                  <Text style={styles.genderBadgeText}>{GENDER_LABEL[item.gender]}</Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.cardPrice}>{Number(item.price).toLocaleString("tr-TR")} ₺</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => {
+          if (!item) return <View style={[styles.card, styles.cardFiller]} />;
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate("ShopProductDetail", { productId: item.id })}
+            >
+              <View style={styles.cardImageWrap}>
+                {item.photo_urls[0] ? (
+                  <Image source={{ uri: item.photo_urls[0] }} style={styles.cardImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
+                    <Text style={{ fontSize: 36 }}>🛍️</Text>
+                  </View>
+                )}
+                {item.gender && (
+                  <View style={styles.genderBadge}>
+                    <Text style={styles.genderBadgeText}>{GENDER_LABEL[item.gender]}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.cardPrice}>{Number(item.price).toLocaleString("tr-TR")} ₺</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -183,6 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg, overflow: "hidden",
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3,
   },
+  cardFiller: { opacity: 0, shadowOpacity: 0, elevation: 0 },
   cardImageWrap: { width: "100%", aspectRatio: 1, backgroundColor: colors.bg },
   cardImage: { width: "100%", height: "100%" },
   cardImagePlaceholder: { alignItems: "center", justifyContent: "center" },
