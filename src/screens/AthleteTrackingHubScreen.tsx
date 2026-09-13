@@ -17,11 +17,11 @@ const TILES: {
   // "Bireysel Programım" sporcunun KENDİ yazdığı bir şey — veli görmüyor.
   athleteOnly?: boolean;
 }[] = [
-  { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri" },
-  { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersizler", sub: "Fitness/kuvvet antrenmanı geçmişi" },
-  { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk check-in geçmişi" },
-  { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı çalışma programı" },
   { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi yazdığın çalışma programı", athleteOnly: true },
+  { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri" },
+  { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk check-in geçmişi" },
+  { key: "AthleteFitnessProgram", icon: "📋", title: "Grup Programı", sub: "Antrenörün yayınladığı çalışma programı" },
+  { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersiz Geçmişi", sub: "Fitness/kuvvet antrenmanı geçmişi" },
 ];
 
 export default function AthleteTrackingHubScreen({ route, navigation }: Props) {

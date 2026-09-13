@@ -43,11 +43,11 @@ const TRACKING_TILES: {
   // hiç görmüyor (bkz. render'daki role==="athlete" filtresi).
   athleteOnly?: boolean;
 }[] = [
-  { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet, dayanıklılık", accent: colors.teal },
-  { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersizler", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
-  { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk", accent: colors.violet },
-  { key: "AthleteFitnessProgram", icon: "📋", title: "Program", sub: "Antrenörün yayınladığı program", accent: colors.yellow },
   { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi programını oluştur ve işle", accent: colors.coral, athleteOnly: true },
+  { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet, dayanıklılık", accent: colors.teal },
+  { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk", accent: colors.violet },
+  { key: "AthleteFitnessProgram", icon: "📋", title: "Grup Programı", sub: "Antrenörün yayınladığı program", accent: colors.yellow },
+  { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersiz Geçmişi", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
 ];
 
 type TabKey = "info" | "parent";

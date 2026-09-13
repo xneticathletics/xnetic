@@ -14,12 +14,19 @@ type Props = NativeStackScreenProps<HomeStackParamList, "AthleteFitnessView">;
 
 const CUSTOM_PREFIX = "custom:";
 
-type Group = {
-  exerciseKey: string;
+type SessionRecord = {
+  measurement: FitnessMeasurement;
   name: string;
   color: string;
   icon: string;
-  items: FitnessMeasurement[];
+};
+
+// measured_at zaten saat içermeyen düz bir tarih (bkz. todayKey()) —
+// bu yüzden aynı tarihte girilen tüm hareketler doğrudan "aynı antrenman"
+// anlamına geliyor, ayrı bir training_session bağlantısına gerek yok.
+type SessionGroup = {
+  dateKey: string;
+  records: SessionRecord[];
 };
 
 function formatDate(iso: string) {
@@ -48,13 +55,25 @@ function resolveExercise(
 
 export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
   const { athleteId, athleteName } = route.params;
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [sessionGroups, setSessionGroups] = useState<SessionGroup[]>([]);
+  // En son antrenman varsayılan olarak açık gelsin, geri kalanı katlı —
+  // her satıra tek tek dokunmadan en güncel çalışmayı hemen görebilsin diye.
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [completions, setCompletions] = useState<FitnessProgramCompletion[]>([]);
   // Bireysel program bölümü SADECE bu sporcunun en az bir programı varsa
   // gösteriliyor — hiç oluşturmamış bir sporcunun profilinde boş bir
   // bölüm göstermeye gerek yok (kullanıcı kararı).
   const [individualPrograms, setIndividualPrograms] = useState<IndividualFitnessProgram[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const toggleDate = (dateKey: string) => {
+    setExpandedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(dateKey)) next.delete(dateKey);
+      else next.add(dateKey);
+      return next;
+    });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -68,26 +87,30 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
             listAllCompletionsForAthlete(athleteId),
             listMyIndividualPrograms(athleteId),
           ]);
-          const byKey = new Map<string, FitnessMeasurement[]>();
-          all.forEach((m) => {
-            const list = byKey.get(m.exercise_key) ?? [];
-            list.push(m);
-            byKey.set(m.exercise_key, list);
-          });
-          const customIds = Array.from(byKey.keys())
+          const customIds = Array.from(new Set(all.map((m) => m.exercise_key)))
             .filter((k) => k.startsWith(CUSTOM_PREFIX))
             .map((k) => k.slice(CUSTOM_PREFIX.length));
           const customExercises = await getCustomExercisesByIds(customIds);
           const customById = new Map(customExercises.map((ex) => [ex.id, ex]));
-          const resolved = Array.from(byKey.entries()).map(([exerciseKey, items]) => {
-            const info = resolveExercise(exerciseKey, customById);
-            if (!info) return null;
-            return { exerciseKey, items, ...info };
+
+          // Hareket bazlı değil, ANTRENMAN (gün) bazlı grupluyoruz —
+          // measured_at zaten saatsiz düz bir tarih, aynı tarihteki tüm
+          // kayıtlar aynı antrenmanın hareketleri sayılıyor.
+          const byDate = new Map<string, SessionRecord[]>();
+          all.forEach((m) => {
+            const info = resolveExercise(m.exercise_key, customById);
+            if (!info) return;
+            const list = byDate.get(m.measured_at) ?? [];
+            list.push({ measurement: m, ...info });
+            byDate.set(m.measured_at, list);
           });
-          const valid = resolved.filter((g): g is Group => !!g);
-          valid.sort((a, b) => new Date(b.items[0].measured_at).getTime() - new Date(a.items[0].measured_at).getTime());
+          const sortedGroups = Array.from(byDate.entries())
+            .map(([dateKey, records]) => ({ dateKey, records }))
+            .sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+
           if (!cancelled) {
-            setGroups(valid);
+            setSessionGroups(sortedGroups);
+            setExpandedDates(new Set(sortedGroups.length > 0 ? [sortedGroups[0].dateKey] : []));
             setCompletions(allCompletions);
             setIndividualPrograms(ownPrograms);
           }
@@ -128,7 +151,7 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
         </>
       )}
 
-      <Text style={[styles.sectionTitle, individualPrograms.length > 0 && { marginTop: spacing.lg }]}>Tamamlanan Programlar</Text>
+      <Text style={[styles.sectionTitle, individualPrograms.length > 0 && { marginTop: spacing.lg }]}>Tamamlanan Grup Programları</Text>
       {completions.length === 0 ? (
         <Text style={styles.empty}>Henüz tamamlandı olarak işaretlenmiş bir program yok.</Text>
       ) : (
@@ -149,26 +172,46 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
       )}
 
       <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Egzersiz Geçmişi</Text>
-      {groups.length === 0 && <Text style={styles.empty}>Henüz kaydedilmiş bir çalışma kaydı yok.</Text>}
+      {sessionGroups.length === 0 && <Text style={styles.empty}>Henüz kaydedilmiş bir çalışma kaydı yok.</Text>}
 
-      {groups.map((g) => (
-        <View key={g.exerciseKey} style={[styles.card, { borderColor: g.color }]}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>{g.icon}</Text>
-            <Text style={styles.cardTitle}>{g.name}</Text>
+      {sessionGroups.map((s) => {
+        const isExpanded = expandedDates.has(s.dateKey);
+        return (
+          <View key={s.dateKey} style={styles.sessionCard}>
+            <TouchableOpacity
+              style={styles.sessionHeader}
+              onPress={() => toggleDate(s.dateKey)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: isExpanded }}
+              accessibilityLabel={`${formatDate(s.dateKey)} antrenmanı, ${s.records.length} hareket`}
+            >
+              <View>
+                <Text style={styles.sessionDate}>{formatDate(s.dateKey)}</Text>
+                <Text style={styles.sessionMeta}>{s.records.length} hareket</Text>
+              </View>
+              <Text style={styles.sessionChevron}>{isExpanded ? "▾" : "▸"}</Text>
+            </TouchableOpacity>
+
+            {isExpanded && (
+              <View style={styles.sessionBody}>
+                {s.records.map((r) => (
+                  <View key={r.measurement.id} style={styles.historyRow}>
+                    <View style={styles.historyLabel}>
+                      <Text style={styles.historyIcon}>{r.icon}</Text>
+                      <Text style={styles.historyValue} numberOfLines={1}>{r.name}</Text>
+                    </View>
+                    <Text style={styles.historyDetail} numberOfLines={1}>
+                      {r.measurement.weight_kg != null ? `${r.measurement.weight_kg} kg` : "Vücut ağırlığı"}
+                      {r.measurement.sets != null ? ` × ${r.measurement.sets} set` : ""}
+                      {r.measurement.reps != null ? ` × ${r.measurement.reps} tekrar` : ""}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
-          {g.items.slice(0, 5).map((m) => (
-            <View key={m.id} style={styles.historyRow}>
-              <Text style={styles.historyValue}>
-                {m.weight_kg != null ? `${m.weight_kg} kg` : "Vücut ağırlığı"}
-                {m.sets != null ? ` × ${m.sets} set` : ""}
-                {m.reps != null ? ` × ${m.reps} tekrar` : ""}
-              </Text>
-              <Text style={styles.historyDate}>{formatDate(m.measured_at)}</Text>
-            </View>
-          ))}
-        </View>
-      ))}
+        );
+      })}
     </ScrollView>
   );
 }
@@ -187,9 +230,24 @@ const styles = StyleSheet.create({
   completionMeta: { color: colors.muted, fontSize: 11 },
   completionNote: { color: colors.ink, fontSize: 12, marginTop: spacing.xs, fontStyle: "italic" },
   historyRow: {
-    flexDirection: "row", justifyContent: "space-between",
-    borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 6,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.sm,
+    borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 8,
   },
-  historyValue: { color: colors.ink, fontSize: 12, fontWeight: "600" },
-  historyDate: { color: colors.muted, fontSize: 12 },
+  historyLabel: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 },
+  historyIcon: { fontSize: 14 },
+  historyValue: { color: colors.ink, fontSize: 12, fontWeight: "600", flexShrink: 1 },
+  historyDetail: { color: colors.muted, fontSize: 12, flexShrink: 0 },
+  // "Egzersiz Geçmişi" artık hareket başına değil, ANTRENMAN (gün) başına
+  // bir akordeon — tıklanınca içerik aşağı doğru açılıyor.
+  sessionCard: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg,
+    marginBottom: spacing.sm, overflow: "hidden",
+  },
+  sessionHeader: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md,
+  },
+  sessionDate: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  sessionMeta: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  sessionChevron: { color: colors.yellow, fontSize: 16, fontWeight: "700" },
+  sessionBody: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
 });
