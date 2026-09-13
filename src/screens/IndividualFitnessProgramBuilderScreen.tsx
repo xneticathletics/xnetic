@@ -145,10 +145,11 @@ export default function IndividualFitnessProgramBuilderScreen({ route, navigatio
                 <View style={styles.chipGrid}>
                   {exerciseOptions.map((ex) => {
                     const active = exerciseKey === ex.key;
+                    const added = items.some((i) => i.exercise_key === ex.key);
                     return (
                       <TouchableOpacity
                         key={ex.key}
-                        style={[styles.chip, styles.chipNeutral, active && styles.chipNeutralActive]}
+                        style={[styles.chip, styles.chipNeutral, added && styles.chipAdded, active && styles.chipNeutralActive]}
                         onPress={() => setExerciseKey(ex.key)}
                         accessibilityRole="radio"
                         accessibilityState={{ selected: active }}
@@ -237,6 +238,7 @@ const styles = StyleSheet.create({
   chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: { borderWidth: 1, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 10 },
   chipNeutral: { borderColor: colors.line, backgroundColor: colors.surface },
+  chipAdded: { borderColor: colors.violet, backgroundColor: colors.violetSoft },
   chipNeutralActive: { backgroundColor: colors.violet, borderColor: colors.violet },
   chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
   chipTextActive: { color: colors.bg, fontWeight: "800" },
