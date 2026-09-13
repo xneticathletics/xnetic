@@ -91,6 +91,27 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
         if (r.athlete_account) contacts.set(r.athlete_account.id, r.athlete_account);
       });
     }
+
+    // Branş koordinatörüyse, kendi branşındaki TÜM antrenörleri de ekle —
+    // koordinatör sadece koçluk yaptığı gruplarla sınırlı kalmamalı,
+    // branşını yönetebilmesi için branşındaki herkesle mesajlaşabilmeli.
+    // (can_message_recipient() DB fonksiyonu bunu ayrıca zorunlu kılıyor.)
+    const { data: coordBranch, error: coordError } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("coordinator_user_id", myUserId)
+      .maybeSingle();
+    if (coordError) throw coordError;
+    if (coordBranch) {
+      const { data: branchCoaches, error: branchCoachesError } = await supabase
+        .from("coach_branches")
+        .select("users:coach_id(id, name, photo_url, role)")
+        .eq("branch_id", coordBranch.id)
+        .neq("coach_id", myUserId);
+      if (branchCoachesError) throw branchCoachesError;
+      (branchCoaches as any[] ?? []).forEach((r) => { if (r.users) contacts.set(r.users.id, r.users); });
+    }
+
     await addAdmins();
     return Array.from(contacts.values()).sort((a, b) => a.name.localeCompare(b.name, "tr"));
   }
