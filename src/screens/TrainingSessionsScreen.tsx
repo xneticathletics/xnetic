@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, ScrollView } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, ScrollView, Modal } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -31,6 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const WEEKDAY_LABELS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const WEEKDAY_FULL = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 const MONTH_LABELS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
@@ -38,6 +39,14 @@ const MONTH_LABELS = [
 
 function pad2(n: number) {
   return n < 10 ? `0${n}` : String(n);
+}
+
+// "2026-09-13" -> "13 Eylül, Pazar"
+function formatSelectedDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const weekdayIdx = (dateObj.getDay() + 6) % 7; // Pzt=0
+  return `${d} ${MONTH_LABELS[m - 1]}, ${WEEKDAY_FULL[weekdayIdx]}`;
 }
 
 function toDateKey(year: number, month0: number, day: number) {
@@ -107,6 +116,10 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   // Branşlar" seçildi, string = belirli bir branş.
   const [branchFilter, setBranchFilter] = useState<string | null | undefined>(undefined);
   const [groupFilter, setGroupFilter] = useState<string | null>(null); // null = Tüm Gruplar
+  // Takvimin en üstündeki "Tümü / Antrenman / Müsabaka" filtresi — hem
+  // aylık ızgaradaki noktaları hem seçili günün altındaki listeyi etkiler.
+  const [typeFilter, setTypeFilter] = useState<"all" | "training" | "match">("all");
+  const [addSheetVisible, setAddSheetVisible] = useState(false);
 
   const selectBranch = (name: string | null) => {
     setBranchFilter(name);
@@ -278,29 +291,36 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     [branchScopedSessions, groupFilter]
   );
 
+  // Müsabakaları da aynı şekilde branş/grup filtreliyoruz — "Takvimime
+  // Ekle" (senkron) her zaman ikisini de kapsar, üstteki Tümü/Antrenman/
+  // Müsabaka filtresinden ETKİLENMEZ, o filtre sadece görüntülemeyi
+  // (aşağıdaki sessionsByDate/matchesByDate) etkiler.
+  const filteredMatches = useMemo(
+    () => (groupFilter ? branchScopedMatches.filter((m) => m.group_id === groupFilter) : branchScopedMatches),
+    [branchScopedMatches, groupFilter]
+  );
+
   // Antrenmanları tarihe göre grupla — takvimde hangi günde kaç
   // antrenman olduğunu ve seçili günün listesini hızlıca bulmak için.
+  // typeFilter "Müsabaka" iken boş dönüp antrenmanları hem ızgaradan hem
+  // gün listesinden gizliyor.
   const sessionsByDate = useMemo(() => {
+    if (typeFilter === "match") return {};
     const map: Record<string, TrainingSession[]> = {};
     for (const s of filteredSessions) {
       (map[s.session_date] ??= []).push(s);
     }
     return map;
-  }, [filteredSessions]);
+  }, [filteredSessions, typeFilter]);
 
-  // Müsabakaları da aynı şekilde tarihe göre grupla — takvimde
-  // antrenmanlarla aynı günde, farklı bir simgeyle görünürler.
-  const filteredMatches = useMemo(
-    () => (groupFilter ? branchScopedMatches.filter((m) => m.group_id === groupFilter) : branchScopedMatches),
-    [branchScopedMatches, groupFilter]
-  );
   const matchesByDate = useMemo(() => {
+    if (typeFilter === "training") return {};
     const map: Record<string, MatchRow[]> = {};
     for (const m of filteredMatches) {
       (map[m.match_date] ??= []).push(m);
     }
     return map;
-  }, [filteredMatches]);
+  }, [filteredMatches, typeFilter]);
 
   const grid = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
   const selectedSessions = sessionsByDate[selectedDate] ?? [];
@@ -325,11 +345,13 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     else setViewMonth((m) => m + 1);
   };
 
-  // "+Antrenman" artık doğrudan tek bir antrenman formuna açmıyor — önce
+  // "Antrenman Ekle" doğrudan tek bir antrenman formuna açmıyor — önce
   // günlük (tek antrenman) mi yoksa haftalık (şablondan otomatik üretim)
   // mi planlanacağını soruyor. Haftalık Program artık ayrı bir kutu değil,
-  // bu seçimin bir seçeneği.
-  const handleAddPress = () => {
+  // bu seçimin bir seçeneği. Sağ alttaki "+" menüsünden çağrılıyor, o
+  // yüzden önce menüyü kapatıyor.
+  const handleAddTrainingPress = () => {
+    setAddSheetVisible(false);
     Alert.alert(
       "Antrenman Planla",
       "Nasıl planlamak istersin?",
@@ -339,6 +361,11 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
         { text: "🗓 Günlük Antrenman Planlama", onPress: () => navigation.navigate("TrainingSessionForm", { sessionId: undefined }) },
       ]
     );
+  };
+
+  const handleAddMatchPress = () => {
+    setAddSheetVisible(false);
+    navigation.navigate("MatchForm", { matchId: undefined });
   };
 
   const handleCalendarSync = async () => {
@@ -354,35 +381,45 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     }
   };
 
+  const canAddAnything = canManageSchedule || !isCoach;
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        {canManageSchedule && (
-          <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
-            <Text style={styles.addButtonText} numberOfLines={1}>+Antrenman</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.pageTitle}>Takvim</Text>
+        <View style={styles.titleActionsRow}>
+          <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("MatchResults")}>
+            <Text style={styles.titleActionButtonText} numberOfLines={1}>🏆 Sonuçlar</Text>
           </TouchableOpacity>
-        )}
-        {!isCoach && (
-          <TouchableOpacity
-            style={styles.addMatchButton}
-            onPress={() => navigation.navigate("MatchForm", { matchId: undefined })}
-          >
-            <Text style={styles.addMatchButtonText} numberOfLines={1}>+Müsabaka</Text>
+          <TouchableOpacity style={styles.titleActionButton} onPress={handleCalendarSync} disabled={syncing}>
+            {syncing ? (
+              <ActivityIndicator color={colors.ink} size="small" />
+            ) : (
+              <Text style={styles.titleActionButtonText} numberOfLines={1}>📲 Takvimime Ekle</Text>
+            )}
           </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={styles.resultsButton}
-          onPress={() => navigation.navigate("MatchResults")}
-        >
-          <Text style={styles.resultsButtonText} numberOfLines={1}>Sonuçlar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.syncButton} onPress={handleCalendarSync} disabled={syncing}>
-          {syncing ? (
-            <ActivityIndicator color={colors.bg} size="small" />
-          ) : (
-            <Text style={styles.syncButtonText} numberOfLines={1}>Takvimime Ekle</Text>
-          )}
-        </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.segmentedRow}>
+        {(
+          [
+            { key: "all" as const, label: "Tümü" },
+            { key: "training" as const, label: "Antrenman" },
+            { key: "match" as const, label: "Müsabaka" },
+          ]
+        ).map((opt) => {
+          const active = typeFilter === opt.key;
+          return (
+            <TouchableOpacity
+              key={opt.key}
+              style={[styles.segmentButton, active && styles.segmentButtonActive]}
+              onPress={() => setTypeFilter(opt.key)}
+            >
+              <Text style={[styles.segmentButtonText, active && styles.segmentButtonTextActive]}>{opt.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.md }} />}
@@ -476,7 +513,6 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           const isToday = dateKey === todayKey();
 
           const hasBoth = hasSessions && hasMatches;
-          const fillColor = hasBoth ? colors.violet : hasSessions ? colors.yellow : hasMatches ? colors.coral : null;
 
           // İlk dokunuş sadece seçer (alttaki liste yerinde güncellenir) —
           // ZATEN seçili olan bir güne TEKRAR dokununca (ikinci dokunuş),
@@ -515,26 +551,22 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
               accessibilityLabel={dayLabel}
               accessibilityState={{ selected: isSelected }}
             >
-              {/* Dış halka SADECE "bugün"ü işaretler — dolgu rengini (antrenman/
-                  müsabaka/ikisi de) hiç etkilemez, üstüne binmez. */}
-              <View style={[styles.dayOuterRing, isToday && styles.dayOuterRingToday]}>
-                <View
-                  style={[
-                    styles.dayCircle,
-                    !!fillColor && { backgroundColor: fillColor },
-                    isSelected && styles.dayCircleSelectedRing,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.dayNumber,
-                      !!fillColor && styles.dayNumberOnFill,
-                      isSelected && !fillColor && styles.dayNumberSelectedPlain,
-                    ]}
-                  >
-                    {day}
-                  </Text>
-                </View>
+              {/* Günün kutusu renkle DOLDURULMUYOR — sadece rakamın altında,
+                  türe göre (sarı=antrenman, kırmızı=müsabaka, ikisi varsa
+                  ikisi birden) küçük noktalar var. Seçili gün beyaz bir
+                  hapla, "bugün" (seçili değilken) ince bir halkayla belli olur. */}
+              <View
+                style={[
+                  styles.dayNumberWrap,
+                  isSelected && styles.dayNumberWrapSelected,
+                  !isSelected && isToday && styles.dayNumberWrapToday,
+                ]}
+              >
+                <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
+              </View>
+              <View style={styles.dayDotsRow}>
+                {hasSessions && <View style={[styles.dayDot, { backgroundColor: colors.yellow }]} />}
+                {hasMatches && <View style={[styles.dayDot, { backgroundColor: colors.coral }]} />}
               </View>
             </TouchableOpacity>
           );
@@ -550,14 +582,10 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           <View style={[styles.legendDot, { backgroundColor: colors.coral }]} />
           <Text style={styles.legendLabel}>Müsabaka</Text>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.violet }]} />
-          <Text style={styles.legendLabel}>İkisi de</Text>
-        </View>
       </View>
 
       <View style={styles.selectedDateHeader}>
-        <Text style={styles.selectedDateLabel}>{selectedDate}</Text>
+        <Text style={styles.selectedDateLabel}>{formatSelectedDate(selectedDate)}</Text>
         <Text style={styles.selectedDateCount}>
           {dayItems.length > 0 ? `${dayItems.length} etkinlik` : "Etkinlik yok"}
         </Text>
@@ -592,6 +620,36 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           />
         )}
       />
+
+      {canAddAnything && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setAddSheetVisible(true)}
+          accessibilityLabel="Antrenman veya müsabaka ekle"
+        >
+          <Text style={styles.fabIcon}>+</Text>
+        </TouchableOpacity>
+      )}
+
+      <Modal visible={addSheetVisible} transparent animationType="fade" onRequestClose={() => setAddSheetVisible(false)}>
+        <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={() => setAddSheetVisible(false)}>
+          <View style={styles.sheetCard}>
+            {canManageSchedule && (
+              <TouchableOpacity style={styles.sheetOption} onPress={handleAddTrainingPress}>
+                <Text style={styles.sheetOptionText}>🗓 Antrenman Ekle</Text>
+              </TouchableOpacity>
+            )}
+            {!isCoach && (
+              <TouchableOpacity style={styles.sheetOption} onPress={handleAddMatchPress}>
+                <Text style={styles.sheetOptionText}>🏆 Müsabaka Ekle</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.sheetCancel} onPress={() => setAddSheetVisible(false)}>
+              <Text style={styles.sheetCancelText}>Vazgeç</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -600,16 +658,24 @@ const CELL_SIZE = 30;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
-  header: { flexDirection: "row", flexWrap: "nowrap", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xs, gap: 4 },
-  title: { color: colors.ink, fontSize: 22, fontWeight: "700" },
-  addButton: { flex: 1, backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center" },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 10.5 },
-  addMatchButton: { flex: 1, borderWidth: 1, borderColor: colors.coral, borderRadius: radius.sm, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center" },
-  addMatchButtonText: { color: colors.coral, fontWeight: "700", fontSize: 10.5 },
-  resultsButton: { flex: 1, borderWidth: 1, borderColor: colors.violet, borderRadius: radius.sm, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center" },
-  resultsButtonText: { color: colors.violet, fontWeight: "700", fontSize: 10.5 },
-  syncButton: { flex: 1, backgroundColor: colors.teal, borderRadius: radius.sm, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center" },
-  syncButtonText: { color: colors.bg, fontWeight: "700", fontSize: 10.5 },
+  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
+  pageTitle: { color: colors.ink, fontSize: 22, fontWeight: "700" },
+  titleActionsRow: { flexDirection: "row", gap: spacing.xs },
+  titleActionButton: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
+    paddingHorizontal: spacing.sm, paddingVertical: 6,
+  },
+  titleActionButtonText: { color: colors.ink, fontWeight: "600", fontSize: 11 },
+
+  segmentedRow: {
+    flexDirection: "row", backgroundColor: colors.surface, borderRadius: radius.full,
+    padding: 3, marginBottom: spacing.sm,
+  },
+  segmentButton: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 7, borderRadius: radius.full },
+  segmentButtonActive: { backgroundColor: colors.yellow },
+  segmentButtonText: { color: colors.muted, fontWeight: "600", fontSize: 12.5 },
+  segmentButtonTextActive: { color: colors.bg, fontWeight: "700" },
+
   error: { color: colors.coral, marginBottom: spacing.sm },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.lg },
 
@@ -631,23 +697,19 @@ const styles = StyleSheet.create({
   weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 10, fontWeight: "700" },
 
   grid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 2 },
-  // Dış halka: SADECE "bugün" işareti — dolgu rengine hiç dokunmaz.
-  dayOuterRing: {
-    width: CELL_SIZE + 8, height: CELL_SIZE + 8, borderRadius: (CELL_SIZE + 8) / 2,
-    alignItems: "center", justifyContent: "center", borderWidth: 2.5, borderColor: "transparent",
-  },
-  dayOuterRingToday: { borderColor: colors.ink },
-  // İç daire: tür dolgusu (sarı/kırmızı/mor) + varsa "seçili" halkası —
-  // seçim artık dolguyu EZMİYOR, sadece ince bir çerçeve olarak ekleniyor.
-  dayCircle: {
+  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 3, gap: 3 },
+  // Gün rakamının etrafındaki hap: sadece "seçili" ya da "bugün" durumunu
+  // gösterir, tür bilgisini hiç taşımaz — tür bilgisi ayrı noktalarla verilir.
+  dayNumberWrap: {
     width: CELL_SIZE, height: CELL_SIZE, borderRadius: CELL_SIZE / 2,
-    alignItems: "center", justifyContent: "center",
+    alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "transparent",
   },
-  dayCircleSelectedRing: { borderWidth: 2.5, borderColor: colors.teal },
+  dayNumberWrapSelected: { backgroundColor: colors.ink },
+  dayNumberWrapToday: { borderColor: colors.yellow },
   dayNumber: { color: colors.muted, fontSize: 12, fontWeight: "600" },
-  dayNumberOnFill: { color: colors.bg, fontWeight: "800" },
-  dayNumberSelectedPlain: { color: colors.teal, fontWeight: "800" },
+  dayNumberSelected: { color: colors.bg, fontWeight: "800" },
+  dayDotsRow: { flexDirection: "row", gap: 3, height: 5, alignItems: "center" },
+  dayDot: { width: 5, height: 5, borderRadius: 2.5 },
 
   legendRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.sm, justifyContent: "center" },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
@@ -660,4 +722,22 @@ const styles = StyleSheet.create({
   },
   selectedDateLabel: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   selectedDateCount: { color: colors.muted, fontSize: 12 },
+
+  fab: {
+    position: "absolute", right: spacing.lg, bottom: spacing.lg,
+    width: 56, height: 56, borderRadius: 28, backgroundColor: colors.yellow,
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 6,
+  },
+  fabIcon: { color: colors.bg, fontSize: 28, fontWeight: "700", lineHeight: 30 },
+
+  sheetBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  sheetCard: {
+    backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xl,
+  },
+  sheetOption: { paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.line },
+  sheetOptionText: { color: colors.ink, fontSize: 16, fontWeight: "600" },
+  sheetCancel: { paddingVertical: spacing.md, alignItems: "center" },
+  sheetCancelText: { color: colors.muted, fontSize: 15, fontWeight: "600" },
 });
