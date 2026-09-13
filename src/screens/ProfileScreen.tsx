@@ -254,15 +254,18 @@ export default function ProfileScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+  // Alt sekme çubuğunun üstünden taşan yuvarlak Asistan logosu (bkz.
+  // RoleTabs.tsx) ekranın en alt ~35px'ine biniyor — "Hesabımı Sil" onun
+  // altında kalmasın diye ekstra bir alt boşluk bırakıyoruz.
+  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg + 36 },
   headerCard: {
     alignItems: "center",
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: radius.lg,
-    paddingVertical: spacing.xl,
-    marginBottom: spacing.lg,
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.md,
   },
   avatarWrapper: { marginBottom: spacing.md },
   avatar: {
@@ -299,10 +302,10 @@ const styles = StyleSheet.create({
   announcementsCard: {
     flexDirection: "row", alignItems: "center", gap: spacing.md,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.sm,
+    borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm,
   },
   announcementsIconBadge: {
-    width: 48, height: 48, borderRadius: radius.md,
+    width: 44, height: 44, borderRadius: radius.md,
     backgroundColor: colors.yellowSoft, alignItems: "center", justifyContent: "center",
   },
   announcementsIcon: { fontSize: 22 },
@@ -311,13 +314,13 @@ const styles = StyleSheet.create({
   settingsGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
   settingsTile: {
     flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, padding: spacing.md,
+    borderRadius: radius.lg, padding: spacing.sm + 4,
   },
   settingsIconBadge: {
-    width: 40, height: 40, borderRadius: radius.md, marginBottom: spacing.sm,
+    width: 36, height: 36, borderRadius: radius.md, marginBottom: 6,
     backgroundColor: colors.yellowSoft, alignItems: "center", justifyContent: "center",
   },
-  settingsIcon: { fontSize: 19 },
+  settingsIcon: { fontSize: 17 },
   settingsTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   settingsSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   chevron: { color: colors.yellow, fontSize: 24, fontWeight: "700" },
