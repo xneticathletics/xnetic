@@ -7,6 +7,7 @@ import { getNutritionRecipe, createNutritionRecipe, updateNutritionRecipe } from
 import { getFoodCategory } from "../lib/nutritionCategories";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipeForm">;
 
@@ -20,6 +21,7 @@ export default function NutritionRecipeFormScreen({ route, navigation }: Props) 
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
   const [source, setSource] = useState("");
+  const initialSnapshotRef = useRef(JSON.stringify({ title: "", description: "", ingredients: "", instructions: "", source: "" }));
   const [loading, setLoading] = useState(!!recipeId);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -34,16 +36,25 @@ export default function NutritionRecipeFormScreen({ route, navigation }: Props) 
       if (!recipeId) return;
       getNutritionRecipe(recipeId)
         .then((r) => {
-          setTitle(r.title);
-          setDescription(r.description ?? "");
-          setIngredients(r.ingredients ?? "");
-          setInstructions(r.instructions ?? "");
-          setSource(r.source ?? "");
+          const loaded = {
+            title: r.title, description: r.description ?? "", ingredients: r.ingredients ?? "",
+            instructions: r.instructions ?? "", source: r.source ?? "",
+          };
+          setTitle(loaded.title);
+          setDescription(loaded.description);
+          setIngredients(loaded.ingredients);
+          setInstructions(loaded.instructions);
+          setSource(loaded.source);
+          initialSnapshotRef.current = JSON.stringify(loaded);
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [recipeId])
   );
+
+  const hasUnsavedChanges =
+    !loading && JSON.stringify({ title, description, ingredients, instructions, source }) !== initialSnapshotRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -66,6 +77,7 @@ export default function NutritionRecipeFormScreen({ route, navigation }: Props) 
       } else {
         await createNutritionRecipe(input);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

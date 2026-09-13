@@ -7,6 +7,7 @@ import { getNutritionFood, createNutritionFood, updateNutritionFood } from "../l
 import { getFoodCategory } from "../lib/nutritionCategories";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionFoodForm">;
 
@@ -31,6 +32,9 @@ export default function NutritionFoodFormScreen({ route, navigation }: Props) {
   const [fat, setFat] = useState("");
   const [benefit, setBenefit] = useState("");
   const [source, setSource] = useState("");
+  const initialSnapshotRef = useRef(JSON.stringify({
+    name: "", description: "", foundIn: "", calories: "", protein: "", carbs: "", fat: "", benefit: "", source: "",
+  }));
   const [loading, setLoading] = useState(!!foodId);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -45,20 +49,34 @@ export default function NutritionFoodFormScreen({ route, navigation }: Props) {
       if (!foodId) return;
       getNutritionFood(foodId)
         .then((f) => {
-          setName(f.name);
-          setDescription(f.description ?? "");
-          setFoundIn(f.found_in ?? "");
-          setCalories(f.calories != null ? String(f.calories) : "");
-          setProtein(f.protein_g != null ? String(f.protein_g) : "");
-          setCarbs(f.carbs_g != null ? String(f.carbs_g) : "");
-          setFat(f.fat_g != null ? String(f.fat_g) : "");
-          setBenefit(f.benefit ?? "");
-          setSource(f.source ?? "");
+          const loaded = {
+            name: f.name, description: f.description ?? "", foundIn: f.found_in ?? "",
+            calories: f.calories != null ? String(f.calories) : "",
+            protein: f.protein_g != null ? String(f.protein_g) : "",
+            carbs: f.carbs_g != null ? String(f.carbs_g) : "",
+            fat: f.fat_g != null ? String(f.fat_g) : "",
+            benefit: f.benefit ?? "", source: f.source ?? "",
+          };
+          setName(loaded.name);
+          setDescription(loaded.description);
+          setFoundIn(loaded.foundIn);
+          setCalories(loaded.calories);
+          setProtein(loaded.protein);
+          setCarbs(loaded.carbs);
+          setFat(loaded.fat);
+          setBenefit(loaded.benefit);
+          setSource(loaded.source);
+          initialSnapshotRef.current = JSON.stringify(loaded);
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [foodId])
   );
+
+  const hasUnsavedChanges =
+    !loading &&
+    JSON.stringify({ name, description, foundIn, calories, protein, carbs, fat, benefit, source }) !== initialSnapshotRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -85,6 +103,7 @@ export default function NutritionFoodFormScreen({ route, navigation }: Props) {
       } else {
         await createNutritionFood(input);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

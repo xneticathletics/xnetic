@@ -9,6 +9,7 @@ import { getArticleCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleForm">;
 
@@ -24,6 +25,7 @@ export default function NutritionArticleFormScreen({ route, navigation }: Props)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLocalUri, setPdfLocalUri] = useState<string | null>(null);
   const [pdfFileName, setPdfFileName] = useState<string | null>(null);
+  const initialSnapshotRef = useRef(JSON.stringify({ title: "", body: "", source: "", pdfUrl: null as string | null }));
   const [loading, setLoading] = useState(!!articleId);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -38,15 +40,24 @@ export default function NutritionArticleFormScreen({ route, navigation }: Props)
       if (!articleId) return;
       getNutritionArticle(articleId)
         .then((a) => {
-          setTitle(a.title);
-          setBody(a.body ?? "");
-          setSource(a.source ?? "");
-          setPdfUrl(a.pdf_url);
+          const loaded = { title: a.title, body: a.body ?? "", source: a.source ?? "", pdfUrl: a.pdf_url };
+          setTitle(loaded.title);
+          setBody(loaded.body);
+          setSource(loaded.source);
+          setPdfUrl(loaded.pdfUrl);
+          initialSnapshotRef.current = JSON.stringify(loaded);
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [articleId])
   );
+
+  // pdfLocalUri (henüz yüklenmemiş yeni PDF) ayrıca kontrol ediliyor —
+  // snapshot'a dahil değil çünkü seçilir seçilmez zaten "değişti" demektir.
+  const hasUnsavedChanges =
+    !loading &&
+    (JSON.stringify({ title, body, source, pdfUrl }) !== initialSnapshotRef.current || !!pdfLocalUri);
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handlePickPdf = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "application/pdf" });
@@ -89,6 +100,7 @@ export default function NutritionArticleFormScreen({ route, navigation }: Props)
       } else {
         await createNutritionArticle(input);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
