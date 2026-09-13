@@ -44,6 +44,10 @@ export type NotificationEventType =
   // Sosyal Alan modülü — bkz. src/lib/api/socialPosts.ts.
   | "social_post_submitted"
   | "social_post_approved"
+  // Yeni mağaza siparişi (club_admin'e) — bkz. src/lib/api/shop.ts
+  // notifyNewOrder. Önceden event_type'sız gönderiliyordu (susturulamıyor,
+  // tıklanınca yönlendirmiyordu) — 2026-09-13'te düzeltildi.
+  | "shop_order"
   // Doğum günü kutlama bildirimi — bkz. send_birthday_notifications()
   // migration'ı (pg_cron, her sabah). Yönlendirmesi yok (tıklanınca hiçbir
   // yere gitmez), getNotificationTarget default: null'a düşer.
@@ -69,6 +73,7 @@ export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: stri
   { key: "event_reminder", label: "Etkinlik Hatırlatması" },
   { key: "social_post_submitted", label: "Sosyal Alan Onay Bekliyor" },
   { key: "social_post_approved", label: "Paylaşımın Onaylandı" },
+  { key: "shop_order", label: "Yeni Mağaza Siparişi" },
   { key: "birthday", label: "Doğum Günü Mesajı" },
 ];
 

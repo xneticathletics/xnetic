@@ -149,7 +149,8 @@ export async function upsertSubscription(input: {
         sendNotification(
           a.id,
           "Ödemen Onaylandı 🎉",
-          "Kulübünün abonelik ödemesi onaylandı — X-NETIC'i hemen kullanmaya başlayabilirsin."
+          "Kulübünün abonelik ödemesi onaylandı — X-NETIC'i hemen kullanmaya başlayabilirsin.",
+          "subscription_alert"
         ).catch(() => {})
       )
     );

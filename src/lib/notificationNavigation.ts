@@ -114,6 +114,9 @@ export function getNotificationTarget(
       return isPlanner ? { tab: "Ana Menü", screen: "SocialFeed", params: { initialTab: "pending" } } : null;
     case "social_post_approved":
       return { tab: "Ana Menü", screen: "SocialFeed" };
+    case "shop_order":
+      // Sadece club_admin alıyor (bkz. src/lib/api/shop.ts notifyNewOrder).
+      return role === "club_admin" ? { tab: "Ana Menü", screen: "ShopOrders" } : null;
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;
       return announcementId
