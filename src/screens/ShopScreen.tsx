@@ -140,7 +140,7 @@ export default function ShopScreen({ navigation }: Props) {
                   <Image source={{ uri: item.photo_urls[0] }} style={styles.cardImage} resizeMode="cover" />
                 ) : (
                   <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
-                    <Text style={{ fontSize: 36 }}>🛍️</Text>
+                    <Text style={{ fontSize: 52 }}>🛍️</Text>
                   </View>
                 )}
                 {item.gender && (
@@ -148,10 +148,12 @@ export default function ShopScreen({ navigation }: Props) {
                     <Text style={styles.genderBadgeText}>{GENDER_LABEL[item.gender]}</Text>
                   </View>
                 )}
+                <View style={styles.priceBadge}>
+                  <Text style={styles.priceBadgeText}>{Number(item.price).toLocaleString("tr-TR")} ₺</Text>
+                </View>
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.cardPrice}>{Number(item.price).toLocaleString("tr-TR")} ₺</Text>
               </View>
             </TouchableOpacity>
           );
@@ -183,20 +185,30 @@ const styles = StyleSheet.create({
   gridRow: { gap: CARD_GAP, marginBottom: CARD_GAP },
   card: {
     flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, overflow: "hidden",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3,
+    borderRadius: 22, overflow: "hidden",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
   },
   cardFiller: { opacity: 0, shadowOpacity: 0, elevation: 0 },
-  cardImageWrap: { width: "100%", aspectRatio: 1, backgroundColor: colors.bg },
+  // Kare yerine dikey (portre) oranlı görsel alanı — ürün fotoğrafı kartın
+  // çok daha büyük bir kısmını kaplayıp mağazayı daha "göz alıcı" gösterir.
+  cardImageWrap: { width: "100%", aspectRatio: 0.8, backgroundColor: colors.bg },
   cardImage: { width: "100%", height: "100%" },
   cardImagePlaceholder: { alignItems: "center", justifyContent: "center" },
   genderBadge: {
-    position: "absolute", top: spacing.xs, left: spacing.xs,
+    position: "absolute", top: spacing.sm, left: spacing.sm,
     backgroundColor: "rgba(16,18,42,0.75)", borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 3,
+    paddingHorizontal: spacing.sm, paddingVertical: 4,
   },
-  genderBadgeText: { color: colors.ink, fontSize: 10, fontWeight: "700" },
-  cardBody: { padding: spacing.sm },
-  cardTitle: { color: colors.ink, fontSize: 13, fontWeight: "700", lineHeight: 17, minHeight: 34 },
-  cardPrice: { color: colors.yellow, fontSize: 15, fontWeight: "800", marginTop: 6 },
+  genderBadgeText: { color: colors.ink, fontSize: 11, fontWeight: "700" },
+  // Fiyat artık metin altında değil, marka sarısıyla görselin üzerinde
+  // dikkat çeken bir hap — vitrin tabelası gibi doğrudan göze çarpsın.
+  priceBadge: {
+    position: "absolute", left: spacing.sm, bottom: spacing.sm,
+    backgroundColor: colors.yellow, borderRadius: radius.full,
+    paddingHorizontal: spacing.sm + 2, paddingVertical: 5,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
+  },
+  priceBadgeText: { color: colors.bg, fontSize: 14, fontWeight: "800" },
+  cardBody: { padding: spacing.md },
+  cardTitle: { color: colors.ink, fontSize: 15, fontWeight: "700", lineHeight: 19, minHeight: 38 },
 });
