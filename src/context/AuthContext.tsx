@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/react-native";
-import { logBoot } from "../lib/bootLog";
 import { supabase } from "../lib/supabase";
 import { resetCurrentUserCache } from "../lib/api/currentUser";
 import { resolveLoginEmail } from "../lib/loginIdentifier";
@@ -96,12 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // sonuçlanmazsa "oturum yok" varsayıp devam ediyoruz. Bu, gerçek
     // neden ne olursa olsun uygulamanın süresiz açılış ekranında
     // kilitli kalmasını KESİN olarak engelliyor.
-    logBoot("AuthContext: getSession() çağrılıyor");
     let settled = false;
     const timeoutId = setTimeout(() => {
       if (settled) return;
       settled = true;
-      logBoot("AuthContext: getSession() 5sn'de sonuçlanmadı, ZAMAN AŞIMI");
       Sentry.captureMessage("getSession() 5sn içinde hiç sonuçlanmadı, oturumsuz devam edildi.");
       initialSessionWasRestoredRef.current = false;
       setSession(null);
@@ -113,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (settled) return;
         settled = true;
         clearTimeout(timeoutId);
-        logBoot(`AuthContext: getSession() sonuçlandı (session=${!!data.session})`);
         initialSessionWasRestoredRef.current = !!data.session;
         setSession(data.session);
         setLoading(false);
@@ -122,7 +118,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (settled) return;
         settled = true;
         clearTimeout(timeoutId);
-        logBoot(`AuthContext: getSession() REDDEDİLDİ: ${e?.message ?? e}`);
         Sentry.captureException(e);
         initialSessionWasRestoredRef.current = false;
         setSession(null);

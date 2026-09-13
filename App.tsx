@@ -13,10 +13,6 @@ import NotificationResponseHandler from "./src/components/NotificationResponseHa
 import BiometricLockGate from "./src/components/BiometricLockGate";
 import { useDeviceOrientationLock } from "./src/hooks/useDeviceOrientationLock";
 import { colors } from "./src/theme/tokens";
-import { logBoot } from "./src/lib/bootLog";
-import BootLogOverlay from "./src/components/BootLogOverlay";
-
-logBoot("App.tsx modülü yüklendi");
 
 // Geliştirme sırasında kendi hatalarımız Sentry'yi kirletmesin diye sadece
 // gerçek (production/preview) build'lerde etkin — dev modda __DEV__ true.
@@ -26,15 +22,9 @@ logBoot("App.tsx modülü yüklendi");
 // olacak. Kişisel veri gönderimini bilerek KAPALI tutuyoruz (sendDefaultPii
 // varsayılanı zaten false) — KVKK incelemesi tamamlanmadan IP/kullanıcı
 // bilgisi gibi ek veri toplamaya başlamıyoruz.
-// TEŞHİS: development build'de (Sentry zaten __DEV__ nedeniyle kapalı)
-// uygulama sorunsuz açılıyor, preview/production build'de (Sentry aktif)
-// süresiz siyah ekranda kalıyor — tek gerçek fark bu. Sentry'nin native
-// başlatmasının bu cihazda/build'de hiç dönmediğinden şüpheleniyoruz.
-// Kesin olarak ayırt etmek için burada TAMAMEN kapatıp aynı build'i
-// tekrar deniyoruz.
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enabled: false,
+  enabled: !__DEV__,
   environment: __DEV__ ? "development" : "production",
   tracesSampleRate: 0.2,
 });
@@ -50,13 +40,6 @@ Sentry.init({
 // derlenmiş paketler) hâlâ onu doğrudan çağırabiliyor.
 // Font gerçek bir "variable font" olduğu için var olan fontWeight
 // değerleri (400/600/700/800...) aynen çalışmaya devam ediyor.
-// TEŞHİS: bu global monkeypatch mekanizması (react/jsx-runtime, jsx-dev-
-// runtime ve React.createElement'i doğrudan değiştiriyor) hiçbir zaman
-// GERÇEK bir standalone Hermes-derlenmiş build'de izole test edilmemişti
-// — şimdiye kadarki tüm teşhis build'lerinde hep aktifti. Preview build'de
-// süresiz siyah ekran sorununun kaynağı olup olmadığını kesin olarak
-// ayırt etmek için burada TAMAMEN devre dışı bırakıyoruz (fonksiyon hiç
-// çağrılmıyor, tanım kalsın diye burada duruyor).
 let fontPatched = false;
 function patchDefaultFont(fontFamily: string) {
   if (fontPatched) return;
@@ -87,15 +70,7 @@ function patchDefaultFont(fontFamily: string) {
   };
 }
 
-const loggedOnce = new Set<string>();
-function logBootOnce(step: string) {
-  if (loggedOnce.has(step)) return;
-  loggedOnce.add(step);
-  logBoot(step);
-}
-
 function App() {
-  logBootOnce("App() ilk render");
   const [fontsLoaded, fontError] = useFonts({
     Inter: require("./src/assets/fonts/Inter-Variable.ttf"),
   });
@@ -120,8 +95,7 @@ function App() {
 
   const fontsReady = fontsLoaded || !!fontError || fontTimedOut;
 
-  // if (fontsLoaded) patchDefaultFont("Inter"); // TEŞHİS: geçici kapalı
-  if (fontsReady) logBootOnce(`Font hazır (loaded=${fontsLoaded}, error=${!!fontError}, timeout=${fontTimedOut})`);
+  if (fontsLoaded) patchDefaultFont("Inter");
 
   // Telefonda dikey kilit hâlâ aynen devam ediyor — sadece tablette
   // (masaüstünde/resepsiyonda yatay tutmak yaygın) serbest dönüşe izin
@@ -141,18 +115,11 @@ function App() {
   }, []);
 
   if (!fontsReady) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <BootLogOverlay />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
   }
-
-  logBootOnce("Ana ağaç render ediliyor (SafeAreaProvider...)");
 
   return (
     <SafeAreaProvider>
-      <BootLogOverlay />
       <ErrorBoundary>
         <AuthProvider>
           <BranchSelectProvider>

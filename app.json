@@ -44,6 +44,14 @@
           "remindersPermission": "X-NETIC hatırlatıcılarına erişmiyor."
         }
       ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "xnetic",
+          "project": "react-native"
+        }
+      ],
       "expo-video",
       [
         "expo-local-authentication",
