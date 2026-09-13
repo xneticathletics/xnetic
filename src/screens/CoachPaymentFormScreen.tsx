@@ -8,6 +8,7 @@ import { listCoaches, type Coach } from "../lib/api/coaches";
 import CoachPickerModal from "../components/CoachPickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachPaymentForm">;
 
@@ -25,6 +26,8 @@ export default function CoachPaymentFormScreen({ navigation }: Props) {
   // iki kez oluşturabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = !!coachId || !!amount.trim() || !!dayOfMonth.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,6 +57,7 @@ export default function CoachPaymentFormScreen({ navigation }: Props) {
         "İlk ödeme bir sonraki ay için oluşturuldu (bu ay için ödeme kaydı açılmadı). Her yeni ay geldiğinde o ayın kaydı otomatik eklenmeye devam edecek.",
         [{ text: "Tamam" }]
       );
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

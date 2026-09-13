@@ -6,6 +6,7 @@ import { createExpense } from "../lib/api/expenses";
 import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "ExpenseForm">;
 
@@ -28,6 +29,8 @@ export default function ExpenseFormScreen({ navigation }: Props) {
   // oluşturabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = !!description.trim() || !!amount.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -40,6 +43,7 @@ export default function ExpenseFormScreen({ navigation }: Props) {
     setError(null);
     try {
       await createExpense({ description: description.trim(), amount: amt, expense_date: expenseDate });
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

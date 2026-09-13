@@ -13,6 +13,7 @@ import CoachPickerModal from "../components/CoachPickerModal";
 import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachAdvanceForm">;
 
@@ -44,6 +45,8 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
   // — hızlı çift dokunuşta handleSave iki kez çalışıp aynı avansı iki kez
   // oluşturabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
+  const hasUnsavedChanges = !!coachId || !!amount.trim() || !!note.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useFocusEffect(
     useCallback(() => {
@@ -95,6 +98,7 @@ export default function CoachAdvanceFormScreen({ navigation }: Props) {
         deductionList.length > 0 ? "Avans kaydedildi ve sıradaki ödemeden kesinti uygulandı." : "Avans kaydedildi.",
         [{ text: "Tamam" }]
       );
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);

@@ -10,6 +10,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useAuth } from "../context/AuthContext";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 type Props = NativeStackScreenProps<HomeStackParamList, "PaymentForm">;
 
 export default function PaymentFormScreen({ route, navigation }: Props) {
@@ -21,6 +22,10 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [amount, setAmount] = useState("");
   const [feeDayOfMonth, setFeeDayOfMonth] = useState("");
+  // athleteId dahil değil — navigation param'ından ön-seçili gelebiliyor,
+  // dahil edilirse bazı akışlarda hiç dokunmadan "değişti" sayılırdı.
+  const hasUnsavedChanges = !!amount.trim() || !!feeDayOfMonth.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
@@ -61,6 +66,7 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
         "İlk ödeme bir sonraki ay için oluşturuldu (bu ay için aidat kaydı açılmadı). Önümüzdeki 3 ay için kayıtlar hazır; zaman geçtikçe yeni aylar otomatik eklenmeye devam edecek.",
         [{ text: "Tamam" }]
       );
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
