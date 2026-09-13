@@ -192,7 +192,7 @@ export default function HomeScreen({
 }) {
   const insets = useSafeAreaInsets();
   const { clubId } = useAuth();
-  const { selectedBranch, isLocked } = useBranchSelect();
+  const { selectedBranch, setSelectedBranch, isLocked } = useBranchSelect();
   const { settings } = useClubSettings();
   const isBranchCoordinator = role === "coach" && isLocked;
   const tiles = useMemo(() => {
@@ -233,6 +233,20 @@ export default function HomeScreen({
       getClubName(clubId).then((n) => { if (!cancelled) setClubName(n); }).catch(() => {});
       return () => { cancelled = true; };
     }, [clubId])
+  );
+
+  // Branş seçimi (Sporcu Yönetimi, Antrenman Programı, Aidat Takibi vb.
+  // birden çok bölümün paylaştığı) bir bölümden diğerine "sızmasın" diye —
+  // Ana Sayfa'ya HER dönüşte sıfırlanıyor. Böylece Finans'ta bir branş
+  // seçip Ana Sayfa'dan Sporcu Yönetimi'ne girmek onu filtrelenmiş
+  // getirmiyor; aynı bölüm içinde alt ekranlar arası gezinirken (Ana
+  // Sayfa'ya hiç uğramadan) seçim olduğu gibi korunuyor. Koordinatör için
+  // zaten no-op (setSelectedBranch kilitliyken hiçbir şey yapmıyor).
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedBranch(null);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
   );
 
   // Ana Sayfa'daki kompakt istatistik satırı için — sadece Kulüp Admini'ne.
