@@ -12,6 +12,7 @@ import { uploadPhotoForUser } from "../lib/api/currentUser";
 import BirthDateInput from "../components/BirthDateInput";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { formatPhoneNumber } from "../lib/phoneFormat";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachForm">;
@@ -44,6 +45,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
   // ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const initialSnapshotRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,11 +59,24 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           setAddress(c.address ?? "");
           setEmergencyName(c.emergency_contact_name ?? "");
           setEmergencyPhone(c.emergency_contact_phone ?? "");
+          initialSnapshotRef.current = JSON.stringify([
+            c.name, c.phone ?? "", c.birth_date, c.education_level,
+            c.address ?? "", c.emergency_contact_name ?? "", c.emergency_contact_phone ?? "",
+          ]);
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }, [coachId])
   );
+
+  const hasUnsavedChanges =
+    !loading &&
+    initialSnapshotRef.current !== null &&
+    initialSnapshotRef.current !==
+      JSON.stringify([name, phone, birthDate, educationLevel, address, emergencyName, emergencyPhone]);
+  // photoUri (henüz yüklenmemiş yeni fotoğraf) ayrıca kontrol ediliyor —
+  // snapshot'a dahil değil çünkü seçilir seçilmez zaten "değişti" demektir.
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges || !!photoUri);
 
   const pickPhoto = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -93,6 +108,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
         emergency_contact_phone: emergencyPhone.trim() || null,
       });
       if (photoUri) await uploadPhotoForUser(coachId, photoUri);
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

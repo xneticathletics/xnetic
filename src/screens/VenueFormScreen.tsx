@@ -6,6 +6,7 @@ import { getVenue, createVenue, updateVenue, deleteVenue, type VenueInput } from
 import { listBranches, type Branch } from "../lib/api/branches";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 // Bu ekran hem ClubSettingsStack'ten hem de HomeStack'ten (Kulüp Yapısı)
 // açılabiliyor — bkz. GroupsListScreen.tsx'teki aynı not.
 type Props = {
@@ -21,6 +22,7 @@ export default function VenueFormScreen({ route, navigation }: Props) {
   const isEdit = !!venueId;
 
   const [form, setForm] = useState<VenueInput>(emptyForm);
+  const initialFormRef = useRef(JSON.stringify(emptyForm));
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -42,10 +44,17 @@ export default function VenueFormScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (!venueId) return;
     getVenue(venueId)
-      .then((v) => setForm({ name: v.name, address: v.address, capacity: v.capacity, branch_ids: v.branch_ids ?? [] }))
+      .then((v) => {
+        const loaded: VenueInput = { name: v.name, address: v.address, capacity: v.capacity, branch_ids: v.branch_ids ?? [] };
+        setForm(loaded);
+        initialFormRef.current = JSON.stringify(loaded);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [venueId]);
+
+  const hasUnsavedChanges = !loading && JSON.stringify(form) !== initialFormRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const toggleBranch = (branchId: string) => {
     setForm((f) => {
@@ -69,6 +78,7 @@ export default function VenueFormScreen({ route, navigation }: Props) {
       } else {
         await createVenue(form);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -88,6 +98,7 @@ export default function VenueFormScreen({ route, navigation }: Props) {
         onPress: async () => {
           try {
             await deleteVenue(venueId);
+            markSaved();
             navigation.goBack();
           } catch (e: any) {
             Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);

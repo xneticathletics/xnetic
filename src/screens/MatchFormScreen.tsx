@@ -18,6 +18,7 @@ import BranchPickerModal from "../components/BranchPickerModal";
 import DatePickerModal from "../components/DatePickerModal";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
@@ -55,6 +56,10 @@ export default function MatchFormScreen({ route, navigation }: Props) {
   const canDelete = role === "club_admin" || (isCoach && isLocked);
 
   const [form, setForm] = useState<MatchInput>(emptyForm);
+  // Kadro (roster) seçimleri ayrı bir async yüklemeyle geldiği için (ve
+  // yarış durumu yaratmadan doğru "başlangıç" anını yakalamak zor olduğu
+  // için) kasıtlı olarak dışarıda bırakıldı — sadece form alanları izleniyor.
+  const initialFormRef = useRef(JSON.stringify(emptyForm));
   const [groupName, setGroupName] = useState<string | null>(null);
   const [groupPickerVisible, setGroupPickerVisible] = useState(false);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
@@ -119,14 +124,16 @@ export default function MatchFormScreen({ route, navigation }: Props) {
       if (!matchId) return;
       getMatch(matchId)
         .then((m) => {
-          setForm({
+          const loaded: MatchInput = {
             group_id: m.group_id, opponent_name: m.opponent_name, match_date: m.match_date,
             // DB'den "SS:DD:SS" (saniyeli) geliyor — form/doğrulama "SS:DD"
             // bekliyor, kesmezsek düzenlemeye her girişte saat alanı bozuk
             // görünüp kaydederken "geçersiz saat" hatası veriyordu.
             start_time: m.start_time.slice(0, 5), location: m.location, notes: m.notes,
             our_score: m.our_score, opponent_score: m.opponent_score, result_note: m.result_note,
-          });
+          };
+          setForm(loaded);
+          initialFormRef.current = JSON.stringify(loaded);
           setGroupName(m.groups?.name ?? null);
           setSelectedBranchFilter(m.groups?.branch ?? null);
           if (m.group_id) loadRoster(matchId, m.group_id);
@@ -135,6 +142,9 @@ export default function MatchFormScreen({ route, navigation }: Props) {
         .finally(() => setLoading(false));
     }, [matchId, loadRoster])
   );
+
+  const hasUnsavedChanges = !loading && JSON.stringify(form) !== initialFormRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const set = <K extends keyof MatchInput>(key: K, value: MatchInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -211,6 +221,7 @@ export default function MatchFormScreen({ route, navigation }: Props) {
       if (savedId && roster.length > 0) {
         await setMatchRoster(savedId, roster.filter((r) => r.selected).map((r) => r.athlete_id));
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -233,6 +244,7 @@ export default function MatchFormScreen({ route, navigation }: Props) {
           onPress: async () => {
             try {
               await deleteMatch(matchId);
+              markSaved();
               navigation.goBack();
             } catch (e: any) {
               Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);

@@ -8,6 +8,7 @@ import BranchPickerModal from "../components/BranchPickerModal";
 import VenuePickerModal from "../components/VenuePickerModal";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 // Bu ekran hem ClubSettingsStack'ten hem de HomeStack'ten (Kulüp Yapısı)
@@ -32,9 +33,12 @@ export default function GroupFormScreen({ route, navigation }: Props) {
   const groupId = route.params?.groupId;
   const isEdit = !!groupId;
 
-  const [form, setForm] = useState<GroupInput>(
-    isCoordinator ? { ...emptyForm, branch: selectedBranch ?? "" } : emptyForm
-  );
+  const initialForm = isCoordinator ? { ...emptyForm, branch: selectedBranch ?? "" } : emptyForm;
+  const [form, setForm] = useState<GroupInput>(initialForm);
+  // Create modunda başlangıç (boş) formu, edit modunda veri yüklenince
+  // GÜNCELLENEN bir kıyaslama noktası — gerçekten bir şey değiştiyse
+  // (yeni girildiyse ya da kayıtlı değerden farklıysa) çıkışta uyarı verir.
+  const initialFormRef = useRef(JSON.stringify(initialForm));
   const [venueName, setVenueName] = useState<string | null>(null);
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
   const [venuePickerVisible, setVenuePickerVisible] = useState(false);
@@ -55,12 +59,17 @@ export default function GroupFormScreen({ route, navigation }: Props) {
     if (!groupId) return;
     getGroup(groupId)
       .then((g) => {
-        setForm({ name: g.name, branch: g.branch, venue_id: g.venue_id, athlete_type: g.athlete_type, fixed_schedule: g.fixed_schedule });
+        const loaded: GroupInput = { name: g.name, branch: g.branch, venue_id: g.venue_id, athlete_type: g.athlete_type, fixed_schedule: g.fixed_schedule };
+        setForm(loaded);
+        initialFormRef.current = JSON.stringify(loaded);
         setVenueName(g.venues?.name ?? null);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [groupId]);
+
+  const hasUnsavedChanges = !loading && JSON.stringify(form) !== initialFormRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -77,6 +86,7 @@ export default function GroupFormScreen({ route, navigation }: Props) {
       } else {
         await createGroup(form);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -99,6 +109,7 @@ export default function GroupFormScreen({ route, navigation }: Props) {
           onPress: async () => {
             try {
               await deleteGroup(groupId);
+              markSaved();
               navigation.goBack();
             } catch (e: any) {
               Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);

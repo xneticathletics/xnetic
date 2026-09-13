@@ -6,18 +6,23 @@ import { createInjury, type InjuryInput } from "../lib/api/injuries";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 type Props = NativeStackScreenProps<HomeStackParamList, "InjuryForm">;
+
+const emptyForm: Omit<InjuryInput, "athlete_id"> = {
+  injury_type: "",
+  injury_date: new Date().toISOString().slice(0, 10),
+  expected_return: null,
+  note: null,
+};
 
 export default function InjuryFormScreen({ route, navigation }: Props) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const { athleteId, athleteName } = route.params;
 
-  const [form, setForm] = useState<Omit<InjuryInput, "athlete_id">>({
-    injury_type: "",
-    injury_date: new Date().toISOString().slice(0, 10),
-    expected_return: null,
-    note: null,
-  });
+  const [form, setForm] = useState(emptyForm);
+  const hasUnsavedChanges = !!form.injury_type.trim() || !!form.expected_return || !!form.note;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
@@ -40,6 +45,7 @@ export default function InjuryFormScreen({ route, navigation }: Props) {
     setError(null);
     try {
       await createInjury({ ...form, athlete_id: athleteId });
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

@@ -5,7 +5,6 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { usePreventRemove } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
   getAthlete, createAthlete, updateAthlete, uploadAthletePhoto,
@@ -25,6 +24,7 @@ import BirthDateInput from "../components/BirthDateInput";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { formatPhoneNumber } from "../lib/phoneFormat";
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteForm">;
 
@@ -79,44 +79,18 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [athleteLinkedUser, setAthleteLinkedUser] = useState<LinkedUser | null>(null);
   const [parentLinkedUser, setParentLinkedUser] = useState<LinkedUser | null>(null);
-  const [justSaved, setJustSaved] = useState(false);
-  // handleSave içinde setJustSaved(true) çağrısının hemen ardından aynı
-  // senkron adımda navigation.goBack() çağrılıyor — ama state güncellemesi
-  // henüz ekrana yansımadığı (usePreventRemove hâlâ eski hasUnsavedChanges
-  // değerini kullandığı) için goBack() engellenip "Çıkmak istediğine emin
-  // misin?" uyarısı yanlışlıkla çıkıyordu. Ref senkron olduğu için bu
-  // yarışı kapatıyor — kaydet başarılı olduğunda uyarı hiç gösterilmiyor.
-  const justSavedRef = useRef(false);
 
   // Yeni sporcu eklerken, form doldurulmuşken yanlışlıkla başka bir yere
-  // geçilirse (geri tuşu, kaydırma hareketi, Ana Sayfa vb.) veri
-  // kaybını önlemek için onay ister. Düzenleme modunda ya da kayıt az
-  // önce başarıyla tamamlandıysa (justSaved) hiç sormaz.
-  //
-  // Not: navigation.addListener("beforeRemove", ...) yerine bilerek
-  // usePreventRemove kullanıyoruz — native-stack'te beforeRemove, geri
-  // KAYDIRMA hareketiyle (swipe-back) birlikte tam desteklenmiyor ve
-  // "ekran native tarafta kaldırıldı ama JS state'te kalmış" hatasına
-  // yol açıyor. usePreventRemove bu senaryo için React Navigation'ın
-  // resmi çözümü.
+  // geçilirse (geri tuşu, kaydırma hareketi, Ana Sayfa vb.) veri kaybını
+  // önlemek için onay ister. Düzenleme modunda sormuyor (mevcut kaydın
+  // hangi alanının fiilen değiştiğini güvenilir şekilde izlemek — burada
+  // veli/sporcu hesap bağlantıları gibi paralel yüklenen alanlar da
+  // olduğu için — ayrı bir iş; şimdilik en yüksek değerli senaryu olan
+  // "yeni girilen veri kaybı"nı kapsıyoruz).
   const hasUnsavedChanges =
-    !isEdit && !justSaved &&
+    !isEdit &&
     (form.full_name.trim().length > 0 || !!form.group_id || !!photoUri || !!athleteLinkedUser || !!parentLinkedUser);
-
-  usePreventRemove(hasUnsavedChanges, ({ data }) => {
-    if (justSavedRef.current) {
-      navigation.dispatch(data.action);
-      return;
-    }
-    Alert.alert(
-      "Çıkmak istediğine emin misin?",
-      "Girdiğin bilgiler kaydedilmeyecek.",
-      [
-        { text: "Vazgeç", style: "cancel" },
-        { text: "Çık", style: "destructive", onPress: () => navigation.dispatch(data.action) },
-      ]
-    );
-  });
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
     navigation.setOptions({ title: isEdit ? "Sporcuyu Düzenle" : "Yeni Sporcu" });
@@ -263,8 +237,7 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
       if (!isEdit && feeAmount && feeDay && saved?.id) {
         await createPaymentPlan({ athlete_id: saved.id, amount: feeAmount, day_of_month: feeDay });
       }
-      justSavedRef.current = true;
-      setJustSaved(true);
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

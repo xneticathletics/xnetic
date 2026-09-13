@@ -16,6 +16,7 @@ import { useBranchSelect } from "../context/BranchSelectContext";
 import type { ProfileStackParamList } from "../navigation/ProfileStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 type Props = NativeStackScreenProps<ProfileStackParamList, "AnnouncementForm">;
 
 const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
@@ -52,6 +53,11 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
   // oluşturabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  // targetTypes dahil değil — koordinatör için mount'ta otomatik ["group"]
+  // atanıyor, o yüzden dahil edilirse hiç dokunmadan "değişti" sayılırdı.
+  const hasUnsavedChanges =
+    !!title.trim() || !!body.trim() || !!attachmentName || selectedGroups.length > 0;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
     Promise.all([listBranches(), listGroups()])
@@ -127,6 +133,7 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
         attachment_url: attachmentUrl,
         storage_path: storagePath,
       });
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Yayınlanamadı");
