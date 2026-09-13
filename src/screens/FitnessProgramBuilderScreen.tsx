@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { FITNESS_CATEGORIES, getFitnessCategory } from "../lib/fitnessExercises";
@@ -66,27 +67,36 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   // gruplarını buradan kaldırdık, program her zaman bir fitness grubuna
   // sergilenir. Antrenör (branş koordinatörü dahil) sadece kendi
   // branş(lar)ındaki fitness gruplarını görür — club_admin tümünü görür.
-  useEffect(() => {
-    if (!finalizing) return;
-    setLoadingGroups(true);
-    (async () => {
-      try {
-        const fg = await listFitnessGroups();
-        if (isCoach) {
-          const myUserId = await getCurrentAppUserId();
-          const myBranchInfo = myUserId ? await getCoachBranches(myUserId) : [];
-          const myBranches = new Set(myBranchInfo.map((b) => b.branch_name));
-          setFitnessGroups(fg.filter((x) => myBranches.has(x.branch)));
-        } else {
-          setFitnessGroups(fg);
+  // useFocusEffect (odaklanma bazlı) — "+ Fitness Grubu Oluştur" ile buradan
+  // ayrılıp yeni bir grup oluşturup geri dönüldüğünde liste otomatik
+  // tazelensin diye; sade useEffect sadece finalizing/isCoach değişince
+  // tetiklenirdi, geri dönüşte tekrar çalışmazdı.
+  useFocusEffect(
+    useCallback(() => {
+      if (!finalizing) return;
+      let cancelled = false;
+      setLoadingGroups(true);
+      (async () => {
+        try {
+          const fg = await listFitnessGroups();
+          if (cancelled) return;
+          if (isCoach) {
+            const myUserId = await getCurrentAppUserId();
+            const myBranchInfo = myUserId ? await getCoachBranches(myUserId) : [];
+            const myBranches = new Set(myBranchInfo.map((b) => b.branch_name));
+            if (!cancelled) setFitnessGroups(fg.filter((x) => myBranches.has(x.branch)));
+          } else if (!cancelled) {
+            setFitnessGroups(fg);
+          }
+        } catch (e: any) {
+          if (!cancelled) setError(e.message);
+        } finally {
+          if (!cancelled) setLoadingGroups(false);
         }
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoadingGroups(false);
-      }
-    })();
-  }, [finalizing, isCoach]);
+      })();
+      return () => { cancelled = true; };
+    }, [finalizing, isCoach])
+  );
 
   const selectedExerciseName = exerciseOptions.find((e) => e.key === exerciseKey)?.name ?? null;
 
@@ -241,9 +251,12 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
             />
 
             <Text style={[styles.label, { marginTop: spacing.md }]}>Hangi Fitness Grubuna Sergilenecek? *</Text>
+            <TouchableOpacity style={styles.newFitnessGroupButton} onPress={() => navigation.navigate("FitnessGroups")}>
+              <Text style={styles.newFitnessGroupButtonText}>+ Fitness Grubu Oluştur</Text>
+            </TouchableOpacity>
             {loadingGroups && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.sm }} />}
             {!loadingGroups && fitnessGroups.length === 0 && (
-              <Text style={styles.hint}>Henüz bir fitness grubu yok — önce Fitness Grupları'ndan bir grup oluşturmalısın.</Text>
+              <Text style={styles.hint}>Henüz bir fitness grubu yok — yukarıdan yeni bir grup oluşturabilirsin.</Text>
             )}
             <View style={styles.chipGrid}>
               {fitnessGroups.map((g) => {
@@ -318,6 +331,11 @@ const styles = StyleSheet.create({
   chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
   chipTextActive: { color: colors.bg, fontWeight: "800" },
   chipTextAdded: { color: colors.violet, fontWeight: "700" },
+  newFitnessGroupButton: {
+    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 12,
+    alignItems: "center", marginBottom: spacing.sm,
+  },
+  newFitnessGroupButtonText: { color: colors.bg, fontWeight: "700", fontSize: 13 },
   stickyFooter: {
     backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line,
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md,
