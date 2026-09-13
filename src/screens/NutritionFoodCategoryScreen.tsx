@@ -4,7 +4,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listNutritionFoodsByCategory, type NutritionFood } from "../lib/api/nutritionFoods";
-import { listNutritionRecipesByCategory, type NutritionRecipe } from "../lib/api/nutritionRecipes";
 import { getFoodCategory } from "../lib/nutritionCategories";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
@@ -42,7 +41,6 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
   const foodsLabel = FOODS_SECTION_LABEL[category] ?? "Örnek Besinler";
 
   const [foods, setFoods] = useState<NutritionFood[]>([]);
-  const [recipes, setRecipes] = useState<NutritionRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,9 +54,7 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [f, r] = await Promise.all([listNutritionFoodsByCategory(category), listNutritionRecipesByCategory(category)]);
-      setFoods(f);
-      setRecipes(r);
+      setFoods(await listNutritionFoodsByCategory(category));
     } catch (e: any) {
       setError(e.message ?? "Yüklenemedi");
     } finally {
@@ -79,7 +75,6 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
     | { kind: "header" }
     | { kind: "sectionHeader"; title: string; onAdd?: () => void }
     | { kind: "food"; data: NutritionFood }
-    | { kind: "recipe"; data: NutritionRecipe }
     | { kind: "empty"; text: string };
 
   const rows: Row[] = [{ kind: "header" }];
@@ -90,13 +85,6 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
   });
   if (foods.length === 0 && !loading) rows.push({ kind: "empty", text: "Henüz eklenmedi." });
   foods.forEach((f) => rows.push({ kind: "food", data: f }));
-  rows.push({
-    kind: "sectionHeader",
-    title: "Sporcu Tarifleri",
-    onAdd: role === "club_admin" || isCoordinator ? () => navigation.navigate("NutritionRecipeForm", { recipeId: undefined, category }) : undefined,
-  });
-  if (recipes.length === 0 && !loading) rows.push({ kind: "empty", text: "Henüz tarif eklenmedi." });
-  recipes.forEach((r) => rows.push({ kind: "recipe", data: r }));
 
   return (
     <View style={styles.container}>
@@ -105,9 +93,7 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
 
       <FlatList
         data={rows}
-        keyExtractor={(row, idx) =>
-          row.kind === "food" ? `food-${row.data.id}` : row.kind === "recipe" ? `recipe-${row.data.id}` : `${row.kind}-${idx}`
-        }
+        keyExtractor={(row, idx) => (row.kind === "food" ? `food-${row.data.id}` : `${row.kind}-${idx}`)}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         renderItem={({ item }) => {
@@ -156,15 +142,7 @@ export default function NutritionFoodCategoryScreen({ route, navigation }: Props
               </TouchableOpacity>
             );
           }
-          const r = item.data;
-          const recipeLabel = sourceLabel(role, r.club_id, r.clubs);
-          return (
-            <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("NutritionRecipeDetail", { recipeId: r.id })}>
-              <Text style={styles.cardName}>🍳 {r.title}</Text>
-              {!!recipeLabel && <Text style={styles.cardSource}>{recipeLabel}</Text>}
-              {!!r.description && <Text style={styles.cardDesc} numberOfLines={2}>{r.description}</Text>}
-            </TouchableOpacity>
-          );
+          return null;
         }}
       />
     </View>

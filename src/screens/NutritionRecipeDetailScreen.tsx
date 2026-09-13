@@ -87,7 +87,7 @@ export default function NutritionRecipeDetailScreen({ route, navigation }: Props
       </View>
       {!!sourceLabel && <Text style={styles.sourceBadge}>{sourceLabel}</Text>}
 
-      <Text style={styles.title}>🍳 {recipe.title}</Text>
+      <Text style={styles.title}>{recipe.title}</Text>
       {!!recipe.description && <Text style={styles.description}>{recipe.description}</Text>}
 
       {!!recipe.ingredients && (

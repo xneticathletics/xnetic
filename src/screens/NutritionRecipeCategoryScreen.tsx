@@ -11,6 +11,11 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipeCategory">;
 
+// NutritionRecipesScreen'deki birebir aynı kopya: her kategori kendi
+// simgesini kullanır, protein için özellikle yumurta korunur — önceden
+// hepsi aynı sahanda yumurtayı gösteriyordu.
+const RECIPE_ICON_OVERRIDE: Partial<Record<string, string>> = { protein: "🍳" };
+
 // Bir satırın global mi (club_id null) yoksa kulübe özel mi olduğuna göre
 // kaynak etiketi (sadece Süper Admin'e) hesaplar — NutritionFoodCategoryScreen'deki
 // birebir aynı mantık (ayrı dosyada kasıtlı kopya).
@@ -25,6 +30,7 @@ export default function NutritionRecipeCategoryScreen({ route, navigation }: Pro
   const { isLocked } = useBranchSelect();
   const isCoordinator = role === "coach" && isLocked;
   const meta = getFoodCategory(category);
+  const recipeIcon = RECIPE_ICON_OVERRIDE[category] ?? meta.icon;
 
   const [recipes, setRecipes] = useState<NutritionRecipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +75,7 @@ export default function NutritionRecipeCategoryScreen({ route, navigation }: Pro
         ListHeaderComponent={
           <>
             <View style={[styles.heroCard, { backgroundColor: meta.soft, borderColor: meta.color }]}>
-              <Text style={styles.heroIcon}>🍳</Text>
+              <Text style={styles.heroIcon}>{recipeIcon}</Text>
               <Text style={[styles.heroTitle, { color: meta.color }]}>{meta.label} Tarifleri</Text>
             </View>
             {(role === "club_admin" || isCoordinator) && (
@@ -87,7 +93,7 @@ export default function NutritionRecipeCategoryScreen({ route, navigation }: Pro
           const label = sourceLabel(role, item.club_id, item.clubs);
           return (
             <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("NutritionRecipeDetail", { recipeId: item.id })}>
-              <Text style={styles.cardName}>🍳 {item.title}</Text>
+              <Text style={styles.cardName}>{recipeIcon} {item.title}</Text>
               {!!label && <Text style={styles.cardSource}>{label}</Text>}
               {!!item.description && <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>}
             </TouchableOpacity>

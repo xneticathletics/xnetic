@@ -7,6 +7,12 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionRecipes">;
 
+// Her kategori kutusu artık kendi simgesini kullanıyor (Besinler'deki
+// FOOD_CATEGORIES ile aynı) — önceden hepsi aynı sahanda yumurtayı
+// gösteriyordu. Protein için yumurta zaten uygun olduğundan burada
+// özellikle korunuyor, diğerleri kendi kategori simgesine döndü.
+const RECIPE_ICON_OVERRIDE: Partial<Record<string, string>> = { protein: "🍳" };
+
 // Besinlerle aynı kategori (karbonhidrat/protein/yağ/vitamin) düzeni —
 // NutritionFoodsScreen.tsx'in tarifler için ayrı, kendi başına ulaşılabilen
 // karşılığı (bkz. web/src/routes/nutrition/NutritionHomePage.tsx'teki
@@ -26,7 +32,7 @@ export default function NutritionRecipesScreen({ navigation }: Props) {
           >
             <View style={[styles.decorCircle, { backgroundColor: cat.soft }]} />
             <View style={styles.tileContent}>
-              <Text style={styles.tileIcon}>🍳</Text>
+              <Text style={styles.tileIcon}>{RECIPE_ICON_OVERRIDE[cat.key] ?? cat.icon}</Text>
               <Text style={styles.tileLabel}>{cat.label}</Text>
             </View>
           </TouchableOpacity>
