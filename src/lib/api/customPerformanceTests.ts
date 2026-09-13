@@ -43,6 +43,18 @@ export async function listTestsByCategory(category: string): Promise<CustomPerfo
   return (data as unknown as CustomPerformanceTest[]) ?? [];
 }
 
+// Test Grubu oluşturma ekranındaki gibi, kategoriden bağımsız TÜM testleri
+// (kendi kulübü + global) tek seferde listelemek için.
+export async function listAllTests(): Promise<CustomPerformanceTest[]> {
+  const { data, error } = await supabase
+    .from("performance_test_catalog")
+    .select(FIELDS)
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getCustomTest(id: string): Promise<CustomPerformanceTest | null> {
   const { data, error } = await supabase.from("performance_test_catalog").select(FIELDS).eq("id", id).maybeSingle();
   if (error) throw error;

@@ -5,6 +5,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { PERFORMANCE_CATEGORIES } from "../lib/performanceTests";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useAuth } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleticPerformance">;
@@ -12,17 +13,25 @@ type Props = NativeStackScreenProps<HomeStackParamList, "AthleticPerformance">;
 export default function AthleticPerformanceScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const { role } = useAuth();
+  const { isLocked: isBranchCoordinator } = useBranchSelect();
+  // Test/Test Grubu ekleme: admin, branş koordinatörü, süper admin —
+  // sıradan antrenör sadece var olan testleri kullanıp ölçüm girebilir.
+  const canManage = role === "club_admin" || role === "super_admin" || (role === "coach" && isBranchCoordinator);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <View style={styles.headerRow}>
-        <Text style={styles.subtitle}>Bir kategori seç, testi seç, sporcunun ölçümünü kaydet.</Text>
-        {role === "super_admin" && (
-          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("PerformanceTestForm")}>
-            <Text style={styles.addButtonText}>+ Test Ekle</Text>
+      {canManage && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("PerformanceTestForm")}>
+            <Text style={styles.actionBoxText}>+ Test Ekle</Text>
           </TouchableOpacity>
-        )}
-      </View>
+          <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("TestGroupsList")}>
+            <Text style={styles.actionBoxText}>+ Test Grubu Ekle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <Text style={styles.subtitle}>Bir kategori seç, testi seç, sporcunun ölçümünü kaydet.</Text>
 
       <View style={styles.grid}>
         {PERFORMANCE_CATEGORIES.map((cat) => (
@@ -46,10 +55,13 @@ export default function AthleticPerformanceScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, marginBottom: spacing.lg },
-  subtitle: { flex: 1, color: colors.muted, fontSize: 12, lineHeight: 17 },
-  addButton: { backgroundColor: colors.violet, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  actionsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
+  actionBox: {
+    flex: 1, backgroundColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: "center",
+  },
+  actionBoxText: { color: colors.bg, fontWeight: "700", fontSize: 13 },
+  subtitle: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   tile: {
     width: "31%", aspectRatio: 1, backgroundColor: colors.surface, borderWidth: 2,

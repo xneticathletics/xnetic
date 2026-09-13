@@ -60,6 +60,9 @@ import AthleticPerformanceScreen from "../screens/AthleticPerformanceScreen";
 import PerformanceCategoryScreen from "../screens/PerformanceCategoryScreen";
 import PerformanceTestDetailScreen from "../screens/PerformanceTestDetailScreen";
 import PerformanceTestFormScreen from "../screens/PerformanceTestFormScreen";
+import TestGroupsListScreen from "../screens/TestGroupsListScreen";
+import TestGroupFormScreen from "../screens/TestGroupFormScreen";
+import TestGroupDetailScreen from "../screens/TestGroupDetailScreen";
 import WellnessCheckinScreen from "../screens/WellnessCheckinScreen";
 import MembershipFreezeScreen from "../screens/MembershipFreezeScreen";
 import CoachWellnessScreen from "../screens/CoachWellnessScreen";
@@ -211,6 +214,9 @@ export type HomeStackParamList = {
   PerformanceCategory: { category: string };
   PerformanceTestDetail: { testKey: string; athleteId?: string; athleteName?: string; readOnly?: boolean };
   PerformanceTestForm: { testId?: string } | undefined;
+  TestGroupsList: undefined;
+  TestGroupForm: undefined;
+  TestGroupDetail: { groupId: string };
   WellnessCheckin: undefined;
   MembershipFreeze: { athleteId?: string; athleteName?: string } | undefined;
   CoachWellness: undefined;
@@ -346,6 +352,9 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="PerformanceCategory" component={PerformanceCategoryScreen} />
       <Stack.Screen name="PerformanceTestDetail" component={PerformanceTestDetailScreen} />
       <Stack.Screen name="PerformanceTestForm" component={PerformanceTestFormScreen} options={{ title: "Test Ekle" }} />
+      <Stack.Screen name="TestGroupsList" component={TestGroupsListScreen} options={{ title: "Test Grupları" }} />
+      <Stack.Screen name="TestGroupForm" component={TestGroupFormScreen} options={{ title: "Yeni Test Grubu" }} />
+      <Stack.Screen name="TestGroupDetail" component={TestGroupDetailScreen} />
       <Stack.Screen name="WellnessCheckin" component={WellnessCheckinScreen} options={{ title: "Günlük Check-in" }} />
       <Stack.Screen name="MembershipFreeze" component={MembershipFreezeScreen} options={{ title: "Kayıt Dondurma" }} />
       <Stack.Screen name="CoachWellness" component={CoachWellnessScreen} options={{ title: "Sporcu Check-in'leri" }} />
