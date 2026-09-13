@@ -11,7 +11,7 @@ import { listAthleteNotes, type AthleteNote } from "../lib/api/athleteNotes";
 import { listInjuries, type Injury } from "../lib/api/injuries";
 import { listAthleteRecentAttendance, type AthleteRecentAttendance, type AttendanceStatus } from "../lib/api/attendance";
 import type { HomeStackParamList } from "../navigation/HomeStack";
-import { useHomeButton } from "../hooks/useHomeButton";
+import { useBackHomeButtons } from "../hooks/useBackHomeButtons";
 import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
 import { listGroups, type Group } from "../lib/api/groups";
 import { useAuth } from "../context/AuthContext";
@@ -95,7 +95,7 @@ function InfoRow({
 }
 
 export default function AthleteDetailScreen({ route, navigation }: Props) {
-  useHomeButton(navigation);
+  useBackHomeButtons(navigation);
   const { athleteId } = route.params;
   const scrollRef = useRef<ScrollView>(null);
   const { role } = useAuth();
