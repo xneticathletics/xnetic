@@ -182,9 +182,12 @@ export default function ProfileScreen({
         )}
       </View>
 
-      {/* Sporcu ve veli, Ana Sayfa'da zaten duyuru önizlemesi + tam listeye
-          erişebiliyor — Profil'de bunu tekrarlamaya gerek yok. */}
-      {role !== "super_admin" && role !== "parent" && role !== "athlete" && (
+      {/* Sadece Kulüp Admini için gösterilir — alt menüsünde "Duyurular"
+          sekmesi YOK (bkz. RoleTabs.tsx: !isClubAdmin && !isSuperAdmin),
+          bu yüzden Profil'den erişmesi gerekiyor. Antrenör (branş
+          koordinatörü dahil) ile Veli/Sporcu'nun zaten kendi alt menüsünde
+          bağımsız bir "Duyurular" sekmesi var, burada tekrarlamaya gerek yok. */}
+      {role === "club_admin" && (
         <TouchableOpacity style={styles.announcementsCard} onPress={() => navigation.navigate("Announcements")}>
           <View style={styles.announcementsIconBadge}>
             <Text style={styles.announcementsIcon}>📣</Text>
@@ -263,11 +266,11 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: { marginBottom: spacing.md },
   avatar: {
-    width: 72, height: 72, borderRadius: radius.full,
+    width: 92, height: 92, borderRadius: radius.full,
     backgroundColor: colors.yellowSoft, alignItems: "center", justifyContent: "center",
   },
-  avatarImage: { width: 72, height: 72, borderRadius: radius.full },
-  avatarText: { color: colors.yellow, fontSize: 28, fontWeight: "800" },
+  avatarImage: { width: 92, height: 92, borderRadius: radius.full },
+  avatarText: { color: colors.yellow, fontSize: 34, fontWeight: "800" },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.full,
