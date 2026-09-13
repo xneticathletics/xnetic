@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, ScrollView, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -10,6 +10,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
+import FilterChipRow from "../components/FilterChipRow";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AllAthletes">;
 
@@ -100,28 +101,12 @@ export default function AllAthletesScreen({ navigation }: Props) {
       <Text style={styles.subtitle}>{filtered.length} sporcu — Gruba göre</Text>
 
       {!isLocked && branches.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <FilterChipRow
+          options={[{ key: null, label: "Tüm Branşlar" }, ...branches.map((b) => ({ key: b.name, label: b.name }))]}
+          activeKey={branchFilter}
+          onSelect={setBranchFilter}
           style={styles.filterRow}
-          contentContainerStyle={styles.filterRowContent}
-        >
-          <TouchableOpacity
-            style={[styles.chip, !branchFilter && styles.chipActive]}
-            onPress={() => setBranchFilter(null)}
-          >
-            <Text style={[styles.chipText, !branchFilter && styles.chipTextActive]}>Tüm Branşlar</Text>
-          </TouchableOpacity>
-          {branches.map((b) => (
-            <TouchableOpacity
-              key={b.id}
-              style={[styles.chip, branchFilter === b.name && styles.chipActive]}
-              onPress={() => setBranchFilter(b.name)}
-            >
-              <Text style={[styles.chipText, branchFilter === b.name && styles.chipTextActive]}>{b.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        />
       )}
 
       <TextInput
@@ -133,19 +118,17 @@ export default function AllAthletesScreen({ navigation }: Props) {
         onChangeText={setQuery}
       />
 
-      <View style={styles.typeFilterRow}>
-        {(["all", "spor_okulu", "musabik"] as const).map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.typeChip, typeFilter === t && styles.typeChipActive]}
-            onPress={() => setTypeFilter(t)}
-          >
-            <Text style={[styles.typeChipText, typeFilter === t && styles.typeChipTextActive]} numberOfLines={1}>
-              {t === "all" ? "Tümü" : t === "spor_okulu" ? "Spor Okulu" : "🏆 Müsabık"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChipRow
+        options={[
+          { key: "all", label: "Tümü" },
+          { key: "spor_okulu", label: "Spor Okulu" },
+          { key: "musabik", label: "🏆 Müsabık" },
+        ]}
+        activeKey={typeFilter}
+        onSelect={(key) => setTypeFilter(key as "all" | "spor_okulu" | "musabik")}
+        activeColor={colors.teal}
+        style={styles.filterRow}
+      />
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -189,24 +172,7 @@ export default function AllAthletesScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.lg },
   subtitle: { color: colors.muted, fontSize: 13, marginTop: 0, marginBottom: spacing.sm },
-  filterRow: { height: 32, marginBottom: spacing.md, flexGrow: 0, flexShrink: 0 },
-  filterRowContent: { flexDirection: "row", alignItems: "center" },
-  chip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 4, marginRight: spacing.xs,
-    alignItems: "center", justifyContent: "center", height: 28, flexShrink: 0,
-  },
-  chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
-  chipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
-  chipTextActive: { color: colors.bg },
-  typeFilterRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginBottom: spacing.md },
-  typeChip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 4, height: 28, alignItems: "center", justifyContent: "center",
-  },
-  typeChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
-  typeChipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
-  typeChipTextActive: { color: colors.bg },
+  filterRow: { marginBottom: spacing.md },
   search: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.md,

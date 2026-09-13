@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, ScrollView, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -8,6 +8,7 @@ import {
 } from "../lib/api/coachPayments";
 import { topUpAllActiveCoachPlans } from "../lib/api/coachPaymentPlans";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import FilterChipRow from "../components/FilterChipRow";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachPayments">;
 
@@ -155,26 +156,17 @@ export default function CoachPaymentsScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterRow}
-        contentContainerStyle={{ alignItems: "center" }}
-      >
-        {([
+      <FilterChipRow
+        options={[
           { key: "all", label: "Tümü" },
           { key: "pending", label: "Bekleyen" },
           { key: "paid", label: "Ödendi" },
-        ] as { key: StatusFilter; label: string }[]).map((f) => (
-          <TouchableOpacity
-            key={f.key}
-            style={[styles.chip, statusFilter === f.key && styles.chipActive]}
-            onPress={() => setStatusFilter(f.key)}
-          >
-            <Text style={[styles.chipText, statusFilter === f.key && styles.chipTextActive]}>{f.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        ]}
+        activeKey={statusFilter}
+        onSelect={(key) => setStatusFilter(key as StatusFilter)}
+        activeColor={colors.violet}
+        style={styles.filterRow}
+      />
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -235,15 +227,7 @@ const styles = StyleSheet.create({
   },
   summarySubLabel: { color: colors.muted, fontSize: 11, fontWeight: "600" },
   summaryValue: { fontSize: 16, fontWeight: "800", marginTop: 2 },
-  filterRow: { flexDirection: "row", marginBottom: spacing.md, height: 32, flexGrow: 0, flexShrink: 0 },
-  chip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 4, marginRight: spacing.xs,
-    alignItems: "center", justifyContent: "center", height: 28, flexShrink: 0,
-  },
-  chipActive: { backgroundColor: colors.violet, borderColor: colors.violet },
-  chipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
-  chipTextActive: { color: colors.bg },
+  filterRow: { marginBottom: spacing.md },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {

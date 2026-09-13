@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, ScrollView, Modal } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -16,6 +16,7 @@ import { getGroupStaffingMap, type GroupStaffing } from "../lib/api/coaches";
 import { getMyAuthorizedVenueIds } from "../lib/api/venueCoaches";
 import { generateSessionsFromTemplates } from "../lib/api/trainingSchedule";
 import DayAgendaItem, { type DayItem } from "../components/DayAgendaItem";
+import FilterChipRow from "../components/FilterChipRow";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
@@ -477,53 +478,21 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       {error && <Text style={styles.error}>{error}</Text>}
 
       {showBranchChips && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.groupFilterRow}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <TouchableOpacity
-            style={[styles.groupChip, branchFilter === null && styles.groupChipActive]}
-            onPress={() => selectBranch(null)}
-          >
-            <Text style={[styles.groupChipText, branchFilter === null && styles.groupChipTextActive]}>Tüm Branşlar</Text>
-          </TouchableOpacity>
-          {visibleBranches.map((b) => (
-            <TouchableOpacity
-              key={b.id}
-              style={[styles.groupChip, branchFilter === b.name && styles.groupChipActive]}
-              onPress={() => selectBranch(b.name)}
-            >
-              <Text style={[styles.groupChipText, branchFilter === b.name && styles.groupChipTextActive]}>{b.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <FilterChipRow
+          options={[{ key: null, label: "Tüm Branşlar" }, ...visibleBranches.map((b) => ({ key: b.name, label: b.name }))]}
+          activeKey={branchFilter}
+          onSelect={selectBranch}
+          style={{ marginTop: spacing.xs }}
+        />
       )}
 
       {showGroupChips && groupOptions.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.groupFilterRow}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <TouchableOpacity
-            style={[styles.groupChip, !groupFilter && styles.groupChipActive]}
-            onPress={() => setGroupFilter(null)}
-          >
-            <Text style={[styles.groupChipText, !groupFilter && styles.groupChipTextActive]}>Tüm Gruplar</Text>
-          </TouchableOpacity>
-          {groupOptions.map((g) => (
-            <TouchableOpacity
-              key={g.id}
-              style={[styles.groupChip, groupFilter === g.id && styles.groupChipActive]}
-              onPress={() => setGroupFilter(g.id)}
-            >
-              <Text style={[styles.groupChipText, groupFilter === g.id && styles.groupChipTextActive]}>{g.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <FilterChipRow
+          options={[{ key: null, label: "Tüm Gruplar" }, ...groupOptions.map((g) => ({ key: g.id, label: g.name }))]}
+          activeKey={groupFilter}
+          onSelect={setGroupFilter}
+          style={{ marginTop: spacing.xs }}
+        />
       )}
 
       <View style={styles.monthNav}>
@@ -739,21 +708,6 @@ const styles = StyleSheet.create({
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.lg },
 
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: spacing.xs, marginBottom: spacing.xs },
-  // Üstteki Tümü/Antrenman/Müsabaka segmentiyle aynı aile: tek bir sarı
-  // "track" içine oturan haplar — her çipin kendi çerçevesi yerine, ortak
-  // bir zemin (colors.surface) üzerinde duruyorlar.
-  groupFilterRow: {
-    flexDirection: "row", marginTop: spacing.xs, maxHeight: 40,
-    backgroundColor: colors.surface, borderRadius: radius.full, paddingHorizontal: 4,
-  },
-  groupChip: {
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.md, marginVertical: 4, marginRight: 4,
-    alignItems: "center", justifyContent: "center", height: 30,
-  },
-  groupChipActive: { backgroundColor: colors.yellow },
-  groupChipText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
-  groupChipTextActive: { color: colors.bg, fontWeight: "700" },
   monthNavButton: { paddingHorizontal: spacing.md, paddingVertical: 2 },
   monthNavIcon: { color: colors.yellow, fontSize: 18, fontWeight: "700" },
   monthLabel: { color: colors.ink, fontSize: 14, fontWeight: "700", minWidth: 130, textAlign: "center" },

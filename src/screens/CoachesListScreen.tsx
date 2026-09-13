@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, ScrollView, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing, accentRotation, accentSoftRotation } from "../theme/tokens";
@@ -13,6 +13,7 @@ import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
+import FilterChipRow from "../components/FilterChipRow";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachesList">;
 
@@ -123,53 +124,21 @@ export default function CoachesListScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       {!isBranchCoordinator && branches.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <FilterChipRow
+          options={[{ key: null, label: "Tüm Branşlar" }, ...branches.map((b) => ({ key: b.name, label: b.name }))]}
+          activeKey={selectedBranch}
+          onSelect={setSelectedBranch}
           style={styles.filterRow}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <TouchableOpacity
-            style={[styles.chip, !selectedBranch && styles.chipActive]}
-            onPress={() => setSelectedBranch(null)}
-          >
-            <Text style={[styles.chipText, !selectedBranch && styles.chipTextActive]}>Tüm Branşlar</Text>
-          </TouchableOpacity>
-          {branches.map((b) => (
-            <TouchableOpacity
-              key={b.id}
-              style={[styles.chip, selectedBranch === b.name && styles.chipActive]}
-              onPress={() => setSelectedBranch(b.name)}
-            >
-              <Text style={[styles.chipText, selectedBranch === b.name && styles.chipTextActive]}>{b.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        />
       )}
 
       {selectedBranch && branchVenues.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <FilterChipRow
+          options={[{ key: null, label: "Tüm Salonlar" }, ...branchVenues.map((v) => ({ key: v.id, label: v.name }))]}
+          activeKey={venueFilter}
+          onSelect={setVenueFilter}
           style={styles.filterRow}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <TouchableOpacity
-            style={[styles.chip, !venueFilter && styles.chipActive]}
-            onPress={() => setVenueFilter(null)}
-          >
-            <Text style={[styles.chipText, !venueFilter && styles.chipTextActive]}>Tüm Salonlar</Text>
-          </TouchableOpacity>
-          {branchVenues.map((v) => (
-            <TouchableOpacity
-              key={v.id}
-              style={[styles.chip, venueFilter === v.id && styles.chipActive]}
-              onPress={() => setVenueFilter(v.id)}
-            >
-              <Text style={[styles.chipText, venueFilter === v.id && styles.chipTextActive]}>{v.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        />
       )}
 
       <TextInput
@@ -276,15 +245,7 @@ export default function CoachesListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
-  filterRow: { flexDirection: "row", marginBottom: spacing.xs, height: 32, flexGrow: 0, flexShrink: 0 },
-  chip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 4, marginRight: spacing.xs,
-    alignItems: "center", justifyContent: "center", height: 28, flexShrink: 0,
-  },
-  chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
-  chipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
-  chipTextActive: { color: colors.bg },
+  filterRow: { marginBottom: spacing.xs },
   search: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.md,

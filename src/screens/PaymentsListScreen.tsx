@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking, ScrollView } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -10,6 +10,7 @@ import { listBranches, type Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import FilterChipRow from "../components/FilterChipRow";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PaymentsList">;
 
@@ -162,28 +163,12 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
       </View>
 
       {!isBranchCoordinator && branches.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <FilterChipRow
+          options={[{ key: null, label: "Tüm Branşlar" }, ...branches.map((b) => ({ key: b.name, label: b.name }))]}
+          activeKey={selectedBranch}
+          onSelect={setSelectedBranch}
           style={styles.filterRow}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <TouchableOpacity
-            style={[styles.chip, !selectedBranch && styles.chipActive]}
-            onPress={() => setSelectedBranch(null)}
-          >
-            <Text style={[styles.chipText, !selectedBranch && styles.chipTextActive]}>Tüm Branşlar</Text>
-          </TouchableOpacity>
-          {branches.map((b) => (
-            <TouchableOpacity
-              key={b.id}
-              style={[styles.chip, selectedBranch === b.name && styles.chipActive]}
-              onPress={() => setSelectedBranch(b.name)}
-            >
-              <Text style={[styles.chipText, selectedBranch === b.name && styles.chipTextActive]}>{b.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        />
       )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
@@ -281,15 +266,7 @@ const styles = StyleSheet.create({
   overdueCardLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
   overdueCardAmount: { color: colors.ink, fontSize: 28, fontWeight: "800", marginTop: 6 },
   overdueCardCount: { fontSize: 12, fontWeight: "600", marginTop: 4 },
-  filterRow: { flexDirection: "row", marginBottom: spacing.md, height: 32, flexGrow: 0, flexShrink: 0 },
-  chip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 4, marginRight: spacing.xs,
-    alignItems: "center", justifyContent: "center", height: 28, flexShrink: 0,
-  },
-  chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
-  chipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
-  chipTextActive: { color: colors.bg },
+  filterRow: { marginBottom: spacing.md },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {
