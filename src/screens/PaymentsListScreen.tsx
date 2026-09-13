@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listClubPayments, markPaymentPaid, isOverdue, isEarlyPayment, getCurrentMonthRange, PAYMENT_METHOD_DB_LABEL, type Payment } from "../lib/api/payments";
 import { topUpAllActivePlans } from "../lib/api/paymentPlans";
 import { sendNotification } from "../lib/api/notifications";
+import { listBranches, type Branch } from "../lib/api/branches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PaymentsList">;
 
@@ -23,7 +25,9 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
   const { filter } = route.params;
   const meta = FILTER_META[filter];
   const { settings } = useClubSettings();
+  const { selectedBranch, setSelectedBranch, isLocked: isBranchCoordinator } = useBranchSelect();
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +39,10 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
 
   // Ana Sayfa'ya her dönüşte yükleniyor göstergesi/sayfa kaymaması için sadece İLK yüklemede gösterilecek.
   const hasLoadedOnceRef = useRef(false);
+
+  useEffect(() => {
+    listBranches().then(setBranches).catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -136,7 +144,12 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
     }
   };
 
-  const totalAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  // Kulüp tek branşlıysa filtre satırı hiç gösterilmiyor — seçilecek bir
+  // şey yok. Koordinatör için de gizli (branşı zaten kilitli/otomatik).
+  const visiblePayments = selectedBranch
+    ? payments.filter((p) => p.athletes?.groups?.branch === selectedBranch)
+    : payments;
+  const totalAmount = visiblePayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
     <View style={styles.container}>
@@ -144,15 +157,40 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
         <Text style={[styles.overdueCardLabel, { color: meta.color }]}>{meta.label}</Text>
         <Text style={styles.overdueCardAmount}>{totalAmount.toLocaleString("tr-TR")} ₺</Text>
         <Text style={[styles.overdueCardCount, { color: meta.color }]}>
-          {payments.length > 0 ? `${payments.length} kayıt` : "Kayıt yok"}
+          {visiblePayments.length > 0 ? `${visiblePayments.length} kayıt` : "Kayıt yok"}
         </Text>
       </View>
+
+      {!isBranchCoordinator && branches.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterRow}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
+          <TouchableOpacity
+            style={[styles.chip, !selectedBranch && styles.chipActive]}
+            onPress={() => setSelectedBranch(null)}
+          >
+            <Text style={[styles.chipText, !selectedBranch && styles.chipTextActive]}>Tüm Branşlar</Text>
+          </TouchableOpacity>
+          {branches.map((b) => (
+            <TouchableOpacity
+              key={b.id}
+              style={[styles.chip, selectedBranch === b.name && styles.chipActive]}
+              onPress={() => setSelectedBranch(b.name)}
+            >
+              <Text style={[styles.chipText, selectedBranch === b.name && styles.chipTextActive]}>{b.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
 
       <FlatList
-        data={payments}
+        data={visiblePayments}
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
@@ -243,6 +281,15 @@ const styles = StyleSheet.create({
   overdueCardLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
   overdueCardAmount: { color: colors.ink, fontSize: 28, fontWeight: "800", marginTop: 6 },
   overdueCardCount: { fontSize: 12, fontWeight: "600", marginTop: 4 },
+  filterRow: { flexDirection: "row", marginBottom: spacing.md, height: 32, flexGrow: 0, flexShrink: 0 },
+  chip: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
+    paddingHorizontal: spacing.sm, paddingVertical: 4, marginRight: spacing.xs,
+    alignItems: "center", justifyContent: "center", height: 28, flexShrink: 0,
+  },
+  chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
+  chipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
+  chipTextActive: { color: colors.bg },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {
