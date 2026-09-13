@@ -8,6 +8,7 @@ import { createCustomTest, updateCustomTest, getCustomTest, uploadTestVideo } fr
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "PerformanceTestForm">;
 
@@ -21,6 +22,9 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
   const [equipment, setEquipment] = useState("");
   const [instructions, setInstructions] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const initialSnapshotRef = useRef(
+    JSON.stringify({ category: null, name: "", unit: "", equipment: "", instructions: "", videoUrl: "" })
+  );
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!testId);
@@ -38,17 +42,28 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
     getCustomTest(testId)
       .then((t) => {
         if (cancelled || !t) return;
+        const loadedEquipment = t.equipment ?? "";
+        const loadedVideoUrl = t.video_url ?? "";
         setCategory(t.category);
         setName(t.name);
         setUnit(t.unit);
-        setEquipment(t.equipment ?? "");
+        setEquipment(loadedEquipment);
         setInstructions(t.instructions);
-        setVideoUrl(t.video_url ?? "");
+        setVideoUrl(loadedVideoUrl);
+        initialSnapshotRef.current = JSON.stringify({
+          category: t.category, name: t.name, unit: t.unit,
+          equipment: loadedEquipment, instructions: t.instructions, videoUrl: loadedVideoUrl,
+        });
       })
       .catch((e) => { if (!cancelled) setError(e.message ?? "Test yüklenemedi"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [testId, navigation]);
+
+  const hasUnsavedChanges =
+    !loading &&
+    JSON.stringify({ category, name, unit, equipment, instructions, videoUrl }) !== initialSnapshotRef.current;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handlePickVideo = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -96,6 +111,7 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
         await createCustomTest(input);
         Alert.alert("Eklendi", `"${name.trim()}" testi eklendi.`, [{ text: "Tamam" }]);
       }
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

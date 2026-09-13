@@ -8,6 +8,7 @@ import { listCustomExercisesByCategory } from "../lib/api/customFitnessExercises
 import { createIndividualProgram, type IndividualFitnessProgramItemInput } from "../lib/api/individualFitnessPrograms";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "IndividualFitnessProgramBuilder">;
 
@@ -34,6 +35,8 @@ export default function IndividualFitnessProgramBuilderScreen({ route, navigatio
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = items.length > 0 || !!name.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
     if (!category) {
@@ -79,6 +82,7 @@ export default function IndividualFitnessProgramBuilderScreen({ route, navigatio
     setError(null);
     try {
       await createIndividualProgram({ athlete_id: athleteId, name: name.trim(), items });
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

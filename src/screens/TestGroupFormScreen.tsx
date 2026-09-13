@@ -10,6 +10,7 @@ import { createTestGroup } from "../lib/api/performanceTestGroups";
 import type { CustomPerformanceTest } from "../lib/api/customPerformanceTests";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "TestGroupForm">;
 
@@ -25,6 +26,8 @@ export default function TestGroupFormScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = !!name.trim() || athletes.length > 0 || tests.length > 0;
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const addAthletes = (newOnes: Athlete[]) => {
     setAthletes((prev) => {
@@ -64,6 +67,7 @@ export default function TestGroupFormScreen({ navigation }: Props) {
         athleteIds: athletes.map((a) => a.id),
         testIds: tests.map((t) => t.id),
       });
+      markSaved();
       navigation.replace("TestGroupDetail", { groupId: group.id });
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");

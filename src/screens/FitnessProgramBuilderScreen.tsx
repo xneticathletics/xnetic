@@ -11,6 +11,7 @@ import { publishFitnessProgram, type FitnessProgramItemInput } from "../lib/api/
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessProgramBuilder">;
@@ -43,6 +44,8 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
   // kez yayınlayabiliyordu. Senkron bir ref ile anında kilitliyoruz.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = items.length > 0 || !!name.trim();
+  const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
     if (!category) {
@@ -126,6 +129,7 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
         items,
       });
       Alert.alert("Gönderildi", "Program yayınlandı ve gruptaki herkese bildirim gönderildi.", [{ text: "Tamam" }]);
+      markSaved();
       navigation.goBack();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
