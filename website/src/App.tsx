@@ -26,6 +26,26 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
+  // index.html'deki JSON-LD şemasının "offers.price" alanı statik (build-time)
+  // bir değer taşıyordu ve Süper Admin panelden fiyatı değiştirdiğinde
+  // senkron kalmıyordu. Gerçek fiyat yüklenince şemayı canlı değerle
+  // güncelliyoruz — statik değer sadece JS çalışmadan önceki an için bir
+  // başlangıç/fallback olarak kalıyor.
+  useEffect(() => {
+    if (!settings) return;
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script) return;
+    try {
+      const data = JSON.parse(script.textContent || "{}");
+      if (data.offers) {
+        data.offers.price = String(settings.monthlyPriceTry);
+        script.textContent = JSON.stringify(data);
+      }
+    } catch {
+      // JSON-LD parse edilemezse sessizce vazgeç — sayfa fonksiyonelliğini etkilemesin.
+    }
+  }, [settings]);
+
   // Tek sayfalık site (router yok) — istisnalar /kvkk ve /hizmet/<slug>.
   // vercel.json zaten her yolu index.html'e yönlendiriyor, bu yüzden bu
   // basit pathname kontrolü yeterli, ayrı bir router bağımlılığı eklemeye
