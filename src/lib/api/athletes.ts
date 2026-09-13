@@ -122,16 +122,33 @@ export async function getActiveAthleteCount(): Promise<number> {
   return count ?? 0;
 }
 
+// Sadece isme göre (A-Z) sıralamak, farklı branş/grupların sporcularını
+// karıştırıp karmaşık bir liste oluşturuyordu (ör. Performans Ölçümleri'nde
+// "Ölçümler" sporcu seçiminde) — listGroups()'taki aynı düzeltme burada da
+// geçerli: önce branşa, sonra grup adına, sonra sporcu adına göre sırala.
+// Grubu/branşı olmayan sporcular en sona düşer.
+function sortAthletesByGroup(list: Athlete[]): Athlete[] {
+  return [...list].sort((a, b) => {
+    const branchA = a.groups?.branch ?? "";
+    const branchB = b.groups?.branch ?? "";
+    if (!branchA !== !branchB) return branchA ? -1 : 1;
+    const branchCmp = branchA.localeCompare(branchB, "tr");
+    if (branchCmp !== 0) return branchCmp;
+    const groupCmp = (a.groups?.name ?? "").localeCompare(b.groups?.name ?? "", "tr");
+    if (groupCmp !== 0) return groupCmp;
+    return a.full_name.localeCompare(b.full_name, "tr");
+  });
+}
+
 // Grup filtresi olmadan tüm kulüp sporcularını döner — aidat ekleme gibi
 // gruptan bağımsız sporcu seçimi gereken ekranlarda kullanılır.
 export async function listAllAthletes(): Promise<Athlete[]> {
   const { data, error } = await supabase
     .from("athletes")
-    .select(`${ATHLETE_FIELDS}, groups!group_id(name)`)
-    .order("full_name", { ascending: true });
+    .select(`${ATHLETE_FIELDS}, groups!group_id(name, branch)`);
 
   if (error) throw error;
-  return (data as unknown as Athlete[]) ?? [];
+  return sortAthletesByGroup((data as unknown as Athlete[]) ?? []);
 }
 
 export type AthleteSearchResult = { id: string; full_name: string; group_id: string | null; groups?: { name: string } | null };
