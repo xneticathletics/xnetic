@@ -122,9 +122,12 @@ export default function AnnouncementsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
-  header: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: spacing.md },
-  addButton: { backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  header: { marginBottom: spacing.md },
+  addButton: {
+    backgroundColor: colors.yellow, borderRadius: radius.lg, paddingVertical: 20,
+    alignItems: "center", justifyContent: "center",
+  },
+  addButtonText: { color: colors.bg, fontWeight: "800", fontSize: 17 },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {
