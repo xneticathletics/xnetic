@@ -9,7 +9,6 @@ import {
 } from "../lib/api/coaches";
 import { listAthletesInGroups } from "../lib/api/athletes";
 import { listSessionsForGroups, type TrainingSession } from "../lib/api/trainingSessions";
-import { listGroups } from "../lib/api/groups";
 import { listVenues, type Venue } from "../lib/api/venues";
 import { getCoachVenueIds, setCoachVenue } from "../lib/api/venueCoaches";
 import { useAuth } from "../context/AuthContext";
@@ -90,21 +89,22 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
       setError(null);
       (async () => {
         try {
-          const [c, b, g, v, authorizedVenues, allGroups] = await Promise.all([
-            getCoach(coachId), getCoachBranches(coachId), getCoachGroups(coachId), listVenues(), getCoachVenueIds(coachId), listGroups(),
+          const [c, b, g, v, authorizedVenues] = await Promise.all([
+            getCoach(coachId), getCoachBranches(coachId), getCoachGroups(coachId), listVenues(), getCoachVenueIds(coachId),
           ]);
           setCoach(c);
           setBranches(b);
           setGroups(g);
           setVenues(v);
           setAuthorizedVenueIds(authorizedVenues);
-          // Salon Yetkisi listesi, antrenörün uzman olduğu branş(lar)ın
-          // GERÇEKTEN kullandığı salonlarla sınırlı olmalı — CoachesListScreen
-          // filtresindeki aynı mantık (branchVenues).
-          const branchNames = new Set(b.map((x) => x.branch_name));
-          setBranchVenueIds(
-            new Set(allGroups.filter((x) => branchNames.has(x.branch) && x.venue_id).map((x) => x.venue_id as string))
-          );
+          // Salon Yetkisi listesi, antrenörün uzman olduğu branş(lar)a
+          // GERÇEKTEN atanmış salonlarla sınırlı olmalı. Önceden bunu
+          // gruplardan (bir grubun venue_id'sinden) türetiyorduk — ama bir
+          // salon aynı anda birden fazla branşa ait olabilir (venues.
+          // branch_ids), o branşta HENÜZ o salonda hiç grup olmasa bile.
+          // Doğru kaynak salonun kendi branch_ids alanı.
+          const branchIds = new Set(b.map((x) => x.branch_id));
+          setBranchVenueIds(new Set(v.filter((venue) => venue.branch_ids.some((id) => branchIds.has(id))).map((venue) => venue.id)));
 
           const groupIds = g.map((x) => x.id);
           if (groupIds.length > 0) {
