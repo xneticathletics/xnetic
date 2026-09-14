@@ -4,9 +4,21 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth } from "../context/AuthContext";
 import {
-  getAnnouncement, markAnnouncementRead, getAnnouncementReaders,
-  type Announcement, type AnnouncementReader,
+  getAnnouncement, markAnnouncementRead, getAnnouncementReaders, getAnnouncementTargetDetails,
+  type Announcement, type AnnouncementReader, type AnnouncementTarget,
 } from "../lib/api/announcements";
+
+const TARGET_LABEL: Record<AnnouncementTarget, string> = {
+  club: "Tüm Kulüp", group: "Branşlar/Gruplar", athletes: "Sporcular", parents: "Veliler", coaches: "Antrenörler",
+};
+
+// Ekran kaydırılabilir değil (altında sabit yükseklikte Okuyanlar listesi
+// var) — çok uzun bir isim listesi sayfayı taşırmasın diye kısaltılıyor.
+const MAX_NAMES_SHOWN = 12;
+function formatNameList(names: string[]): string {
+  if (names.length <= MAX_NAMES_SHOWN) return names.join(", ");
+  return `${names.slice(0, MAX_NAMES_SHOWN).join(", ")} +${names.length - MAX_NAMES_SHOWN} tane daha`;
+}
 // ProfileStack tarafından mount ediliyor — bkz. AnnouncementsScreen.tsx'teki
 // aynı gerekçe.
 type AnnouncementsRouteParamList = {
@@ -20,6 +32,8 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
 
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [readers, setReaders] = useState<AnnouncementReader[]>([]);
+  const [groupNames, setGroupNames] = useState<string[]>([]);
+  const [recipientNames, setRecipientNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +75,17 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
           setAnnouncement(found);
           setReaders(readerList);
         }
+        // Kime gönderildiğinin isim çözümü, duyuru elimize geçtikten SONRA
+        // yapılabiliyor (target_ids/target_user_ids ona bağlı) — bu yüzden
+        // yukarıdaki Promise.all'a dahil edilmedi, ayrıca ve sadece
+        // admin/antrenöre (canSeeReaders) gösteriliyor.
+        if (canSeeReaders) {
+          const details = await getAnnouncementTargetDetails(found);
+          if (!cancelled) {
+            setGroupNames(details.groupNames);
+            setRecipientNames(details.recipientNames);
+          }
+        }
       } catch (e: any) {
         if (!cancelled) setError(e.message ?? "Duyuru yüklenemedi");
       } finally {
@@ -93,6 +118,23 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
       <Text style={styles.body}>{announcement.body}</Text>
 
       {!!announcement.attachment_url && <AnnouncementAttachment url={announcement.attachment_url} />}
+
+      {canSeeReaders && (
+        <View style={styles.targetSection}>
+          <Text style={styles.readersTitle}>Kime Gönderildi</Text>
+          <Text style={styles.targetLine}>
+            {announcement.target_types.map((t) => TARGET_LABEL[t] ?? t).join(", ")}
+          </Text>
+          {groupNames.length > 0 && (
+            <Text style={styles.targetLine}>Gruplar: {formatNameList(groupNames)}</Text>
+          )}
+          {recipientNames.length > 0 && (
+            <Text style={styles.targetLine}>
+              Seçilen kişiler ({recipientNames.length}): {formatNameList(recipientNames)}
+            </Text>
+          )}
+        </View>
+      )}
 
       {canSeeReaders && (
         <View style={styles.readersSection}>
@@ -153,7 +195,9 @@ const styles = StyleSheet.create({
     alignItems: "center", marginTop: spacing.md,
   },
   attachmentButtonText: { color: colors.teal, fontWeight: "700", fontSize: 13 },
-  readersSection: { marginTop: spacing.xl, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.md, flex: 1 },
+  targetSection: { marginTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.md, gap: 4 },
+  targetLine: { color: colors.ink, fontSize: 12, lineHeight: 17 },
+  readersSection: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.md, flex: 1 },
   readersTitle: { color: colors.muted, fontSize: 12, fontWeight: "700", marginBottom: spacing.sm, textTransform: "uppercase" },
   empty: { color: colors.muted, fontSize: 13 },
   readerRow: {

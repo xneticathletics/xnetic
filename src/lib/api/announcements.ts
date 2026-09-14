@@ -301,3 +301,31 @@ export async function getAnnouncementReaders(announcementId: string): Promise<An
     read_at: r.read_at,
   }));
 }
+
+export type AnnouncementTargetDetails = {
+  groupNames: string[];
+  // "group" ve/veya "coaches" hedefinde admin isim isim daraltmışsa (bkz.
+  // AnnouncementFormScreen) çözülen gerçek alıcı isimleri — duyuruyu
+  // oluşturan kişi "bunu kime gönderdim" diye görebilsin diye.
+  recipientNames: string[];
+};
+
+// Duyuru detayında "Kime Gönderildi" bölümü için — kategori etiketlerinin
+// (target_types) ötesinde, gerçekten hangi gruplara/kişilere gittiğini
+// isimleriyle çözer.
+export async function getAnnouncementTargetDetails(announcement: Announcement): Promise<AnnouncementTargetDetails> {
+  const [groupsResult, usersResult] = await Promise.all([
+    announcement.target_ids?.length
+      ? supabase.from("groups").select("name").in("id", announcement.target_ids)
+      : Promise.resolve({ data: [] as { name: string }[], error: null }),
+    announcement.target_user_ids?.length
+      ? supabase.from("users").select("name").in("id", announcement.target_user_ids)
+      : Promise.resolve({ data: [] as { name: string }[], error: null }),
+  ]);
+  if (groupsResult.error) throw groupsResult.error;
+  if (usersResult.error) throw usersResult.error;
+  return {
+    groupNames: (groupsResult.data ?? []).map((g) => g.name).sort((a, b) => a.localeCompare(b, "tr")),
+    recipientNames: (usersResult.data ?? []).map((u) => u.name).sort((a, b) => a.localeCompare(b, "tr")),
+  };
+}
