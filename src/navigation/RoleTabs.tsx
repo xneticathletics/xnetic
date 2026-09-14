@@ -102,14 +102,20 @@ function CustomTabBar({
   // ayrıca hesaplanıyor: gerçekten SocialFeed/Shop(Manage)/Events(Manage)
   // 'daysak o kısayolun ikonu renkleniyor, Ana Menü'nünki de o sırada SÖNÜK
   // kalıyor (aksi halde ikisi birden aktif görünüp kafa karıştırırdı).
+  // "Ana Menü" gerçekten ODAKLI değilse (ör. Mesajlar/Profil'e geçilmiş)
+  // activeHomeScreen'e hiç bakmıyoruz — yoksa Ana Menü'nün stack'i son
+  // kaldığı ekranı (ör. EventsManage) hafızada tuttuğu için, o ekrandan
+  // çıkıp sağdaki bir sekmeye geçtiğinde bile Etkinlik/Sosyal/Mağaza ikonu
+  // yanlışlıkla renkli kalmaya devam ediyordu.
+  const isHomeTabFocused = state.routes[state.index]?.name === "Ana Menü";
   const homeRoute = state.routes.find((r) => r.name === "Ana Menü");
   const homeNestedState = homeRoute?.state as { index?: number; routes: { name: string }[] } | undefined;
   const activeHomeScreen = homeNestedState
     ? homeNestedState.routes[homeNestedState.index ?? homeNestedState.routes.length - 1]?.name
     : undefined;
-  const isOnSocialFeed = activeHomeScreen === "SocialFeed";
-  const isOnShop = activeHomeScreen === "Shop" || activeHomeScreen === "ShopManage";
-  const isOnEvents = activeHomeScreen === "EventsList" || activeHomeScreen === "EventsManage";
+  const isOnSocialFeed = isHomeTabFocused && activeHomeScreen === "SocialFeed";
+  const isOnShop = isHomeTabFocused && (activeHomeScreen === "Shop" || activeHomeScreen === "ShopManage");
+  const isOnEvents = isHomeTabFocused && (activeHomeScreen === "EventsList" || activeHomeScreen === "EventsManage");
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key];
@@ -235,8 +241,12 @@ export default function RoleTabs({ role }: { role: UserRole }) {
             Sistem Ayarları/Profil. Sosyal/Mağaza/Etkinlik kendi ekranı
             değil — dokununca Ana Menü'nün stack'indeki gerçek SocialFeed/
             Shop/Events ekranına yönlendiren birer kısayol (Profil
-            sekmesindeki aynı desen), animation:"none" ile de (bkz.
-            HomeStack.tsx) sekme geçişi gibi anında açılıyor. */}
+            sekmesindeki aynı desen). Not: bu üçünde animation:"none"
+            denenmişti ama Stok/Siparişler/Ürün Ekle gibi üstüne PUSH edilen
+            ekranlardan geri dönüşü bozduğu görüldü (native-stack v7 +
+            react-native-screens + Yeni Mimari'de bilinen bir etkileşim) —
+            bu yüzden HomeStack.tsx'te kaldırıldı, normal geçiş animasyonu
+            kullanılıyor. */}
         {showShopTabs && (
           <>
             <Tab.Screen
