@@ -99,10 +99,23 @@ async function resolveAnnouncementRecipients(announcement: Announcement): Promis
       // bir kulübün "Tüm Kulüp" duyurusunu ALMAZ.
       const { data } = await supabase.from("users").select("id").eq("is_active", true).neq("role", "super_admin");
       (data ?? []).forEach((u) => recipients.add(u.id));
-    } else if (t === "parents" || t === "coaches" || t === "athletes") {
-      const role = t === "parents" ? "parent" : t === "coaches" ? "coach" : "athlete";
+    } else if (t === "parents" || t === "athletes") {
+      // Artık yeni duyurularda üretilmiyor (bkz. AnnouncementFormScreen —
+      // "Veliler"/"Sporcular" kulüp geneli seçenek olmaktan çıktı), ama eski
+      // duyurular hâlâ bu target_type'ları taşıyabilir.
+      const role = t === "parents" ? "parent" : "athlete";
       const { data } = await supabase.from("users").select("id").eq("role", role).eq("is_active", true);
       (data ?? []).forEach((u) => recipients.add(u.id));
+    } else if (t === "coaches") {
+      // target_user_ids doluysa admin branş seçip antrenörleri isim isim
+      // işaretlemiş demektir (bkz. AnnouncementFormScreen) — sadece onlara
+      // gidiyor. NULL ise eski duyurular: TÜM antrenörlere gider.
+      if (announcement.target_user_ids?.length) {
+        announcement.target_user_ids.forEach((id) => recipients.add(id));
+      } else {
+        const { data } = await supabase.from("users").select("id").eq("role", "coach").eq("is_active", true);
+        (data ?? []).forEach((u) => recipients.add(u.id));
+      }
     } else if (t === "group" && announcement.target_ids?.length) {
       // target_user_ids doluysa admin, grup(lar) için antrenör/sporcu/veli
       // isimlerini TEK TEK (ya da rol bazında "Tümü") daraltmış demektir —
@@ -224,8 +237,15 @@ export function filterAnnouncementsForViewer(
     a.target_types.some((t) => {
       if (t === "club") return true;
       if (t === "parents") return role === "parent";
-      if (t === "coaches") return role === "coach";
       if (t === "athletes") return role === "athlete";
+      if (t === "coaches") {
+        if (role !== "coach") return false;
+        // Admin branş seçip antrenörleri isim isim işaretlemiş olabilir
+        // (bkz. AnnouncementFormScreen) — öyleyse sadece o listedeysem
+        // görürüm. NULL ise eski duyurular: tüm antrenörler görür.
+        if (a.target_user_ids?.length) return !!myUserId && a.target_user_ids.includes(myUserId);
+        return true;
+      }
       if (t === "group") {
         if (!(a.target_ids ?? []).some((id) => myGroupIds.includes(id))) return false;
         // Grup eşleşti — ama admin isim isim daraltmış olabilir; öyleyse

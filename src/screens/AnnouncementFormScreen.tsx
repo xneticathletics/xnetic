@@ -11,6 +11,7 @@ import type { Group } from "../lib/api/groups";
 import { listGroups } from "../lib/api/groups";
 import type { Branch } from "../lib/api/branches";
 import { listBranches } from "../lib/api/branches";
+import { listCoaches, getAllCoachBranches, type Coach, type CoachBranchInfo } from "../lib/api/coaches";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { ProfileStackParamList } from "../navigation/ProfileStack";
@@ -23,7 +24,8 @@ type Props = NativeStackScreenProps<ProfileStackParamList, "AnnouncementForm">;
 // isteği. "Branşlar" seçilince aşağıda branş->grup seçimi açılıyor (bkz.
 // render); "Veliler"/"Sporcular" artık ayrı, kulüp geneli birer seçenek
 // değil — o daralma artık Branşlar akışının içinde, grup bazında (+ Veli
-// işaretiyle) yapılıyor.
+// işaretiyle) yapılıyor. "Antrenörler" de artık aynı desende — branş
+// seçilince o branştaki antrenörlerin isim listesi açılıyor.
 const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
   { value: "club", label: "Tüm Kulüp" },
   { value: "coaches", label: "Antrenörler" },
@@ -52,6 +54,10 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
   // groupId -> seçim durumu. includeParents: bu grubun velilerine de
   // gönderilsin mi (grup kutusunun hemen yanındaki ikinci işaret).
   const [selectedGroups, setSelectedGroups] = useState<Map<string, GroupSelection>>(new Map());
+  const [allCoaches, setAllCoaches] = useState<Coach[]>([]);
+  const [coachBranches, setCoachBranches] = useState<Record<string, CoachBranchInfo[]>>({});
+  const [coachBranchFilter, setCoachBranchFilter] = useState<string | null>(null);
+  const [selectedCoachIds, setSelectedCoachIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
@@ -62,17 +68,22 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
   // targetTypes dahil değil — koordinatör için mount'ta otomatik ["group"]
   // atanıyor, o yüzden dahil edilirse hiç dokunmadan "değişti" sayılırdı.
   const hasUnsavedChanges =
-    !!title.trim() || !!body.trim() || !!attachmentName || selectedGroups.size > 0;
+    !!title.trim() || !!body.trim() || !!attachmentName || selectedGroups.size > 0 || selectedCoachIds.size > 0;
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
-    Promise.all([listBranches(), listGroups()])
-      .then(([b, g]) => {
+    Promise.all([listBranches(), listGroups(), listCoaches(), getAllCoachBranches()])
+      .then(([b, g, c, cb]) => {
         setBranches(b);
         setAllGroups(g);
+        setAllCoaches(c);
+        setCoachBranches(cb);
         // Tek branşlı kulüplerde ayrıca bir branş seçtirmeye gerek yok —
-        // grupları hemen göster.
-        if (b.length === 1) setBranchFilter(b[0].name);
+        // grupları/antrenörleri hemen göster.
+        if (b.length === 1) {
+          setBranchFilter(b[0].name);
+          setCoachBranchFilter(b[0].name);
+        }
       })
       .catch(() => {});
   }, []);
@@ -104,6 +115,15 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       const existing = next.get(group.id);
       if (existing) next.set(group.id, { ...existing, includeParents: !existing.includeParents });
       else next.set(group.id, { groupId: group.id, groupName: group.name, includeParents: true });
+      return next;
+    });
+  };
+
+  const toggleCoach = (coachId: string) => {
+    setSelectedCoachIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(coachId)) next.delete(coachId);
+      else next.add(coachId);
       return next;
     });
   };
@@ -141,6 +161,10 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       Alert.alert("Eksik bilgi", "En az bir grup seçmelisin.", [{ text: "Tamam" }]);
       return;
     }
+    if (targetTypes.includes("coaches") && selectedCoachIds.size === 0) {
+      Alert.alert("Eksik bilgi", "En az bir antrenör seçmelisin.", [{ text: "Tamam" }]);
+      return;
+    }
 
     savingRef.current = true;
     setSaving(true);
@@ -155,23 +179,25 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       }
 
       let targetIds: string[] | null = null;
-      let targetUserIds: string[] | null = null;
+      const unionUserIds = new Set<string>();
       if (targetTypes.includes("group")) {
         const entries = Array.from(selectedGroups.values());
         targetIds = entries.map((e) => e.groupId);
         const recipientsByGroup = await Promise.all(entries.map((e) => getGroupAnnouncementRecipients(e.groupId)));
-        const ids = new Set<string>();
         recipientsByGroup.forEach((r, i) => {
-          r.athletes.forEach((id) => ids.add(id));
-          if (entries[i].includeParents) r.parents.forEach((id) => ids.add(id));
+          r.athletes.forEach((id) => unionUserIds.add(id));
+          if (entries[i].includeParents) r.parents.forEach((id) => unionUserIds.add(id));
         });
-        targetUserIds = Array.from(ids);
-        if (targetUserIds.length === 0) {
-          Alert.alert("Eksik bilgi", "Seçtiğin grup(lar)da bildirim alabilecek hiç hesap yok (sporcu/veli hesabı bağlı değil).", [{ text: "Tamam" }]);
-          savingRef.current = false;
-          setSaving(false);
-          return;
-        }
+      }
+      if (targetTypes.includes("coaches")) {
+        selectedCoachIds.forEach((id) => unionUserIds.add(id));
+      }
+      const targetUserIds = targetTypes.includes("group") || targetTypes.includes("coaches") ? Array.from(unionUserIds) : null;
+      if (targetUserIds !== null && targetUserIds.length === 0) {
+        Alert.alert("Eksik bilgi", "Seçtiğin grup(lar)da/antrenör(ler)de bildirim alabilecek hiç hesap yok.", [{ text: "Tamam" }]);
+        savingRef.current = false;
+        setSaving(false);
+        return;
       }
 
       await createAnnouncement({
@@ -271,6 +297,55 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
       </Field>
+
+      {targetTypes.includes("coaches") && (
+        <Field label="Antrenörler — Branş Seç *">
+          {branches.length > 1 && (
+            <View style={styles.branchFilterRow}>
+              {branches.map((b) => (
+                <TouchableOpacity
+                  key={b.id}
+                  style={[styles.branchChip, coachBranchFilter === b.name && styles.branchChipActive]}
+                  onPress={() => setCoachBranchFilter(b.name)}
+                >
+                  <Text style={[styles.branchChipText, coachBranchFilter === b.name && styles.branchChipTextActive]}>{b.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {!coachBranchFilter ? (
+            <Text style={styles.sectionHint}>Önce bir branş seç.</Text>
+          ) : (
+            (() => {
+              const coachesInBranch = allCoaches.filter((c) =>
+                (coachBranches[c.id] ?? []).some((b) => b.branch_name === coachBranchFilter)
+              );
+              if (coachesInBranch.length === 0) {
+                return <Text style={styles.sectionHint}>Bu branşta antrenör yok.</Text>;
+              }
+              return (
+                <View style={styles.nameChipRow}>
+                  {coachesInBranch.map((c) => {
+                    const checked = selectedCoachIds.has(c.id);
+                    return (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[styles.nameChip, checked && styles.nameChipActive]}
+                        onPress={() => toggleCoach(c.id)}
+                      >
+                        <Text style={[styles.nameChipText, checked && styles.nameChipTextActive]} numberOfLines={1}>
+                          {checked ? "✓ " : ""}{c.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              );
+            })()
+          )}
+        </Field>
+      )}
 
       {targetTypes.includes("group") && (
         <Field label="Branşlar / Gruplar *">
@@ -388,6 +463,14 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   checkmark: { color: colors.bg, fontWeight: "800", fontSize: 12 },
+  nameChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  nameChip: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
+    paddingHorizontal: spacing.sm, paddingVertical: 6, maxWidth: 220,
+  },
+  nameChipActive: { backgroundColor: colors.tealSoft, borderColor: colors.teal },
+  nameChipText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+  nameChipTextActive: { color: colors.teal },
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
