@@ -106,6 +106,7 @@ export default function AllAthletesScreen({ navigation }: Props) {
           activeKey={branchFilter}
           onSelect={setBranchFilter}
           style={styles.filterRow}
+          showScrollHint
         />
       )}
 
@@ -128,6 +129,7 @@ export default function AllAthletesScreen({ navigation }: Props) {
         onSelect={(key) => setTypeFilter(key as "all" | "spor_okulu" | "musabik")}
         activeColor={colors.teal}
         style={styles.filterRow}
+        showScrollHint
       />
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}

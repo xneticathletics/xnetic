@@ -168,6 +168,7 @@ export default function PaymentsListScreen({ route, navigation }: Props) {
           activeKey={selectedBranch}
           onSelect={setSelectedBranch}
           style={styles.filterRow}
+          showScrollHint
         />
       )}
 

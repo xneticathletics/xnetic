@@ -129,6 +129,7 @@ export default function CoachesListScreen({ navigation }: Props) {
           activeKey={selectedBranch}
           onSelect={setSelectedBranch}
           style={styles.filterRow}
+          showScrollHint
         />
       )}
 
@@ -138,6 +139,7 @@ export default function CoachesListScreen({ navigation }: Props) {
           activeKey={venueFilter}
           onSelect={setVenueFilter}
           style={styles.filterRow}
+          showScrollHint
         />
       )}
 

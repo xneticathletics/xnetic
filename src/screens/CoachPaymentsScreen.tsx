@@ -166,6 +166,7 @@ export default function CoachPaymentsScreen({ navigation }: Props) {
         onSelect={(key) => setStatusFilter(key as StatusFilter)}
         activeColor={colors.violet}
         style={styles.filterRow}
+        showScrollHint
       />
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}

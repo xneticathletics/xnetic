@@ -178,6 +178,7 @@ export default function PaymentGroupsScreen({ navigation }: Props) {
           activeKey={branchFilter}
           onSelect={setBranchFilter}
           style={styles.filterRow}
+          showScrollHint
         />
       )}
 
