@@ -74,6 +74,17 @@ export async function updateCustomExercise(id: string, input: CustomFitnessExerc
   return data;
 }
 
+// Dikkat: global (club_id null) hareketleri SADECE süper admin silebilir —
+// club_admin/branş koordinatörü onları düzenleyebilir ama silemez (bkz.
+// fitness_exercises_delete RLS politikası, migration
+// 20260911110000_tighten_fitness_exercises_write_to_admin_tier.sql'deki
+// yorum). Çağıran ekran "Sil" düğmesini buna göre canEdit'ten AYRI bir
+// canDelete koşuluyla göstermeli.
+export async function deleteCustomExercise(id: string) {
+  const { error } = await supabase.from("fitness_exercises").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // "fitness-exercise-videos" bucket'ında da bu değerle senkron (bkz.
 // supabase/migrations/..._fitness_exercises_global_library.sql) — 1GB gibi
 // aşırı büyük dosyalar yüklenemesin diye standart bir üst sınır: kısa bir

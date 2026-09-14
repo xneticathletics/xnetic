@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getFitnessCategory } from "../lib/fitnessExercises";
-import { listCustomExercisesByCategory, type CustomFitnessExercise } from "../lib/api/customFitnessExercises";
+import { listCustomExercisesByCategory, deleteCustomExercise, type CustomFitnessExercise } from "../lib/api/customFitnessExercises";
 import { listHiddenExerciseIds } from "../lib/api/fitnessExerciseVisibility";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
@@ -12,7 +12,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "FitnessCategory">;
 
-type Row = { key: string; name: string; exerciseId?: string; sourceLabel?: string; canEdit?: boolean };
+type Row = { key: string; name: string; exerciseId?: string; sourceLabel?: string; canEdit?: boolean; canDelete?: boolean };
 
 export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
@@ -26,6 +26,7 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
 
   useEffect(() => {
@@ -46,6 +47,32 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
       setRefreshing(false);
     }
   }, [category]);
+
+  const handleDelete = (row: Row) => {
+    if (!row.exerciseId) return;
+    Alert.alert(
+      "Hareketi sil",
+      `"${row.name}" hareketini kalıcı olarak silmek istediğine emin misin?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            setDeletingId(row.exerciseId!);
+            try {
+              await deleteCustomExercise(row.exerciseId!);
+              load();
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Silinemedi", [{ text: "Tamam" }]);
+            } finally {
+              setDeletingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -83,6 +110,13 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
         canEdit:
           e.club_id === null
             ? role === "club_admin" || isCoordinator || role === "super_admin"
+            : e.club_id === clubId && (role === "club_admin" || isCoordinator),
+        // Silme, düzenlemeden DAHA DAR: global hareketleri SADECE süper
+        // admin silebilir (club_admin/koordinatör düzenleyebilir ama
+        // silemez) — bkz. fitness_exercises_delete RLS politikası.
+        canDelete:
+          e.club_id === null
+            ? role === "super_admin"
             : e.club_id === clubId && (role === "club_admin" || isCoordinator),
       })),
   ];
@@ -130,6 +164,15 @@ export default function FitnessCategoryScreen({ route, navigation }: Props) {
                   <Text style={styles.editButtonText}>✏️ Düzenle</Text>
                 </TouchableOpacity>
               )}
+              {item.canDelete && (
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item)} disabled={deletingId === item.exerciseId}>
+                  {deletingId === item.exerciseId ? (
+                    <ActivityIndicator color={colors.coral} size="small" />
+                  ) : (
+                    <Text style={styles.deleteButtonText}>🗑 Sil</Text>
+                  )}
+                </TouchableOpacity>
+              )}
               <Text style={styles.rowArrow}>›</Text>
             </View>
           </TouchableOpacity>
@@ -161,5 +204,7 @@ const styles = StyleSheet.create({
   rowActions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   editButton: { paddingHorizontal: spacing.sm, paddingVertical: 4 },
   editButtonText: { color: colors.violet, fontSize: 12, fontWeight: "700" },
+  deleteButton: { paddingHorizontal: spacing.sm, paddingVertical: 4 },
+  deleteButtonText: { color: colors.coral, fontSize: 12, fontWeight: "700" },
   rowArrow: { color: colors.muted, fontSize: 18, fontWeight: "700" },
 });
