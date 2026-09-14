@@ -141,6 +141,7 @@ export type MatchRosterEntry = {
   athlete_id: string;
   full_name: string;
   photo_url: string | null;
+  gender: "erkek" | "kadin" | null;
   selected: boolean;
 };
 
@@ -153,7 +154,7 @@ export async function getMatchRoster(matchId: string, groupId: string): Promise<
   const [primaryResult, extraLinksResult, rosterResult] = await Promise.all([
     supabase
       .from("athletes")
-      .select("id, full_name, photo_url")
+      .select("id, full_name, photo_url, gender")
       .eq("group_id", groupId)
       .eq("status", "active")
       .eq("athlete_type", "musabik"),
@@ -164,14 +165,14 @@ export async function getMatchRoster(matchId: string, groupId: string): Promise<
   if (extraLinksResult.error) throw extraLinksResult.error;
   if (rosterResult.error) throw rosterResult.error;
 
-  const byId = new Map<string, { id: string; full_name: string; photo_url: string | null }>();
+  const byId = new Map<string, { id: string; full_name: string; photo_url: string | null; gender: "erkek" | "kadin" | null }>();
   (primaryResult.data ?? []).forEach((a) => byId.set(a.id, a));
 
   const extraAthleteIds = (extraLinksResult.data ?? []).map((r) => r.athlete_id);
   if (extraAthleteIds.length > 0) {
     const { data: extraAthletes, error: extraAthletesError } = await supabase
       .from("athletes")
-      .select("id, full_name, photo_url")
+      .select("id, full_name, photo_url, gender")
       .in("id", extraAthleteIds)
       .eq("status", "active")
       .eq("athlete_type", "musabik");
@@ -186,6 +187,7 @@ export async function getMatchRoster(matchId: string, groupId: string): Promise<
       athlete_id: a.id,
       full_name: a.full_name,
       photo_url: a.photo_url,
+      gender: a.gender,
       selected: selectedIds.has(a.id),
     }));
 }

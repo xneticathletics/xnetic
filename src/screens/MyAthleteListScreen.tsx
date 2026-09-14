@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getMyAthletes, type MyAthlete } from "../lib/api/myAthletes";
 import { useHomeButton } from "../hooks/useHomeButton";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "MyAthleteList">;
 
@@ -44,13 +45,7 @@ export default function MyAthleteListScreen({ navigation }: Props) {
             style={styles.card}
             onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
           >
-            {item.photo_url ? (
-              <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-              </View>
-            )}
+            <Avatar photoUrl={item.photo_url} name={item.full_name} gender={item.gender} kind="athlete" size={44} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cardName}>{item.full_name}</Text>
               {!!item.groups?.name && <Text style={styles.cardSub}>{item.groups.name}</Text>}
@@ -72,12 +67,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
-  avatar: {
-    width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 44, height: 44, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700" },
   cardName: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   cardSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   chevron: { color: colors.muted, fontSize: 18 },

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Linking, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -9,11 +9,13 @@ import {
 } from "../lib/api/coaches";
 import { listAthletesInGroups } from "../lib/api/athletes";
 import { listSessionsForGroups, type TrainingSession } from "../lib/api/trainingSessions";
+import { listGroups } from "../lib/api/groups";
 import { listVenues, type Venue } from "../lib/api/venues";
 import { getCoachVenueIds, setCoachVenue } from "../lib/api/venueCoaches";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachDetail">;
 
@@ -70,6 +72,7 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
   const [athleteCounts, setAthleteCounts] = useState<Record<string, number>>({});
   const [lastSession, setLastSession] = useState<TrainingSession | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [branchVenueIds, setBranchVenueIds] = useState<Set<string>>(new Set());
   const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
   const [venueTogglingId, setVenueTogglingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("branch");
@@ -87,14 +90,21 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
       setError(null);
       (async () => {
         try {
-          const [c, b, g, v, authorizedVenues] = await Promise.all([
-            getCoach(coachId), getCoachBranches(coachId), getCoachGroups(coachId), listVenues(), getCoachVenueIds(coachId),
+          const [c, b, g, v, authorizedVenues, allGroups] = await Promise.all([
+            getCoach(coachId), getCoachBranches(coachId), getCoachGroups(coachId), listVenues(), getCoachVenueIds(coachId), listGroups(),
           ]);
           setCoach(c);
           setBranches(b);
           setGroups(g);
           setVenues(v);
           setAuthorizedVenueIds(authorizedVenues);
+          // Salon Yetkisi listesi, antrenörün uzman olduğu branş(lar)ın
+          // GERÇEKTEN kullandığı salonlarla sınırlı olmalı — CoachesListScreen
+          // filtresindeki aynı mantık (branchVenues).
+          const branchNames = new Set(b.map((x) => x.branch_name));
+          setBranchVenueIds(
+            new Set(allGroups.filter((x) => branchNames.has(x.branch) && x.venue_id).map((x) => x.venue_id as string))
+          );
 
           const groupIds = g.map((x) => x.id);
           if (groupIds.length > 0) {
@@ -191,13 +201,7 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
       <View style={styles.headerCard}>
         <View style={styles.avatarWrap}>
-          {coach.photo_url ? (
-            <Image source={{ uri: coach.photo_url }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{coach.name.slice(0, 1).toUpperCase()}</Text>
-            </View>
-          )}
+          <Avatar photoUrl={coach.photo_url} name={coach.name} gender={coach.gender} kind="coach" size={96} />
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{coach.name}</Text>
@@ -343,19 +347,22 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
         )}
       </View>
 
-      {venues.length > 0 && (
+      {(() => {
+        const branchVenues = venues.filter((v) => branchVenueIds.has(v.id));
+        if (branchVenues.length === 0) return null;
+        return (
         <>
           <SectionHeader title="Salon Yetkisi" />
           <View style={styles.card}>
             <Text style={styles.venueHint}>
               İşaretli salon(lar) için bu antrenör, kendi branşındaki tüm gruplar adına antrenman planı oluşturabilir.
             </Text>
-            {venues.map((v, i) => {
+            {branchVenues.map((v, i) => {
               const on = authorizedVenueIds.includes(v.id);
               return (
                 <TouchableOpacity
                   key={v.id}
-                  style={[styles.venueRow, i === venues.length - 1 && { borderBottomWidth: 0 }]}
+                  style={[styles.venueRow, i === branchVenues.length - 1 && { borderBottomWidth: 0 }]}
                   onPress={() => canManageVenueAuthority && handleToggleVenue(v.id, on)}
                   disabled={!canManageVenueAuthority || venueTogglingId === v.id}
                   accessibilityRole="checkbox"
@@ -374,7 +381,8 @@ export default function CoachDetailScreen({ route, navigation }: Props) {
             })}
           </View>
         </>
-      )}
+        );
+      })()}
 
       {lastSession && (
         <>
@@ -425,12 +433,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md,
   },
   avatarWrap: { position: "relative", marginRight: spacing.md },
-  avatar: {
-    width: 96, height: 96, borderRadius: radius.full, backgroundColor: colors.yellowSoft,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 96, height: 96, borderRadius: radius.full },
-  avatarText: { color: colors.yellow, fontSize: 32, fontWeight: "800" },
   headerInfo: { flex: 1, justifyContent: "center" },
   name: { color: colors.ink, fontSize: 18, fontWeight: "700" },
   roleLabel: { color: colors.muted, fontSize: 13, marginTop: 2 },

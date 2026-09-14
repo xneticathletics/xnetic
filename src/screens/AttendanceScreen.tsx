@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -9,6 +9,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Attendance">;
 
@@ -162,13 +163,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
           return (
           <View style={styles.athleteRow}>
             <View style={styles.athleteHeaderRow}>
-              {item.photo_url ? (
-                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={item.photo_url} name={item.full_name} gender={item.gender} kind="athlete" size={56} />
 
               <View style={styles.athleteInfo}>
                 <Text style={styles.athleteName} numberOfLines={2}>{item.full_name}</Text>
@@ -261,12 +256,6 @@ const styles = StyleSheet.create({
   },
   athleteRowFiller: { opacity: 0 },
   athleteHeaderRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  avatar: {
-    width: 56, height: 56, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 56, height: 56, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700", fontSize: 20 },
   athleteInfo: { flex: 1, gap: 2 },
   athleteName: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   athleteBirth: { color: colors.muted, fontSize: 11 },

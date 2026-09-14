@@ -5,6 +5,7 @@ import { assertRowAffected } from "./assertAffected";
 
 export type AthleteStatus = "active" | "passive";
 export type AthleteType = "spor_okulu" | "musabik";
+export type Gender = "erkek" | "kadin";
 
 export type Athlete = {
   id: string;
@@ -19,6 +20,7 @@ export type Athlete = {
   jersey_number: string | null;
   status: AthleteStatus;
   athlete_type: AthleteType;
+  gender: Gender | null;
   photo_url: string | null;
   parent_name: string | null;
   parent_phone: string | null;
@@ -43,13 +45,14 @@ export type AthleteInput = {
   jersey_number: string | null;
   status: AthleteStatus;
   athlete_type: AthleteType;
+  gender: Gender | null;
   photo_url: string | null;
   parent_name: string | null;
   parent_phone: string | null;
 };
 
 const ATHLETE_FIELDS =
-  "id, full_name, birth_date, group_id, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, photo_url, parent_name, parent_phone, parent_user_id, registered_at";
+  "id, full_name, birth_date, group_id, height_cm, weight_kg, license_no, school, jersey_size, jersey_number, status, athlete_type, gender, photo_url, parent_name, parent_phone, parent_user_id, registered_at";
 
 // Not: national_id (T.C. Kimlik No) ve sağlık verileri (kan grubu, alerji,
 // ilaç, sağlık notu) bilerek yok — sağlık verileri daha önce ayrı bir

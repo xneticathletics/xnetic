@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -10,6 +10,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
+import Avatar from "../components/Avatar";
 import FilterChipRow from "../components/FilterChipRow";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AllAthletes">;
@@ -151,13 +152,7 @@ export default function AllAthletesScreen({ navigation }: Props) {
               style={styles.row}
               onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
             >
-              {item.photo_url ? (
-                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={item.photo_url} name={item.full_name} gender={item.gender} kind="athlete" size={40} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
                 <Text style={styles.rowSub} numberOfLines={1}>{item.groups?.name ?? "Grup atanmadı"}</Text>
@@ -187,12 +182,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm, padding: spacing.sm,
   },
   rowFiller: { opacity: 0 },
-  avatar: {
-    width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 40, height: 40, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700" },
   rowName: { color: colors.ink, fontSize: 13, fontWeight: "600" },
   rowSub: { color: colors.muted, fontSize: 11, marginTop: 1 },
   musabikTag: { color: colors.yellow, fontSize: 10, fontWeight: "700", marginTop: 2 },

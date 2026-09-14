@@ -1,16 +1,17 @@
 import React, { useCallback, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listGroups, type Group } from "../lib/api/groups";
 import {
-  getCoach, getCoachAssignments, setCoachAssignment, deactivateCoach,
+  getCoach, getCoachAssignments, setCoachAssignment,
   getCoachBranches, getGroupStaffingMap, type Coach, type CoachBranchInfo, type GroupAssignment, type GroupStaffing,
 } from "../lib/api/coaches";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useClubSettings } from "../context/ClubSettingsContext";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachGroups">;
 
@@ -20,7 +21,7 @@ const OPTIONS: { value: GroupAssignment; label: string }[] = [
   { value: "assistant", label: "Yardımcı" },
 ];
 
-export default function CoachGroupsScreen({ route, navigation }: Props) {
+export default function CoachGroupsScreen({ route }: Props) {
   const { coachId, coachName } = route.params;
   const { selectedBranch } = useBranchSelect();
   const { settings } = useClubSettings();
@@ -77,28 +78,6 @@ export default function CoachGroupsScreen({ route, navigation }: Props) {
     }
   };
 
-  const handleRemoveCoach = () => {
-    Alert.alert(
-      "Antrenörü kulüpten çıkar",
-      `${coachName} kulüpten çıkarılacak ve tüm grup atamaları kaldırılacak. Hesabı tamamen silmiyoruz — istersen ileride tekrar aktifleştirebilirsin. Devam etmek istiyor musun?`,
-      [
-        { text: "Vazgeç", style: "cancel" },
-        {
-          text: "Kulüpten Çıkar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deactivateCoach(coachId);
-              navigation.goBack();
-            } catch (e: any) {
-              Alert.alert("Hata", e.message ?? "İşlem başarısız", [{ text: "Tamam" }]);
-            }
-          },
-        },
-      ]
-    );
-  };
-
   // Antrenörün uzman olduğu branş(lar)a göre daralt — henüz hiç branş
   // atanmadıysa grup listesi boş kalır (tüm branşların grupları karışık
   // görünmesin diye), Admin'in Ana Sayfa'da seçtiği branşa göre de ayrıca
@@ -131,13 +110,7 @@ export default function CoachGroupsScreen({ route, navigation }: Props) {
         ListHeaderComponent={
           <>
             <View style={styles.infoCard}>
-              {coach?.photo_url ? (
-                <Image source={{ uri: coach.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{coachName.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={coach?.photo_url} name={coachName} gender={coach?.gender} kind="coach" size={56} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{coachName}</Text>
                 {!!coach?.phone && <Text style={styles.infoLine}>📞 {coach.phone}</Text>}
@@ -196,10 +169,6 @@ export default function CoachGroupsScreen({ route, navigation }: Props) {
           );
         }}
       />
-
-      <TouchableOpacity style={styles.removeButton} onPress={handleRemoveCoach}>
-        <Text style={styles.removeButtonText}>Antrenörü Kulüpten Çıkar</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -214,12 +183,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md,
   },
-  avatar: {
-    width: 56, height: 56, borderRadius: radius.full, backgroundColor: colors.yellowSoft,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 56, height: 56, borderRadius: radius.full },
-  avatarText: { color: colors.yellow, fontSize: 20, fontWeight: "800" },
   infoLine: { color: colors.muted, fontSize: 12, marginTop: 2 },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   groupRow: {
@@ -239,9 +202,4 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   chipText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
   chipTextActive: { color: colors.bg },
-  removeButton: {
-    borderWidth: 1, borderColor: colors.coral, borderRadius: radius.md,
-    paddingVertical: 14, alignItems: "center", marginTop: spacing.lg, marginBottom: spacing.xl,
-  },
-  removeButtonText: { color: colors.coral, fontWeight: "700", fontSize: 14 },
 });

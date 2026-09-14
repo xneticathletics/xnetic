@@ -1,11 +1,12 @@
 import React, { useCallback, useState, useRef } from "react";
-import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getSessionRoster, type RosterEntry, type AttendanceStatus } from "../lib/api/attendance";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "SessionRoster">;
 
@@ -59,13 +60,7 @@ export default function SessionRosterScreen({ route, navigation }: Props) {
           const statusInfo = item.status ? STATUS_LABEL[item.status] : null;
           return (
             <View style={styles.row}>
-              {item.photo_url ? (
-                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={item.photo_url} name={item.full_name} gender={item.gender} kind="athlete" size={40} />
               <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
               <Text style={[styles.statusBadge, { color: statusInfo?.color ?? colors.muted }]}>
                 {statusInfo?.text ?? "İşaretlenmedi"}
@@ -89,12 +84,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
-  avatar: {
-    width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 40, height: 40, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700" },
   rowName: { flex: 1, color: colors.ink, fontSize: 15, fontWeight: "600" },
   statusBadge: { fontSize: 12, fontWeight: "700" },
 });

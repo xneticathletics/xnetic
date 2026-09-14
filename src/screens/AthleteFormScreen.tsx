@@ -40,6 +40,7 @@ const emptyForm: AthleteInput = {
   jersey_number: null,
   status: "active",
   athlete_type: "spor_okulu",
+  gender: null,
   photo_url: null,
   parent_name: null,
   parent_phone: null,
@@ -154,6 +155,7 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
           jersey_number: a.jersey_number,
           status: a.status,
           athlete_type: a.athlete_type,
+          gender: a.gender,
           photo_url: a.photo_url,
           parent_name: a.parent_name,
           parent_phone: a.parent_phone,
@@ -331,6 +333,25 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
 
       <Field label="Doğum Tarihi">
         <BirthDateInput value={form.birth_date} onChange={(iso) => set("birth_date", iso)} onFocus={handleFocus} />
+      </Field>
+
+      <Field label="Cinsiyet">
+        <View style={styles.row}>
+          {([
+            { value: "erkek" as const, label: "Erkek" },
+            { value: "kadin" as const, label: "Kız" },
+          ]).map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.statusChip, form.gender === opt.value && styles.statusChipActive]}
+              onPress={() => set("gender", form.gender === opt.value ? null : opt.value)}
+            >
+              <Text style={[styles.statusChipText, form.gender === opt.value && styles.statusChipTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </Field>
 
       <View style={styles.row}>

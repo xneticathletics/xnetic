@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from "react-native";
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -7,6 +7,7 @@ import { getCoach, type Coach } from "../lib/api/coaches";
 import { listCoachLeaves, createCoachLeave, deleteCoachLeave, type CoachLeave } from "../lib/api/coachLeaves";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import DatePickerModal from "../components/DatePickerModal";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachLeave">;
 
@@ -101,13 +102,7 @@ export default function CoachLeaveScreen({ route }: Props) {
         ListHeaderComponent={
           <>
             <View style={styles.infoCard}>
-              {coach?.photo_url ? (
-                <Image source={{ uri: coach.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{coachName.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={coach?.photo_url} name={coachName} gender={coach?.gender} kind="coach" size={56} />
               <Text style={styles.title}>{coachName}</Text>
             </View>
 
@@ -191,12 +186,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md,
   },
-  avatar: {
-    width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.yellowSoft,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 44, height: 44, borderRadius: radius.full },
-  avatarText: { color: colors.yellow, fontSize: 16, fontWeight: "800" },
   title: { color: colors.ink, fontSize: 16, fontWeight: "700" },
   formBox: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,

@@ -7,7 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { getCoach, updateCoach, type Coach } from "../lib/api/coaches";
+import { getCoach, updateCoach, deactivateCoach, type Coach } from "../lib/api/coaches";
 import { uploadPhotoForUser } from "../lib/api/currentUser";
 import BirthDateInput from "../components/BirthDateInput";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -23,6 +23,10 @@ const EDUCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "yuksek_lisans", label: "Yüksek Lisans" },
   { value: "doktora", label: "Doktora" },
 ];
+const GENDER_OPTIONS: { value: "erkek" | "kadin"; label: string }[] = [
+  { value: "erkek", label: "Erkek" },
+  { value: "kadin", label: "Kadın" },
+];
 
 export default function CoachFormScreen({ route, navigation }: Props) {
   const { coachId } = route.params;
@@ -33,12 +37,14 @@ export default function CoachFormScreen({ route, navigation }: Props) {
   const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState<string | null>(null);
   const [educationLevel, setEducationLevel] = useState<string | null>(null);
+  const [gender, setGender] = useState<"erkek" | "kadin" | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [address, setAddress] = useState("");
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
   // — hızlı çift dokunuşta handleSave iki kez çalışabiliyordu. Senkron bir
@@ -56,11 +62,12 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           setPhone(c.phone ?? "");
           setBirthDate(c.birth_date);
           setEducationLevel(c.education_level);
+          setGender(c.gender);
           setAddress(c.address ?? "");
           setEmergencyName(c.emergency_contact_name ?? "");
           setEmergencyPhone(c.emergency_contact_phone ?? "");
           initialSnapshotRef.current = JSON.stringify([
-            c.name, c.phone ?? "", c.birth_date, c.education_level,
+            c.name, c.phone ?? "", c.birth_date, c.education_level, c.gender,
             c.address ?? "", c.emergency_contact_name ?? "", c.emergency_contact_phone ?? "",
           ]);
         })
@@ -73,7 +80,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
     !loading &&
     initialSnapshotRef.current !== null &&
     initialSnapshotRef.current !==
-      JSON.stringify([name, phone, birthDate, educationLevel, address, emergencyName, emergencyPhone]);
+      JSON.stringify([name, phone, birthDate, educationLevel, gender, address, emergencyName, emergencyPhone]);
   // photoUri (henüz yüklenmemiş yeni fotoğraf) ayrıca kontrol ediliyor —
   // snapshot'a dahil değil çünkü seçilir seçilmez zaten "değişti" demektir.
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges || !!photoUri);
@@ -103,6 +110,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
         phone: phone.trim() || null,
         birth_date: birthDate,
         education_level: educationLevel,
+        gender,
         address: address.trim() || null,
         emergency_contact_name: emergencyName.trim() || null,
         emergency_contact_phone: emergencyPhone.trim() || null,
@@ -116,6 +124,32 @@ export default function CoachFormScreen({ route, navigation }: Props) {
       savingRef.current = false;
       setSaving(false);
     }
+  };
+
+  const handleRemoveCoach = () => {
+    Alert.alert(
+      "Antrenörü kulüpten çıkar",
+      `${coach?.name ?? "Bu antrenör"} kulüpten çıkarılacak ve tüm grup atamaları kaldırılacak. Hesabı tamamen silmiyoruz — istersen ileride tekrar aktifleştirebilirsin. Devam etmek istiyor musun?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Kulüpten Çıkar",
+          style: "destructive",
+          onPress: async () => {
+            setRemoving(true);
+            try {
+              markSaved();
+              await deactivateCoach(coachId);
+              navigation.navigate("CoachesList");
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "İşlem başarısız", [{ text: "Tamam" }]);
+            } finally {
+              setRemoving(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -191,6 +225,20 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           </View>
         </Field>
 
+        <Field label="Cinsiyet">
+          <View style={styles.chipGrid}>
+            {GENDER_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[styles.chip, gender === opt.value && styles.chipActive]}
+                onPress={() => setGender(gender === opt.value ? null : opt.value)}
+              >
+                <Text style={[styles.chipText, gender === opt.value && styles.chipTextActive]}>{opt.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Field>
+
         <Field label="Adres">
           <TextInput
             onFocus={handleFocus}
@@ -232,6 +280,10 @@ export default function CoachFormScreen({ route, navigation }: Props) {
         <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.removeButton} onPress={handleRemoveCoach} disabled={removing}>
+          {removing ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.removeButtonText}>Antrenörü Kulüpten Çıkar</Text>}
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -268,6 +320,11 @@ const styles = StyleSheet.create({
   photoPreview: { width: 96, height: 96 },
   photoPlaceholderText: { color: colors.muted, fontSize: 11, textAlign: "center", paddingHorizontal: 8 },
   error: { color: colors.coral, marginBottom: spacing.md },
-  saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
+  saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
+  removeButton: {
+    borderWidth: 1, borderColor: colors.coral, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: "center", marginTop: spacing.md, marginBottom: spacing.xl,
+  },
+  removeButtonText: { color: colors.coral, fontWeight: "700", fontSize: 14 },
 });

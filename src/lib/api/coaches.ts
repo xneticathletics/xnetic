@@ -10,6 +10,7 @@ export type Coach = {
   phone: string | null;
   birth_date: string | null;
   education_level: string | null;
+  gender: "erkek" | "kadin" | null;
   photo_url: string | null;
   address: string | null;
   emergency_contact_name: string | null;
@@ -17,7 +18,7 @@ export type Coach = {
 };
 
 const COACH_FIELDS =
-  "id, name, email, phone, birth_date, education_level, photo_url, address, emergency_contact_name, emergency_contact_phone";
+  "id, name, email, phone, birth_date, education_level, gender, photo_url, address, emergency_contact_name, emergency_contact_phone";
 
 export async function listCoaches(): Promise<Coach[]> {
   const { data, error } = await supabase
@@ -46,6 +47,7 @@ export type CoachInput = {
   phone: string | null;
   birth_date: string | null;
   education_level: string | null;
+  gender: "erkek" | "kadin" | null;
   address: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;

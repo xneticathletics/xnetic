@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Linking, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -16,6 +16,7 @@ import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
 import { listGroups, type Group } from "../lib/api/groups";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteDetail">;
 
@@ -277,13 +278,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
     <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
       <View style={styles.headerCard}>
         <View style={styles.avatarWrap}>
-          {athlete.photo_url ? (
-            <Image source={{ uri: athlete.photo_url }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{athlete.full_name.slice(0, 1).toUpperCase()}</Text>
-            </View>
-          )}
+          <Avatar photoUrl={athlete.photo_url} name={athlete.full_name} gender={athlete.gender} kind="athlete" size={96} />
           <View style={[styles.statusDot, { backgroundColor: athlete.status === "active" ? colors.teal : colors.muted }]} />
         </View>
         <View style={styles.headerInfo}>
@@ -560,12 +555,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md,
   },
   avatarWrap: { position: "relative", marginRight: spacing.md },
-  avatar: {
-    width: 96, height: 96, borderRadius: radius.full, backgroundColor: colors.yellowSoft,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 96, height: 96, borderRadius: radius.full },
-  avatarText: { color: colors.yellow, fontSize: 32, fontWeight: "800" },
   statusDot: {
     position: "absolute", bottom: 2, right: 2, width: 14, height: 14, borderRadius: 7,
     borderWidth: 2, borderColor: colors.surface,

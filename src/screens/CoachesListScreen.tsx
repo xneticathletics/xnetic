@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, Image } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing, accentRotation, accentSoftRotation } from "../theme/tokens";
@@ -14,6 +14,7 @@ import { useBranchSelect } from "../context/BranchSelectContext";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 import FilterChipRow from "../components/FilterChipRow";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachesList">;
 
@@ -183,13 +184,15 @@ export default function CoachesListScreen({ navigation }: Props) {
               onPress={() => navigation.navigate("CoachDetail", { coachId: item.id })}
             >
               <View style={styles.cardTopRow}>
-                {item.photo_url ? (
-                  <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-                ) : (
-                  <View style={[styles.avatar, { backgroundColor: accentSoft }]}>
-                    <Text style={[styles.avatarText, { color: accent }]}>{item.name.slice(0, 1).toUpperCase()}</Text>
-                  </View>
-                )}
+                <Avatar
+                  photoUrl={item.photo_url}
+                  name={item.name}
+                  gender={item.gender}
+                  kind="coach"
+                  size={44}
+                  backgroundColor={accentSoft}
+                  textColor={accent}
+                />
                 <View style={{ alignItems: "flex-end", gap: 4 }}>
                   {isCoordinator && (
                     <View style={styles.coordinatorBadge}>
@@ -254,10 +257,10 @@ const styles = StyleSheet.create({
   },
   error: { color: colors.coral, marginBottom: spacing.md },
   addButton: {
-    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 12,
+    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16,
     alignItems: "center", marginTop: spacing.sm,
   },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
+  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl, paddingHorizontal: spacing.md },
   card: {
     flex: 1,
@@ -266,12 +269,6 @@ const styles = StyleSheet.create({
   },
   cardFiller: { opacity: 0 },
   cardTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: spacing.xs },
-  avatar: {
-    width: 44, height: 44, borderRadius: radius.full,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 44, height: 44, borderRadius: radius.full },
-  avatarText: { fontWeight: "800", fontSize: 16 },
   groupBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: colors.bg, borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 3,

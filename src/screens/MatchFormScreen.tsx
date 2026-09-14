@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert,
-  KeyboardAvoidingView, Platform, Image,
+  KeyboardAvoidingView, Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -12,6 +12,7 @@ import {
 } from "../lib/api/matches";
 import type { Group } from "../lib/api/groups";
 import { listGroups } from "../lib/api/groups";
+import Avatar from "../components/Avatar";
 import { listBranches, type Branch } from "../lib/api/branches";
 import GroupPickerModal from "../components/GroupPickerModal";
 import BranchPickerModal from "../components/BranchPickerModal";
@@ -356,13 +357,7 @@ export default function MatchFormScreen({ route, navigation }: Props) {
                   <View style={[styles.checkbox, r.selected && styles.checkboxChecked]}>
                     {r.selected && <Text style={styles.checkmark}>✓</Text>}
                   </View>
-                  {r.photo_url ? (
-                    <Image source={{ uri: r.photo_url }} style={styles.rosterAvatarImage} />
-                  ) : (
-                    <View style={styles.rosterAvatar}>
-                      <Text style={styles.rosterAvatarText}>{r.full_name.slice(0, 1).toUpperCase()}</Text>
-                    </View>
-                  )}
+                  <Avatar photoUrl={r.photo_url} name={r.full_name} gender={r.gender} kind="athlete" size={30} />
                   <Text style={styles.rosterName}>{r.full_name}</Text>
                 </TouchableOpacity>
               ))
@@ -457,12 +452,6 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   checkmark: { color: colors.bg, fontWeight: "800", fontSize: 12 },
-  rosterAvatar: {
-    width: 30, height: 30, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  rosterAvatarImage: { width: 30, height: 30, borderRadius: radius.full },
-  rosterAvatarText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
   rosterName: { color: colors.ink, fontSize: 14, fontWeight: "600" },
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },

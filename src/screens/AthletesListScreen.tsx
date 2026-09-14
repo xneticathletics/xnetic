@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl, Image,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -8,6 +8,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listAthletes, type Athlete } from "../lib/api/athletes";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthletesList">;
 
@@ -85,13 +86,7 @@ export default function AthletesListScreen({ navigation, route }: Props) {
               style={styles.row}
               onPress={() => navigation.navigate("AthleteDetail", { athleteId: item.id })}
             >
-              {item.photo_url ? (
-                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={item.photo_url} name={item.full_name} gender={item.gender} kind="athlete" size={56} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.rowName} numberOfLines={1}>{item.full_name}</Text>
                 <Text style={styles.rowSub}>
@@ -123,12 +118,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm, padding: spacing.sm,
   },
   rowFiller: { opacity: 0 },
-  avatar: {
-    width: 56, height: 56, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 56, height: 56, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700", fontSize: 18 },
   rowName: { color: colors.ink, fontSize: 13, fontWeight: "600" },
   rowSub: { color: colors.muted, fontSize: 11, marginTop: 1 },
   extraTag: { color: colors.violet, fontSize: 10, fontWeight: "700", marginTop: 2 },

@@ -67,6 +67,7 @@ export type AthleteLatestCheckin = {
   athlete_id: string;
   full_name: string;
   photo_url: string | null;
+  gender: "erkek" | "kadin" | null;
   latest: WellnessCheckin | null;
 };
 
@@ -76,7 +77,7 @@ export async function listLatestCheckinsForAthletes(athleteIds: string[]): Promi
   if (athleteIds.length === 0) return [];
 
   const [athletesResult, checkinsResult] = await Promise.all([
-    supabase.from("athletes").select("id, full_name, photo_url").in("id", athleteIds),
+    supabase.from("athletes").select("id, full_name, photo_url, gender").in("id", athleteIds),
     supabase
       .from("wellness_checkins")
       .select(FIELDS)
@@ -92,7 +93,10 @@ export async function listLatestCheckinsForAthletes(athleteIds: string[]): Promi
   });
 
   return (athletesResult.data ?? [])
-    .map((a) => ({ athlete_id: a.id, full_name: a.full_name, photo_url: a.photo_url, latest: latestByAthlete.get(a.id) ?? null }))
+    .map((a) => ({
+      athlete_id: a.id, full_name: a.full_name, photo_url: a.photo_url, gender: a.gender,
+      latest: latestByAthlete.get(a.id) ?? null,
+    }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
 }
 
@@ -103,7 +107,7 @@ export async function listCheckinsForAthletesOnDate(athleteIds: string[], date: 
   if (athleteIds.length === 0) return [];
 
   const [athletesResult, checkinsResult] = await Promise.all([
-    supabase.from("athletes").select("id, full_name, photo_url").in("id", athleteIds),
+    supabase.from("athletes").select("id, full_name, photo_url, gender").in("id", athleteIds),
     supabase.from("wellness_checkins").select(FIELDS).in("athlete_id", athleteIds).eq("checkin_date", date),
   ]);
   if (athletesResult.error) throw athletesResult.error;
@@ -112,6 +116,6 @@ export async function listCheckinsForAthletesOnDate(athleteIds: string[], date: 
   const byAthlete = new Map<string, WellnessCheckin>((checkinsResult.data ?? []).map((c) => [c.athlete_id, c]));
 
   return (athletesResult.data ?? [])
-    .map((a) => ({ athlete_id: a.id, full_name: a.full_name, photo_url: a.photo_url, latest: byAthlete.get(a.id) ?? null }))
+    .map((a) => ({ athlete_id: a.id, full_name: a.full_name, photo_url: a.photo_url, gender: a.gender, latest: byAthlete.get(a.id) ?? null }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name, "tr"));
 }

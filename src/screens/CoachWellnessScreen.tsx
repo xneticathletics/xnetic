@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image,
+  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
   KeyboardAvoidingView, Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -13,6 +13,7 @@ import { listCheckinsForAthletesOnDate, type AthleteLatestCheckin } from "../lib
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import DatePickerModal from "../components/DatePickerModal";
+import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachWellness">;
 
@@ -216,13 +217,7 @@ export default function CoachWellnessScreen({ navigation }: Props) {
               style={styles.row}
               onPress={() => navigation.navigate("AthleteWellnessDetail", { athleteId: item.athlete_id, athleteName: item.full_name })}
             >
-              {item.photo_url ? (
-                <Image source={{ uri: item.photo_url }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{item.full_name.slice(0, 1).toUpperCase()}</Text>
-                </View>
-              )}
+              <Avatar photoUrl={item.photo_url} name={item.full_name} gender={item.gender} kind="athlete" size={44} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowName}>
                   {item.full_name}
@@ -290,12 +285,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
   },
-  avatar: {
-    width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.line,
-    alignItems: "center", justifyContent: "center",
-  },
-  avatarImage: { width: 44, height: 44, borderRadius: radius.full },
-  avatarText: { color: colors.ink, fontWeight: "700" },
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   rowGroup: { color: colors.muted, fontSize: 12, fontWeight: "500" },
   rowSub: { color: colors.muted, fontSize: 11, marginTop: 2 },

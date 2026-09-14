@@ -7,6 +7,7 @@ export type MyAthlete = {
   group_id: string | null;
   photo_url: string | null;
   athlete_type: "spor_okulu" | "musabik";
+  gender: "erkek" | "kadin" | null;
   groups?: { name: string } | null;
 };
 
@@ -19,7 +20,7 @@ export async function getMyAthletes(): Promise<MyAthlete[]> {
 
   const { data, error } = await supabase
     .from("athletes")
-    .select("id, full_name, group_id, photo_url, athlete_type, groups!group_id(name)")
+    .select("id, full_name, group_id, photo_url, athlete_type, gender, groups!group_id(name)")
     .or(`parent_user_id.eq.${userId},athlete_user_id.eq.${userId}`);
 
   if (error) throw error;

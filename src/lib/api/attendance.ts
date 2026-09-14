@@ -8,6 +8,7 @@ export type RosterEntry = {
   full_name: string;
   birth_date: string | null;
   photo_url: string | null;
+  gender: "erkek" | "kadin" | null;
   status: AttendanceStatus | null;
 };
 
@@ -16,7 +17,7 @@ export type RosterEntry = {
 export async function getSessionRoster(sessionId: string, groupId: string): Promise<RosterEntry[]> {
   const { data: athletes, error: athErr } = await supabase
     .from("athletes")
-    .select("id, full_name, birth_date, photo_url")
+    .select("id, full_name, birth_date, photo_url, gender")
     .eq("group_id", groupId)
     .eq("status", "active")
     .order("full_name", { ascending: true });
@@ -37,6 +38,7 @@ export async function getSessionRoster(sessionId: string, groupId: string): Prom
     full_name: a.full_name,
     birth_date: a.birth_date,
     photo_url: a.photo_url,
+    gender: a.gender,
     status: statusMap.get(a.id) ?? null,
   }));
 }
