@@ -124,6 +124,10 @@ export default function CoachesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.overviewButton} onPress={() => navigation.navigate("CoachesOverview")}>
+        <Text style={styles.overviewButtonText}>Antrenör Atamaları</Text>
+      </TouchableOpacity>
+
       {!isBranchCoordinator && branches.length > 1 && (
         <FilterChipRow
           options={[{ key: null, label: "Tüm Branşlar" }, ...branches.map((b) => ({ key: b.name, label: b.name }))]}
@@ -162,7 +166,7 @@ export default function CoachesListScreen({ navigation }: Props) {
         keyExtractor={(c, index) => c?.id ?? `filler-${index}`}
         numColumns={columns}
         columnWrapperStyle={{ gap: spacing.sm }}
-        contentContainerStyle={{ paddingBottom: spacing.md, gap: spacing.sm }}
+        contentContainerStyle={{ paddingBottom: role === "club_admin" ? 80 : spacing.md, gap: spacing.sm }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={
           !loading ? (
@@ -231,19 +235,18 @@ export default function CoachesListScreen({ navigation }: Props) {
 
       {/* Yeni antrenör DAVET ETMEK, kulüp geneli bir hesap oluşturma işlemi —
           "branş koordinatörü kendi branşının admini" ilkesi bunu kapsamıyor,
-          koordinatör sadece kendi branşındaki antrenörleri GÖREBİLİR. */}
+          koordinatör sadece kendi branşındaki antrenörleri GÖREBİLİR.
+          Takvim ekranındaki sarı yuvarlak + ile aynı desen (bkz.
+          TrainingSessionsScreen.tsx fab/fabIcon). */}
       {role === "club_admin" && (
         <TouchableOpacity
-          style={styles.addButton}
+          style={styles.fab}
           onPress={() => navigation.navigate("InviteUser", { presetRole: "coach" })}
+          accessibilityLabel="Antrenör ekle"
         >
-          <Text style={styles.addButtonText}>+ Antrenör Ekle</Text>
+          <Text style={styles.fabIcon}>+</Text>
         </TouchableOpacity>
       )}
-
-      <TouchableOpacity style={styles.overviewButton} onPress={() => navigation.navigate("CoachesOverview")}>
-        <Text style={styles.overviewButtonText}>Antrenör Atamaları</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -256,11 +259,6 @@ const styles = StyleSheet.create({
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.md,
   },
   error: { color: colors.coral, marginBottom: spacing.md },
-  addButton: {
-    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16,
-    alignItems: "center", marginTop: spacing.sm,
-  },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl, paddingHorizontal: spacing.md },
   card: {
     flex: 1,
@@ -288,7 +286,14 @@ const styles = StyleSheet.create({
   rowGroups: { color: colors.muted, fontSize: 10, marginTop: 4 },
   overviewButton: {
     backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16,
-    alignItems: "center", marginTop: spacing.sm,
+    alignItems: "center", marginBottom: spacing.md,
   },
   overviewButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
+  fab: {
+    position: "absolute", right: spacing.lg, bottom: spacing.lg,
+    width: 56, height: 56, borderRadius: 28, backgroundColor: colors.yellow,
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 6,
+  },
+  fabIcon: { color: colors.bg, fontSize: 28, fontWeight: "700", lineHeight: 30 },
 });
