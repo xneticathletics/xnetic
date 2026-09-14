@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listActiveProducts, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
-import { useHomeButton } from "../hooks/useHomeButton";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, "Shop">;
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
 
 export default function ShopScreen({ navigation }: Props) {
-  useHomeButton(navigation);
+  const insets = useSafeAreaInsets();
   const { role } = useAuth();
   const columns = useResponsiveColumns(2);
 
@@ -56,7 +56,7 @@ export default function ShopScreen({ navigation }: Props) {
   }, [products, categoryFilter, genderFilter]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       {role === "parent" && (
         <TouchableOpacity style={styles.ordersButton} onPress={() => navigation.navigate("MyShopOrders")}>
           <Text style={styles.ordersButtonText}>📦 Siparişlerim</Text>

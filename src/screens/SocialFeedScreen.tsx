@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
@@ -75,6 +76,7 @@ function buildFeedRows(posts: SocialPost[], columns: number): FeedRow[] {
 }
 
 export default function SocialFeedScreen({ route, navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { role } = useAuth();
   // Herhangi bir antrenör (sadece koordinatör değil) branşındaki bekleyen
   // paylaşımları onaylayabilir — bkz. is_branch_moderator RLS helper'ı.
@@ -173,7 +175,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <Text style={styles.title}>Sosyal Alan</Text>
         <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("SocialPostForm")}>
           <Text style={styles.addButtonText}>+ Paylaş</Text>

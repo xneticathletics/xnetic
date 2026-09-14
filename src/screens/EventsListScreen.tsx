@@ -1,17 +1,17 @@
 import React, { useCallback, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, ImageBackground } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listPublishedEvents, EVENT_TYPE_LABEL, type EventRow } from "../lib/api/events";
 import { useAuth } from "../context/AuthContext";
-import { useHomeButton } from "../hooks/useHomeButton";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "EventsList">;
 
 export default function EventsListScreen({ navigation }: Props) {
-  useHomeButton(navigation);
+  const insets = useSafeAreaInsets();
   const { role } = useAuth();
 
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -38,7 +38,7 @@ export default function EventsListScreen({ navigation }: Props) {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       {(role === "parent" || role === "athlete") && (
         <TouchableOpacity style={styles.myRegistrationsButton} onPress={() => navigation.navigate("MyEventRegistrations")}>
           <Text style={styles.myRegistrationsButtonText}>📋 Kayıtlarım</Text>

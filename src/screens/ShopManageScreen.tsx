@@ -1,18 +1,18 @@
 import React, { useCallback, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAllProducts, updateProduct, deleteProduct, getPendingOrderCount, type ShopProductAdmin, type ShopGender } from "../lib/api/shop";
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
-import { useHomeButton } from "../hooks/useHomeButton";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "ShopManage">;
 
 export default function ShopManageScreen({ navigation }: Props) {
-  useHomeButton(navigation);
+  const insets = useSafeAreaInsets();
 
   const [products, setProducts] = useState<ShopProductAdmin[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -79,7 +79,7 @@ export default function ShopManageScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.stockButton} onPress={() => navigation.navigate("ShopStock")}>
           <Text style={styles.stockButtonText}>📊 Stok</Text>
