@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { listAnnouncements, filterAnnouncementsForViewer, type Announcement } from "../lib/api/announcements";
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
+import { getCurrentAppUserId } from "../lib/api/currentUser";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 
@@ -42,18 +43,19 @@ export default function AnnouncementsScreen({ navigation }: Props) {
       setError(null);
       // Duyuru listesi ile "benim grup(lar)ım" sorgusu birbirinden bağımsız
       // — sıra sıra beklemek yerine paralel çekiliyor.
-      const [all, myGroupIds] = await Promise.all([
+      const [all, myGroupIds, myUserId] = await Promise.all([
         listAnnouncements(),
         role === "parent" || role === "athlete"
           ? getMyAthletes().then((athletes) => athletes.map((a) => a.group_id).filter((id): id is string => !!id))
           : role === "coach"
           ? getMyCoachedGroupIds()
           : Promise.resolve([] as string[]),
+        getCurrentAppUserId(),
       ]);
 
       const visibilityMs = settings.announcement_visibility_days * 24 * 60 * 60 * 1000;
       const recentOnly = all.filter((a) => Date.now() - new Date(a.created_at).getTime() <= visibilityMs);
-      setItems(filterAnnouncementsForViewer(recentOnly, role ?? "", myGroupIds));
+      setItems(filterAnnouncementsForViewer(recentOnly, role ?? "", myGroupIds, myUserId));
     } catch (e: any) {
       setError(e.message ?? "Duyurular yüklenemedi");
     } finally {

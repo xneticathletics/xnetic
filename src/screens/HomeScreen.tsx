@@ -10,7 +10,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { listAnnouncements, filterAnnouncementsForViewer, type Announcement } from "../lib/api/announcements";
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
-import { getCurrentUserName } from "../lib/api/currentUser";
+import { getCurrentUserName, getCurrentAppUserId } from "../lib/api/currentUser";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { getClubLogoUrl } from "../lib/api/clubLogo";
@@ -282,17 +282,18 @@ export default function HomeScreen({
           // İki sorgu birbirinden bağımsız — sıra sıra beklemek yerine
           // paralel çekiliyor (AnnouncementsScreen.tsx'teki aynı düzeltme
           // burada eksikti, "Son Duyurular" önizlemesi gereksiz yavaştı).
-          const [all, myGroupIds] = await Promise.all([
+          const [all, myGroupIds, myUserId] = await Promise.all([
             listAnnouncements(),
             role === "parent" || role === "athlete"
               ? getMyAthletes().then((athletes) => athletes.map((a) => a.group_id).filter((id): id is string => !!id))
               : role === "coach"
               ? getMyCoachedGroupIds()
               : Promise.resolve([] as string[]),
+            getCurrentAppUserId(),
           ]);
           const previewMs = settings.announcement_home_preview_days * 24 * 60 * 60 * 1000;
           const recentOnly = all.filter((a) => Date.now() - new Date(a.created_at).getTime() <= previewMs);
-          const visible = filterAnnouncementsForViewer(recentOnly, role, myGroupIds).slice(0, 3);
+          const visible = filterAnnouncementsForViewer(recentOnly, role, myGroupIds, myUserId).slice(0, 3);
           if (!cancelled) setAnnouncements(visible);
         } catch {
           if (!cancelled) setAnnouncements([]);

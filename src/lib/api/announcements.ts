@@ -10,6 +10,10 @@ export type Announcement = {
   id: string;
   target_types: AnnouncementTarget[];
   target_ids: string[] | null;
+  // "group" hedefi için — hangi antrenör/sporcu/veli isimlerinin
+  // işaretlendiği (bkz. getGroupRecipientOptions). NULL/boş: eski
+  // duyurular ya da hiç daraltılmamış — gruptaki HERKESE gider.
+  target_user_ids: string[] | null;
   title: string;
   body: string;
   created_at: string;
@@ -19,6 +23,7 @@ export type Announcement = {
 export type AnnouncementInput = {
   target_types: AnnouncementTarget[];
   target_ids: string[] | null;
+  target_user_ids?: string[] | null;
   title: string;
   body: string;
   attachment_url?: string | null;
@@ -28,7 +33,7 @@ export type AnnouncementInput = {
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, title, body, created_at, attachment_url")
+    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -42,7 +47,7 @@ export async function listAnnouncements(): Promise<Announcement[]> {
 export async function getAnnouncement(id: string): Promise<Announcement> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, title, body, created_at, attachment_url")
+    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url")
     .eq("id", id)
     .single();
   if (error) throw error;
@@ -99,38 +104,138 @@ async function resolveAnnouncementRecipients(announcement: Announcement): Promis
       const { data } = await supabase.from("users").select("id").eq("role", role).eq("is_active", true);
       (data ?? []).forEach((u) => recipients.add(u.id));
     } else if (t === "group" && announcement.target_ids?.length) {
-      const groupIds = announcement.target_ids;
-      const [athletesResult, extraLinksResult, groupsResult, coachesResult] = await Promise.all([
-        supabase.from("athletes").select("parent_user_id, athlete_user_id").in("group_id", groupIds).eq("status", "active"),
-        supabase.from("athlete_groups").select("athlete_id").in("group_id", groupIds),
-        supabase.from("groups").select("head_coach_id").in("id", groupIds),
-        supabase.from("group_coaches").select("coach_id").in("group_id", groupIds),
-      ]);
-      (athletesResult.data ?? []).forEach((a) => {
-        if (a.parent_user_id) recipients.add(a.parent_user_id);
-        if (a.athlete_user_id) recipients.add(a.athlete_user_id);
-      });
-      const extraAthleteIds = (extraLinksResult.data ?? []).map((r) => r.athlete_id);
-      if (extraAthleteIds.length > 0) {
-        const { data: extraAthletes } = await supabase
-          .from("athletes")
-          .select("parent_user_id, athlete_user_id")
-          .in("id", extraAthleteIds)
-          .eq("status", "active");
-        (extraAthletes ?? []).forEach((a) => {
+      // target_user_ids doluysa admin, grup(lar) için antrenör/sporcu/veli
+      // isimlerini TEK TEK (ya da rol bazında "Tümü") daraltmış demektir —
+      // o zaman SADECE onlara gidiyor. Boş/NULL ise (eski duyurular ya da
+      // hiç daraltılmamış) eski davranış: gruptaki HERKESE gider.
+      if (announcement.target_user_ids?.length) {
+        announcement.target_user_ids.forEach((id) => recipients.add(id));
+      } else {
+        const groupIds = announcement.target_ids;
+        const [athletesResult, extraLinksResult, groupsResult, coachesResult] = await Promise.all([
+          supabase.from("athletes").select("parent_user_id, athlete_user_id").in("group_id", groupIds).eq("status", "active"),
+          supabase.from("athlete_groups").select("athlete_id").in("group_id", groupIds),
+          supabase.from("groups").select("head_coach_id").in("id", groupIds),
+          supabase.from("group_coaches").select("coach_id").in("group_id", groupIds),
+        ]);
+        (athletesResult.data ?? []).forEach((a) => {
           if (a.parent_user_id) recipients.add(a.parent_user_id);
           if (a.athlete_user_id) recipients.add(a.athlete_user_id);
         });
+        const extraAthleteIds = (extraLinksResult.data ?? []).map((r) => r.athlete_id);
+        if (extraAthleteIds.length > 0) {
+          const { data: extraAthletes } = await supabase
+            .from("athletes")
+            .select("parent_user_id, athlete_user_id")
+            .in("id", extraAthleteIds)
+            .eq("status", "active");
+          (extraAthletes ?? []).forEach((a) => {
+            if (a.parent_user_id) recipients.add(a.parent_user_id);
+            if (a.athlete_user_id) recipients.add(a.athlete_user_id);
+          });
+        }
+        (groupsResult.data ?? []).forEach((g) => {
+          if (g.head_coach_id) recipients.add(g.head_coach_id);
+        });
+        (coachesResult.data ?? []).forEach((c) => recipients.add(c.coach_id));
       }
-      (groupsResult.data ?? []).forEach((g) => {
-        if (g.head_coach_id) recipients.add(g.head_coach_id);
-      });
-      (coachesResult.data ?? []).forEach((c) => recipients.add(c.coach_id));
     }
   }
 
   if (myUserId) recipients.delete(myUserId);
   return Array.from(recipients);
+}
+
+export type AnnouncementRecipientOption = { id: string; name: string };
+export type GroupAnnouncementRecipients = {
+  coaches: AnnouncementRecipientOption[];
+  athletes: AnnouncementRecipientOption[];
+  parents: AnnouncementRecipientOption[];
+};
+
+// "Belirli Gruplar" hedefinde bir grup seçilince, o grubun antrenör/
+// sporcu/veli isimlerini tek tek göstermek için — sadece GERÇEKTEN bir
+// hesabı (dolayısıyla bildirim alabilecek bir kullanıcı id'si) olanlar
+// listelenir: hesabı olmayan bir sporcu, kendi adına seçilecek bir
+// "kullanıcı" değildir (bildirim gidecek gerçek hesap velisininkidir).
+export async function getGroupAnnouncementRecipients(groupId: string): Promise<GroupAnnouncementRecipients> {
+  const [groupResult, assistantsResult, athletesResult, extraLinksResult] = await Promise.all([
+    supabase.from("groups").select("head_coach_id").eq("id", groupId).single(),
+    supabase.from("group_coaches").select("coach_id").eq("group_id", groupId),
+    supabase
+      .from("athletes")
+      .select("id, full_name, athlete_user_id, parent_user_id")
+      .eq("group_id", groupId)
+      .eq("status", "active"),
+    supabase.from("athlete_groups").select("athlete_id").eq("group_id", groupId),
+  ]);
+  if (groupResult.error) throw groupResult.error;
+  if (assistantsResult.error) throw assistantsResult.error;
+  if (athletesResult.error) throw athletesResult.error;
+  if (extraLinksResult.error) throw extraLinksResult.error;
+
+  let athleteRows = athletesResult.data ?? [];
+  const extraAthleteIds = (extraLinksResult.data ?? []).map((r) => r.athlete_id);
+  if (extraAthleteIds.length > 0) {
+    const { data: extraAthletes, error } = await supabase
+      .from("athletes")
+      .select("id, full_name, athlete_user_id, parent_user_id")
+      .in("id", extraAthleteIds)
+      .eq("status", "active");
+    if (error) throw error;
+    athleteRows = [...athleteRows, ...(extraAthletes ?? [])];
+  }
+
+  const coachIds = new Set<string>();
+  if (groupResult.data?.head_coach_id) coachIds.add(groupResult.data.head_coach_id);
+  (assistantsResult.data ?? []).forEach((r) => coachIds.add(r.coach_id));
+
+  const parentIds = new Set<string>();
+  athleteRows.forEach((a) => {
+    if (a.parent_user_id) parentIds.add(a.parent_user_id);
+  });
+
+  const [coachUsersResult, parentUsersResult] = await Promise.all([
+    coachIds.size > 0
+      ? supabase.from("users").select("id, name").in("id", Array.from(coachIds))
+      : Promise.resolve({ data: [], error: null }),
+    parentIds.size > 0
+      ? supabase.from("users").select("id, name").in("id", Array.from(parentIds))
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (coachUsersResult.error) throw coachUsersResult.error;
+  if (parentUsersResult.error) throw parentUsersResult.error;
+
+  const parentNameById = new Map((parentUsersResult.data ?? []).map((u) => [u.id, u.name as string]));
+
+  const athletes: AnnouncementRecipientOption[] = athleteRows
+    .filter((a) => a.athlete_user_id)
+    .map((a) => ({ id: a.athlete_user_id as string, name: a.full_name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+
+  // Aynı veli birden çok kardeşin velisi olabilir — hangi sporcu(lar)ın
+  // velisi olduğu da parantez içinde görünsün diye athleteRows'tan tekrar
+  // grupluyoruz (parentIds zaten Set olduğu için tekilleşme garanti).
+  const athleteNamesByParent = new Map<string, string[]>();
+  athleteRows.forEach((a) => {
+    if (!a.parent_user_id) return;
+    const list = athleteNamesByParent.get(a.parent_user_id) ?? [];
+    list.push(a.full_name);
+    athleteNamesByParent.set(a.parent_user_id, list);
+  });
+  const parents: AnnouncementRecipientOption[] = Array.from(parentIds)
+    .map((id) => {
+      const parentName = parentNameById.get(id) ?? "—";
+      const athleteNames = athleteNamesByParent.get(id) ?? [];
+      return { id, name: athleteNames.length > 0 ? `${parentName} (${athleteNames.join(", ")})` : parentName };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+
+  const coaches: AnnouncementRecipientOption[] = (coachUsersResult.data ?? [])
+    .map((u) => ({ id: u.id as string, name: u.name as string }))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+
+  return { coaches, athletes, parents };
 }
 
 async function notifyAnnouncementRecipients(announcement: Announcement) {
@@ -153,11 +258,14 @@ export async function createAnnouncement(input: AnnouncementInput) {
 
 // Duyuruların hedef kitlesine göre görünürlüğünü istemci tarafında uygular.
 // Kulüp Admini / Süper Admin yönetim amaçlı her şeyi görür; diğer roller
-// yalnızca kendilerini ilgilendiren duyuruları görür.
+// yalnızca kendilerini ilgilendiren duyuruları görür. myUserId, "group"
+// hedefinde admin belirli isimler seçmişse (target_user_ids) kendisinin
+// o listede olup olmadığını kontrol etmek için gerekiyor.
 export function filterAnnouncementsForViewer(
   items: Announcement[],
   role: string,
-  myGroupIds: string[]
+  myGroupIds: string[],
+  myUserId?: string | null
 ): Announcement[] {
   if (role === "club_admin" || role === "super_admin") return items;
 
@@ -167,7 +275,13 @@ export function filterAnnouncementsForViewer(
       if (t === "parents") return role === "parent";
       if (t === "coaches") return role === "coach";
       if (t === "athletes") return role === "athlete";
-      if (t === "group") return (a.target_ids ?? []).some((id) => myGroupIds.includes(id));
+      if (t === "group") {
+        if (!(a.target_ids ?? []).some((id) => myGroupIds.includes(id))) return false;
+        // Grup eşleşti — ama admin isim isim daraltmış olabilir; öyleyse
+        // sadece o listedeysem görürüm.
+        if (a.target_user_ids?.length) return !!myUserId && a.target_user_ids.includes(myUserId);
+        return true;
+      }
       return false;
     })
   );
