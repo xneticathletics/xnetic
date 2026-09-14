@@ -151,8 +151,11 @@ export async function saveAttendance(
   const newlyAbsentIds = entries
     .filter((e) => e.status === "gelmedi" && previousStatus.get(e.athlete_id) !== "gelmedi")
     .map((e) => e.athlete_id);
-  await notifyAbsentAthletes(sessionId, newlyAbsentIds).catch(() => {});
-  await notifyConsecutiveAbsence(sessionId, newlyAbsentIds).catch(() => {});
+  // İki bildirim de birbirinden bağımsız, aynı anda gönderilebilir.
+  await Promise.all([
+    notifyAbsentAthletes(sessionId, newlyAbsentIds).catch(() => {}),
+    notifyConsecutiveAbsence(sessionId, newlyAbsentIds).catch(() => {}),
+  ]);
 }
 
 // Bir sporcunun BELİRLİ bir antrenmandaki yoklama durumunu döner — ör.

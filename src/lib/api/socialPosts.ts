@@ -145,8 +145,8 @@ export async function createSocialPost(params: {
   mediaType: "photo" | "video";
   caption?: string;
 }): Promise<SocialPost> {
-  const userId = await getCurrentAppUserId();
-  const clubId = await getCurrentClubId();
+  // userId ve clubId birbirinden bağımsız (farklı kaynaklardan okunuyor), aynı anda çekilebilir.
+  const [userId, clubId] = await Promise.all([getCurrentAppUserId(), getCurrentClubId()]);
   if (!userId || !clubId) throw new Error("Kullanıcı bulunamadı");
 
   let uploadUri = params.localUri;
@@ -234,30 +234,31 @@ export async function deleteSocialPost(post: Pick<SocialPost, "id" | "storage_pa
 async function notifySocialPostSubmitted(post: SocialPost): Promise<void> {
   const recipients = new Set<string>();
 
-  const [branchGroupsResult, adminsResult] = await Promise.all([
+  // branchGroups, admins ve branchRow üçü de sadece post.branch'e bağlı, birbirinden bağımsız.
+  const [branchGroupsResult, adminsResult, branchRowResult] = await Promise.all([
     supabase.from("groups").select("id, head_coach_id").eq("branch", post.branch),
     supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true),
+    supabase.from("branches").select("id, coordinator_user_id").eq("name", post.branch).maybeSingle(),
   ]);
   const branchGroups = branchGroupsResult.data;
   const groupIds = (branchGroups ?? []).map((g) => g.id);
   (branchGroups ?? []).forEach((g) => g.head_coach_id && recipients.add(g.head_coach_id));
   (adminsResult.data ?? []).forEach((a) => recipients.add(a.id));
 
-  if (groupIds.length > 0) {
-    const { data: assistants } = await supabase.from("group_coaches").select("coach_id").in("group_id", groupIds);
-    (assistants ?? []).forEach((a) => recipients.add(a.coach_id));
-  }
+  const branchRow = branchRowResult.data;
 
-  const { data: branchRow } = await supabase
-    .from("branches")
-    .select("id, coordinator_user_id")
-    .eq("name", post.branch)
-    .maybeSingle();
+  // assistants (groupIds'e bağlı) ve specialists (branchRow.id'ye bağlı) birbirinden bağımsız.
+  const [assistantsResult, specialistsResult] = await Promise.all([
+    groupIds.length > 0
+      ? supabase.from("group_coaches").select("coach_id").in("group_id", groupIds)
+      : Promise.resolve({ data: null as { coach_id: string }[] | null, error: null }),
+    branchRow?.id
+      ? supabase.from("coach_branches").select("coach_id").eq("branch_id", branchRow.id)
+      : Promise.resolve({ data: null as { coach_id: string }[] | null, error: null }),
+  ]);
+  (assistantsResult.data ?? []).forEach((a) => recipients.add(a.coach_id));
   if (branchRow?.coordinator_user_id) recipients.add(branchRow.coordinator_user_id);
-  if (branchRow?.id) {
-    const { data: specialists } = await supabase.from("coach_branches").select("coach_id").eq("branch_id", branchRow.id);
-    (specialists ?? []).forEach((s) => recipients.add(s.coach_id));
-  }
+  (specialistsResult.data ?? []).forEach((s) => recipients.add(s.coach_id));
 
   recipients.delete(post.author_id);
   if (recipients.size === 0) return;

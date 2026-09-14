@@ -106,16 +106,15 @@ export async function notifyPaymentClaim(
   method: PaymentClaimMethod,
   hasReceipt: boolean = false
 ): Promise<void> {
-  const { data: admins, error } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
+  // admins ve payment sorguları birbirinden bağımsız, aynı anda çekilebilir.
+  const [{ data: admins, error }, { data: payment }] = await Promise.all([
+    supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true),
+    supabase.from("payments").select("athlete_id, athletes(groups!group_id(branch))").eq("id", paymentId).maybeSingle(),
+  ]);
   if (error) throw error;
 
   const recipients = new Set<string>((admins ?? []).map((a) => a.id));
 
-  const { data: payment } = await supabase
-    .from("payments")
-    .select("athlete_id, athletes(groups!group_id(branch))")
-    .eq("id", paymentId)
-    .maybeSingle();
   const athleteId = (payment as any)?.athlete_id as string | undefined;
   const group = (payment as any)?.athletes?.groups;
   if (group?.branch) {

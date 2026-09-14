@@ -56,18 +56,23 @@ export default function ProfileScreen({
       let cancelled = false;
       (async () => {
         try {
-          const name = await getCurrentUserName();
-          if (!cancelled) setUserName(name);
-
+          // getCurrentUserName ile athlete/photo çağrısı birbirine bağlı değil —
+          // tek Promise.all'da paralel çalıştırıyoruz.
           if (role === "athlete") {
-            const athletes = await getMyAthletes();
-            if (!cancelled && athletes.length > 0) {
-              setMyAthleteId(athletes[0].id);
-              setPhotoUrl(athletes[0].photo_url);
+            const [name, athletes] = await Promise.all([getCurrentUserName(), getMyAthletes()]);
+            if (!cancelled) {
+              setUserName(name);
+              if (athletes.length > 0) {
+                setMyAthleteId(athletes[0].id);
+                setPhotoUrl(athletes[0].photo_url);
+              }
             }
           } else {
-            const photo = await getCurrentUserPhoto();
-            if (!cancelled) setPhotoUrl(photo);
+            const [name, photo] = await Promise.all([getCurrentUserName(), getCurrentUserPhoto()]);
+            if (!cancelled) {
+              setUserName(name);
+              setPhotoUrl(photo);
+            }
           }
         } catch {
           // Sessizce yut — profil ekranı kritik olmayan bir ekran, hata

@@ -78,10 +78,15 @@ export default function FitnessProgramBuilderScreen({ navigation }: Props) {
       setLoadingGroups(true);
       (async () => {
         try {
-          const fg = await listFitnessGroups();
+          // listFitnessGroups() ve getCurrentAppUserId() birbirinden bağımsız
+          // — sıra sıra beklemek yerine paralel çekiliyor (getCoachBranches
+          // gerçekten myUserId'ye bağımlı olduğu için o ayrı kalıyor).
+          const [fg, myUserId] = await Promise.all([
+            listFitnessGroups(),
+            isCoach ? getCurrentAppUserId() : Promise.resolve(null),
+          ]);
           if (cancelled) return;
           if (isCoach) {
-            const myUserId = await getCurrentAppUserId();
             const myBranchInfo = myUserId ? await getCoachBranches(myUserId) : [];
             const myBranches = new Set(myBranchInfo.map((b) => b.branch_name));
             if (!cancelled) setFitnessGroups(fg.filter((x) => myBranches.has(x.branch)));

@@ -31,33 +31,30 @@ export async function listTestGroups(): Promise<TestGroupSummary[]> {
 }
 
 export async function getTestGroup(id: string): Promise<{ group: TestGroup; athletes: Athlete[]; tests: CustomPerformanceTest[] }> {
-  const { data: group, error: groupError } = await supabase
-    .from("performance_test_groups")
-    .select("id, club_id, name, created_at")
-    .eq("id", id)
-    .single();
-  if (groupError) throw groupError;
-
+  // Üç sorgu da sadece id'ye bağlı, birbirinden bağımsız — aynı anda çekilebilir.
   // groups!group_id: athletes ile groups arasında birden fazla ilişki
   // olduğu için PostgREST'e hangi foreign key'i kullanacağını açıkça
   // söylememiz gerekiyor (bkz. aynı desenin athletes.ts/fitnessGroups.ts/
   // socialPosts.ts'de kullanıldığı yerler).
-  const { data: athleteRows, error: athleteError } = await supabase
-    .from("performance_test_group_athletes")
-    .select("athletes(id, full_name, birth_date, group_id, photo_url, groups!group_id(name, branch))")
-    .eq("test_group_id", id);
-  if (athleteError) throw athleteError;
-
-  const { data: testRows, error: testError } = await supabase
-    .from("performance_test_group_tests")
-    .select("performance_test_catalog(id, club_id, category, name, unit, equipment, instructions, video_url, created_at)")
-    .eq("test_group_id", id);
-  if (testError) throw testError;
+  const [groupResult, athleteRowsResult, testRowsResult] = await Promise.all([
+    supabase.from("performance_test_groups").select("id, club_id, name, created_at").eq("id", id).single(),
+    supabase
+      .from("performance_test_group_athletes")
+      .select("athletes(id, full_name, birth_date, group_id, photo_url, groups!group_id(name, branch))")
+      .eq("test_group_id", id),
+    supabase
+      .from("performance_test_group_tests")
+      .select("performance_test_catalog(id, club_id, category, name, unit, equipment, instructions, video_url, created_at)")
+      .eq("test_group_id", id),
+  ]);
+  if (groupResult.error) throw groupResult.error;
+  if (athleteRowsResult.error) throw athleteRowsResult.error;
+  if (testRowsResult.error) throw testRowsResult.error;
 
   return {
-    group,
-    athletes: (athleteRows ?? []).map((r: any) => r.athletes).filter(Boolean),
-    tests: (testRows ?? []).map((r: any) => r.performance_test_catalog).filter(Boolean),
+    group: groupResult.data,
+    athletes: (athleteRowsResult.data ?? []).map((r: any) => r.athletes).filter(Boolean),
+    tests: (testRowsResult.data ?? []).map((r: any) => r.performance_test_catalog).filter(Boolean),
   };
 }
 

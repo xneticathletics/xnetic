@@ -252,10 +252,19 @@ export async function cancelMyRegistration(registrationId: string): Promise<void
 async function notifyEventPublished(event: EventRow): Promise<void> {
   const recipients = new Set<string>();
 
+  // branchGroups ve branchRow ikisi de sadece event.branch'e bağlı, birbirinden bağımsız.
+  const [branchGroupsResult, branchRowResult] = await Promise.all([
+    event.branch
+      ? supabase.from("groups").select("id").eq("branch", event.branch)
+      : Promise.resolve({ data: null as { id: string }[] | null, error: null }),
+    event.branch
+      ? supabase.from("branches").select("coordinator_user_id").eq("name", event.branch).maybeSingle()
+      : Promise.resolve({ data: null as { coordinator_user_id: string | null } | null, error: null }),
+  ]);
+
   let athleteQuery = supabase.from("athletes").select("parent_user_id, athlete_user_id, group_id").eq("status", "active");
   if (event.branch) {
-    const { data: branchGroups } = await supabase.from("groups").select("id").eq("branch", event.branch);
-    const groupIds = (branchGroups ?? []).map((g) => g.id);
+    const groupIds = (branchGroupsResult.data ?? []).map((g) => g.id);
     if (groupIds.length === 0) return;
     athleteQuery = athleteQuery.in("group_id", groupIds);
   }
@@ -266,7 +275,7 @@ async function notifyEventPublished(event: EventRow): Promise<void> {
   });
 
   if (event.branch) {
-    const { data: branchRow } = await supabase.from("branches").select("coordinator_user_id").eq("name", event.branch).maybeSingle();
+    const branchRow = branchRowResult.data;
     if (branchRow?.coordinator_user_id) recipients.add(branchRow.coordinator_user_id);
   }
   if (recipients.size === 0) return;
@@ -289,10 +298,13 @@ async function notifyRegistrationSubmitted(
   eventTitle: string,
   athleteName: string
 ): Promise<void> {
-  const { data: admins } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
+  // admins ve event sorguları birbirinden bağımsız, aynı anda çekilebilir.
+  const [{ data: admins }, { data: event }] = await Promise.all([
+    supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true),
+    supabase.from("events").select("branch").eq("id", registration.event_id).maybeSingle(),
+  ]);
   const recipients = new Set<string>((admins ?? []).map((a) => a.id));
 
-  const { data: event } = await supabase.from("events").select("branch").eq("id", registration.event_id).maybeSingle();
   if (event?.branch) {
     const { data: branchRow } = await supabase.from("branches").select("coordinator_user_id").eq("name", event.branch).maybeSingle();
     if (branchRow?.coordinator_user_id) recipients.add(branchRow.coordinator_user_id);

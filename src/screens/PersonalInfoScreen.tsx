@@ -66,33 +66,37 @@ export default function PersonalInfoScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const [n, p] = await Promise.all([getCurrentUserName(), getCurrentUserPhone()]);
+          // Aşağıdaki 4 çağrının hiçbiri birbirinin sonucuna bağlı değil
+          // (coach için getCoach ayrı adımda, çünkü userId'ye ihtiyaç duyuyor) —
+          // tek Promise.all'da toplayıp gereksiz ardışık bekleyişi kaldırıyoruz.
+          const [n, p, athleteOrPhoto, coachUserId] = await Promise.all([
+            getCurrentUserName(),
+            getCurrentUserPhone(),
+            role === "athlete" ? getMyAthletes() : getCurrentUserPhoto(),
+            role === "coach" ? getCurrentAppUserId() : Promise.resolve(null),
+          ]);
           if (cancelled) return;
           setName(n ?? "");
           setPhone(p ?? "");
 
           if (role === "athlete") {
-            const athletes = await getMyAthletes();
-            if (!cancelled && athletes.length > 0) {
+            const athletes = athleteOrPhoto as Awaited<ReturnType<typeof getMyAthletes>>;
+            if (athletes.length > 0) {
               setMyAthleteId(athletes[0].id);
               setPhotoUrl(athletes[0].photo_url);
             }
           } else {
-            const photo = await getCurrentUserPhoto();
-            if (!cancelled) setPhotoUrl(photo);
+            setPhotoUrl(athleteOrPhoto as string | null);
           }
 
-          if (role === "coach") {
-            const userId = await getCurrentAppUserId();
-            if (userId) {
-              const c = await getCoach(userId);
-              if (!cancelled) {
-                setBirthDate(c.birth_date);
-                setEducationLevel(c.education_level);
-                setAddress(c.address ?? "");
-                setEmergencyName(c.emergency_contact_name ?? "");
-                setEmergencyPhone(c.emergency_contact_phone ?? "");
-              }
+          if (role === "coach" && coachUserId) {
+            const c = await getCoach(coachUserId);
+            if (!cancelled) {
+              setBirthDate(c.birth_date);
+              setEducationLevel(c.education_level);
+              setAddress(c.address ?? "");
+              setEmergencyName(c.emergency_contact_name ?? "");
+              setEmergencyPhone(c.emergency_contact_phone ?? "");
             }
           }
         } catch (e: any) {

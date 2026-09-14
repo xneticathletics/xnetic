@@ -53,8 +53,12 @@ export default function CoachWellnessScreen({ navigation }: Props) {
       // sadece antrenörün erişebildiği gruplarla sınırlı — aksi halde
       // antrenör, hiç sonuç vermeyecek başka branşların filtrelerini görürdü.
       // Wellness check-in sadece müsabık sporcular için bir uygulama.
+      // getMyCoachedGroupIds() içeride "await" ile beklenirse, aynı satırdaki
+      // ikinci sorgu (listGroups/listMyCoachedGroups) Promise.all'a hiç
+      // girmeden önce beklemeye başlar — .then() zinciriyle bağımlılığı
+      // koruyup iki sorgunun gerçekten paralel başlamasını sağlıyoruz.
       const [athletes, allGroups] = await Promise.all([
-        role === "club_admin" ? listAllAthletes() : listAthletesInGroups(await getMyCoachedGroupIds()),
+        role === "club_admin" ? listAllAthletes() : getMyCoachedGroupIds().then((ids) => listAthletesInGroups(ids)),
         role === "club_admin" ? listGroups() : listMyCoachedGroups(),
       ]);
       const musabikAthletes: Athlete[] = athletes.filter((a) => a.athlete_type === "musabik");

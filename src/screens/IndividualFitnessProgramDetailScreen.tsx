@@ -65,11 +65,11 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
   const [setsByItem, setSetsByItem] = useState<Record<string, SetEntry[]>>({});
   const [savingItem, setSavingItem] = useState<string | null>(null);
 
-  const loadHistory = useCallback(async (currentItems: IndividualFitnessProgramItem[]) => {
+  const loadHistory = useCallback(async (currentItems: IndividualFitnessProgramItem[], preFetched?: Promise<FitnessMeasurement[]>) => {
     // Sporcunun TÜM ölçümlerini TEK sorguda çekip programdaki hareketlere
     // göre burada grupluyoruz — her hareket için ayrı sorgu atmak yerine
     // (N+1) tek seferde çekmek, hareket sayısı arttıkça ölçekleniyor.
-    const all = await listAllMeasurementsForAthlete(athleteId);
+    const all = await (preFetched ?? listAllMeasurementsForAthlete(athleteId));
     const byExerciseKey = new Map<string, FitnessMeasurement[]>();
     all.forEach((m) => {
       if (!byExerciseKey.has(m.exercise_key)) byExerciseKey.set(m.exercise_key, []);
@@ -82,17 +82,20 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
     useCallback(() => {
       let cancelled = false;
       setLoading(true);
+      // Ölçüm geçmişi program/hareketlerin sonucuna bağlı değil — athleteId
+      // yeterli, o yüzden diğer ikisiyle aynı anda başlatılıyor.
+      const measurementsPromise = listAllMeasurementsForAthlete(athleteId);
       Promise.all([getIndividualProgram(programId), listIndividualProgramItems(programId)])
         .then(async ([p, i]) => {
           if (cancelled) return;
           setProgram(p);
           setItems(i);
           navigation.setOptions({ title: p.name });
-          await loadHistory(i);
+          await loadHistory(i, measurementsPromise);
         })
         .finally(() => { if (!cancelled) setLoading(false); });
       return () => { cancelled = true; };
-    }, [programId, navigation, loadHistory])
+    }, [programId, athleteId, navigation, loadHistory])
   );
 
   const handleSaveItem = async (item: IndividualFitnessProgramItem) => {

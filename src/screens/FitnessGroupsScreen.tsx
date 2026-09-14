@@ -33,12 +33,16 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const all = await listFitnessGroups();
+      // İkisi de birbirinden bağımsız sorgu — antrenörse sıra sıra değil
+      // paralel çekiliyor.
+      const [all, myGroups] = await Promise.all([
+        listFitnessGroups(),
+        isCoach ? listMyCoachedGroups() : Promise.resolve([]),
+      ]);
       if (!isCoach) {
         setGroups(all);
         return;
       }
-      const myGroups = await listMyCoachedGroups();
       const myBranches = new Set(myGroups.map((g) => g.branch));
       setGroups(all.filter((g) => myBranches.has(g.branch)));
     } catch (e: any) {

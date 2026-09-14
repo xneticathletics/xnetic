@@ -57,11 +57,11 @@ function formatDate(iso: string) {
 // yardımcı antrenör(ler)ine ve sporcuya bağlı hesaplara (veli VE sporcunun
 // kendi hesabı — ikisi de bağlıysa ikisine de) bildirim gider.
 async function notifyFreezeCreated(athleteId: string, freeze: MembershipFreeze) {
-  const { data: athlete, error: athleteError } = await supabase
-    .from("athletes")
-    .select("full_name, group_id, parent_user_id, athlete_user_id")
-    .eq("id", athleteId)
-    .single();
+  // athlete ve admins sorguları birbirinden bağımsız, aynı anda çekilebilir.
+  const [{ data: athlete, error: athleteError }, { data: admins }] = await Promise.all([
+    supabase.from("athletes").select("full_name, group_id, parent_user_id, athlete_user_id").eq("id", athleteId).single(),
+    supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true),
+  ]);
   if (athleteError || !athlete) return;
 
   const recipients = new Set<string>();
@@ -77,7 +77,6 @@ async function notifyFreezeCreated(athleteId: string, freeze: MembershipFreeze) 
     (assistantResult.data ?? []).forEach((r) => recipients.add(r.coach_id));
   }
 
-  const { data: admins } = await supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true);
   (admins ?? []).forEach((a) => recipients.add(a.id));
 
   const title = "Kayıt Dondurma";
