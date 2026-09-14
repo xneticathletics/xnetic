@@ -5,7 +5,6 @@ const APP_URL = import.meta.env.VITE_APP_URL as string;
 const NAV_LINKS = [
   { href: "/#hakkimizda", label: "Hakkımızda" },
   { href: "/#ozellikler", label: "Özellikler" },
-  { href: "/#nasil-calisir", label: "Nasıl Çalışır" },
   { href: "/#fiyatlandirma", label: "Fiyatlandırma" },
   { href: "/#sss", label: "SSS" },
 ];
@@ -18,19 +17,28 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <a href="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
           <img src="/logo-mark.png" alt="X-NETIC" className="h-16 w-16 drop-shadow-lg" />
-          <span className="text-lg font-extrabold tracking-tight text-ink">X-NETIC Spor Sistemleri</span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-xl font-extrabold tracking-tight text-ink">X-NETIC</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-teal">Spor Sistemleri</span>
+          </span>
         </a>
 
-        <nav className="hidden items-center gap-7 text-base font-semibold text-muted md:flex">
+        <nav className="hidden items-center gap-1 rounded-full border border-line bg-surface p-1.5 text-sm font-bold text-muted md:flex">
           {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="hover:text-ink">{l.label}</a>
+            <a
+              key={l.href}
+              href={l.href}
+              className="rounded-full px-4 py-2 transition hover:bg-line hover:text-ink"
+            >
+              {l.label}
+            </a>
           ))}
         </nav>
 
         <div className="flex items-center gap-3">
           <a
             href={`${APP_URL}/login`}
-            className="hidden text-sm font-semibold text-muted hover:text-ink sm:inline"
+            className="hidden rounded-lg border border-violet px-4 py-2 text-sm font-bold text-violet transition hover:bg-violet/10 sm:inline-block"
           >
             Giriş Yap
           </a>
@@ -85,7 +93,7 @@ export default function Header() {
               <a
                 href={`${APP_URL}/login`}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-2 py-2.5 text-base font-semibold text-muted hover:bg-surface hover:text-ink"
+                className="block rounded-lg px-2 py-2.5 text-base font-bold text-violet hover:bg-surface"
               >
                 Giriş Yap
               </a>

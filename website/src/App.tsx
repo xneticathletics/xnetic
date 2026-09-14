@@ -4,7 +4,6 @@ import Hero from "./components/Hero";
 import About from "./components/About";
 import Features from "./components/Features";
 import Roles from "./components/Roles";
-import HowItWorks from "./components/HowItWorks";
 import Pricing from "./components/Pricing";
 import Faq from "./components/Faq";
 import CtaBanner from "./components/CtaBanner";
@@ -74,7 +73,6 @@ export default function App() {
         <About />
         <Features />
         <Roles />
-        <HowItWorks />
         <Pricing settings={settings} loading={loading} />
         <Faq />
         <CtaBanner />
