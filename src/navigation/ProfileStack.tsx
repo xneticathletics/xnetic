@@ -10,6 +10,7 @@ import PersonalInfoScreen from "../screens/PersonalInfoScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import NotificationPreferencesScreen from "../screens/NotificationPreferencesScreen";
 import SupportScreen from "../screens/SupportScreen";
+import ClubSettingsStack from "./ClubSettingsStack";
 
 export type ProfileStackParamList = {
   Profile: undefined;
@@ -20,6 +21,7 @@ export type ProfileStackParamList = {
   ChangePassword: undefined;
   NotificationPreferences: undefined;
   Support: undefined;
+  ClubSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -43,6 +45,9 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: "Giriş ve Şifre İşlemleri" }} />
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ title: "Bildirim Tercihleri" }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Yardım / Destek" }} />
+      {role === "club_admin" && (
+        <Stack.Screen name="ClubSettings" component={ClubSettingsStack} options={{ headerShown: false }} />
+      )}
     </Stack.Navigator>
   );
 }

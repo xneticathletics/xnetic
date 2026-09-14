@@ -9,8 +9,8 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { getPlatformSettings, updatePlatformSettings } from "../lib/api/platformSettings";
 
 // Süper Admin'in alt menüsündeki bağımsız sekme — Ana Sayfa kutucuklarının
-// arasından çıkarılıp Kulüp Admini'nin "Kulüp Ayarları" sekmesiyle aynı
-// konuma (Ana Menü'nün yanına) taşındı.
+// arasından çıkarılıp buraya taşındı. Kulüp Admini'nin karşılığı olan
+// "Kulüp Ayarları" artık bir sekme değil, Profil'in içinde.
 export default function SystemSettingsScreen() {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);

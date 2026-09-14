@@ -182,6 +182,21 @@ export default function ProfileScreen({
         )}
       </View>
 
+      {/* Sadece Kulüp Admini için gösterilir — alt menüde artık ayrı bir
+          "Ayarlar" sekmesi YOK, kulüp yönetimi ekranlarına buradan girilir. */}
+      {role === "club_admin" && (
+        <TouchableOpacity style={styles.announcementsCard} onPress={() => navigation.navigate("ClubSettings")}>
+          <View style={styles.announcementsIconBadge}>
+            <Text style={styles.announcementsIcon}>⚙️</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.announcementsTitle}>Kulüp Ayarları</Text>
+            <Text style={styles.announcementsSub}>Grup, branş, kullanıcı ve diğer ayarlar</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Sadece Kulüp Admini için gösterilir — alt menüsünde "Duyurular"
           sekmesi YOK (bkz. RoleTabs.tsx: !isClubAdmin && !isSuperAdmin),
           bu yüzden Profil'den erişmesi gerekiyor. Antrenör (branş

@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { ClubSettingsStackParamList } from "../navigation/ClubSettingsStack";
@@ -19,13 +18,27 @@ const TILES: { key: keyof ClubSettingsStackParamList; icon: string; title: strin
 ];
 
 export default function ClubSettingsScreen({ navigation }: Props) {
-  const insets = useSafeAreaInsets();
+  // ClubSettingsStack, Profil'in içine gömülü bağımsız bir alt-stack —
+  // kendi kökünde (bu ekran) geri gidilecek bir önceki ekranı yok, bu
+  // yüzden React Navigation'ın normalde otomatik gösterdiği geri oku
+  // burada çıkmıyor. Üst navigatöre (ProfileStack) çıkıp Profil'e dönen
+  // bir geri düğmesini elle ekliyoruz — bkz. AnnouncementDetailScreen.tsx
+  // aynı desen.
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.getParent()?.goBack()}
+          style={{ paddingHorizontal: 4 }}
+        >
+          <Text style={{ color: colors.yellow, fontWeight: "700", fontSize: 15 }}>‹ Profil</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
-    >
-      <Text style={styles.title}>Kulüp Ayarları</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.grid}>
         {TILES.map((t, index) => {
           const accent = ACCENTS[index % ACCENTS.length];
@@ -51,8 +64,7 @@ export default function ClubSettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
-  title: { color: colors.ink, fontSize: 22, fontWeight: "700", marginBottom: spacing.lg },
+  content: { padding: spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   tile: {
     width: "47%", minHeight: 110, backgroundColor: colors.surface, borderWidth: 1,

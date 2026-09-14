@@ -39,10 +39,10 @@ export type ClubSettingsStackParamList = {
 
 const Stack = createNativeStackNavigator<ClubSettingsStackParamList>();
 
-// "Kulüp Ayarları" — Ana Menü'nün altında bir alt sayfa değil, Asistan/
-// Profil gibi kendi başına, ayrı bir üst seviye sekme. Bu yüzden kendi
-// bağımsız stack'i var; kökü (ClubSettingsHome) tıpkı Ana Sayfa/Profil
-// kökleri gibi headerShown:false — üstte "Ana Sayfa" düğmesi göstermiyor.
+// "Kulüp Ayarları" — Profil'in içine gömülü, kendi bağımsız stack'i olan
+// bir alt akış (bkz. ProfileStack.tsx). Kökü (ClubSettingsHome) kendi
+// başlığını gösterdiği için headerShown:false — üstteki Profil stack'inin
+// varsayılan header'ıyla çakışmasın diye.
 export default function ClubSettingsStack() {
   return (
     <Stack.Navigator
@@ -52,7 +52,7 @@ export default function ClubSettingsStack() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="ClubSettingsHome" component={ClubSettingsScreen} options={{ headerShown: false, title: "Kulüp Ayarları" }} />
+      <Stack.Screen name="ClubSettingsHome" component={ClubSettingsScreen} options={{ title: "Kulüp Ayarları" }} />
       <Stack.Screen name="GroupsList" component={GroupsListScreen} options={{ title: "Gruplar" }} />
       <Stack.Screen name="GroupForm" component={GroupFormScreen} />
       <Stack.Screen name="BranchesList" component={BranchesListScreen} options={{ title: "Branşlar" }} />

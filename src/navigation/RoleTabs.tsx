@@ -8,7 +8,6 @@ import { useBranchSelect } from "../context/BranchSelectContext";
 import HomeStack from "./HomeStack";
 import AIScreen from "../screens/AIScreen";
 import ProfileStack from "./ProfileStack";
-import ClubSettingsStack from "./ClubSettingsStack";
 import SystemSettingsScreen from "../screens/SystemSettingsScreen";
 import AnnouncementsStack from "./AnnouncementsStack";
 import MessagesStack from "./MessagesStack";
@@ -21,11 +20,11 @@ const TAB_ICONS: Record<string, string> = {
   Asistan: "🤖",
   Mesajlar: "💬",
   Profil: "👤",
-  Ayarlar: "⚙️",
   "Sistem Ayarları": "⚙️",
   Duyurular: "📣",
   "Sosyal Alan": "📸",
   Mağaza: "🛍️",
+  Etkinlik: "🏆",
 };
 
 function TabIcon({ routeName, focused, badgeCount }: { routeName: string; focused: boolean; badgeCount?: number }) {
@@ -67,18 +66,16 @@ const LOGO_SIZE = 62;
 // dar tutuluyor.
 const CENTER_GAP = LOGO_SIZE - 6;
 
-// Sol tarafta Ana Menü/Sosyal Alan/Mağaza (Süper Admin hariç herkeste 3-3,
-// Süper Admin'de 2-2), sağda Mesajlar/[Kulüp Ayarları ya da Sistem
+// Sol tarafta Ana Menü/Sosyal Alan/Mağaza, sağda Etkinlik/Mesajlar/[Sistem
 // Ayarları ya da Duyurular]/Profil, ortada da büyük/çıkıntılı marka rozeti
-// için boşluk bırakan özel bir tab bar. Kulüp Ayarları ve Asistan da
-// tıpkı Ana Menü/Profil gibi GERÇEK, bağımsız sekmeler — Ana Menü'nün
-// altına gizlenmiş bir alt sayfa değiller.
+// için boşluk bırakan özel bir tab bar. Asistan da tıpkı Ana Menü/Profil
+// gibi GERÇEK, bağımsız bir sekme — Ana Menü'nün altına gizlenmiş bir alt
+// sayfa değil.
 function CustomTabBar({
-  state, descriptors, navigation, onReady, unreadMessages, showShopTabs,
+  state, descriptors, navigation, onReady, unreadMessages,
 }: BottomTabBarProps & {
   onReady?: (navigation: BottomTabBarProps["navigation"]) => void;
   unreadMessages: number;
-  showShopTabs: boolean;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -89,23 +86,24 @@ function CustomTabBar({
     onReady?.(navigation);
   }, [navigation, onReady]);
 
-  // showShopTabs=true iken (Süper Admin hariç herkes — Sosyal Alan/Mağaza
-  // kutucuğu olmayan tek rol o) sol grup 3 (Ana Menü, Sosyal Alan, Mağaza),
-  // sağ grup 3 (Mesajlar, ikinci sekme, Profil) olacak şekilde 3-3. Süper
-  // Admin'de eskisi gibi 2-2 kalır. Asistan artık normal bir sekme değil —
-  // ortadaki logoya dokununca açılıyor, bu yüzden görünür sıraya hiç dahil
-  // edilmiyor (kendisi hâlâ gerçek bir Tab.Screen, sadece bu satırlarda
-  // gizleniyor) — RoleTabs'taki Tab.Screen sırası, Asistan'ın dizide tam
-  // ortada kalacağı şekilde kuruldu.
-  const leftCount = showShopTabs ? 3 : 2;
-  const rightCount = showShopTabs ? 3 : 2;
+  // Asistan artık normal bir sekme değil — ortadaki logoya dokununca
+  // açılıyor, bu yüzden görünür sıraya hiç dahil edilmiyor (kendisi hâlâ
+  // gerçek bir Tab.Screen, sadece burada gizleniyor). Sol/sağ grup
+  // uzunlukları rol bazında değişebildiği için (ör. Kulüp Admini'nde
+  // Duyurular sekmesi yok) sabit 3/2 yerine Asistan'ın dizideki KONUMUNA
+  // göre dinamik hesaplanıyor — bu sayede Asistan her zaman iki grubun tam
+  // ortasında (iki flex:1 kapsayıcı arasında) kalır, gruplardaki sekme
+  // sayısı eşit olmasa bile.
+  const asistanIndex = state.routes.findIndex((r) => r.name === "Asistan");
+  const leftCount = asistanIndex;
+  const rightCount = state.routes.length - asistanIndex - 1;
 
-  // Sosyal Alan/Mağaza kendi sekmesi hiç FOCUS olmuyor (tabPress hep
-  // preventDefault edip Ana Menü'nün stack'ine yönlendiriyor) — o yüzden
+  // Sosyal Alan/Mağaza/Etkinlik kendi sekmesi hiç FOCUS olmuyor (tabPress
+  // hep preventDefault edip Ana Menü'nün stack'ine yönlendiriyor) — o yüzden
   // "hangi sekmedeyiz" hissi Ana Menü'nün İÇİNDEKİ aktif ekrana bakılarak
-  // ayrıca hesaplanıyor: gerçekten SocialFeed/Shop(Manage)'daysak o
-  // kısayolun ikonu renkleniyor, Ana Menü'nünki de o sırada SÖNÜK kalıyor
-  // (aksi halde ikisi birden aktif görünüp kafa karıştırırdı).
+  // ayrıca hesaplanıyor: gerçekten SocialFeed/Shop(Manage)/Events(Manage)
+  // 'daysak o kısayolun ikonu renkleniyor, Ana Menü'nünki de o sırada SÖNÜK
+  // kalıyor (aksi halde ikisi birden aktif görünüp kafa karıştırırdı).
   const homeRoute = state.routes.find((r) => r.name === "Ana Menü");
   const homeNestedState = homeRoute?.state as { index?: number; routes: { name: string }[] } | undefined;
   const activeHomeScreen = homeNestedState
@@ -113,13 +111,15 @@ function CustomTabBar({
     : undefined;
   const isOnSocialFeed = activeHomeScreen === "SocialFeed";
   const isOnShop = activeHomeScreen === "Shop" || activeHomeScreen === "ShopManage";
+  const isOnEvents = activeHomeScreen === "EventsList" || activeHomeScreen === "EventsManage";
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key];
     let isFocused = state.index === index;
     if (route.name === "Sosyal Alan") isFocused = isOnSocialFeed;
     else if (route.name === "Mağaza") isFocused = isOnShop;
-    else if (route.name === "Ana Menü") isFocused = isFocused && !isOnSocialFeed && !isOnShop;
+    else if (route.name === "Etkinlik") isFocused = isOnEvents;
+    else if (route.name === "Ana Menü") isFocused = isFocused && !isOnSocialFeed && !isOnShop && !isOnEvents;
 
     const onPress = () => {
       const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
@@ -173,14 +173,15 @@ function CustomTabBar({
   );
 }
 
-// Kulüp Ayarları sadece Kulüp Admini'ne, Sistem Ayarları sadece Süper
-// Admin'e gösterilir. Asistan artık HERKESE açık.
+// Sistem Ayarları sadece Süper Admin'e gösterilir. Kulüp Ayarları artık
+// alt menüde değil — Profil'in içinde (bkz. ProfileStack.tsx). Asistan
+// HERKESE açık.
 export default function RoleTabs({ role }: { role: UserRole }) {
   const isClubAdmin = role === "club_admin";
   const isSuperAdmin = role === "super_admin";
-  // Süper Admin'in Ana Sayfa'sında Sosyal Alan/Mağaza kutucuğu hiç yok
-  // (kulübe özel değil, platform yönetimi ekranları var) — bu yüzden alt
-  // menüde de sadece o, eski 2-2 düzeninde kalıyor.
+  // Süper Admin'in Ana Sayfa'sında Sosyal Alan/Mağaza/Etkinlik kutucuğu
+  // hiç yok (kulübe özel değil, platform yönetimi ekranları var) — bu
+  // yüzden alt menüde de sadece o bu kısayolları görmüyor.
   const showShopTabs = !isSuperAdmin;
   const { isLocked } = useBranchSelect();
   const isBranchCoordinator = role === "coach" && isLocked;
@@ -221,23 +222,22 @@ export default function RoleTabs({ role }: { role: UserRole }) {
           <CustomTabBar
             {...props}
             unreadMessages={unreadMessages}
-            showShopTabs={showShopTabs}
             onReady={(nav) => { tabNavRef.current = nav; }}
           />
         )}
       >
         <Tab.Screen name="Ana Menü">{() => <HomeStack role={role} />}</Tab.Screen>
 
-        {/* CustomTabBar sol/sağ gruplarını dizideki KONUMA göre ayırıyor
-            (leftCount/rightCount) — Asistan'ın gizli kalabilmesi için
-            her zaman tam ortada (dizinin index'te leftCount'ıncı sırasında)
-            durması gerekiyor. showShopTabs=true iken sol grup Ana Menü/
-            Sosyal Alan/Mağaza (3), sağ grup Mesajlar/ikinci sekme/Profil
-            (3) — Mesajlar bu yüzden Asistan'dan SONRA geliyor. Süper
-            Admin'de (showShopTabs=false) eskisi gibi Mesajlar hemen Ana
-            Menü'nün yanında (sol grup, 2-2). Sosyal Alan/Mağaza kendi
-            ekranı değil — dokununca Ana Menü'nün stack'indeki gerçek
-            SocialFeed/Shop ekranına yönlendiren birer kısayol (Profil
+        {/* CustomTabBar sol/sağ gruplarını Asistan'ın dizideki KONUMUNA göre
+            dinamik ayırıyor — Asistan'ın gizli kalabilmesi için her zaman
+            iki grubun tam ortasında durması gerekiyor. showShopTabs=true
+            iken sol grup Ana Menü/Sosyal Alan/Mağaza (3), sağ grup
+            Etkinlik/Mesajlar/[Duyurular varsa]/Profil (Kulüp Admini'nde
+            Duyurular yok, 3-3; diğer rollerde 3-4). Süper Admin'de
+            (showShopTabs=false) Mesajlar hemen Ana Menü'nün yanında (sol
+            grup), sağda Sistem Ayarları/Profil. Sosyal Alan/Mağaza/Etkinlik
+            kendi ekranı değil — dokununca Ana Menü'nün stack'indeki gerçek
+            SocialFeed/Shop/Events ekranına yönlendiren birer kısayol (Profil
             sekmesindeki aynı desen). */}
         {showShopTabs && (
           <>
@@ -270,8 +270,22 @@ export default function RoleTabs({ role }: { role: UserRole }) {
 
         <Tab.Screen name="Asistan" component={AIScreen} />
 
-        {showShopTabs && <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>}
-        {isClubAdmin && <Tab.Screen name="Ayarlar" component={ClubSettingsStack} />}
+        {showShopTabs && (
+          <>
+            <Tab.Screen
+              name="Etkinlik"
+              listeners={({ navigation }) => ({
+                tabPress: (e) => {
+                  e.preventDefault();
+                  navigation.navigate("Ana Menü", { screen: isClubAdmin || isBranchCoordinator ? "EventsManage" : "EventsList" });
+                },
+              })}
+            >
+              {() => null}
+            </Tab.Screen>
+            <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>
+          </>
+        )}
         {isSuperAdmin && <Tab.Screen name="Sistem Ayarları" component={SystemSettingsScreen} />}
         {!isClubAdmin && !isSuperAdmin && <Tab.Screen name="Duyurular" component={AnnouncementsStack} />}
         <Tab.Screen
