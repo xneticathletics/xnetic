@@ -21,7 +21,7 @@ const TAB_ICONS: Record<string, string> = {
   Asistan: "🤖",
   Mesajlar: "💬",
   Profil: "👤",
-  "Kulüp Ayarları": "⚙️",
+  Ayarlar: "⚙️",
   "Sistem Ayarları": "⚙️",
   Duyurular: "📣",
   "Sosyal Alan": "📸",
@@ -62,8 +62,10 @@ function TabIcon({ routeName, focused, badgeCount }: { routeName: string; focuse
 const TAB_BAR_HEIGHT = 58;
 const LOGO_SIZE = 62;
 // Ortadaki logoya yer açmak için sol/sağ gruplara ayrılan sabit
-// genişliği — logonun altına gizlenip dokunmayı engellemesin diye.
-const CENTER_GAP = LOGO_SIZE + 12;
+// genişliği — logonun altına gizlenip dokunmayı engellemesin diye, ama
+// menüler logoya biraz daha yakın dursun diye eskisinden (LOGO_SIZE + 12)
+// dar tutuluyor.
+const CENTER_GAP = LOGO_SIZE - 6;
 
 // Sol tarafta Ana Menü/Sosyal Alan/Mağaza (Süper Admin hariç herkeste 3-3,
 // Süper Admin'de 2-2), sağda Mesajlar/[Kulüp Ayarları ya da Sistem
@@ -98,9 +100,26 @@ function CustomTabBar({
   const leftCount = showShopTabs ? 3 : 2;
   const rightCount = showShopTabs ? 3 : 2;
 
+  // Sosyal Alan/Mağaza kendi sekmesi hiç FOCUS olmuyor (tabPress hep
+  // preventDefault edip Ana Menü'nün stack'ine yönlendiriyor) — o yüzden
+  // "hangi sekmedeyiz" hissi Ana Menü'nün İÇİNDEKİ aktif ekrana bakılarak
+  // ayrıca hesaplanıyor: gerçekten SocialFeed/Shop(Manage)'daysak o
+  // kısayolun ikonu renkleniyor, Ana Menü'nünki de o sırada SÖNÜK kalıyor
+  // (aksi halde ikisi birden aktif görünüp kafa karıştırırdı).
+  const homeRoute = state.routes.find((r) => r.name === "Ana Menü");
+  const homeNestedState = homeRoute?.state as { index?: number; routes: { name: string }[] } | undefined;
+  const activeHomeScreen = homeNestedState
+    ? homeNestedState.routes[homeNestedState.index ?? homeNestedState.routes.length - 1]?.name
+    : undefined;
+  const isOnSocialFeed = activeHomeScreen === "SocialFeed";
+  const isOnShop = activeHomeScreen === "Shop" || activeHomeScreen === "ShopManage";
+
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key];
-    const isFocused = state.index === index;
+    let isFocused = state.index === index;
+    if (route.name === "Sosyal Alan") isFocused = isOnSocialFeed;
+    else if (route.name === "Mağaza") isFocused = isOnShop;
+    else if (route.name === "Ana Menü") isFocused = isFocused && !isOnSocialFeed && !isOnShop;
 
     const onPress = () => {
       const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
@@ -252,7 +271,7 @@ export default function RoleTabs({ role }: { role: UserRole }) {
         <Tab.Screen name="Asistan" component={AIScreen} />
 
         {showShopTabs && <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>}
-        {isClubAdmin && <Tab.Screen name="Kulüp Ayarları" component={ClubSettingsStack} />}
+        {isClubAdmin && <Tab.Screen name="Ayarlar" component={ClubSettingsStack} />}
         {isSuperAdmin && <Tab.Screen name="Sistem Ayarları" component={SystemSettingsScreen} />}
         {!isClubAdmin && !isSuperAdmin && <Tab.Screen name="Duyurular" component={AnnouncementsStack} />}
         <Tab.Screen
