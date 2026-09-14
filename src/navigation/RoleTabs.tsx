@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createBottomTabNavigator, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { colors, radius } from "../theme/tokens";
 import type { UserRole } from "../context/AuthContext";
+import { useBranchSelect } from "../context/BranchSelectContext";
 import HomeStack from "./HomeStack";
 import AIScreen from "../screens/AIScreen";
 import ProfileStack from "./ProfileStack";
@@ -23,6 +24,8 @@ const TAB_ICONS: Record<string, string> = {
   "Kulüp Ayarları": "⚙️",
   "Sistem Ayarları": "⚙️",
   Duyurular: "📣",
+  "Sosyal Alan": "📸",
+  Mağaza: "🛍️",
 };
 
 function TabIcon({ routeName, focused, badgeCount }: { routeName: string; focused: boolean; badgeCount?: number }) {
@@ -62,16 +65,18 @@ const LOGO_SIZE = 62;
 // genişliği — logonun altına gizlenip dokunmayı engellemesin diye.
 const CENTER_GAP = LOGO_SIZE + 12;
 
-// Sol tarafta Ana Menü (+ Kulüp Admini'nde Kulüp Ayarları), sağda Profil
-// (+ Kulüp Admini'nde yanına Asistan), ortada da büyük/çıkıntılı marka
-// rozeti için boşluk bırakan özel bir tab bar. Kulüp Ayarları ve Asistan
-// da tıpkı Ana Menü/Profil gibi GERÇEK, bağımsız sekmeler — Ana Menü'nün
+// Sol tarafta Ana Menü/Sosyal Alan/Mağaza (Süper Admin hariç herkeste 3-3,
+// Süper Admin'de 2-2), sağda Mesajlar/[Kulüp Ayarları ya da Sistem
+// Ayarları ya da Duyurular]/Profil, ortada da büyük/çıkıntılı marka rozeti
+// için boşluk bırakan özel bir tab bar. Kulüp Ayarları ve Asistan da
+// tıpkı Ana Menü/Profil gibi GERÇEK, bağımsız sekmeler — Ana Menü'nün
 // altına gizlenmiş bir alt sayfa değiller.
 function CustomTabBar({
-  state, descriptors, navigation, onReady, unreadMessages,
+  state, descriptors, navigation, onReady, unreadMessages, showShopTabs,
 }: BottomTabBarProps & {
   onReady?: (navigation: BottomTabBarProps["navigation"]) => void;
   unreadMessages: number;
+  showShopTabs: boolean;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -82,14 +87,16 @@ function CustomTabBar({
     onReady?.(navigation);
   }, [navigation, onReady]);
 
-  // Sol: Ana Menü + Mesajlar (HERKESTE). Sağ: Profil'in önünde herkeste
-  // ikinci bir sekme var artık — Kulüp Admini'nde Kulüp Ayarları, Süper
-  // Admin'de Sistem Ayarları, geri kalan üç rolde (Antrenör/Veli/Sporcu)
-  // Duyurular. Asistan artık normal bir sekme değil — ortadaki logoya
-  // dokununca açılıyor, bu yüzden görünür sıraya hiç dahil edilmiyor
-  // (kendisi hâlâ gerçek bir Tab.Screen, sadece bu satırlarda gizleniyor).
-  const leftCount = 2;
-  const rightCount = 2;
+  // showShopTabs=true iken (Süper Admin hariç herkes — Sosyal Alan/Mağaza
+  // kutucuğu olmayan tek rol o) sol grup 3 (Ana Menü, Sosyal Alan, Mağaza),
+  // sağ grup 3 (Mesajlar, ikinci sekme, Profil) olacak şekilde 3-3. Süper
+  // Admin'de eskisi gibi 2-2 kalır. Asistan artık normal bir sekme değil —
+  // ortadaki logoya dokununca açılıyor, bu yüzden görünür sıraya hiç dahil
+  // edilmiyor (kendisi hâlâ gerçek bir Tab.Screen, sadece bu satırlarda
+  // gizleniyor) — RoleTabs'taki Tab.Screen sırası, Asistan'ın dizide tam
+  // ortada kalacağı şekilde kuruldu.
+  const leftCount = showShopTabs ? 3 : 2;
+  const rightCount = showShopTabs ? 3 : 2;
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key];
@@ -152,6 +159,12 @@ function CustomTabBar({
 export default function RoleTabs({ role }: { role: UserRole }) {
   const isClubAdmin = role === "club_admin";
   const isSuperAdmin = role === "super_admin";
+  // Süper Admin'in Ana Sayfa'sında Sosyal Alan/Mağaza kutucuğu hiç yok
+  // (kulübe özel değil, platform yönetimi ekranları var) — bu yüzden alt
+  // menüde de sadece o, eski 2-2 düzeninde kalıyor.
+  const showShopTabs = !isSuperAdmin;
+  const { isLocked } = useBranchSelect();
+  const isBranchCoordinator = role === "coach" && isLocked;
   const insets = useSafeAreaInsets();
   const tabNavRef = useRef<BottomTabBarProps["navigation"] | null>(null);
   const logoScale = useRef(new Animated.Value(1)).current;
@@ -189,17 +202,56 @@ export default function RoleTabs({ role }: { role: UserRole }) {
           <CustomTabBar
             {...props}
             unreadMessages={unreadMessages}
+            showShopTabs={showShopTabs}
             onReady={(nav) => { tabNavRef.current = nav; }}
           />
         )}
       >
         <Tab.Screen name="Ana Menü">{() => <HomeStack role={role} />}</Tab.Screen>
+
         {/* CustomTabBar sol/sağ gruplarını dizideki KONUMA göre ayırıyor
             (leftCount/rightCount) — Asistan'ın gizli kalabilmesi için
-            her zaman tam ortada durması gerekiyor. Mesajlar HERKESTE Ana
-            Menü'nün hemen yanında (sol grup). */}
-        <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>
+            her zaman tam ortada (dizinin index'te leftCount'ıncı sırasında)
+            durması gerekiyor. showShopTabs=true iken sol grup Ana Menü/
+            Sosyal Alan/Mağaza (3), sağ grup Mesajlar/ikinci sekme/Profil
+            (3) — Mesajlar bu yüzden Asistan'dan SONRA geliyor. Süper
+            Admin'de (showShopTabs=false) eskisi gibi Mesajlar hemen Ana
+            Menü'nün yanında (sol grup, 2-2). Sosyal Alan/Mağaza kendi
+            ekranı değil — dokununca Ana Menü'nün stack'indeki gerçek
+            SocialFeed/Shop ekranına yönlendiren birer kısayol (Profil
+            sekmesindeki aynı desen). */}
+        {showShopTabs && (
+          <>
+            <Tab.Screen
+              name="Sosyal Alan"
+              listeners={({ navigation }) => ({
+                tabPress: (e) => {
+                  e.preventDefault();
+                  navigation.navigate("Ana Menü", { screen: "SocialFeed" });
+                },
+              })}
+            >
+              {() => null}
+            </Tab.Screen>
+            <Tab.Screen
+              name="Mağaza"
+              listeners={({ navigation }) => ({
+                tabPress: (e) => {
+                  e.preventDefault();
+                  navigation.navigate("Ana Menü", { screen: isClubAdmin || isBranchCoordinator ? "ShopManage" : "Shop" });
+                },
+              })}
+            >
+              {() => null}
+            </Tab.Screen>
+          </>
+        )}
+
+        {!showShopTabs && <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>}
+
         <Tab.Screen name="Asistan" component={AIScreen} />
+
+        {showShopTabs && <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>}
         {isClubAdmin && <Tab.Screen name="Kulüp Ayarları" component={ClubSettingsStack} />}
         {isSuperAdmin && <Tab.Screen name="Sistem Ayarları" component={SystemSettingsScreen} />}
         {!isClubAdmin && !isSuperAdmin && <Tab.Screen name="Duyurular" component={AnnouncementsStack} />}
