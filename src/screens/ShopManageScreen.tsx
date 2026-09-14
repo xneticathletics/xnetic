@@ -105,6 +105,10 @@ export default function ShopManageScreen({ navigation }: Props) {
         data={products}
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz ürün eklenmedi.</Text> : null}
         renderItem={({ item }) => (

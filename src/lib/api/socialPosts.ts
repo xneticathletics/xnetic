@@ -42,7 +42,10 @@ async function attachAuthorNames(posts: SocialPost[]): Promise<SocialPost[]> {
 export async function listSocialFeed(): Promise<SocialPost[]> {
   const myUserId = await getCurrentAppUserId();
   const [approvedResult, ownPendingResult] = await Promise.all([
-    supabase.from("social_posts").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+    // Fotoğraflar zaten 2 hafta sonra siliniyor ama çok aktif bir kulüpte
+    // yine de çok satır/görsel birikebiliyor — akışı ilk açılışta hızlı
+    // tutmak için en yeni 150 ile sınırlıyoruz.
+    supabase.from("social_posts").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(150),
     myUserId
       ? supabase.from("social_posts").select("*").eq("status", "pending").eq("author_id", myUserId)
       : Promise.resolve({ data: [] as SocialPost[], error: null }),

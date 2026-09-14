@@ -121,6 +121,13 @@ export default function ShopScreen({ navigation }: Props) {
         numColumns={columns}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
+        // İlk açılışta aynı anda çok fazla ürün fotoğrafı indirmesin diye
+        // (yavaşlık şikayeti) — az sayıda ürünle başlayıp kaydırdıkça
+        // genişletiyor.
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={
           !loading ? (

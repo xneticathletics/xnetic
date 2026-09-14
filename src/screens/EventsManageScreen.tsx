@@ -57,6 +57,10 @@ export default function EventsManageScreen({ navigation }: Props) {
         data={events}
         keyExtractor={(e) => e.id}
         contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz etkinlik oluşturulmadı.</Text> : null}
         renderItem={({ item }) => (

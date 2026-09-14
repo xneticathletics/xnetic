@@ -203,6 +203,13 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
         data={feedRows}
         keyExtractor={(row) => row.key}
         contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.xs, paddingBottom: insets.bottom + 96 }}
+        // İlk açılışta aynı anda çok fazla foto/video karesi indirip
+        // çözmeye çalışmasın diye (yavaşlık şikayeti) — az sayıda satırla
+        // başlayıp kaydırdıkça genişletiyor.
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews
         ListEmptyComponent={
           !loading ? (
             <Text style={styles.empty}>{tab === "pending" ? "Onay bekleyen paylaşım yok." : "Henüz paylaşım yapılmamış."}</Text>
