@@ -178,7 +178,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "geldi" }}
               >
-                <Text style={[styles.statusButtonText, { color: item.status === "geldi" ? colors.bg : colors.teal }]}>Geldi</Text>
+                <Text style={[styles.statusButtonText, { color: item.status === "geldi" ? colors.bg : colors.teal }]}>✓ Geldi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, { borderColor: colors.coral }, item.status === "gelmedi" && { backgroundColor: colors.coral }]}
@@ -186,15 +186,15 @@ export default function AttendanceScreen({ route, navigation }: Props) {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "gelmedi" }}
               >
-                <Text style={[styles.statusButtonText, { color: item.status === "gelmedi" ? colors.bg : colors.coral }]}>Gelmedi</Text>
+                <Text style={[styles.statusButtonText, { color: item.status === "gelmedi" ? colors.bg : colors.coral }]}>✕ Gelmedi</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.statusButton, { borderColor: colors.violet }, item.status === "izinli" && { backgroundColor: colors.violet }]}
+                style={[styles.statusButton, { borderColor: colors.muted }, item.status === "izinli" && { backgroundColor: colors.muted }]}
                 onPress={() => setStatus(item.athlete_id, "izinli")}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "izinli" }}
               >
-                <Text style={[styles.statusButtonText, { color: item.status === "izinli" ? colors.bg : colors.violet }]}>İzinli</Text>
+                <Text style={[styles.statusButtonText, { color: item.status === "izinli" ? colors.bg : colors.muted }]}>📄 İzinli</Text>
               </TouchableOpacity>
             </View>
           </View>
