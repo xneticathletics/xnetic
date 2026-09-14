@@ -183,13 +183,14 @@ export type CoachWithGroups = Coach & { groupNames: string[]; groupIds: string[]
 // id'lerini de taşır — bu sayede Antrenörler ekranında salona göre
 // filtreleme yapılabilir (groups.venue_id üzerinden).
 export async function listCoachesWithGroups(): Promise<CoachWithGroups[]> {
-  const coaches = await listCoaches();
-  if (coaches.length === 0) return [];
-
-  const [headResult, assistantResult] = await Promise.all([
+  // Üç sorgu da birbirinden bağımsız (head/assistant sorguları coaches
+  // listesine ihtiyaç duymuyor) — ardışık değil, tek dalgada paralel.
+  const [coaches, headResult, assistantResult] = await Promise.all([
+    listCoaches(),
     supabase.from("groups").select("id, name, head_coach_id").not("head_coach_id", "is", null),
     supabase.from("group_coaches").select("coach_id, groups(id, name)"),
   ]);
+  if (coaches.length === 0) return [];
   if (headResult.error) throw headResult.error;
   if (assistantResult.error) throw assistantResult.error;
 
