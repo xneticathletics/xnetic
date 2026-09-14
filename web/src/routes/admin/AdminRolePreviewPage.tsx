@@ -34,7 +34,6 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Yoklama Durumu", sub: "", icon: "📋" },
     { label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { label: "Aidat Öde", sub: "", icon: "💰" },
-    { label: "Performans", sub: "Beslenme", icon: "📊" },
   ],
   athlete: [
     { label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },

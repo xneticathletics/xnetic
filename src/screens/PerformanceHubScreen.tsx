@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { UserRole } from "../context/AuthContext";
@@ -20,11 +19,10 @@ type HubItem = { key: string; icon: string; title: string; sub: string; onPress:
 // Ana Sayfa'da ayrı ayrı duran Fitness/Performans Ölçümleri/Beslenme
 // kutucuklarının birleştiği tek giriş noktası. Hangi alt öğelerin
 // görüneceği role göre değişir: Kulüp Admini/Branş Koordinatörü üçünü de,
-// Antrenör sadece Fitness+Beslenme'yi, Sporcu Performansım+Beslenme'yi,
-// Veli sadece Beslenme'yi görür (o roller zaten diğer öğelere hiç sahip
-// değildi — bkz. HomeScreen.tsx eski TILES_BY_ROLE).
+// Antrenör sadece Fitness+Beslenme'yi, Sporcu Performansım+Beslenme'yi
+// görür. Veli'de bu bölüm hiç yok (bkz. HomeScreen.tsx — "sporcum"
+// üzerinden zaten her şeyi görüyor), bu yüzden bu ekrana hiç gelmiyor.
 export default function PerformanceHubScreen({ role, navigation }: Props) {
-  const insets = useSafeAreaInsets();
   const { isLocked } = useBranchSelect();
   const isBranchCoordinator = role === "coach" && isLocked;
 
@@ -62,11 +60,7 @@ export default function PerformanceHubScreen({ role, navigation }: Props) {
   });
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
-    >
-      <Text style={styles.title}>Performans</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.grid}>
         {items.map((item, index) => {
           const accent = ACCENTS[index % ACCENTS.length];
@@ -92,8 +86,7 @@ export default function PerformanceHubScreen({ role, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
-  title: { color: colors.ink, fontSize: 22, fontWeight: "700", marginBottom: spacing.lg },
+  content: { padding: spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   tile: {
     width: "47%", minHeight: 110, backgroundColor: colors.surface, borderWidth: 1,

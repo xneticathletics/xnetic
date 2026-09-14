@@ -38,7 +38,6 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "yoklama", label: "Yoklama Durumu", sub: "", icon: "📋" },
     { key: "antrenman", label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
-    { key: "performans_hub", label: "Performans", sub: "Beslenme", icon: "📊" },
   ],
   athlete: [
     { key: "antrenman", label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
