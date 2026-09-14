@@ -53,6 +53,8 @@ const TOGGLEABLE_TILES: { key: string; label: string; hint?: string; icon: strin
   { key: "beslenme", label: "Beslenme", icon: "🥗" },
   { key: "fitness", label: "Fitness", icon: "💪" },
   { key: "magaza", label: "Mağaza", icon: "🛍️" },
+  { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", icon: "🏆" },
+  { key: "sosyal", label: "Sosyal Alan", icon: "📸" },
 ];
 
 export default function ClubSettingsPage() {
