@@ -12,10 +12,7 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Takvim", sub: "Antrenman ve Müsabakalar", icon: "📅" },
     { label: "Finans", sub: "Aidat ve giderler", icon: "💰" },
     { label: "Kulüp Yapısı", sub: "Grup, branş, salon", icon: "🏛️" },
-    { label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
-    { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
-    { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet", icon: "🏆" },
+    { label: "Performans", sub: "Fitness, ölçüm ve beslenme", icon: "📊" },
   ],
   coordinator: [
     { label: "Sporcu Yönetimi", sub: "Branşının sporcuları", icon: "👥" },
@@ -24,34 +21,26 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
     { label: "Kulüp Yapısı", sub: "Branşının grup ve salonları", icon: "🏛️" },
     { label: "Finans", sub: "Branşının aidatları", icon: "💰" },
-    { label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
-    { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
-    { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { label: "Etkinlik/Turnuva/Kamp", sub: "Branşının etkinlikleri", icon: "🏆" },
+    { label: "Performans", sub: "Fitness, ölçüm ve beslenme", icon: "📊" },
   ],
   coach: [
     { label: "Sporcularım", sub: "", icon: "👥" },
     { label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
     { label: "Antrenman Planla", sub: "Bugün", icon: "📅" },
-    { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
-    { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { label: "Performans", sub: "Fitness ve beslenme", icon: "📊" },
   ],
   parent: [
     { label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
     { label: "Yoklama Durumu", sub: "", icon: "📋" },
     { label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { label: "Aidat Öde", sub: "", icon: "💰" },
-    { label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { label: "Performans", sub: "Beslenme", icon: "📊" },
   ],
   athlete: [
     { label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
     { label: "Antrenman Katılım Durumu", sub: "", icon: "📋" },
     { label: "Günlük Check-in", sub: "Uyku, enerji ve ruh hâlini kaydet", icon: "🌡️" },
-    { label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
-    { label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { label: "Performans", sub: "Performans ve beslenme", icon: "📊" },
   ],
 };
 
@@ -69,10 +58,11 @@ const ROLE_ORDER = ["club_admin", "coordinator", "coach", "parent", "athlete"];
 // mobildeki theme/tokens.ts accentRotation ile birebir aynı.
 const ACCENT_ROTATION = ["#FFC845", "#3FD6C6", "#FF6B5D"];
 
-// Alt sekme çubuğundaki ikinci sağ sekme — mobildeki RoleTabs.tsx ile aynı
-// mantık: Kulüp Admini'nde Kulüp Ayarları, diğer 4 rolde Duyurular.
-function getSecondTab(roleKey: string) {
-  return roleKey === "club_admin" ? { icon: "⚙️", label: "Kulüp Ayarları" } : { icon: "📣", label: "Duyurular" };
+// Alt sekme çubuğundaki ekstra sağ sekme — mobildeki RoleTabs.tsx ile aynı
+// mantık: Kulüp Admini'nde yok (Kulüp Ayarları artık Profil'in içinde),
+// diğer 4 rolde Duyurular.
+function getExtraTab(roleKey: string) {
+  return roleKey === "club_admin" ? null : { icon: "📣", label: "Duyurular" };
 }
 
 function TabIcon({ icon, label, active }: { icon: string; label: string; active?: boolean }) {
@@ -89,7 +79,7 @@ export default function AdminRolePreviewPage() {
   const activeKey = roleKey && TILES_BY_ROLE_KEY[roleKey] ? roleKey : "club_admin";
   const tiles: Tile[] = TILES_BY_ROLE_KEY[activeKey] ?? [];
   const label = ROLE_LABELS[activeKey] ?? "Rol";
-  const secondTab = getSecondTab(activeKey);
+  const extraTab = getExtraTab(activeKey);
 
   return (
     <div>
@@ -161,14 +151,17 @@ export default function AdminRolePreviewPage() {
 
             <div className="flex items-end justify-around border-t border-line bg-bg px-2 pb-2 pt-1.5">
               <TabIcon icon="🏠" label="Ana Menü" active />
-              <TabIcon icon="💬" label="Mesajlar" />
+              <TabIcon icon="📸" label="Sosyal Alan" />
+              <TabIcon icon="🛍️" label="Mağaza" />
               <div className="-mt-3 flex flex-col items-center gap-0.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow text-base shadow-lg">
                   🤖
                 </div>
                 <span className="text-[8px] font-semibold text-muted">Asistan</span>
               </div>
-              <TabIcon icon={secondTab.icon} label={secondTab.label} />
+              <TabIcon icon="🏆" label="Etkinlik" />
+              <TabIcon icon="💬" label="Mesajlar" />
+              {extraTab && <TabIcon icon={extraTab.icon} label={extraTab.label} />}
               <TabIcon icon="👤" label="Profil" />
             </div>
           </div>
