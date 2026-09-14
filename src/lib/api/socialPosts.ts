@@ -1,9 +1,25 @@
 import { supabase } from "../supabase";
 import * as FileSystem from "expo-file-system/legacy";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { decode } from "base64-arraybuffer";
 import { getCurrentAppUserId, getCurrentClubId } from "./currentUser";
 import { sendNotification } from "./notifications";
 import type { UserRole } from "../../context/AuthContext";
+
+// Telefon kameralarının orijinal karesi genelde 3000-4000px genişliğinde
+// (birkaç MB) — Sosyal Alan'daki ızgara önizlemesi bunun küçük bir kısmını
+// (~150px) gösteriyor ama TAM boyutu indiriyordu, bu da akışın (özellikle
+// fotoğrafların) "geç geliyor" şikayetinin asıl nedeniydi. Yükleme
+// öncesinde 1600px genişliğe indirip JPEG'e sıkıştırıyoruz — tam ekran
+// görüntüleyicide de bu boyut fazlasıyla net.
+const SOCIAL_PHOTO_MAX_WIDTH = 1600;
+
+async function resizeSocialPhoto(localUri: string): Promise<string> {
+  const context = ImageManipulator.manipulate(localUri);
+  const rendered = await context.resize({ width: SOCIAL_PHOTO_MAX_WIDTH, height: null }).renderAsync();
+  const result = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
+  return result.uri;
+}
 
 // "social-posts" bucket'ında da bu değerle senkron (bkz. migration
 // 20260909050000_social_posts.sql'deki bucket file_size_limit).
@@ -133,23 +149,26 @@ export async function createSocialPost(params: {
   const clubId = await getCurrentClubId();
   if (!userId || !clubId) throw new Error("Kullanıcı bulunamadı");
 
+  let uploadUri = params.localUri;
+  let ext = params.localUri.split(".").pop()?.split("?")[0] || (params.mediaType === "video" ? "mp4" : "jpg");
+
   if (params.mediaType === "video") {
     const info = await FileSystem.getInfoAsync(params.localUri);
     if (info.exists && info.size > MAX_SOCIAL_VIDEO_SIZE_BYTES) {
       throw new Error(`Video en fazla ${MAX_SOCIAL_VIDEO_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
     }
+  } else {
+    uploadUri = await resizeSocialPhoto(params.localUri);
+    ext = "jpg";
   }
 
-  const ext = params.localUri.split(".").pop()?.split("?")[0] || (params.mediaType === "video" ? "mp4" : "jpg");
   const path = `${clubId}/${userId}/${Date.now()}.${ext}`;
   const contentType =
     params.mediaType === "video"
       ? `video/${ext === "mov" ? "quicktime" : ext}`
-      : ext === "jpg"
-        ? "image/jpeg"
-        : `image/${ext}`;
+      : "image/jpeg";
 
-  const base64 = await FileSystem.readAsStringAsync(params.localUri, { encoding: FileSystem.EncodingType.Base64 });
+  const base64 = await FileSystem.readAsStringAsync(uploadUri, { encoding: FileSystem.EncodingType.Base64 });
   const arrayBuffer = decode(base64);
 
   const { error: uploadError } = await supabase.storage
