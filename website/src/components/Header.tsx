@@ -23,12 +23,12 @@ export default function Header() {
           </span>
         </a>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-line bg-surface p-1.5 text-sm font-bold text-muted md:flex">
+        <nav className="hidden items-center gap-3 text-sm font-bold text-muted md:flex">
           {NAV_LINKS.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="rounded-full px-4 py-2 transition hover:bg-line hover:text-ink"
+              className="rounded-full border border-line px-4 py-2 transition hover:border-teal hover:bg-surface hover:text-ink"
             >
               {l.label}
             </a>
