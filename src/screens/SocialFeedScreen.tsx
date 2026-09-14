@@ -176,10 +176,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
-        <Text style={styles.title}>Sosyal Alan</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("SocialPostForm")}>
-          <Text style={styles.addButtonText}>+ Paylaş</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Sosyal</Text>
       </View>
 
       {canModerate && (
@@ -205,7 +202,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
       <FlatList
         data={feedRows}
         keyExtractor={(row) => row.key}
-        contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.xs }}
+        contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.xs, paddingBottom: insets.bottom + 96 }}
         ListEmptyComponent={
           !loading ? (
             <Text style={styles.empty}>{tab === "pending" ? "Onay bekleyen paylaşım yok." : "Henüz paylaşım yapılmamış."}</Text>
@@ -246,6 +243,17 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
           );
         }}
       />
+
+      {/* Sabit alt Paylaş barı — FlatList'in dışında, position:absolute
+          olduğu için kaydırmadan etkilenmiyor, her zaman ekranın altında
+          sabit kalıyor (kullanıcı isteği). */}
+      <TouchableOpacity
+        style={[styles.shareBar, { bottom: insets.bottom + spacing.md }]}
+        activeOpacity={0.85}
+        onPress={() => navigation.navigate("SocialPostForm")}
+      >
+        <Text style={styles.shareBarText}>+ Paylaş</Text>
+      </TouchableOpacity>
 
       <Modal visible={viewerIndex !== null} animationType="fade" transparent={false} onRequestClose={() => setViewerIndex(null)}>
         <View style={styles.viewerContainer}>
@@ -396,8 +404,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { alignItems: "flex-start", gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xs },
   title: { color: colors.ink, fontSize: 18, fontWeight: "700", flexShrink: 1 },
-  addButton: { backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  shareBar: {
+    position: "absolute", left: spacing.lg, right: spacing.lg,
+    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center",
+    shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 6,
+  },
+  shareBarText: { color: colors.bg, fontWeight: "800", fontSize: 15 },
   tabRow: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
   tabButton: {
     flexDirection: "row", alignItems: "center", gap: 6,

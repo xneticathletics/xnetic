@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -144,7 +144,10 @@ export default function ProfileScreen({
   const initial = (userName ?? ROLE_LABEL[role])[0]?.toUpperCase() ?? "?";
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
+    >
       <View style={styles.headerCard}>
         <TouchableOpacity
           style={styles.avatarWrapper}
@@ -197,12 +200,11 @@ export default function ProfileScreen({
         </TouchableOpacity>
       )}
 
-      {/* Sadece Kulüp Admini için gösterilir — alt menüsünde "Duyurular"
-          sekmesi YOK (bkz. RoleTabs.tsx: !isClubAdmin && !isSuperAdmin),
-          bu yüzden Profil'den erişmesi gerekiyor. Antrenör (branş
-          koordinatörü dahil) ile Veli/Sporcu'nun zaten kendi alt menüsünde
-          bağımsız bir "Duyurular" sekmesi var, burada tekrarlamaya gerek yok. */}
-      {role === "club_admin" && (
+      {/* Süper Admin hariç herkeste gösterilir — alt menüde artık ayrı bir
+          "Duyurular" sekmesi YOK (bkz. RoleTabs.tsx), bu yüzden herkes
+          buradan erişiyor. Süper Admin'in kendi kulübü yok, duyuru
+          kulüp-içi bir kavram, bu yüzden o hariç. */}
+      {role !== "super_admin" && (
         <TouchableOpacity style={styles.announcementsCard} onPress={() => navigation.navigate("Announcements")}>
           <View style={styles.announcementsIconBadge}>
             <Text style={styles.announcementsIcon}>📣</Text>
@@ -264,15 +266,23 @@ export default function ProfileScreen({
       >
         <Text style={styles.deleteAccountLinkText}>Hesabımı Sil</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  // flexGrow:1 + altta flex:1'lik boş View (bkz. render): içerik ekrana
+  // sığdığında "Çıkış Yap"/"Hesabımı Sil" hep en altta durur; sığmadığında
+  // (ör. Kulüp Admini'nde ekstra kartlar varken) ScrollView devreye girip
+  // kaydırılabiliyor — bu ikisi eskiden (View, ScrollView değilken) sığmayan
+  // içerikte "Hesabımı Sil"in ekran dışına taşıp kaybolmasına yol açmıştı.
   // Alt sekme çubuğunun üstünden taşan yuvarlak Asistan logosu (bkz.
-  // RoleTabs.tsx) ekranın en alt ~35px'ine biniyor — "Hesabımı Sil" onun
-  // altında kalmasın diye ekstra bir alt boşluk bırakıyoruz.
-  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg + 36 },
+  // RoleTabs.tsx) ekranın en alt ~35px'ine biniyor — ekstra bir alt boşluk
+  // bu yüzden var.
+  content: {
+    flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg + 36,
+  },
   headerCard: {
     alignItems: "center",
     backgroundColor: colors.surface,
@@ -315,17 +325,17 @@ const styles = StyleSheet.create({
   },
   coordinatorBadgeText: { color: colors.teal, fontWeight: "700", fontSize: 13 },
   announcementsCard: {
-    flexDirection: "row", alignItems: "center", gap: spacing.md,
+    flexDirection: "row", alignItems: "center", gap: spacing.sm,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm,
+    borderRadius: radius.md, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.sm, marginBottom: spacing.xs,
   },
   announcementsIconBadge: {
-    width: 44, height: 44, borderRadius: radius.md,
+    width: 32, height: 32, borderRadius: radius.sm,
     backgroundColor: colors.yellowSoft, alignItems: "center", justifyContent: "center",
   },
-  announcementsIcon: { fontSize: 22 },
-  announcementsTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
-  announcementsSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  announcementsIcon: { fontSize: 16 },
+  announcementsTitle: { color: colors.ink, fontSize: 13, fontWeight: "700" },
+  announcementsSub: { color: colors.muted, fontSize: 10, marginTop: 1 },
   settingsGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
   settingsTile: {
     flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
@@ -338,7 +348,7 @@ const styles = StyleSheet.create({
   settingsIcon: { fontSize: 17 },
   settingsTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   settingsSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  chevron: { color: colors.yellow, fontSize: 24, fontWeight: "700" },
+  chevron: { color: colors.yellow, fontSize: 18, fontWeight: "700" },
   button: {
     backgroundColor: colors.surface,
     borderWidth: 1,

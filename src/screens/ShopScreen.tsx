@@ -57,6 +57,8 @@ export default function ShopScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+      <Text style={styles.title}>Mağaza</Text>
+
       {role === "parent" && (
         <TouchableOpacity style={styles.ordersButton} onPress={() => navigation.navigate("MyShopOrders")}>
           <Text style={styles.ordersButtonText}>📦 Siparişlerim</Text>
@@ -167,6 +169,7 @@ const CARD_GAP = spacing.md;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  title: { color: colors.ink, fontSize: 18, fontWeight: "700", marginBottom: spacing.sm },
   ordersButton: {
     alignSelf: "flex-start", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.xs,

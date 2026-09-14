@@ -48,11 +48,7 @@ export default function EventsManageScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("EventForm", { eventId: undefined })}>
-          <Text style={styles.addButtonText}>+ Etkinlik Oluştur</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.title}>Etkinlik/Turnuva/Kamp</Text>
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -60,7 +56,7 @@ export default function EventsManageScreen({ navigation }: Props) {
       <FlatList
         data={events}
         keyExtractor={(e) => e.id}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />}
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Henüz etkinlik oluşturulmadı.</Text> : null}
         renderItem={({ item }) => (
@@ -100,15 +96,28 @@ export default function EventsManageScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
       />
+
+      {/* Sabit alt buton — FlatList'in dışında, kaydırmadan etkilenmiyor. */}
+      <TouchableOpacity
+        style={[styles.createBar, { bottom: insets.bottom + spacing.md }]}
+        activeOpacity={0.85}
+        onPress={() => navigation.navigate("EventForm", { eventId: undefined })}
+      >
+        <Text style={styles.createBarText}>+ Etkinlik Oluştur</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md, gap: spacing.sm },
-  addButton: { backgroundColor: colors.violet, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  title: { color: colors.ink, fontSize: 18, fontWeight: "700", marginBottom: spacing.md },
+  createBar: {
+    position: "absolute", left: spacing.lg, right: spacing.lg,
+    backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16, alignItems: "center",
+    shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 6,
+  },
+  createBarText: { color: colors.bg, fontWeight: "800", fontSize: 15 },
   eventPendingBadge: {
     position: "absolute", top: spacing.sm, right: spacing.sm,
     backgroundColor: colors.coral, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 5,

@@ -10,10 +10,9 @@ import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { useClubSettings } from "../context/ClubSettingsContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 
-// Hem ProfileStack (Kulüp Admini/Süper Admin'de, Profil'in içinden) hem
-// AnnouncementsStack (Antrenör/Veli/Sporcu'da, kendi bağımsız "Duyurular"
-// sekmesi) tarafından mount ediliyor — belirli bir üst stack'e bağlı
-// kalmamak için kendi minimal parametre listesini tanımlıyor.
+// ProfileStack tarafından mount ediliyor (Profil'in içinden, tüm roller) —
+// belirli bir üst stack'e bağlı kalmamak için kendi minimal parametre
+// listesini tanımlıyor.
 type AnnouncementsRouteParamList = {
   Announcements: undefined;
   AnnouncementDetail: { announcementId: string };

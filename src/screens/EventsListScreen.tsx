@@ -39,6 +39,8 @@ export default function EventsListScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+      <Text style={styles.title}>Etkinlik/Turnuva/Kamp</Text>
+
       {(role === "parent" || role === "athlete") && (
         <TouchableOpacity style={styles.myRegistrationsButton} onPress={() => navigation.navigate("MyEventRegistrations")}>
           <Text style={styles.myRegistrationsButtonText}>📋 Kayıtlarım</Text>
@@ -94,6 +96,7 @@ export default function EventsListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  title: { color: colors.ink, fontSize: 18, fontWeight: "700", marginBottom: spacing.sm },
   myRegistrationsButton: {
     alignSelf: "flex-start", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md,

@@ -7,8 +7,8 @@ import {
   getAnnouncement, markAnnouncementRead, getAnnouncementReaders,
   type Announcement, type AnnouncementReader,
 } from "../lib/api/announcements";
-// ProfileStack ve AnnouncementsStack'in ikisinden de mount edilebiliyor —
-// bkz. AnnouncementsScreen.tsx'teki aynı gerekçe.
+// ProfileStack tarafından mount ediliyor — bkz. AnnouncementsScreen.tsx'teki
+// aynı gerekçe.
 type AnnouncementsRouteParamList = {
   AnnouncementDetail: { announcementId: string };
 };

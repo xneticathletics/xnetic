@@ -80,6 +80,7 @@ export default function ShopManageScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+      <Text style={styles.title}>Mağaza</Text>
       <View style={styles.header}>
         <TouchableOpacity style={styles.stockButton} onPress={() => navigation.navigate("ShopStock")}>
           <Text style={styles.stockButtonText}>📊 Stok</Text>
@@ -147,6 +148,7 @@ export default function ShopManageScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  title: { color: colors.ink, fontSize: 18, fontWeight: "700", marginBottom: spacing.sm },
   header: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm, marginBottom: spacing.md },
   stockButton: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.teal,
