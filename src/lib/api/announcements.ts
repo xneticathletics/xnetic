@@ -146,31 +146,24 @@ async function resolveAnnouncementRecipients(announcement: Announcement): Promis
   return Array.from(recipients);
 }
 
-export type AnnouncementRecipientOption = { id: string; name: string };
 export type GroupAnnouncementRecipients = {
-  coaches: AnnouncementRecipientOption[];
-  athletes: AnnouncementRecipientOption[];
-  parents: AnnouncementRecipientOption[];
+  athletes: string[];
+  parents: string[];
 };
 
-// "Belirli Gruplar" hedefinde bir grup seçilince, o grubun antrenör/
-// sporcu/veli isimlerini tek tek göstermek için — sadece GERÇEKTEN bir
-// hesabı (dolayısıyla bildirim alabilecek bir kullanıcı id'si) olanlar
-// listelenir: hesabı olmayan bir sporcu, kendi adına seçilecek bir
-// "kullanıcı" değildir (bildirim gidecek gerçek hesap velisininkidir).
+// "Branşlar" hedefinde bir grup işaretlenince, gerçek alıcı kullanıcı
+// id'lerini (sporcu hesabı + istenirse veli hesabı) çözer — sadece
+// GERÇEKTEN bir hesabı olanlar sayılır: hesabı olmayan bir sporcu kendi
+// adına bildirim alamaz (bildirim gidecek hesap velisininkidir).
 export async function getGroupAnnouncementRecipients(groupId: string): Promise<GroupAnnouncementRecipients> {
-  const [groupResult, assistantsResult, athletesResult, extraLinksResult] = await Promise.all([
-    supabase.from("groups").select("head_coach_id").eq("id", groupId).single(),
-    supabase.from("group_coaches").select("coach_id").eq("group_id", groupId),
+  const [athletesResult, extraLinksResult] = await Promise.all([
     supabase
       .from("athletes")
-      .select("id, full_name, athlete_user_id, parent_user_id")
+      .select("athlete_user_id, parent_user_id")
       .eq("group_id", groupId)
       .eq("status", "active"),
     supabase.from("athlete_groups").select("athlete_id").eq("group_id", groupId),
   ]);
-  if (groupResult.error) throw groupResult.error;
-  if (assistantsResult.error) throw assistantsResult.error;
   if (athletesResult.error) throw athletesResult.error;
   if (extraLinksResult.error) throw extraLinksResult.error;
 
@@ -179,63 +172,21 @@ export async function getGroupAnnouncementRecipients(groupId: string): Promise<G
   if (extraAthleteIds.length > 0) {
     const { data: extraAthletes, error } = await supabase
       .from("athletes")
-      .select("id, full_name, athlete_user_id, parent_user_id")
+      .select("athlete_user_id, parent_user_id")
       .in("id", extraAthleteIds)
       .eq("status", "active");
     if (error) throw error;
     athleteRows = [...athleteRows, ...(extraAthletes ?? [])];
   }
 
-  const coachIds = new Set<string>();
-  if (groupResult.data?.head_coach_id) coachIds.add(groupResult.data.head_coach_id);
-  (assistantsResult.data ?? []).forEach((r) => coachIds.add(r.coach_id));
-
-  const parentIds = new Set<string>();
+  const athletes = new Set<string>();
+  const parents = new Set<string>();
   athleteRows.forEach((a) => {
-    if (a.parent_user_id) parentIds.add(a.parent_user_id);
+    if (a.athlete_user_id) athletes.add(a.athlete_user_id);
+    if (a.parent_user_id) parents.add(a.parent_user_id);
   });
 
-  const [coachUsersResult, parentUsersResult] = await Promise.all([
-    coachIds.size > 0
-      ? supabase.from("users").select("id, name").in("id", Array.from(coachIds))
-      : Promise.resolve({ data: [], error: null }),
-    parentIds.size > 0
-      ? supabase.from("users").select("id, name").in("id", Array.from(parentIds))
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (coachUsersResult.error) throw coachUsersResult.error;
-  if (parentUsersResult.error) throw parentUsersResult.error;
-
-  const parentNameById = new Map((parentUsersResult.data ?? []).map((u) => [u.id, u.name as string]));
-
-  const athletes: AnnouncementRecipientOption[] = athleteRows
-    .filter((a) => a.athlete_user_id)
-    .map((a) => ({ id: a.athlete_user_id as string, name: a.full_name }))
-    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
-
-  // Aynı veli birden çok kardeşin velisi olabilir — hangi sporcu(lar)ın
-  // velisi olduğu da parantez içinde görünsün diye athleteRows'tan tekrar
-  // grupluyoruz (parentIds zaten Set olduğu için tekilleşme garanti).
-  const athleteNamesByParent = new Map<string, string[]>();
-  athleteRows.forEach((a) => {
-    if (!a.parent_user_id) return;
-    const list = athleteNamesByParent.get(a.parent_user_id) ?? [];
-    list.push(a.full_name);
-    athleteNamesByParent.set(a.parent_user_id, list);
-  });
-  const parents: AnnouncementRecipientOption[] = Array.from(parentIds)
-    .map((id) => {
-      const parentName = parentNameById.get(id) ?? "—";
-      const athleteNames = athleteNamesByParent.get(id) ?? [];
-      return { id, name: athleteNames.length > 0 ? `${parentName} (${athleteNames.join(", ")})` : parentName };
-    })
-    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
-
-  const coaches: AnnouncementRecipientOption[] = (coachUsersResult.data ?? [])
-    .map((u) => ({ id: u.id as string, name: u.name as string }))
-    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
-
-  return { coaches, athletes, parents };
+  return { athletes: Array.from(athletes), parents: Array.from(parents) };
 }
 
 async function notifyAnnouncementRecipients(announcement: Announcement) {

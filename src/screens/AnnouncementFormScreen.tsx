@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
   createAnnouncement, uploadAnnouncementAttachment, getGroupAnnouncementRecipients, MAX_ATTACHMENT_SIZE_BYTES,
-  type AnnouncementTarget, type AnnouncementRecipientOption, type GroupAnnouncementRecipients,
+  type AnnouncementTarget,
 } from "../lib/api/announcements";
 import type { Group } from "../lib/api/groups";
 import { listGroups } from "../lib/api/groups";
@@ -19,20 +19,25 @@ import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 type Props = NativeStackScreenProps<ProfileStackParamList, "AnnouncementForm">;
 
+// Sıra bilerek bu şekilde: Tüm Kulüp / Antrenörler / Branşlar — kullanıcı
+// isteği. "Branşlar" seçilince aşağıda branş->grup seçimi açılıyor (bkz.
+// render); "Veliler"/"Sporcular" artık ayrı, kulüp geneli birer seçenek
+// değil — o daralma artık Branşlar akışının içinde, grup bazında (+ Veli
+// işaretiyle) yapılıyor.
 const TARGET_OPTIONS: { value: AnnouncementTarget; label: string }[] = [
   { value: "club", label: "Tüm Kulüp" },
-  { value: "group", label: "Belirli Gruplar" },
-  { value: "parents", label: "Veliler" },
   { value: "coaches", label: "Antrenörler" },
-  { value: "athletes", label: "Sporcular" },
+  { value: "group", label: "Branşlar" },
 ];
+
+type GroupSelection = { groupId: string; groupName: string; includeParents: boolean };
 
 export default function AnnouncementFormScreen({ navigation }: Props) {
   const { clubId, role } = useAuth();
   const { isLocked, selectedBranch } = useBranchSelect();
   // Branş koordinatörü sadece kendi branşının gruplarına duyuru
-  // gönderebilir — "Tüm Kulüp"/"Veliler"/"Antrenörler"/"Sporcular" kulüp
-  // geneli bir yayın olduğu için admin'e özel kalıyor.
+  // gönderebilir — "Tüm Kulüp"/"Antrenörler" kulüp geneli bir yayın
+  // olduğu için admin'e özel kalıyor.
   const isCoordinator = role === "coach" && isLocked;
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const [title, setTitle] = useState("");
@@ -44,21 +49,9 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
-  // Bir grup işaretlenince o grubun antrenör/sporcu/veli isimleri
-  // getGroupAnnouncementRecipients ile çekilip recipients'a yazılıyor
-  // (yüklenene kadar null) — coachIds/athleteIds/parentIds varsayılan
-  // olarak HEPSİ seçili başlıyor (eski "gruba gönder = herkese gönder"
-  // davranışıyla aynı), admin isterse tek tek daraltabiliyor.
-  const [groupConfigs, setGroupConfigs] = useState<
-    {
-      groupId: string;
-      groupName: string;
-      recipients: GroupAnnouncementRecipients | null;
-      coachIds: Set<string>;
-      athleteIds: Set<string>;
-      parentIds: Set<string>;
-    }[]
-  >([]);
+  // groupId -> seçim durumu. includeParents: bu grubun velilerine de
+  // gönderilsin mi (grup kutusunun hemen yanındaki ikinci işaret).
+  const [selectedGroups, setSelectedGroups] = useState<Map<string, GroupSelection>>(new Map());
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
@@ -69,7 +62,7 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
   // targetTypes dahil değil — koordinatör için mount'ta otomatik ["group"]
   // atanıyor, o yüzden dahil edilirse hiç dokunmadan "değişti" sayılırdı.
   const hasUnsavedChanges =
-    !!title.trim() || !!body.trim() || !!attachmentName || groupConfigs.length > 0;
+    !!title.trim() || !!body.trim() || !!attachmentName || selectedGroups.size > 0;
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   useEffect(() => {
@@ -77,12 +70,15 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       .then(([b, g]) => {
         setBranches(b);
         setAllGroups(g);
+        // Tek branşlı kulüplerde ayrıca bir branş seçtirmeye gerek yok —
+        // grupları hemen göster.
+        if (b.length === 1) setBranchFilter(b[0].name);
       })
       .catch(() => {});
   }, []);
 
-  // Koordinatörün tek seçeneği "Belirli Gruplar" — elle seçmesine gerek
-  // kalmadan otomatik işaretliyoruz, diğer hedef tipleri hiç gösterilmiyor.
+  // Koordinatörün tek seçeneği "Branşlar" — elle seçmesine gerek kalmadan
+  // otomatik işaretliyoruz, diğer hedef tipleri hiç gösterilmiyor.
   useEffect(() => {
     if (isCoordinator) setTargetTypes(["group"]);
   }, [isCoordinator]);
@@ -91,64 +87,25 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
     setTargetTypes((prev) => (prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]));
   };
 
-  // Bir gruba tıklamak onu ekler/kaldırır — eklenince antrenör/sporcu/veli
-  // isimleri arka planda çekilir ve hepsi varsayılan olarak seçili gelir.
   const toggleGroup = (group: Group) => {
-    setGroupConfigs((prev) => {
-      if (prev.some((c) => c.groupId === group.id)) {
-        return prev.filter((c) => c.groupId !== group.id);
-      }
-      return [
-        ...prev,
-        {
-          groupId: group.id, groupName: group.name, recipients: null,
-          coachIds: new Set(), athleteIds: new Set(), parentIds: new Set(),
-        },
-      ];
+    setSelectedGroups((prev) => {
+      const next = new Map(prev);
+      if (next.has(group.id)) next.delete(group.id);
+      else next.set(group.id, { groupId: group.id, groupName: group.name, includeParents: false });
+      return next;
     });
-    if (!groupConfigs.some((c) => c.groupId === group.id)) {
-      getGroupAnnouncementRecipients(group.id)
-        .then((recipients) => {
-          setGroupConfigs((prev) =>
-            prev.map((c) =>
-              c.groupId === group.id
-                ? {
-                    ...c, recipients,
-                    coachIds: new Set(recipients.coaches.map((o) => o.id)),
-                    athleteIds: new Set(recipients.athletes.map((o) => o.id)),
-                    parentIds: new Set(recipients.parents.map((o) => o.id)),
-                  }
-                : c
-            )
-          );
-        })
-        .catch(() => {
-          // Sessizce yut — grup işaretli kalır ama isim listesi boş
-          // görünür, tekrar tıklayıp kaldırıp eklemek yeniden dener.
-        });
-    }
   };
 
-  type RoleKey = "coachIds" | "athleteIds" | "parentIds";
-  const toggleAllInGroup = (groupId: string, key: RoleKey, options: AnnouncementRecipientOption[]) => {
-    setGroupConfigs((prev) =>
-      prev.map((c) => {
-        if (c.groupId !== groupId) return c;
-        const allSelected = c[key].size === options.length;
-        return { ...c, [key]: allSelected ? new Set<string>() : new Set(options.map((o) => o.id)) };
-      })
-    );
-  };
-  const toggleOneInGroup = (groupId: string, key: RoleKey, id: string) => {
-    setGroupConfigs((prev) =>
-      prev.map((c) => {
-        if (c.groupId !== groupId) return c;
-        const next = new Set(c[key]);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return { ...c, [key]: next };
-      })
-    );
+  // "+ Veli" işareti — grup henüz seçili değilse önce onu da seçer (velisine
+  // göndermek isteyip grubu işaretlemeyi unutmak gibi bir tuzak olmasın diye).
+  const toggleIncludeParents = (group: Group) => {
+    setSelectedGroups((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(group.id);
+      if (existing) next.set(group.id, { ...existing, includeParents: !existing.includeParents });
+      else next.set(group.id, { groupId: group.id, groupName: group.name, includeParents: true });
+      return next;
+    });
   };
 
   const handlePickAttachment = async () => {
@@ -180,15 +137,8 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       Alert.alert("Eksik bilgi", "En az bir hedef kitle seçmelisin.", [{ text: "Tamam" }]);
       return;
     }
-    if (targetTypes.includes("group") && groupConfigs.length === 0) {
+    if (targetTypes.includes("group") && selectedGroups.size === 0) {
       Alert.alert("Eksik bilgi", "En az bir grup seçmelisin.", [{ text: "Tamam" }]);
-      return;
-    }
-    const targetUserIds = Array.from(
-      new Set(groupConfigs.flatMap((c) => [...c.coachIds, ...c.athleteIds, ...c.parentIds]))
-    );
-    if (targetTypes.includes("group") && groupConfigs.length > 0 && targetUserIds.length === 0) {
-      Alert.alert("Eksik bilgi", "Seçtiğin grup(lar)da hiç alıcı işaretli değil.", [{ text: "Tamam" }]);
       return;
     }
 
@@ -203,12 +153,33 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
         attachmentUrl = uploaded.url;
         storagePath = uploaded.path;
       }
+
+      let targetIds: string[] | null = null;
+      let targetUserIds: string[] | null = null;
+      if (targetTypes.includes("group")) {
+        const entries = Array.from(selectedGroups.values());
+        targetIds = entries.map((e) => e.groupId);
+        const recipientsByGroup = await Promise.all(entries.map((e) => getGroupAnnouncementRecipients(e.groupId)));
+        const ids = new Set<string>();
+        recipientsByGroup.forEach((r, i) => {
+          r.athletes.forEach((id) => ids.add(id));
+          if (entries[i].includeParents) r.parents.forEach((id) => ids.add(id));
+        });
+        targetUserIds = Array.from(ids);
+        if (targetUserIds.length === 0) {
+          Alert.alert("Eksik bilgi", "Seçtiğin grup(lar)da bildirim alabilecek hiç hesap yok (sporcu/veli hesabı bağlı değil).", [{ text: "Tamam" }]);
+          savingRef.current = false;
+          setSaving(false);
+          return;
+        }
+      }
+
       await createAnnouncement({
         title,
         body,
         target_types: targetTypes,
-        target_ids: targetTypes.includes("group") ? groupConfigs.map((c) => c.groupId) : null,
-        target_user_ids: targetTypes.includes("group") ? targetUserIds : null,
+        target_ids: targetIds,
+        target_user_ids: targetUserIds,
         attachment_url: attachmentUrl,
         storage_path: storagePath,
       });
@@ -221,6 +192,12 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       setSaving(false);
     }
   };
+
+  const visibleGroups = isCoordinator
+    ? allGroups.filter((g) => g.branch === selectedBranch)
+    : branchFilter
+    ? allGroups.filter((g) => g.branch === branchFilter)
+    : [];
 
   return (
     <KeyboardAvoidingView
@@ -296,15 +273,9 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
       </Field>
 
       {targetTypes.includes("group") && (
-        <Field label="Gruplar * (branş seç, sonra grup(lar)a dokun)">
+        <Field label="Branşlar / Gruplar *">
           {!isCoordinator && branches.length > 1 && (
             <View style={styles.branchFilterRow}>
-              <TouchableOpacity
-                style={[styles.branchChip, !branchFilter && styles.branchChipActive]}
-                onPress={() => setBranchFilter(null)}
-              >
-                <Text style={[styles.branchChipText, !branchFilter && styles.branchChipTextActive]}>Tüm Branşlar</Text>
-              </TouchableOpacity>
               {branches.map((b) => (
                 <TouchableOpacity
                   key={b.id}
@@ -317,55 +288,32 @@ export default function AnnouncementFormScreen({ navigation }: Props) {
             </View>
           )}
 
-          {(isCoordinator
-            ? allGroups.filter((g) => g.branch === selectedBranch)
-            : branchFilter
-            ? allGroups.filter((g) => g.branch === branchFilter)
-            : allGroups
-          ).map((g) => {
-            const config = groupConfigs.find((c) => c.groupId === g.id);
-            const isSelected = !!config;
-            return (
-              <View key={g.id} style={styles.groupBlock}>
-                <TouchableOpacity style={styles.groupRow} onPress={() => toggleGroup(g)}>
-                  <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                  </View>
-                  <Text style={styles.groupRowText}>{g.name}</Text>
-                </TouchableOpacity>
-
-                {isSelected && (
-                  config.recipients === null ? (
-                    <ActivityIndicator color={colors.yellow} style={{ marginVertical: spacing.sm }} />
-                  ) : (
-                    <View style={styles.groupPanel}>
-                      <RoleSection
-                        label="Antrenörler"
-                        options={config.recipients.coaches}
-                        selectedIds={config.coachIds}
-                        onToggleAll={() => toggleAllInGroup(g.id, "coachIds", config.recipients!.coaches)}
-                        onToggleOne={(id) => toggleOneInGroup(g.id, "coachIds", id)}
-                      />
-                      <RoleSection
-                        label="Sporcular"
-                        options={config.recipients.athletes}
-                        selectedIds={config.athleteIds}
-                        onToggleAll={() => toggleAllInGroup(g.id, "athleteIds", config.recipients!.athletes)}
-                        onToggleOne={(id) => toggleOneInGroup(g.id, "athleteIds", id)}
-                      />
-                      <RoleSection
-                        label="Veliler"
-                        options={config.recipients.parents}
-                        selectedIds={config.parentIds}
-                        onToggleAll={() => toggleAllInGroup(g.id, "parentIds", config.recipients!.parents)}
-                        onToggleOne={(id) => toggleOneInGroup(g.id, "parentIds", id)}
-                      />
+          {visibleGroups.length === 0 ? (
+            <Text style={styles.sectionHint}>
+              {isCoordinator || branchFilter ? "Bu branşta hiç grup yok." : "Önce bir branş seç."}
+            </Text>
+          ) : (
+            visibleGroups.map((g) => {
+              const sel = selectedGroups.get(g.id);
+              const isSelected = !!sel;
+              return (
+                <View key={g.id} style={styles.groupRow}>
+                  <TouchableOpacity style={styles.groupCheckArea} onPress={() => toggleGroup(g)}>
+                    <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+                      {isSelected && <Text style={styles.checkmark}>✓</Text>}
                     </View>
-                  )
-                )}
-              </View>
-            );
-          })}
+                    <Text style={styles.groupRowText} numberOfLines={1}>{g.name}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.parentCheckArea} onPress={() => toggleIncludeParents(g)}>
+                    <View style={[styles.checkbox, sel?.includeParents && styles.checkboxChecked]}>
+                      {sel?.includeParents && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.parentCheckLabel}>+ Veli</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
         </Field>
       )}
 
@@ -384,48 +332,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <View style={{ marginBottom: spacing.md }}>
       <Text style={styles.label}>{label}</Text>
       {children}
-    </View>
-  );
-}
-
-// Bir grup için tek bir rol bölümü (Antrenörler/Sporcular/Veliler) — "Tümü"
-// başlığa dokununca hepsini seçer/kaldırır, altındaki isim etiketleri tek
-// tek işaretlenebilir.
-function RoleSection({
-  label, options, selectedIds, onToggleAll, onToggleOne,
-}: {
-  label: string;
-  options: AnnouncementRecipientOption[];
-  selectedIds: Set<string>;
-  onToggleAll: () => void;
-  onToggleOne: (id: string) => void;
-}) {
-  if (options.length === 0) return null;
-  const allSelected = selectedIds.size === options.length;
-  return (
-    <View style={styles.roleSection}>
-      <TouchableOpacity style={styles.roleSectionHeader} onPress={onToggleAll}>
-        <View style={[styles.checkbox, allSelected && styles.checkboxChecked]}>
-          {allSelected && <Text style={styles.checkmark}>✓</Text>}
-        </View>
-        <Text style={styles.roleSectionLabel}>{label} · Tümü ({options.length})</Text>
-      </TouchableOpacity>
-      <View style={styles.nameChipRow}>
-        {options.map((opt) => {
-          const checked = selectedIds.has(opt.id);
-          return (
-            <TouchableOpacity
-              key={opt.id}
-              style={[styles.nameChip, checked && styles.nameChipActive]}
-              onPress={() => onToggleOne(opt.id)}
-            >
-              <Text style={[styles.nameChipText, checked && styles.nameChipTextActive]} numberOfLines={1}>
-                {checked ? "✓ " : ""}{opt.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
     </View>
   );
 }
@@ -454,6 +360,7 @@ const styles = StyleSheet.create({
   branchChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
   branchChipText: { color: colors.muted, fontWeight: "600", fontSize: 11 },
   branchChipTextActive: { color: colors.bg },
+  sectionHint: { color: colors.muted, fontSize: 12 },
   selectedGroupRow: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
@@ -466,32 +373,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10, alignItems: "center",
   },
   addGroupButtonText: { color: colors.teal, fontWeight: "700", fontSize: 12 },
-  groupBlock: {
+  groupRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.md, marginBottom: spacing.sm, overflow: "hidden",
+    borderRadius: radius.md, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.sm, marginBottom: spacing.xs,
   },
-  groupRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, padding: spacing.sm + 4 },
-  groupRowText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
+  groupCheckArea: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flex: 1, flexShrink: 1 },
+  parentCheckArea: { flexDirection: "row", alignItems: "center", gap: 6, marginLeft: spacing.sm },
+  groupRowText: { color: colors.ink, fontWeight: "700", fontSize: 14, flexShrink: 1 },
+  parentCheckLabel: { color: colors.muted, fontSize: 11, fontWeight: "600" },
   checkbox: {
     width: 20, height: 20, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line,
     alignItems: "center", justifyContent: "center",
   },
   checkboxChecked: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   checkmark: { color: colors.bg, fontWeight: "800", fontSize: 12 },
-  groupPanel: {
-    borderTopWidth: 1, borderTopColor: colors.line, padding: spacing.sm + 4, gap: spacing.sm,
-  },
-  roleSection: { gap: 6 },
-  roleSectionHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  roleSectionLabel: { color: colors.muted, fontSize: 12, fontWeight: "700" },
-  nameChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingLeft: 28 },
-  nameChip: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 5, maxWidth: 220,
-  },
-  nameChipActive: { backgroundColor: colors.tealSoft, borderColor: colors.teal },
-  nameChipText: { color: colors.muted, fontSize: 11, fontWeight: "600" },
-  nameChipTextActive: { color: colors.teal },
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
