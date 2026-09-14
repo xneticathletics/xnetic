@@ -18,23 +18,36 @@ export default function AthleticPerformanceScreen({ navigation }: Props) {
   // Test/Test Grubu ekleme: admin, branş koordinatörü, süper admin —
   // sıradan antrenör sadece var olan testleri kullanıp ölçüm girebilir.
   const canManage = role === "club_admin" || role === "super_admin" || (role === "coach" && isBranchCoordinator);
+  // Süper admin hiçbir kulübün sporcusuna/test grubuna bağlı değil —
+  // "Ölçümler" (sporcu seçip ölçüm girme) ve "Test Grubu Ekle" (kulübe özel
+  // sporcu grubu) onun için anlamsız. Sadece platform genelinde görünen
+  // yeni bir test TANIMI eklemesi ("Test Ekle") mantıklı, o da tam satır.
+  const isSuperAdmin = role === "super_admin";
   const [athletePickerVisible, setAthletePickerVisible] = useState(false);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <TouchableOpacity style={styles.measurementsButton} onPress={() => setAthletePickerVisible(true)}>
-        <Text style={styles.measurementsButtonText}>📊 Ölçümler</Text>
-      </TouchableOpacity>
+      {!isSuperAdmin && (
+        <TouchableOpacity style={styles.measurementsButton} onPress={() => setAthletePickerVisible(true)}>
+          <Text style={styles.measurementsButtonText}>📊 Ölçümler</Text>
+        </TouchableOpacity>
+      )}
 
       {canManage && (
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("PerformanceTestForm")}>
+        isSuperAdmin ? (
+          <TouchableOpacity style={styles.fullActionBox} onPress={() => navigation.navigate("PerformanceTestForm")}>
             <Text style={styles.actionBoxText}>+ Test Ekle</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("TestGroupsList")}>
-            <Text style={styles.actionBoxText}>+ Test Grubu Ekle</Text>
-          </TouchableOpacity>
-        </View>
+        ) : (
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("PerformanceTestForm")}>
+              <Text style={styles.actionBoxText}>+ Test Ekle</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("TestGroupsList")}>
+              <Text style={styles.actionBoxText}>+ Test Grubu Ekle</Text>
+            </TouchableOpacity>
+          </View>
+        )
       )}
 
       <Text style={styles.subtitle}>Bir kategori seç, testi seç, sporcunun ölçümünü kaydet.</Text>
@@ -80,6 +93,10 @@ const styles = StyleSheet.create({
   actionBox: {
     flex: 1, backgroundColor: colors.yellow, borderRadius: radius.md,
     paddingVertical: 14, alignItems: "center",
+  },
+  fullActionBox: {
+    backgroundColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: "center", marginBottom: spacing.md,
   },
   actionBoxText: { color: colors.bg, fontWeight: "700", fontSize: 13 },
   subtitle: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.lg },
