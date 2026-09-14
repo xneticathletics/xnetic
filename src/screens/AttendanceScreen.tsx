@@ -173,28 +173,28 @@ export default function AttendanceScreen({ route, navigation }: Props) {
 
             <View style={styles.statusButtons}>
               <TouchableOpacity
-                style={[styles.statusButton, { borderColor: colors.teal }, item.status === "geldi" && { backgroundColor: colors.teal }]}
+                style={[styles.statusButton, item.status === "geldi" && { backgroundColor: colors.teal, borderColor: colors.teal }]}
                 onPress={() => setStatus(item.athlete_id, "geldi")}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "geldi" }}
               >
-                <Text style={[styles.statusButtonText, { color: item.status === "geldi" ? colors.bg : colors.teal }]}>✓ Geldi</Text>
+                <Text style={[styles.statusButtonText, item.status === "geldi" && styles.statusButtonTextActive]}>✓ Geldi</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.statusButton, { borderColor: colors.coral }, item.status === "gelmedi" && { backgroundColor: colors.coral }]}
+                style={[styles.statusButton, item.status === "gelmedi" && { backgroundColor: colors.coral, borderColor: colors.coral }]}
                 onPress={() => setStatus(item.athlete_id, "gelmedi")}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "gelmedi" }}
               >
-                <Text style={[styles.statusButtonText, { color: item.status === "gelmedi" ? colors.bg : colors.coral }]}>✕ Gelmedi</Text>
+                <Text style={[styles.statusButtonText, item.status === "gelmedi" && styles.statusButtonTextActive]}>✕ Gelmedi</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.statusButton, { borderColor: colors.muted }, item.status === "izinli" && { backgroundColor: colors.muted }]}
+                style={[styles.statusButton, item.status === "izinli" && { backgroundColor: colors.muted, borderColor: colors.muted }]}
                 onPress={() => setStatus(item.athlete_id, "izinli")}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "izinli" }}
               >
-                <Text style={[styles.statusButtonText, { color: item.status === "izinli" ? colors.bg : colors.muted }]}>📄 İzinli</Text>
+                <Text style={[styles.statusButtonText, item.status === "izinli" && styles.statusButtonTextActive]}>📄 İzinli</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -260,10 +260,16 @@ const styles = StyleSheet.create({
   athleteName: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   athleteBirth: { color: colors.muted, fontSize: 11 },
   statusButtons: { flexDirection: "row", gap: 6 },
+  // Üçü de işaretlenmeden önce AYNI nötr görünümde — hangisinin seçili
+  // olduğu sadece dokunulunca (kendi rengiyle) belli olsun diye, önceden
+  // her biri kendi rengiyle (teal/coral/muted) duran çerçeveler kaldırıldı
+  // (kullanıcı isteği: "hepsi tek renk olsun, işaretlenen renklensin").
   statusButton: {
-    flex: 1, borderWidth: 1.5, borderRadius: radius.sm, paddingVertical: 6, alignItems: "center",
+    flex: 1, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.sm,
+    paddingVertical: 6, alignItems: "center",
   },
-  statusButtonText: { fontSize: 10, fontWeight: "700" },
+  statusButtonText: { fontSize: 10, fontWeight: "700", color: colors.muted },
+  statusButtonTextActive: { color: colors.bg },
   footer: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center" },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
