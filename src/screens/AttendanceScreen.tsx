@@ -178,7 +178,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "geldi" }}
               >
-                <Text style={[styles.statusButtonText, item.status === "geldi" && styles.statusButtonTextActive]}>✓ Geldi</Text>
+                <Text style={[styles.statusButtonText, item.status === "geldi" && styles.statusButtonTextActive]}>Geldi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, item.status === "gelmedi" && { backgroundColor: colors.coral, borderColor: colors.coral }]}
@@ -186,7 +186,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "gelmedi" }}
               >
-                <Text style={[styles.statusButtonText, item.status === "gelmedi" && styles.statusButtonTextActive]}>✕ Gelmedi</Text>
+                <Text style={[styles.statusButtonText, item.status === "gelmedi" && styles.statusButtonTextActive]}>Gelmedi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, item.status === "izinli" && { backgroundColor: colors.muted, borderColor: colors.muted }]}
@@ -194,7 +194,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.status === "izinli" }}
               >
-                <Text style={[styles.statusButtonText, item.status === "izinli" && styles.statusButtonTextActive]}>📄 İzinli</Text>
+                <Text style={[styles.statusButtonText, item.status === "izinli" && styles.statusButtonTextActive]}>İzinli</Text>
               </TouchableOpacity>
             </View>
           </View>
