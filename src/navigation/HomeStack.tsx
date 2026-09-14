@@ -125,6 +125,7 @@ import EventsManageScreen from "../screens/EventsManageScreen";
 import EventRegisterScreen from "../screens/EventRegisterScreen";
 import EventRegistrationsScreen from "../screens/EventRegistrationsScreen";
 import MyEventRegistrationsScreen from "../screens/MyEventRegistrationsScreen";
+import PerformanceHubScreen from "../screens/PerformanceHubScreen";
 import type { FoodCategoryKey, ArticleCategoryKey } from "../lib/nutritionCategories";
 
 export type HomeStackParamList = {
@@ -279,6 +280,7 @@ export type HomeStackParamList = {
   EventRegister: { eventId: string };
   EventRegistrations: { eventId: string };
   MyEventRegistrations: undefined;
+  PerformanceHub: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -417,6 +419,9 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="EventRegister" component={EventRegisterScreen} options={{ title: "Kayıt Ol" }} />
       <Stack.Screen name="EventRegistrations" component={EventRegistrationsScreen} options={{ title: "Kayıtlar" }} />
       <Stack.Screen name="MyEventRegistrations" component={MyEventRegistrationsScreen} options={{ title: "Kayıtlarım" }} />
+      <Stack.Screen name="PerformanceHub" options={{ title: "Performans" }}>
+        {({ navigation }) => <PerformanceHubScreen role={role} navigation={navigation} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 }

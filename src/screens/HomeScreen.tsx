@@ -31,25 +31,20 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "sporcu", label: "Sporcularım", sub: "", icon: "👥" },
     { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
     { key: "antrenman", label: "Antrenman Planla", sub: "Bugün", icon: "📅" },
-    { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
-    { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { key: "performans_hub", label: "Performans", sub: "Fitness ve beslenme", icon: "📊" },
   ],
   parent: [
     { key: "sporcum", label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
     { key: "yoklama", label: "Yoklama Durumu", sub: "", icon: "📋" },
     { key: "antrenman", label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
-    { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { key: "performans_hub", label: "Performans", sub: "Beslenme", icon: "📊" },
   ],
   athlete: [
     { key: "antrenman", label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
     { key: "yoklama", label: "Antrenman Katılım Durumu", sub: "", icon: "📋" },
     { key: "wellness", label: "Günlük Check-in", sub: "Uyku, enerji ve ruh hâlini kaydet", icon: "🌡️" },
-    { key: "performansim", label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
-    { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { key: "performans_hub", label: "Performans", sub: "Performans ve beslenme", icon: "📊" },
   ],
   club_admin: [
     { key: "sporcu", label: "Sporcu Yönetimi", sub: "Sporcular, gruplar", icon: "👥" },
@@ -57,10 +52,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "antrenman", label: "Takvim", sub: "Antrenman ve Müsabakalar", icon: "📅" },
     { key: "aidat", label: "Finans", sub: "Aidat ve giderler", icon: "💰" },
     { key: "kulup_yapisi", label: "Kulüp Yapısı", sub: "Grup, branş, salon", icon: "🏛️" },
-    { key: "performans", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
-    { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
-    { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet", icon: "🏆" },
+    { key: "performans_hub", label: "Performans", sub: "Fitness, ölçüm ve beslenme", icon: "📊" },
   ],
   super_admin: [
     { key: "kulupler", label: "Kulüpler", sub: "", icon: "🏢" },
@@ -83,17 +75,13 @@ export const COORDINATOR_TILES: Tile[] = [
   { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
   { key: "kulup_yapisi", label: "Kulüp Yapısı", sub: "Branşının grup ve salonları", icon: "🏛️" },
   { key: "aidat", label: "Finans", sub: "Branşının aidatları", icon: "💰" },
-  { key: "performans", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
-  { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
-  { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-  { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "Branşının etkinlikleri", icon: "🏆" },
+  { key: "performans_hub", label: "Performans", sub: "Fitness, ölçüm ve beslenme", icon: "📊" },
 ];
 
 async function handleTilePress(
   key: string,
   role: UserRole,
-  navigation: NativeStackNavigationProp<HomeStackParamList, "Home">,
-  isBranchCoordinator: boolean
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Home">
 ) {
   const isPlanner = role === "coach" || role === "club_admin";
 
@@ -106,13 +94,6 @@ async function handleTilePress(
     }
     return;
   }
-  if (key === "performansim") {
-    const athletes = await getMyAthletes();
-    const me = athletes[0];
-    if (me) navigation.navigate("AthleteTrackingHub", { athleteId: me.id, athleteName: me.full_name });
-    return;
-  }
-
   if (key === "sporcu") {
     navigation.navigate("AthleteGroups");
   } else if (key === "antrenman") {
@@ -127,18 +108,12 @@ async function handleTilePress(
     navigation.navigate(role === "parent" ? "MyPayments" : "PaymentGroups");
   } else if (key === "ozet" && role === "parent") {
     navigation.navigate("MyPayments");
-  } else if (key === "performans") {
-    navigation.navigate("AthleticPerformance");
-  } else if (key === "beslenme") {
-    navigation.navigate("Nutrition");
+  } else if (key === "performans_hub") {
+    navigation.navigate("PerformanceHub");
   } else if (key === "wellness") {
     navigation.navigate("WellnessCheckin");
-  } else if (key === "fitness") {
-    navigation.navigate("Fitness");
   } else if (key === "freeze") {
     navigation.navigate("MembershipFreeze", undefined);
-  } else if (key === "etkinlik") {
-    navigation.navigate(role === "club_admin" || isBranchCoordinator ? "EventsManage" : "EventsList");
   } else if (key === "kulupler") {
     navigation.navigate("SuperAdminClubs");
   } else if (key === "abonelik") {
@@ -458,7 +433,7 @@ export default function HomeScreen({
               key={tile.key}
               style={[styles.tile, { borderColor: accentSoft }]}
               activeOpacity={0.8}
-              onPress={() => handleTilePress(tile.key, role, navigation, isBranchCoordinator)}
+              onPress={() => handleTilePress(tile.key, role, navigation)}
             >
               <View style={topBarStyle(accent)} />
               <View style={decorCircleStyle(accentSoft)} />
