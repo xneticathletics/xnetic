@@ -168,8 +168,8 @@ const CARD_GAP = spacing.md;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   ordersButton: {
-    alignSelf: "flex-end", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md,
+    alignSelf: "flex-start", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.xs,
   },
   ordersButtonText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
   filterRow: { flexGrow: 0, marginBottom: spacing.sm },

@@ -392,7 +392,7 @@ function VideoViewerPage({ uri, active, width }: { uri: string; active: boolean;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.lg, paddingBottom: spacing.xs },
+  header: { alignItems: "flex-start", gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xs },
   title: { color: colors.ink, fontSize: 18, fontWeight: "700", flexShrink: 1 },
   addButton: { backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 10 },
   addButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },

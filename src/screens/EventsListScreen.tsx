@@ -95,7 +95,7 @@ export default function EventsListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   myRegistrationsButton: {
-    alignSelf: "flex-end", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    alignSelf: "flex-start", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md,
   },
   myRegistrationsButtonText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
