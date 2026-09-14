@@ -33,9 +33,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "antrenman", label: "Antrenman Planla", sub: "Bugün", icon: "📅" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
     { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
-    { key: "sosyal", label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   parent: [
     { key: "sporcum", label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
@@ -43,9 +41,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "antrenman", label: "Antrenman ve Müsabaka Takvimi", sub: "", icon: "📅" },
     { key: "ozet", label: "Aidat Öde", sub: "", icon: "💰" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
     { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
-    { key: "sosyal", label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   athlete: [
     { key: "antrenman", label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
@@ -53,9 +49,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "wellness", label: "Günlük Check-in", sub: "Uyku, enerji ve ruh hâlini kaydet", icon: "🌡️" },
     { key: "performansim", label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
-    { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
     { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
-    { key: "sosyal", label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   club_admin: [
     { key: "sporcu", label: "Sporcu Yönetimi", sub: "Sporcular, gruplar", icon: "👥" },
@@ -66,9 +60,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "performans", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
     { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-    { key: "magaza", label: "Mağaza", sub: "Ürünler ve siparişler", icon: "🛍️" },
     { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet", icon: "🏆" },
-    { key: "sosyal", label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   super_admin: [
     { key: "kulupler", label: "Kulüpler", sub: "", icon: "🏢" },
@@ -94,9 +86,7 @@ export const COORDINATOR_TILES: Tile[] = [
   { key: "performans", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
   { key: "beslenme", label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
   { key: "fitness", label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
-  { key: "magaza", label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
   { key: "etkinlik", label: "Etkinlik/Turnuva/Kamp", sub: "Branşının etkinlikleri", icon: "🏆" },
-  { key: "sosyal", label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
 ];
 
 async function handleTilePress(
@@ -147,12 +137,8 @@ async function handleTilePress(
     navigation.navigate("Fitness");
   } else if (key === "freeze") {
     navigation.navigate("MembershipFreeze", undefined);
-  } else if (key === "magaza") {
-    navigation.navigate(role === "club_admin" || isBranchCoordinator ? "ShopManage" : "Shop");
   } else if (key === "etkinlik") {
     navigation.navigate(role === "club_admin" || isBranchCoordinator ? "EventsManage" : "EventsList");
-  } else if (key === "sosyal") {
-    navigation.navigate("SocialFeed", undefined);
   } else if (key === "kulupler") {
     navigation.navigate("SuperAdminClubs");
   } else if (key === "abonelik") {
