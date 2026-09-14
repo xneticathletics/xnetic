@@ -17,9 +17,9 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <a href="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
           <img src="/logo-mark.png" alt="X-NETIC" className="h-16 w-16 drop-shadow-lg" />
-          <span className="flex flex-col leading-tight">
+          <span className="flex flex-col items-center leading-tight">
             <span className="text-xl font-extrabold tracking-tight text-ink">X-NETIC</span>
-            <span className="text-xs font-bold uppercase tracking-wider text-teal">Spor Sistemleri</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink">Spor Sistemleri</span>
           </span>
         </a>
 
