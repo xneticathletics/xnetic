@@ -158,10 +158,23 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [groups, branchList, myVenueIds] = await Promise.all([listGroups(), listBranches(), getMyAuthorizedVenueIds()]);
+      // Eskiden burada 3 AYRI ardışık ağ "dalgası" vardı (bu sorgular ->
+      // isCoach ise ayrıca getMyBranchGroupIds -> sonra antrenman/maç/kadro
+      // sorguları) — her dalga bir önceki bitmeden başlayamadığı için
+      // Takvim'in her açılışında gözle görülür bir toplam gecikme
+      // birikiyordu. getMyBranchGroupIds ve getGroupStaffingMap aslında bu
+      // ilk gruptaki hiçbir sonuca bağlı değil (kendi bağımsız sorgularını
+      // yapıyorlar) — o yüzden ikisi de BURAYA, tek dalgaya taşındı.
+      const [groups, branchList, myVenueIds, myBranchGroupIds, fetchedStaffing] = await Promise.all([
+        listGroups(), listBranches(), getMyAuthorizedVenueIds(),
+        isCoach ? getMyBranchGroupIds() : Promise.resolve<string[]>([]),
+        getGroupStaffingMap(),
+      ]);
       setAllGroups(groups);
       setBranches(branchList);
       setAuthorizedVenueIds(myVenueIds);
+      setStaffing(fetchedStaffing);
+      if (isCoach) setMyGroupIds(new Set(myBranchGroupIds));
 
       // Aktif haftalık program şablonlarının önümüzdeki ufkunu tazeler
       // (aidattaki topUpAllActivePlans ile aynı yerde/mantıkta) — sıradan
@@ -177,27 +190,22 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
       let fetched: TrainingSession[];
       let fetchedMatches: MatchRow[];
-      let fetchedStaffing: Record<string, GroupStaffing>;
       if (isCoach) {
         // Düz (koordinatör olmayan) antrenör takvimde SADECE kendi branşının
         // programını görür — koçluğunu yaptığı gruplarla sınırlı değil,
         // coach_branches'taki tüm branşındaki antrenman/maçlar dahil.
-        const groupIds = await getMyBranchGroupIds();
-        setMyGroupIds(new Set(groupIds));
-        [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
-          listSessionsForGroups(groupIds), listMatchesForGroups(groupIds), getGroupStaffingMap(),
+        [fetched, fetchedMatches] = await Promise.all([
+          listSessionsForGroups(myBranchGroupIds), listMatchesForGroups(myBranchGroupIds),
         ]);
       } else if (selectedBranch) {
         // Kulüp Admini bir branş seçtiyse (çoklu branşlı kulüp), o
         // branştaki grupların antrenmanlarıyla sınırla.
         const groupIds = groups.filter((g) => g.branch === selectedBranch).map((g) => g.id);
-        [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
-          listSessionsForGroups(groupIds), listMatchesForGroups(groupIds), getGroupStaffingMap(),
+        [fetched, fetchedMatches] = await Promise.all([
+          listSessionsForGroups(groupIds), listMatchesForGroups(groupIds),
         ]);
       } else {
-        [fetched, fetchedMatches, fetchedStaffing] = await Promise.all([
-          listSessions(), listMatches(), getGroupStaffingMap(),
-        ]);
+        [fetched, fetchedMatches] = await Promise.all([listSessions(), listMatches()]);
       }
 
       // Bitişinden belirli süre geçmiş, hâlâ "planned" antrenmanları
@@ -213,7 +221,6 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
       setSessions(fetched);
       setMatches(fetchedMatches);
-      setStaffing(fetchedStaffing);
     } catch (e: any) {
       setError(e.message ?? "Program yüklenemedi");
     } finally {
