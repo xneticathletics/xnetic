@@ -58,13 +58,6 @@ const ROLE_ORDER = ["club_admin", "coordinator", "coach", "parent", "athlete"];
 // mobildeki theme/tokens.ts accentRotation ile birebir aynı.
 const ACCENT_ROTATION = ["#FFC845", "#3FD6C6", "#FF6B5D"];
 
-// Alt sekme çubuğundaki ekstra sağ sekme — mobildeki RoleTabs.tsx ile aynı
-// mantık: Kulüp Admini'nde yok (Kulüp Ayarları artık Profil'in içinde),
-// diğer 4 rolde Duyurular.
-function getExtraTab(roleKey: string) {
-  return roleKey === "club_admin" ? null : { icon: "📣", label: "Duyurular" };
-}
-
 function TabIcon({ icon, label, active }: { icon: string; label: string; active?: boolean }) {
   return (
     <div className="flex flex-col items-center gap-0.5 px-1">
@@ -79,7 +72,6 @@ export default function AdminRolePreviewPage() {
   const activeKey = roleKey && TILES_BY_ROLE_KEY[roleKey] ? roleKey : "club_admin";
   const tiles: Tile[] = TILES_BY_ROLE_KEY[activeKey] ?? [];
   const label = ROLE_LABELS[activeKey] ?? "Rol";
-  const extraTab = getExtraTab(activeKey);
 
   return (
     <div>
@@ -151,7 +143,7 @@ export default function AdminRolePreviewPage() {
 
             <div className="flex items-end justify-around border-t border-line bg-bg px-2 pb-2 pt-1.5">
               <TabIcon icon="🏠" label="Ana Menü" active />
-              <TabIcon icon="📸" label="Sosyal Alan" />
+              <TabIcon icon="📸" label="Sosyal" />
               <TabIcon icon="🛍️" label="Mağaza" />
               <div className="-mt-3 flex flex-col items-center gap-0.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow text-base shadow-lg">
@@ -161,7 +153,6 @@ export default function AdminRolePreviewPage() {
               </div>
               <TabIcon icon="🏆" label="Etkinlik" />
               <TabIcon icon="💬" label="Mesajlar" />
-              {extraTab && <TabIcon icon={extraTab.icon} label={extraTab.label} />}
               <TabIcon icon="👤" label="Profil" />
             </div>
           </div>
