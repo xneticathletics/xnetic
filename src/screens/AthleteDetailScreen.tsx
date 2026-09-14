@@ -29,12 +29,14 @@ const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
 };
 
 // Veli/sporcunun "Sporcum" ekranında gördüğü, eskiden ayrı bir "Sporcu
-// Takibi" karosu/hub'ı üzerinden erişilen 4 takip kısayolu — artık
-// doğrudan profille aynı ekranda, tek bir yerde. Antrenör/admin
-// (AthleteTrackingHubScreen zaten sadece antrenör/veli/sporcu görüntülemesi
-// için var) bu bölümü görmez, kendi düzenleme araçları var.
+// Takibi" karosu/hub'ı üzerinden erişilen takip kısayolu — artık doğrudan
+// profille aynı ekranda, tek bir yerde. Antrenör/admin (AthleteTrackingHubScreen
+// zaten sadece antrenör/veli/sporcu görüntülemesi için var) bu bölümü
+// görmez, kendi düzenleme araçları var.
+// "Grup Programı" ayrı bir kutu değil artık — Egzersiz Geçmişi'ndeki
+// "Tamamlanan Grup Programları" bölümünde zaten var, tekrar gerek yoktu.
 const TRACKING_TILES: {
-  key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "AthleteFitnessProgram" | "IndividualFitnessProgramList";
+  key: "AthletePerformanceView" | "AthleteFitnessView" | "AthleteWellnessDetail" | "IndividualFitnessProgramList" | "MembershipFreeze";
   icon: string;
   title: string;
   sub: string;
@@ -42,12 +44,15 @@ const TRACKING_TILES: {
   // "Bireysel Programım" sporcunun KENDİ yazdığı bir şey — veli bu kartı
   // hiç görmüyor (bkz. render'daki role==="athlete" filtresi).
   athleteOnly?: boolean;
+  // "Kayıt Dondurma" eskiden MyAttendanceScreen'de ayrı, yalnız bir düğmeydi
+  // — sadece veli görür/yönetir, sporcu hesabına taşınmadı.
+  parentOnly?: boolean;
 }[] = [
   { key: "IndividualFitnessProgramList", icon: "📝", title: "Bireysel Programım", sub: "Kendi programını oluştur ve işle", accent: colors.coral, athleteOnly: true },
   { key: "AthletePerformanceView", icon: "⏱️", title: "Ölçümler", sub: "Hız, sıçrama, kuvvet, dayanıklılık", accent: colors.teal },
   { key: "AthleteWellnessDetail", icon: "🌡️", title: "Günlük Durum", sub: "Uyku, enerji, yorgunluk", accent: colors.violet },
-  { key: "AthleteFitnessProgram", icon: "📋", title: "Grup Programı", sub: "Antrenörün yayınladığı program", accent: colors.yellow },
   { key: "AthleteFitnessView", icon: "🏋️", title: "Egzersiz Geçmişi", sub: "Fitness/kuvvet geçmişi", accent: colors.coral },
+  { key: "MembershipFreeze", icon: "🧊", title: "Kayıt Dondurma", sub: "Geçici olarak kaydını dondur", accent: colors.teal, parentOnly: true },
 ];
 
 type TabKey = "info" | "parent";
@@ -338,7 +343,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <Text style={styles.trackingSubtitle}>Gelişimini takip et</Text>
           </View>
           <View style={styles.trackingGrid}>
-            {TRACKING_TILES.filter((t) => !t.athleteOnly || role === "athlete").map((t) => (
+            {TRACKING_TILES.filter((t) => (!t.athleteOnly || role === "athlete") && (!t.parentOnly || role === "parent")).map((t) => (
               <TouchableOpacity
                 key={t.key}
                 style={styles.trackingTile}
