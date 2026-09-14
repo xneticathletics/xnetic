@@ -241,12 +241,15 @@ export default function RoleTabs({ role }: { role: UserRole }) {
             Sistem Ayarları/Profil. Sosyal/Mağaza/Etkinlik kendi ekranı
             değil — dokununca Ana Menü'nün stack'indeki gerçek SocialFeed/
             Shop/Events ekranına yönlendiren birer kısayol (Profil
-            sekmesindeki aynı desen). Not: bu üçünde animation:"none"
-            denenmişti ama Stok/Siparişler/Ürün Ekle gibi üstüne PUSH edilen
-            ekranlardan geri dönüşü bozduğu görüldü (native-stack v7 +
-            react-native-screens + Yeni Mimari'de bilinen bir etkileşim) —
-            bu yüzden HomeStack.tsx'te kaldırıldı, normal geçiş animasyonu
-            kullanılıyor. */}
+            sekmesindeki aynı desen). Not: bu 5 ekranda (bkz. HomeStack.tsx)
+            animation:"none" denenmişti ama Stok/Siparişler/Ürün Ekle gibi
+            üstüne PUSH edilen ekranlardan geri dönüşü bozduğu görüldü
+            (native-stack v7 + react-native-screens + Yeni Mimari'de bilinen
+            bir etkileşim — "none" geçiş tamamlanma callback'ini hiç
+            tetiklemiyor, geri hareketinin/butonunun dayandığı durum
+            temizliği hiç olmuyor). Onun yerine çok kısa bir animation:
+            "fade" (150ms) kullanılıyor — sağdan kayma hissi kayboluyor,
+            ama gerçek bir geçiş olduğu için geri tuşu/hareketi bozulmuyor. */}
         {showShopTabs && (
           <>
             <Tab.Screen
