@@ -185,36 +185,31 @@ export default function ProfileScreen({
         )}
       </View>
 
-      {/* Sadece Kulüp Admini için gösterilir — alt menüde artık ayrı bir
-          "Ayarlar" sekmesi YOK, kulüp yönetimi ekranlarına buradan girilir. */}
-      {role === "club_admin" && (
-        <TouchableOpacity style={styles.announcementsCard} onPress={() => navigation.navigate("ClubSettings")}>
-          <View style={styles.announcementsIconBadge}>
-            <Text style={styles.announcementsIcon}>⚙️</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.announcementsTitle}>Kulüp Ayarları</Text>
-            <Text style={styles.announcementsSub}>Grup, branş, kullanıcı ve diğer ayarlar</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Süper Admin hariç herkeste gösterilir — alt menüde artık ayrı bir
-          "Duyurular" sekmesi YOK (bkz. RoleTabs.tsx), bu yüzden herkes
-          buradan erişiyor. Süper Admin'in kendi kulübü yok, duyuru
-          kulüp-içi bir kavram, bu yüzden o hariç. */}
+      {/* Kulüp Ayarları sadece Kulüp Admini'nde (alt menüde artık ayrı bir
+          "Ayarlar" sekmesi YOK, buradan girilir); Duyurular Süper Admin
+          hariç herkeste (alt menüde artık ayrı bir "Duyurular" sekmesi de
+          YOK — bkz. RoleTabs.tsx). Süper Admin'in kendi kulübü yok, duyuru
+          kulüp-içi bir kavram, bu yüzden o hariç. Diğer ayar kutucuklarıyla
+          aynı kutu stilinde — tek satır kart yerine iki de burada. */}
       {role !== "super_admin" && (
-        <TouchableOpacity style={styles.announcementsCard} onPress={() => navigation.navigate("Announcements")}>
-          <View style={styles.announcementsIconBadge}>
-            <Text style={styles.announcementsIcon}>📣</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.announcementsTitle}>Duyurular</Text>
-            <Text style={styles.announcementsSub}>Tüm duyuruları görüntüle</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
+        <View style={styles.settingsGrid}>
+          {role === "club_admin" && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ClubSettings")}>
+              <View style={styles.settingsIconBadge}>
+                <Text style={styles.settingsIcon}>⚙️</Text>
+              </View>
+              <Text style={styles.settingsTitle}>Kulüp Ayarları</Text>
+              <Text style={styles.settingsSub}>Grup, branş, kullanıcı ve diğer ayarlar</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Announcements")}>
+            <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
+              <Text style={styles.settingsIcon}>📣</Text>
+            </View>
+            <Text style={styles.settingsTitle}>Duyurular</Text>
+            <Text style={styles.settingsSub}>Tüm duyuruları görüntüle</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <View style={styles.settingsGrid}>
@@ -324,18 +319,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 8,
   },
   coordinatorBadgeText: { color: colors.teal, fontWeight: "700", fontSize: 13 },
-  announcementsCard: {
-    flexDirection: "row", alignItems: "center", gap: spacing.sm,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
-    borderRadius: radius.md, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.sm, marginBottom: spacing.xs,
-  },
-  announcementsIconBadge: {
-    width: 32, height: 32, borderRadius: radius.sm,
-    backgroundColor: colors.yellowSoft, alignItems: "center", justifyContent: "center",
-  },
-  announcementsIcon: { fontSize: 16 },
-  announcementsTitle: { color: colors.ink, fontSize: 13, fontWeight: "700" },
-  announcementsSub: { color: colors.muted, fontSize: 10, marginTop: 1 },
   settingsGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
   settingsTile: {
     flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
@@ -348,7 +331,6 @@ const styles = StyleSheet.create({
   settingsIcon: { fontSize: 17 },
   settingsTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   settingsSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  chevron: { color: colors.yellow, fontSize: 18, fontWeight: "700" },
   button: {
     backgroundColor: colors.surface,
     borderWidth: 1,
