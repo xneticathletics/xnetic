@@ -16,16 +16,22 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
     { label: "Mağaza", sub: "Ürünler ve siparişler", icon: "🛍️" },
+    { label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet", icon: "🏆" },
+    { label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   coordinator: [
     { label: "Sporcu Yönetimi", sub: "Branşının sporcuları", icon: "👥" },
+    { label: "Antrenörler", sub: "Branşının kadrosu", icon: "🧑‍🏫" },
     { label: "Antrenman-Maç Takvimi", sub: "", icon: "📅" },
     { label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
+    { label: "Kulüp Yapısı", sub: "Branşının grup ve salonları", icon: "🏛️" },
     { label: "Finans", sub: "Branşının aidatları", icon: "💰" },
     { label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", icon: "⏱️" },
     { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { label: "Etkinlik/Turnuva/Kamp", sub: "Branşının etkinlikleri", icon: "🏆" },
+    { label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   coach: [
     { label: "Sporcularım", sub: "", icon: "👥" },
@@ -34,6 +40,8 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Beslenme", sub: "Besinler ve Rehber", icon: "🥗" },
     { label: "Fitness", sub: "Check-in ve çalışma takibi", icon: "💪" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   parent: [
     { label: "Sporcum", sub: "Profilini görüntüle", icon: "🧒" },
@@ -42,6 +50,8 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Aidat Öde", sub: "", icon: "💰" },
     { label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
   athlete: [
     { label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
@@ -50,6 +60,8 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
     { label: "Performansım", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
     { label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
     { label: "Mağaza", sub: "Kulüp ürünleri", icon: "🛍️" },
+    { label: "Etkinlik/Turnuva/Kamp", sub: "", icon: "🏆" },
+    { label: "Sosyal Alan", sub: "Fotoğraf ve videolar", icon: "📸" },
   ],
 };
 
