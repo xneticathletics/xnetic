@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth } from "../context/AuthContext";
 import {
-  getAnnouncement, markAnnouncementRead, getAnnouncementReaders, getAnnouncementTargetDetails,
+  getAnnouncement, markAnnouncementRead, getAnnouncementReaders, getAnnouncementTargetDetails, deleteAnnouncement,
   type Announcement, type AnnouncementReader, type AnnouncementTarget,
 } from "../lib/api/announcements";
 
@@ -36,6 +36,36 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
   const [recipientNames, setRecipientNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Silme yetkisi sunucu tarafında da (RPC içinde is_admin_tier()) ayrıca
+  // kontrol ediliyor — buradaki gösterim sadece butonun görünürlüğü için.
+  const canDelete = role === "club_admin";
+
+  const handleDelete = () => {
+    if (!announcement) return;
+    Alert.alert(
+      "Duyuruyu sil",
+      "Bu duyuru kalıcı olarak silinecek. Devam etmek istiyor musun?",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deleteAnnouncement(announcement);
+              navigation.goBack();
+            } catch (e: any) {
+              setDeleting(false);
+              Alert.alert("Silinemedi", e.message ?? "Duyuru silinemedi.", [{ text: "Tamam" }]);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Ana Sayfa'dan sekmeler arası (Profil sekmesine) programatik olarak
   // gelindiğinde, Profil sekmesinin geçmişinde "Profile" ekranı olmayabilir
@@ -155,6 +185,12 @@ export default function AnnouncementDetailScreen({ route, navigation }: Props) {
           />
         </View>
       )}
+
+      {canDelete && (
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} disabled={deleting}>
+          {deleting ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.deleteButtonText}>Duyuruyu Sil</Text>}
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -199,6 +235,11 @@ const styles = StyleSheet.create({
   targetLine: { color: colors.ink, fontSize: 12, lineHeight: 17 },
   readersSection: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.md, flex: 1 },
   readersTitle: { color: colors.muted, fontSize: 12, fontWeight: "700", marginBottom: spacing.sm, textTransform: "uppercase" },
+  deleteButton: {
+    borderWidth: 1, borderColor: colors.coral, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginTop: spacing.md,
+  },
+  deleteButtonText: { color: colors.coral, fontWeight: "700", fontSize: 14 },
   empty: { color: colors.muted, fontSize: 13 },
   readerRow: {
     flexDirection: "row", justifyContent: "space-between", paddingVertical: 8,

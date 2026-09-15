@@ -18,6 +18,7 @@ export type Announcement = {
   body: string;
   created_at: string;
   attachment_url: string | null;
+  storage_path: string | null;
 };
 
 export type AnnouncementInput = {
@@ -33,7 +34,7 @@ export type AnnouncementInput = {
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url")
+    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url, storage_path")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -47,7 +48,7 @@ export async function listAnnouncements(): Promise<Announcement[]> {
 export async function getAnnouncement(id: string): Promise<Announcement> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url")
+    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url, storage_path")
     .eq("id", id)
     .single();
   if (error) throw error;
@@ -218,6 +219,21 @@ export async function createAnnouncement(input: AnnouncementInput) {
   if (error) throw error;
   await notifyAnnouncementRecipients(data as Announcement).catch(() => {});
   return data;
+}
+
+// Silme, announcement_reads içindeki BAŞKA kullanıcılara ait okundu
+// kayıtlarını da temizlemesi gerektiğinden (RLS bunu düz bir delete'e
+// izin vermez — bkz. announcement_reads_own_delete) SECURITY DEFINER bir
+// RPC üzerinden yapılıyor (bkz. migration 20260915100000). Ek dosya varsa
+// veritabanı kaydı silindikten SONRA, best-effort olarak storage'dan da
+// kaldırılır — storage silme başarısız olsa bile duyuru zaten gitmiş olur,
+// geride yetim bir dosya kalması kullanıcı için görünür bir soruna yol açmaz.
+export async function deleteAnnouncement(announcement: Pick<Announcement, "id" | "storage_path">) {
+  const { error } = await supabase.rpc("delete_announcement", { p_announcement_id: announcement.id });
+  if (error) throw error;
+  if (announcement.storage_path) {
+    await supabase.storage.from("announcement-attachments").remove([announcement.storage_path]).catch(() => {});
+  }
 }
 
 // Duyuruların hedef kitlesine göre görünürlüğünü istemci tarafında uygular.
