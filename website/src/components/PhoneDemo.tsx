@@ -796,7 +796,7 @@ function FinanceScreen({ onBack, onSelectGroup }: { onBack: () => void; onSelect
         <div className="rounded-lg border border-teal py-2 text-center text-[10px] font-bold text-teal">+ Gelir</div>
         <div className="rounded-lg border border-coral py-2 text-center text-[10px] font-bold text-coral">+ Gider</div>
         <div className="rounded-lg border border-violet py-2 text-center text-[10px] font-bold text-violet">Antrenör Ödemeleri</div>
-        <div className="rounded-lg bg-yellow py-2 text-center text-[10px] font-bold text-bg">+ Aidat Planı</div>
+        <div className="rounded-lg border border-yellow py-2 text-center text-[10px] font-bold text-yellow">+ Aidat Planı</div>
       </div>
 
       <div className="mb-3 space-y-1.5">
@@ -1018,7 +1018,7 @@ function CalendarScreen({ onBack }: { onBack: () => void }) {
             <span className="mb-2 inline-block rounded-full bg-line px-2 py-0.5 text-[9px] font-bold text-muted">{e.status}</span>
             <div className="mt-2 grid grid-cols-3 gap-1.5">
               <div className="rounded-lg border border-teal py-1.5 text-center text-[9px] font-bold text-teal">👥 Sporcular</div>
-              <div className="rounded-lg border border-line py-1.5 text-center text-[9px] font-bold text-muted">Yoklama Al</div>
+              <div className="rounded-lg border border-line py-1.5 text-center text-[9px] font-bold text-muted">Günün Programı</div>
               <div className="rounded-lg border border-line py-1.5 text-center text-[9px] font-bold text-muted">✓ Tamamlandı</div>
             </div>
           </div>
