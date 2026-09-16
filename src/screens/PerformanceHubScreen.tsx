@@ -43,6 +43,14 @@ export default function PerformanceHubScreen({ role, navigation }: Props) {
       key: "fitness", icon: "💪", title: "Fitness", sub: "Check-in ve çalışma takibi",
       onPress: () => navigation.navigate("Fitness"),
     });
+    // Düz antrenör de ölçümleri görebilmeli — sadece test/test grubu
+    // ekleme/düzenleme/silme admin+koordinatöre özel kalıyor (bkz.
+    // AthleticPerformanceScreen ve TestGroups ekranlarındaki kontroller).
+    items.push({
+      key: "performans", icon: "⏱️", title: "Performans Ölçümleri",
+      sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri",
+      onPress: () => navigation.navigate("AthleticPerformance"),
+    });
   } else if (role === "athlete") {
     items.push({
       key: "performansim", icon: "📊", title: "Performansım", sub: "Ölçümlerini ve gelişimini gör",
