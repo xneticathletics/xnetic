@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from "react";
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -8,6 +8,7 @@ import { getCoach, getCoachBranches, setCoachBranches, type Coach, type CoachBra
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import BirthDateInput from "../components/BirthDateInput";
 import Avatar from "../components/Avatar";
+import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachBranch">;
 
@@ -15,6 +16,7 @@ const LEVELS = [1, 2, 3, 4, 5];
 
 export default function CoachBranchScreen({ route }: Props) {
   const { coachId, coachName } = route.params;
+  const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [coach, setCoach] = useState<Coach | null>(null);
   const [myBranches, setMyBranches] = useState<CoachBranchInfo[]>([]);
@@ -130,7 +132,13 @@ export default function CoachBranchScreen({ route }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.container}
+        contentContainerStyle={{ padding: spacing.lg }}
+        keyboardShouldPersistTaps="handled"
+      >
       {error && <Text style={styles.error}>{error}</Text>}
 
       <View style={styles.infoCard}>
@@ -189,6 +197,7 @@ export default function CoachBranchScreen({ route }: Props) {
                 value={mb.license_no ?? ""}
                 onChangeText={(v) => updateLocalBranchField(mb.branch_id, { license_no: v })}
                 onEndEditing={() => persistBranches(myBranches)}
+                onFocus={handleFocus}
                 placeholder="Belge/lisans no"
                 placeholderTextColor={colors.muted}
               />
@@ -201,6 +210,7 @@ export default function CoachBranchScreen({ route }: Props) {
                 value={mb.experience_years != null ? String(mb.experience_years) : ""}
                 onChangeText={(v) => updateLocalBranchField(mb.branch_id, { experience_years: v ? Number(v) : null })}
                 onEndEditing={() => persistBranches(myBranches)}
+                onFocus={handleFocus}
                 keyboardType="numeric"
                 placeholder="Örn. 5"
                 placeholderTextColor={colors.muted}
@@ -216,6 +226,16 @@ export default function CoachBranchScreen({ route }: Props) {
             </View>
           </View>
         ))}
+
+        {myBranches.length > 0 && (
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => persistBranches(myBranches)}
+            disabled={branchSaving}
+          >
+            {branchSaving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
+          </TouchableOpacity>
+        )}
       </View>
 
       {branches.length > 1 && (
@@ -265,7 +285,8 @@ export default function CoachBranchScreen({ route }: Props) {
           </View>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -309,4 +330,9 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },
   chipText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
   chipTextActive: { color: colors.bg },
+  saveButton: {
+    backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginTop: spacing.md,
+  },
+  saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 14 },
 });
