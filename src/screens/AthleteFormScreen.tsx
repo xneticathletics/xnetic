@@ -21,6 +21,7 @@ import GroupPickerModal from "../components/GroupPickerModal";
 import BranchPickerModal from "../components/BranchPickerModal";
 import LinkedAccountField from "../components/LinkedAccountField";
 import BirthDateInput from "../components/BirthDateInput";
+import DateMaskInput from "../components/DateMaskInput";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
@@ -69,7 +70,7 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | null>(null); // yeni seçilen, henüz yüklenmemiş fotoğraf
   const [monthlyFee, setMonthlyFee] = useState("");
-  const [feeDayOfMonth, setFeeDayOfMonth] = useState("");
+  const [feeFirstPaymentDate, setFeeFirstPaymentDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true)
@@ -227,13 +228,8 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
     }
     // Aidat alanları isteğe bağlı ama ikisi birlikte doldurulmalı.
     const feeAmount = monthlyFee.trim() ? Number(monthlyFee) : null;
-    const feeDay = feeDayOfMonth.trim() ? Number(feeDayOfMonth) : null;
-    if ((feeAmount && !feeDay) || (feeDay && !feeAmount)) {
-      Alert.alert("Eksik bilgi", "Aidat tutarı ve günü birlikte girilmeli (ya da ikisini de boş bırak).", [{ text: "Tamam" }]);
-      return;
-    }
-    if (feeDay && (feeDay < 1 || feeDay > 31)) {
-      Alert.alert("Eksik bilgi", "Ayın günü 1 ile 31 arasında olmalı.", [{ text: "Tamam" }]);
+    if ((feeAmount && !feeFirstPaymentDate) || (feeFirstPaymentDate && !feeAmount)) {
+      Alert.alert("Eksik bilgi", "Aidat tutarı ve ilk ödeme tarihi birlikte girilmeli (ya da ikisini de boş bırak).", [{ text: "Tamam" }]);
       return;
     }
 
@@ -255,19 +251,14 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
       // kaldırma) Kaydet'e basınca tek seferde işlenir.
       await linkAthleteAccount(saved.id, athleteLinkedUser?.id ?? null);
       await linkParentAccount(saved.id, parentLinkedUser?.id ?? null);
-      // Yeni sporcu eklerken aidat tutarı girildiyse, o gün itibarıyla
-      // tekrarlayan aidat planını otomatik başlat (önümüzdeki 3 ay
-      // otomatik oluşur — Finans ekranındaki sistemle aynı).
-      if (!isEdit && feeAmount && feeDay && saved?.id) {
-        // Yeni kaydolan bir sporcunun ilk aidatı HER ZAMAN bir sonraki
-        // aydan başlar — ayın günü bu ay içinde henüz gelmemiş olsa bile
-        // (aksi halde, ör. ayın 16'sında eklenip günü 20 seçilen bir
-        // sporcu 4 gün sonra hemen ücretlendirilirdi). Finans sayfasındaki
-        // "+ Aidat Planı Ekle" akışı bilerek bu davranışı kullanmıyor.
-        await createPaymentPlan(
-          { athlete_id: saved.id, amount: feeAmount, day_of_month: feeDay },
-          { alwaysSkipCreationMonth: true }
-        );
+      // Yeni sporcu eklerken aidat tutarı ve ilk ödeme tarihi girildiyse,
+      // o tarihten itibaren tekrarlayan aidat planını otomatik başlat
+      // (önümüzdeki 3 ay otomatik oluşur — Finans ekranındaki sistemle aynı).
+      // Hangi ayda başlayacağı artık seçilen TARİHTEN doğrudan belli
+      // (bkz. paymentPlans.ts computeMissingRows) — eskiden "ayın kaçında"
+      // bilgisinden "bu ay mı gelecek ay mı" diye tahmin ediliyordu.
+      if (!isEdit && feeAmount && feeFirstPaymentDate && saved?.id) {
+        await createPaymentPlan({ athlete_id: saved.id, amount: feeAmount, first_payment_date: feeFirstPaymentDate });
       }
       markSaved();
       navigation.goBack();
@@ -526,9 +517,10 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
           <View style={styles.sectionDivider}>
             <Text style={styles.sectionLabel}>Aidat</Text>
             <Text style={styles.sectionHint}>
-              Doldurursan, bu sporcu için bugünden itibaren otomatik tekrarlayan bir
-              aidat planı başlar ve önümüzdeki 3 ay otomatik oluşturulur. Boş bırakırsan
-              istediğin zaman Finans ekranından ayrıca ekleyebilirsin.
+              Doldurursan, bu sporcu için seçtiğin ilk ödeme tarihinden itibaren
+              otomatik tekrarlayan bir aidat planı başlar ve önümüzdeki 3 ay otomatik
+              oluşturulur. Boş bırakırsan istediğin zaman Finans ekranından ayrıca
+              ekleyebilirsin.
             </Text>
           </View>
 
@@ -544,16 +536,8 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
                 placeholderTextColor={colors.muted}
               />
             </Field>
-            <Field label="Ayın Kaçında" style={{ flex: 1 }}>
-              <TextInput
-          onFocus={handleFocus}
-                style={styles.input}
-                value={feeDayOfMonth}
-                onChangeText={setFeeDayOfMonth}
-                keyboardType="numeric"
-                placeholder="Örn. 5"
-                placeholderTextColor={colors.muted}
-              />
+            <Field label="İlk Ödeme Tarihi" style={{ flex: 1 }}>
+              <DateMaskInput value={feeFirstPaymentDate} onChange={setFeeFirstPaymentDate} onFocus={handleFocus} />
             </Field>
           </View>
         </>

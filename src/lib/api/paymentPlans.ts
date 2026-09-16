@@ -5,6 +5,7 @@ export type PaymentPlan = {
   athlete_id: string;
   amount: number;
   day_of_month: number;
+  first_payment_date: string | null;
   active: boolean;
   created_at: string;
 };
@@ -12,7 +13,12 @@ export type PaymentPlan = {
 export type PaymentPlanInput = {
   athlete_id: string;
   amount: number;
-  day_of_month: number;
+  // "YYYY-MM-DD" — kullanıcının gün/ay/yıl seçerek belirlediği ilk ödeme
+  // tarihi (bkz. DateField.tsx). Eskiden sadece "ayın kaçında" (day_of_month)
+  // alınıyordu ve hangi ayda başlayacağı (bu ay mı gelecek ay mı) bir
+  // tahminle (günü geçti mi?) belirleniyordu — artık kullanıcı ayı da
+  // doğrudan seçtiği için bu tahmine gerek kalmadı.
+  first_payment_date: string;
 };
 
 // Kaç ay ilerisi için ödeme kaydı hazır bulunsun (bugünkü ay dahil).
@@ -39,33 +45,40 @@ function monthIndexOf(date: Date): number {
   return date.getFullYear() * 12 + date.getMonth();
 }
 
+// "YYYY-MM-DD" string'inden, Date'e hiç çevirmeden (saat dilimi kaymasından
+// tamamen kaçınarak) aynı mutlak ay sayısını üretir.
+function monthIndexOfDateKey(dateKey: string): number {
+  const [y, m] = dateKey.split("-").map(Number);
+  return y * 12 + (m - 1);
+}
+
 type PendingPaymentRow = { plan_id: string; athlete_id: string; period: "monthly"; amount: number; due_date: string };
 
 // Bir plan için, eksik olan ayların payments satırlarını HESAPLAR (henüz
 // yazmaz) — due_date bazında, zaten var olan ayları tekrarlamaz. topUpPlan
 // (tekil) ve topUpAllActivePlans (toplu) bu tek hesaplamayı paylaşır.
 //
-// Plan BU AY oluşturulduysa ve günü (day_of_month) bugünün gününden ZATEN
-// geçtiyse, bu ay atlanır (geçmişe dönük/retroaktif ücretlendirme olmasın) —
-// ilk ödeme gelecek aydan başlar. Ama günü hâlâ önümüzdeyse (ör. bugün
-// ayın 10'u, plan günü 28), bu ay da dahil edilir — eskiden bu ayrım
-// yapılmıyordu, planın oluşturulduğu ay HER ZAMAN atlanıyordu; bu da o ay
-// içinde kurulan bir planın "Bu Ay Beklenen"de hep 0 TL görünmesine yol
-// açıyordu (bkz. src/lib/api/payments.ts getMonthlyFinanceSummary). Plan
-// geçmiş bir ayda oluşturulmuşsa bu ayrımın bir önemi yok, doğrudan bugünkü
-// aydan başlanır (eskisiyle aynı davranış).
-// alwaysSkipCreationMonth: bazı akışlar (ör. Sporcu Ekle) yeni kaydolan
-// bir sporcunun ilk aidatının HER ZAMAN bir sonraki aydan başlamasını
-// istiyor — günü bu ay içinde henüz gelmemiş olsa bile. Finans sayfasındaki
-// "+ Aidat Planı Ekle" akışı ise varsayılan (false) davranışı korur —
-// yukarıdaki yorumdaki "Bu Ay Beklenen" düzeltmesini bozmamak için.
-function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>, alwaysSkipCreationMonth = false): PendingPaymentRow[] {
+// Başlangıç ayı artık kullanıcının seçtiği first_payment_date'in AYINA göre
+// belirleniyor (eskiden "created_at'in ayı + günü geçti mi?" tahminiyle
+// bulunuyordu — bkz. eski day_of_month-only akış). Kural:
+// - first_payment_date GELECEKTE bir aydaysa (ör. plan bugün kuruldu ama
+//   ilk ödeme 2 ay sonrasına seçildi), başlangıç DOĞRUDAN o ay — araya
+//   giren aylar için hiç kayıt açılmaz.
+// - first_payment_date bu ay veya geçmişteyse, başlangıç HER ZAMAN bugünkü
+//   ay (geçmişe dönük/retroaktif ücretlendirme asla yapılmaz) — TEK istisna:
+//   first_payment_date TAM bu ayı gösteriyorsa ve o günü bugünün gününden
+//   zaten geçtiyse, bu ay da atlanıp bir sonraki aydan başlanır (aksi halde
+//   "Bu Ay Beklenen" zaten geçmiş bir tarihi göstermeye başlardı — bkz.
+//   src/lib/api/payments.ts getMonthlyFinanceSummary).
+function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>): PendingPaymentRow[] {
   const now = new Date();
   const nowMonthIndex = monthIndexOf(now);
-  const createdMonthIndex = monthIndexOf(new Date(plan.created_at));
-  const createdThisMonth = createdMonthIndex === nowMonthIndex;
-  const currentMonthDayAlreadyPassed = createdThisMonth && (alwaysSkipCreationMonth || plan.day_of_month < now.getDate());
-  const startMonthIndex = currentMonthDayAlreadyPassed ? nowMonthIndex + 1 : nowMonthIndex;
+  const anchorDateKey = plan.first_payment_date ?? plan.created_at.slice(0, 10);
+  const anchorMonthIndex = monthIndexOfDateKey(anchorDateKey);
+  const anchorIsCurrentMonth = anchorMonthIndex === nowMonthIndex;
+  const currentMonthDayAlreadyPassed = anchorIsCurrentMonth && plan.day_of_month < now.getDate();
+  const baseStartMonthIndex = Math.max(anchorMonthIndex, nowMonthIndex);
+  const startMonthIndex = currentMonthDayAlreadyPassed ? baseStartMonthIndex + 1 : baseStartMonthIndex;
 
   const rows: PendingPaymentRow[] = [];
   for (let i = 0; i < MONTHS_AHEAD; i++) {
@@ -84,21 +97,21 @@ function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>, alway
 // 20260906020000) — bu yüzden düz insert yerine upsert+ignoreDuplicates
 // kullanıyoruz: aynı anda iki tazeleme çağrısı çakışsa bile ikinci satır
 // sessizce atlanır, kopya oluşmaz.
-export async function topUpPlan(plan: PaymentPlan, alwaysSkipCreationMonth = false) {
+export async function topUpPlan(plan: PaymentPlan) {
   const { data: existing, error: existingError } = await supabase
     .from("payments")
     .select("due_date")
     .eq("plan_id", plan.id);
   if (existingError) throw existingError;
 
-  const rows = computeMissingRows(plan, new Set((existing ?? []).map((e) => e.due_date)), alwaysSkipCreationMonth);
+  const rows = computeMissingRows(plan, new Set((existing ?? []).map((e) => e.due_date)));
   if (rows.length > 0) {
     const { error: insertError } = await supabase.from("payments").upsert(rows, { onConflict: "plan_id,due_date", ignoreDuplicates: true });
     if (insertError) throw insertError;
   }
 }
 
-export async function createPaymentPlan(input: PaymentPlanInput, options?: { alwaysSkipCreationMonth?: boolean }) {
+export async function createPaymentPlan(input: PaymentPlanInput) {
   // Sporcunun zaten aktif bir aidat planı varsa, yenisini eklemeden önce
   // eskisini kaldırıyoruz — aksi halde iki plan aynı anda geçerli kalıp
   // sporcuya hem eski hem yeni tutardan aidat açılırdı. Eskisine bağlı,
@@ -124,9 +137,14 @@ export async function createPaymentPlan(input: PaymentPlanInput, options?: { alw
     if (deletePlansError) throw deletePlansError;
   }
 
-  const { data, error } = await supabase.from("payment_plans").insert(input).select().single();
+  const day_of_month = Number(input.first_payment_date.split("-")[2]);
+  const { data, error } = await supabase
+    .from("payment_plans")
+    .insert({ athlete_id: input.athlete_id, amount: input.amount, day_of_month, first_payment_date: input.first_payment_date })
+    .select()
+    .single();
   if (error) throw error;
-  await topUpPlan(data as PaymentPlan, options?.alwaysSkipCreationMonth);
+  await topUpPlan(data as PaymentPlan);
   return data;
 }
 
@@ -141,7 +159,7 @@ export async function createPaymentPlan(input: PaymentPlanInput, options?: { alw
 export async function topUpAllActivePlans() {
   const { data: plans, error } = await supabase
     .from("payment_plans")
-    .select("id, athlete_id, amount, day_of_month, active, created_at")
+    .select("id, athlete_id, amount, day_of_month, first_payment_date, active, created_at")
     .eq("active", true);
   if (error) throw error;
   if (!plans || plans.length === 0) return;

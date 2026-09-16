@@ -46,9 +46,16 @@ export async function uploadClubLogo(localUri: string, clubId: string): Promise<
   if (error) throw error;
 
   // Diğer ekranların (Ana Sayfa) sabit URL'i ne zaman yenileyeceğini
-  // bilmesi için — hata sessizce yutuluyor: dosya zaten yüklendi, bu
-  // sadece ÖNBELLEK TAZELEME sinyali, kritik değil (bkz. getClubLogoUrl).
-  await supabase.from("clubs").update({ logo_updated_at: new Date().toISOString() }).eq("id", clubId).then(
+  // bilmesi için. clubs tablosuna doğrudan .update() ÖNCEDEN kullanılıyordu
+  // ama bu, repo'daki migration'larda hiç görünmeyen (bu proje öncesinden
+  // gelen) clubs UPDATE RLS politikasına bağımlıydı ve hatası sessizce
+  // yutulduğu için politika izin vermediğinde fark edilmeden başarısız
+  // kalıyordu — sonuç: logo_updated_at hiç değişmiyor, cache-buster URL'i
+  // hiç değişmiyor, eski logo süresiz görünüyordu. SECURITY DEFINER bir
+  // RPC'ye taşındı (touch_club_logo), böylece altta yatan RLS ne olursa
+  // olsun her zaman çalışır — yine de kritik olmadığı için hatası burada
+  // sessizce yutuluyor.
+  await supabase.rpc("touch_club_logo", { p_club_id: clubId }).then(
     () => {},
     () => {}
   );

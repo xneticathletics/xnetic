@@ -669,25 +669,27 @@ const styles = StyleSheet.create({
   },
   editButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
   injuryNavButton: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingVertical: 14,
-    alignItems: "center", marginBottom: spacing.sm,
-  },
-  injuryNavButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
-  extraGroupsButton: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingVertical: 14,
-    alignItems: "center", marginBottom: spacing.sm,
-  },
-  extraGroupsButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
-  notesNavButton: {
-    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingVertical: 14,
-    alignItems: "center", marginBottom: spacing.sm,
-  },
-  notesNavButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
-  freezeButton: {
     borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md, paddingVertical: 14,
     alignItems: "center", marginBottom: spacing.sm,
   },
-  freezeButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
+  injuryNavButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
+  extraGroupsButton: {
+    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginBottom: spacing.sm,
+  },
+  extraGroupsButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
+  notesNavButton: {
+    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginBottom: spacing.sm,
+  },
+  notesNavButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
+  // Kaydı Dondur diğerlerinden BİLEREK farklı (kırmızı) — geri dönüşü kolay
+  // ama dikkatli kullanılması gereken, yarı-yıkıcı bir işlem (kullanıcı isteği).
+  freezeButton: {
+    borderWidth: 1, borderColor: colors.coral, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginBottom: spacing.sm,
+  },
+  freezeButtonText: { color: colors.coral, fontWeight: "700", fontSize: 14 },
   deleteButton: { alignItems: "center", paddingVertical: spacing.lg, marginBottom: spacing.xl },
   deleteButtonText: { color: colors.coral, fontWeight: "700", fontSize: 13 },
 });

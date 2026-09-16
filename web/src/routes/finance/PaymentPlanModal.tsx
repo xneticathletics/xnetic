@@ -8,7 +8,7 @@ export default function PaymentPlanModal({ onClose, onSaved }: { onClose: () => 
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteId, setAthleteId] = useState("");
   const [amount, setAmount] = useState("");
-  const [dayOfMonth, setDayOfMonth] = useState("");
+  const [firstPaymentDate, setFirstPaymentDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingRef = useRef(false);
@@ -22,14 +22,13 @@ export default function PaymentPlanModal({ onClose, onSaved }: { onClose: () => 
     if (!athleteId) return setError("Sporcu seçmelisiniz.");
     const amt = Number(amount);
     if (!amt || amt <= 0) return setError("Geçerli bir tutar girin.");
-    const day = Number(dayOfMonth);
-    if (!day || day < 1 || day > 28) return setError("Ayın günü 1 ile 28 arasında olmalı.");
+    if (!firstPaymentDate) return setError("İlk ödeme tarihini seçmelisiniz.");
 
     savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
-      await createPaymentPlan({ athlete_id: athleteId, amount: amt, day_of_month: day });
+      await createPaymentPlan({ athlete_id: athleteId, amount: amt, first_payment_date: firstPaymentDate });
       onSaved();
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
@@ -42,8 +41,8 @@ export default function PaymentPlanModal({ onClose, onSaved }: { onClose: () => 
   return (
     <Modal title="Yeni Aidat Planı" onClose={onClose}>
       <p className="mb-4 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-muted">
-        Burada gireceğin tutar ve gün, her ay otomatik tekrarlanan bir aidat planı oluşturur. Önümüzdeki 3 ay için
-        ödeme kaydı hemen hazırlanır; süre ilerledikçe yeni aylar kendiliğinden eklenir.
+        Burada gireceğin tutar ve ilk ödeme tarihi, her ay otomatik tekrarlanan bir aidat planı oluşturur. Önümüzdeki 3
+        ay için ödeme kaydı hemen hazırlanır; süre ilerledikçe yeni aylar kendiliğinden eklenir.
       </p>
 
       <FormField label="Sporcu *">
@@ -61,13 +60,12 @@ export default function PaymentPlanModal({ onClose, onSaved }: { onClose: () => 
         <input type="number" className={inputClass} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500" />
       </FormField>
 
-      <FormField label="Ayın Kaçında? (1-28) *">
+      <FormField label="İlk Ödeme Tarihi *">
         <input
-          type="number"
+          type="date"
           className={inputClass}
-          value={dayOfMonth}
-          onChange={(e) => setDayOfMonth(e.target.value)}
-          placeholder="Örn. 5"
+          value={firstPaymentDate}
+          onChange={(e) => setFirstPaymentDate(e.target.value)}
         />
       </FormField>
 

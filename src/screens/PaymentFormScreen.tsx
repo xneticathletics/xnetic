@@ -6,6 +6,7 @@ import { createPaymentPlan } from "../lib/api/paymentPlans";
 import { getClubSettings } from "../lib/api/clubSettings";
 import type { Athlete } from "../lib/api/athletes";
 import AthletePickerModal from "../components/AthletePickerModal";
+import DateMaskInput from "../components/DateMaskInput";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useAuth } from "../context/AuthContext";
 
@@ -21,10 +22,10 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
   const [athleteName, setAthleteName] = useState<string | null>(preselected?.athleteName ?? null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [amount, setAmount] = useState("");
-  const [feeDayOfMonth, setFeeDayOfMonth] = useState("");
+  const [firstPaymentDate, setFirstPaymentDate] = useState<string | null>(null);
   // athleteId dahil değil — navigation param'ından ön-seçili gelebiliyor,
   // dahil edilirse bazı akışlarda hiç dokunmadan "değişti" sayılırdı.
-  const hasUnsavedChanges = !!amount.trim() || !!feeDayOfMonth.trim();
+  const hasUnsavedChanges = !!amount.trim() || !!firstPaymentDate;
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -49,9 +50,8 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
     if (savingRef.current) return;
     if (!athleteId) return Alert.alert("Eksik bilgi", "Sporcu seçmelisin.", [{ text: "Tamam" }]);
     if (!amount || Number(amount) <= 0) return Alert.alert("Eksik bilgi", "Geçerli bir tutar gir.", [{ text: "Tamam" }]);
-    const day = Number(feeDayOfMonth);
-    if (!feeDayOfMonth || isNaN(day) || day < 1 || day > 31) {
-      return Alert.alert("Eksik bilgi", "Ayın günü 1 ile 31 arasında olmalı.", [{ text: "Tamam" }]);
+    if (!firstPaymentDate) {
+      return Alert.alert("Eksik bilgi", "İlk ödeme tarihini seçmelisin.", [{ text: "Tamam" }]);
     }
     // 29-31 gibi her ayda bulunmayan günler için computeDueDate()
     // (paymentPlans.ts) o ayın son gününe otomatik sığdırır.
@@ -60,10 +60,10 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await createPaymentPlan({ athlete_id: athleteId, amount: Number(amount), day_of_month: day });
+      await createPaymentPlan({ athlete_id: athleteId, amount: Number(amount), first_payment_date: firstPaymentDate });
       Alert.alert(
         "Aidat Planı Oluşturuldu",
-        "İlk ödeme bir sonraki ay için oluşturuldu (bu ay için aidat kaydı açılmadı). Önümüzdeki 3 ay için kayıtlar hazır; zaman geçtikçe yeni aylar otomatik eklenmeye devam edecek.",
+        "İlk ödeme seçtiğin tarih için oluşturuldu. Önümüzdeki 3 ay için kayıtlar hazır; zaman geçtikçe yeni aylar otomatik eklenmeye devam edecek.",
         [{ text: "Tamam" }]
       );
       markSaved();
@@ -88,10 +88,10 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
         keyboardShouldPersistTaps="handled"
       >
       <Text style={styles.infoBox}>
-        Burada gireceğin tutar ve gün, her ay otomatik olarak tekrarlanan bir
-        aidat planı oluşturur. İlk ödeme, planın oluşturulduğu ay değil, bir
-        SONRAKİ ay olarak ayarlanır; önümüzdeki 3 ay için ödeme kaydı hemen
-        hazırlanır, süre ilerledikçe yeni aylar kendiliğinden eklenir.
+        Burada gireceğin tutar ve seçtiğin ilk ödeme tarihi, her ay otomatik
+        olarak tekrarlanan bir aidat planı oluşturur. Önümüzdeki 3 ay için
+        ödeme kaydı hemen hazırlanır, süre ilerledikçe yeni aylar
+        kendiliğinden eklenir.
       </Text>
 
       <Field label="Sporcu *">
@@ -112,17 +112,8 @@ export default function PaymentFormScreen({ route, navigation }: Props) {
         />
       </Field>
 
-      <Field label="Ayın Kaçında *">
-        <TextInput
-          onFocus={handleFocus}
-          style={styles.input}
-          value={feeDayOfMonth}
-          onChangeText={(v) => setFeeDayOfMonth(v.replace(/[^0-9]/g, "").slice(0, 2))}
-          keyboardType="numeric"
-          placeholder="Örn. 5"
-          placeholderTextColor={colors.muted}
-          maxLength={2}
-        />
+      <Field label="İlk Ödeme Tarihi *">
+        <DateMaskInput value={firstPaymentDate} onChange={setFirstPaymentDate} onFocus={handleFocus} />
       </Field>
 
       {error && <Text style={styles.error}>{error}</Text>}
