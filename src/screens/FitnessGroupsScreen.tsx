@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { listFitnessGroups, deleteFitnessGroup, type FitnessGroupSummary } from "../lib/api/fitnessGroups";
 import { listMyCoachedGroups } from "../lib/api/groups";
+import { getMyAuthorizedVenueIds } from "../lib/api/venueCoaches";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 
@@ -26,6 +27,18 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<FitnessGroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasVenueAuthority, setHasVenueAuthority] = useState(false);
+
+  // Oluşturma: club_admin, branş koordinatörü ya da en az bir salonun
+  // yetkilisi olan antrenör — düz (etiketsiz) antrenör artık oluşturamaz.
+  const canCreate = role === "club_admin" || (role === "coach" && isLocked) || hasVenueAuthority;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isCoach) return;
+      getMyAuthorizedVenueIds().then((ids) => setHasVenueAuthority(ids.length > 0)).catch(() => setHasVenueAuthority(false));
+    }, [isCoach])
+  );
 
   // Antrenör (branş koordinatörü dahil) sadece kendi branşındaki fitness
   // gruplarını görsün/yönetsin — başka branşların gruplarını ne listede
@@ -81,9 +94,11 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
         Bir branştaki tüm müsabık sporculardan istediklerini seçip özel bir fitness grubu oluşturabilirsin.
       </Text>
 
-      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("FitnessGroupForm", undefined)}>
-        <Text style={styles.addButtonText}>+ Fitness Grubu Ekle</Text>
-      </TouchableOpacity>
+      {canCreate && (
+        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("FitnessGroupForm", undefined)}>
+          <Text style={styles.addButtonText}>+ Fitness Grubu Ekle</Text>
+        </TouchableOpacity>
+      )}
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
