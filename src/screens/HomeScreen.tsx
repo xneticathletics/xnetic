@@ -29,7 +29,7 @@ export type Tile = { key: string; label: string; sub: string; icon: string };
 export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
   coach: [
     { key: "sporcu", label: "Sporcularım", sub: "", icon: "👥" },
-    { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
+    { key: "yoklama", label: "Günün Programı", sub: "Grubunu seç", icon: "📋" },
     { key: "antrenman", label: "Antrenman Planla", sub: "Bugün", icon: "📅" },
     { key: "performans_hub", label: "Performans", sub: "Fitness ve beslenme", icon: "📊" },
   ],
@@ -71,7 +71,7 @@ export const COORDINATOR_TILES: Tile[] = [
   { key: "sporcu", label: "Sporcu Yönetimi", sub: "Branşının sporcuları", icon: "👥" },
   { key: "antrenorler", label: "Antrenörler", sub: "Branşının kadrosu", icon: "🧑‍🏫" },
   { key: "antrenman", label: "Antrenman-Maç Takvimi", sub: "", icon: "📅" },
-  { key: "yoklama", label: "Yoklama Al", sub: "Grubunu seç", icon: "📋" },
+  { key: "yoklama", label: "Günün Programı", sub: "Grubunu seç", icon: "📋" },
   { key: "kulup_yapisi", label: "Kulüp Yapısı", sub: "Branşının grup ve salonları", icon: "🏛️" },
   { key: "aidat", label: "Finans", sub: "Branşının aidatları", icon: "💰" },
   { key: "performans_hub", label: "Performans", sub: "Fitness, ölçüm ve beslenme", icon: "📊" },

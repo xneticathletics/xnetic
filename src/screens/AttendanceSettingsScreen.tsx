@@ -20,7 +20,7 @@ export default function AttendanceSettingsScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-        <Field label="Yoklama Al — Antrenmandan Kaç Dakika Önce Açılsın">
+        <Field label="Günün Programı — Antrenmandan Kaç Dakika Önce Açılsın">
           <TextInput
             onFocus={handleFocus}
             style={styles.input}
@@ -30,7 +30,7 @@ export default function AttendanceSettingsScreen() {
           />
         </Field>
 
-        <Field label="Yoklama Al — Antrenman Başladıktan Kaç Dakika Sonra Kapansın">
+        <Field label="Günün Programı — Antrenman Başladıktan Kaç Dakika Sonra Kapansın">
           <TextInput
             onFocus={handleFocus}
             style={styles.input}

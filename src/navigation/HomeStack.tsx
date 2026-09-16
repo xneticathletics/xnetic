@@ -314,10 +314,23 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="TrainingSessions" component={TrainingSessionsScreen} options={{ title: "Antrenman ve Müsabaka Takvimi" }} />
       <Stack.Screen name="DayScheduleDetail" component={DayScheduleDetailScreen} options={{ title: "Gün Detayı" }} />
       <Stack.Screen name="WeeklySchedule" component={WeeklyScheduleScreen} options={{ title: "Haftalık Program" }} />
-      <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Yoklama Al" }} />
+      <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Günün Programı" }} />
       <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} />
-      <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Yoklama Al" }} />
-      <Stack.Screen name="SocialFeed" component={SocialFeedScreen} options={{ headerShown: false, title: "Sosyal" }} />
+      <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Günün Programı" }} />
+      {/* gestureEnabled:false — Sosyal/Mağaza/Etkinlik'e sekmeye
+          basılınca gelinir, gerçek bir "geri" hedefi yok (altlarında Ana
+          Sayfa duruyor, kaydırınca oraya dönmek kafa karıştırıcı oluyordu).
+          animation'a KASITLI olarak dokunulmuyor — bkz. dosyanın üstündeki
+          yorum, iki farklı animation denemesi geri tuşunu/gestini kırmıştı.
+          gestureEnabled bambaşka, daha önce hiç sorun çıkarmayan bir ayar;
+          bu ekranlardan PUSH edilen alt sayfalar (Stok, Siparişler, Ürün
+          Ekle, Etkinlik Detayı vb.) kendi Stack.Screen tanımlarında bu
+          override'a sahip değil, normal geri davranışlarını koruyor. */}
+      <Stack.Screen
+        name="SocialFeed"
+        component={SocialFeedScreen}
+        options={{ headerShown: false, title: "Sosyal", gestureEnabled: false }}
+      />
       <Stack.Screen name="SocialPostForm" component={SocialPostFormScreen} options={{ title: "Yeni Paylaşım" }} />
       <Stack.Screen name="SessionRoster" component={SessionRosterScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="InviteUser" component={InviteUserScreen} options={{ title: "Antrenör Ekle" }} />
@@ -404,18 +417,18 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="MakePayment" component={MakePaymentScreen} options={{ title: "Ödeme Yap" }} />
       <Stack.Screen name="AthleteBulkImport" component={AthleteBulkImportScreen} options={{ title: "Excelden Aktar" }} />
       <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
-      <Stack.Screen name="Shop" component={ShopScreen} options={{ headerShown: false, title: "Mağaza" }} />
+      <Stack.Screen name="Shop" component={ShopScreen} options={{ headerShown: false, title: "Mağaza", gestureEnabled: false }} />
       <Stack.Screen name="ShopProductDetail" component={ShopProductDetailScreen} options={{ title: "Ürün" }} />
       <Stack.Screen name="ShopPurchase" component={ShopPurchaseScreen} options={{ title: "Satın Al" }} />
       <Stack.Screen name="MyShopOrders" component={MyShopOrdersScreen} options={{ title: "Siparişlerim" }} />
-      <Stack.Screen name="ShopManage" component={ShopManageScreen} options={{ headerShown: false, title: "Mağaza" }} />
+      <Stack.Screen name="ShopManage" component={ShopManageScreen} options={{ headerShown: false, title: "Mağaza", gestureEnabled: false }} />
       <Stack.Screen name="ShopProductForm" component={ShopProductFormScreen} options={{ title: "Ürün" }} />
       <Stack.Screen name="ShopOrders" component={ShopOrdersScreen} options={{ title: "Siparişler" }} />
       <Stack.Screen name="ShopStock" component={ShopStockScreen} options={{ title: "Stok" }} />
-      <Stack.Screen name="EventsList" component={EventsListScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp" }} />
+      <Stack.Screen name="EventsList" component={EventsListScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp", gestureEnabled: false }} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: "Etkinlik" }} />
       <Stack.Screen name="EventForm" component={EventFormScreen} options={{ title: "Etkinlik" }} />
-      <Stack.Screen name="EventsManage" component={EventsManageScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp" }} />
+      <Stack.Screen name="EventsManage" component={EventsManageScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp", gestureEnabled: false }} />
       <Stack.Screen name="EventRegister" component={EventRegisterScreen} options={{ title: "Kayıt Ol" }} />
       <Stack.Screen name="EventRegistrations" component={EventRegistrationsScreen} options={{ title: "Kayıtlar" }} />
       <Stack.Screen name="MyEventRegistrations" component={MyEventRegistrationsScreen} options={{ title: "Kayıtlarım" }} />

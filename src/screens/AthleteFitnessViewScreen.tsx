@@ -27,6 +27,11 @@ type SessionRecord = {
 type SessionGroup = {
   dateKey: string;
   records: SessionRecord[];
+  // O güne ait TÜM kayıtlar AYNI bireysel programdan geliyorsa (yaygın
+  // durum — bir program sayfasından kaydedilen ölçümler hep birlikte
+  // girilir) programın adı; karışık/hiç yoksa null (bkz. individual_
+  // program_id, migration 20260916200000).
+  programName: string | null;
 };
 
 function formatDate(iso: string) {
@@ -96,16 +101,26 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
           // Hareket bazlı değil, ANTRENMAN (gün) bazlı grupluyoruz —
           // measured_at zaten saatsiz düz bir tarih, aynı tarihteki tüm
           // kayıtlar aynı antrenmanın hareketleri sayılıyor.
+          const programNameById = new Map(ownPrograms.map((p) => [p.id, p.name]));
           const byDate = new Map<string, SessionRecord[]>();
+          const programIdsByDate = new Map<string, Set<string | null>>();
           all.forEach((m) => {
             const info = resolveExercise(m.exercise_key, customById);
             if (!info) return;
             const list = byDate.get(m.measured_at) ?? [];
             list.push({ measurement: m, ...info });
             byDate.set(m.measured_at, list);
+            const idsForDate = programIdsByDate.get(m.measured_at) ?? new Set<string | null>();
+            idsForDate.add(m.individual_program_id);
+            programIdsByDate.set(m.measured_at, idsForDate);
           });
           const sortedGroups = Array.from(byDate.entries())
-            .map(([dateKey, records]) => ({ dateKey, records }))
+            .map(([dateKey, records]) => {
+              const ids = Array.from(programIdsByDate.get(dateKey) ?? []);
+              const programName =
+                ids.length === 1 && ids[0] ? programNameById.get(ids[0]) ?? null : null;
+              return { dateKey, records, programName };
+            })
             .sort((a, b) => b.dateKey.localeCompare(a.dateKey));
 
           if (!cancelled) {
@@ -186,7 +201,9 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
               accessibilityLabel={`${formatDate(s.dateKey)} antrenmanı, ${s.records.length} hareket`}
             >
               <View>
-                <Text style={styles.sessionDate}>{formatDate(s.dateKey)}</Text>
+                <Text style={styles.sessionDate}>
+                  {s.programName ? `${s.programName} — ${formatDate(s.dateKey)}` : formatDate(s.dateKey)}
+                </Text>
                 <Text style={styles.sessionMeta}>{s.records.length} hareket</Text>
               </View>
               <Text style={styles.sessionChevron}>{isExpanded ? "▾" : "▸"}</Text>

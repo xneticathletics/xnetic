@@ -114,6 +114,7 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
           reps: repsNum,
           measured_at: measuredAt,
           notes: `Bireysel Program: ${program?.name ?? ""}`,
+          individual_program_id: programId,
         });
       })
       .filter((c): c is Promise<unknown> => !!c);

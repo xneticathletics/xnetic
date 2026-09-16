@@ -67,7 +67,7 @@ export default function AttendanceScreen({ route, navigation }: Props) {
     if (!isAdmin && session && !isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)) {
       Alert.alert(
         "Henüz zamanı değil",
-        `Yoklama Al, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır ve başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`,
+        `Günün Programı, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır ve başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`,
         [{ text: "Tamam" }]
       );
       return;

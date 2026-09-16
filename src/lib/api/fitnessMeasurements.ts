@@ -10,6 +10,11 @@ export type FitnessMeasurement = {
   measured_at: string;
   notes: string | null;
   created_at: string;
+  // Sadece Bireysel Program (IndividualFitnessProgramDetailScreen)
+  // üzerinden girilen ölçümlerde dolu — Egzersiz Geçmişi'nde tarihin
+  // önünde hangi programa ait olduğunu göstermek için (bkz.
+  // AthleteFitnessViewScreen). Grup programı üzerinden girilenlerde NULL.
+  individual_program_id: string | null;
 };
 
 export type FitnessMeasurementInput = {
@@ -20,9 +25,10 @@ export type FitnessMeasurementInput = {
   reps: number | null;
   measured_at: string;
   notes: string | null;
+  individual_program_id?: string | null;
 };
 
-const FIELDS = "id, athlete_id, exercise_key, weight_kg, sets, reps, measured_at, notes, created_at";
+const FIELDS = "id, athlete_id, exercise_key, weight_kg, sets, reps, measured_at, notes, created_at, individual_program_id";
 
 export async function listMeasurementsForAthleteExercise(athleteId: string, exerciseKey: string): Promise<FitnessMeasurement[]> {
   const { data, error } = await supabase
