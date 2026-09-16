@@ -167,12 +167,12 @@ export default function AllAthletesScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.lg },
+  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
   subtitle: { color: colors.muted, fontSize: 13, marginTop: 0, marginBottom: spacing.sm },
-  filterRow: { marginBottom: spacing.md },
+  filterRow: { marginBottom: spacing.sm },
   search: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
-    color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.md,
+    color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12, marginBottom: spacing.sm,
   },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },

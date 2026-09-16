@@ -669,20 +669,20 @@ const styles = StyleSheet.create({
   },
   editButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
   injuryNavButton: {
-    backgroundColor: colors.coral, borderRadius: radius.md, paddingVertical: 16,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingVertical: 14,
     alignItems: "center", marginBottom: spacing.sm,
   },
-  injuryNavButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
+  injuryNavButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
   extraGroupsButton: {
-    borderWidth: 1, borderColor: colors.violet, borderRadius: radius.md, paddingVertical: 14,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingVertical: 14,
     alignItems: "center", marginBottom: spacing.sm,
   },
-  extraGroupsButtonText: { color: colors.violet, fontWeight: "700", fontSize: 14 },
+  extraGroupsButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
   notesNavButton: {
-    backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingVertical: 14,
     alignItems: "center", marginBottom: spacing.sm,
   },
-  notesNavButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
+  notesNavButtonText: { color: colors.ink, fontWeight: "700", fontSize: 14 },
   freezeButton: {
     borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md, paddingVertical: 14,
     alignItems: "center", marginBottom: spacing.sm,
