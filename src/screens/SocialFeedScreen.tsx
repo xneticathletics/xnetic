@@ -81,6 +81,9 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
   // Herhangi bir antrenör (sadece koordinatör değil) branşındaki bekleyen
   // paylaşımları onaylayabilir — bkz. is_branch_moderator RLS helper'ı.
   const canModerate = role === "coach" || role === "club_admin";
+  // Veli sosyal alanda sadece görüntüleyebilir, paylaşım yapamaz (bkz.
+  // social_posts_insert RLS politikası — aynı kısıtlama sunucu tarafında da var).
+  const canPost = role !== "parent";
   const { width: windowWidth } = useWindowDimensions();
   const columns = useResponsiveColumns(2);
   const thumbSize = (windowWidth - spacing.lg * 2 - GRID_GAP * (columns - 1)) / columns;
@@ -254,13 +257,15 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
       {/* Sabit alt Paylaş barı — FlatList'in dışında, position:absolute
           olduğu için kaydırmadan etkilenmiyor, her zaman ekranın altında
           sabit kalıyor (kullanıcı isteği). */}
-      <TouchableOpacity
-        style={[styles.shareBar, { bottom: insets.bottom + spacing.md }]}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate("SocialPostForm")}
-      >
-        <Text style={styles.shareBarText}>+ Paylaş</Text>
-      </TouchableOpacity>
+      {canPost && (
+        <TouchableOpacity
+          style={[styles.shareBar, { bottom: insets.bottom + spacing.md }]}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("SocialPostForm")}
+        >
+          <Text style={styles.shareBarText}>+ Paylaş</Text>
+        </TouchableOpacity>
+      )}
 
       <Modal visible={viewerIndex !== null} animationType="fade" transparent={false} onRequestClose={() => setViewerIndex(null)}>
         <View style={styles.viewerContainer}>
