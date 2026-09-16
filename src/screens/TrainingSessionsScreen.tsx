@@ -8,7 +8,7 @@ import {
   type TrainingSession,
 } from "../lib/api/trainingSessions";
 import { listMatches, listMatchesForGroups, type MatchRow } from "../lib/api/matches";
-import { getMyBranchGroupIds } from "../lib/api/myGroups";
+import { getMyCoachedGroupIds, getMyBranchGroupIds } from "../lib/api/myGroups";
 import { syncScheduleToDeviceCalendar } from "../lib/calendarSync";
 import { listGroups, type Group } from "../lib/api/groups";
 import { listBranches, type Branch } from "../lib/api/branches";
@@ -121,11 +121,11 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   // (aksi halde programı zaten hiç görünmeyecek başka branşların filtre
   // etiketleri de listelenip tıklanınca boş sonuç verirdi).
   const [myGroupIds, setMyGroupIds] = useState<Set<string> | null>(null);
-  // Antrenman EKLEME/SİLME yetkisi: admin, branş koordinatörü ya da en az
-  // bir salonun yetkilisi olan antrenör. Sıradan (etiketsiz) bir antrenör
-  // artık antrenman ekleyemez/silemez — sadece yoklama/tamamlama gibi
-  // mevcut UPDATE işlemlerine devam eder.
-  const canManageSchedule = !isCoach || authorizedVenueIds.length > 0;
+  // Antrenman EKLEME yetkisi: admin, branş koordinatörü, en az bir salonun
+  // yetkilisi olan antrenör, YA DA en az bir grubun baş/yardımcı antrenörü
+  // olan antrenör (kendi sorumlu olduğu gruplar için). SİLME hâlâ daha dar
+  // (admin/koordinatör/salon yetkilisi) — bkz. training_sessions_coordinator_delete.
+  const canManageSchedule = !isCoach || authorizedVenueIds.length > 0 || (myGroupIds?.size ?? 0) > 0;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,14 +159,15 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
     try {
       setError(null);
       // Eskiden burada 3 AYRI ardışık ağ "dalgası" vardı (bu sorgular ->
-      // isCoach ise ayrıca getMyBranchGroupIds -> sonra antrenman/maç/kadro
+      // isCoach ise ayrıca getMyCoachedGroupIds -> sonra antrenman/maç/kadro
       // sorguları) — her dalga bir önceki bitmeden başlayamadığı için
       // Takvim'in her açılışında gözle görülür bir toplam gecikme
-      // birikiyordu. getMyBranchGroupIds ve getGroupStaffingMap aslında bu
+      // birikiyordu. getMyCoachedGroupIds ve getGroupStaffingMap aslında bu
       // ilk gruptaki hiçbir sonuca bağlı değil (kendi bağımsız sorgularını
       // yapıyorlar) — o yüzden ikisi de BURAYA, tek dalgaya taşındı.
-      const [groups, branchList, myVenueIds, myBranchGroupIds, fetchedStaffing] = await Promise.all([
+      const [groups, branchList, myVenueIds, myCoachedGroupIds, myBranchGroupIds, fetchedStaffing] = await Promise.all([
         listGroups(), listBranches(), getMyAuthorizedVenueIds(),
+        isCoach ? getMyCoachedGroupIds() : Promise.resolve<string[]>([]),
         isCoach ? getMyBranchGroupIds() : Promise.resolve<string[]>([]),
         getGroupStaffingMap(),
       ]);
@@ -174,7 +175,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       setBranches(branchList);
       setAuthorizedVenueIds(myVenueIds);
       setStaffing(fetchedStaffing);
-      if (isCoach) setMyGroupIds(new Set(myBranchGroupIds));
+      if (isCoach) setMyGroupIds(new Set(myCoachedGroupIds));
 
       // Aktif haftalık program şablonlarının önümüzdeki ufkunu tazeler
       // (aidattaki topUpAllActivePlans ile aynı yerde/mantıkta) — sıradan
@@ -191,11 +192,13 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       let fetched: TrainingSession[];
       let fetchedMatches: MatchRow[];
       if (isCoach) {
-        // Düz (koordinatör olmayan) antrenör takvimde SADECE kendi branşının
-        // programını görür — koçluğunu yaptığı gruplarla sınırlı değil,
-        // coach_branches'taki tüm branşındaki antrenman/maçlar dahil.
+        // Düz (koordinatör olmayan) antrenör takvimde SADECE kendi sorumlu
+        // olduğu (baş/yardımcı antrenör olduğu) grupların antrenmanlarını
+        // görür. Müsabakalar ise hâlâ tüm branş genelinde görünür — ama
+        // salt görüntüleme amaçlı, ekleme/düzenleme yetkisi yok (bkz.
+        // aşağıdaki {!isCoach && ... Müsabaka Ekle} ve canDelete kontrolleri).
         [fetched, fetchedMatches] = await Promise.all([
-          listSessionsForGroups(myBranchGroupIds), listMatchesForGroups(myBranchGroupIds),
+          listSessionsForGroups(myCoachedGroupIds), listMatchesForGroups(myBranchGroupIds),
         ]);
       } else if (selectedBranch) {
         // Kulüp Admini bir branş seçtiyse (çoklu branşlı kulüp), o
