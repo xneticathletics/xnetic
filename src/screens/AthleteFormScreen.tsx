@@ -259,7 +259,15 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
       // tekrarlayan aidat planını otomatik başlat (önümüzdeki 3 ay
       // otomatik oluşur — Finans ekranındaki sistemle aynı).
       if (!isEdit && feeAmount && feeDay && saved?.id) {
-        await createPaymentPlan({ athlete_id: saved.id, amount: feeAmount, day_of_month: feeDay });
+        // Yeni kaydolan bir sporcunun ilk aidatı HER ZAMAN bir sonraki
+        // aydan başlar — ayın günü bu ay içinde henüz gelmemiş olsa bile
+        // (aksi halde, ör. ayın 16'sında eklenip günü 20 seçilen bir
+        // sporcu 4 gün sonra hemen ücretlendirilirdi). Finans sayfasındaki
+        // "+ Aidat Planı Ekle" akışı bilerek bu davranışı kullanmıyor.
+        await createPaymentPlan(
+          { athlete_id: saved.id, amount: feeAmount, day_of_month: feeDay },
+          { alwaysSkipCreationMonth: true }
+        );
       }
       markSaved();
       navigation.goBack();

@@ -54,11 +54,17 @@ type PendingPaymentRow = { plan_id: string; athlete_id: string; period: "monthly
 // açıyordu (bkz. src/lib/api/payments.ts getMonthlyFinanceSummary). Plan
 // geçmiş bir ayda oluşturulmuşsa bu ayrımın bir önemi yok, doğrudan bugünkü
 // aydan başlanır (eskisiyle aynı davranış).
-function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>): PendingPaymentRow[] {
+// alwaysSkipCreationMonth: bazı akışlar (ör. Sporcu Ekle) yeni kaydolan
+// bir sporcunun ilk aidatının HER ZAMAN bir sonraki aydan başlamasını
+// istiyor — günü bu ay içinde henüz gelmemiş olsa bile. Finans sayfasındaki
+// "+ Aidat Planı Ekle" akışı ise varsayılan (false) davranışı korur —
+// yukarıdaki yorumdaki "Bu Ay Beklenen" düzeltmesini bozmamak için.
+function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>, alwaysSkipCreationMonth = false): PendingPaymentRow[] {
   const now = new Date();
   const nowMonthIndex = monthIndexOf(now);
   const createdMonthIndex = monthIndexOf(new Date(plan.created_at));
-  const currentMonthDayAlreadyPassed = createdMonthIndex === nowMonthIndex && plan.day_of_month < now.getDate();
+  const createdThisMonth = createdMonthIndex === nowMonthIndex;
+  const currentMonthDayAlreadyPassed = createdThisMonth && (alwaysSkipCreationMonth || plan.day_of_month < now.getDate());
   const startMonthIndex = currentMonthDayAlreadyPassed ? nowMonthIndex + 1 : nowMonthIndex;
 
   const rows: PendingPaymentRow[] = [];
@@ -78,24 +84,49 @@ function computeMissingRows(plan: PaymentPlan, existingDates: Set<string>): Pend
 // 20260906020000) — bu yüzden düz insert yerine upsert+ignoreDuplicates
 // kullanıyoruz: aynı anda iki tazeleme çağrısı çakışsa bile ikinci satır
 // sessizce atlanır, kopya oluşmaz.
-export async function topUpPlan(plan: PaymentPlan) {
+export async function topUpPlan(plan: PaymentPlan, alwaysSkipCreationMonth = false) {
   const { data: existing, error: existingError } = await supabase
     .from("payments")
     .select("due_date")
     .eq("plan_id", plan.id);
   if (existingError) throw existingError;
 
-  const rows = computeMissingRows(plan, new Set((existing ?? []).map((e) => e.due_date)));
+  const rows = computeMissingRows(plan, new Set((existing ?? []).map((e) => e.due_date)), alwaysSkipCreationMonth);
   if (rows.length > 0) {
     const { error: insertError } = await supabase.from("payments").upsert(rows, { onConflict: "plan_id,due_date", ignoreDuplicates: true });
     if (insertError) throw insertError;
   }
 }
 
-export async function createPaymentPlan(input: PaymentPlanInput) {
+export async function createPaymentPlan(input: PaymentPlanInput, options?: { alwaysSkipCreationMonth?: boolean }) {
+  // Sporcunun zaten aktif bir aidat planı varsa, yenisini eklemeden önce
+  // eskisini kaldırıyoruz — aksi halde iki plan aynı anda geçerli kalıp
+  // sporcuya hem eski hem yeni tutardan aidat açılırdı. Eskisine bağlı,
+  // henüz ÖDENMEMİŞ (pending) gelecek kayıtlar da siliniyor; zaten ÖDENMİŞ
+  // kayıtlara dokunulmuyor — gerçek bir mali kayıt, geçmişi bozmamalı.
+  const { data: existingPlans, error: existingPlansError } = await supabase
+    .from("payment_plans")
+    .select("id")
+    .eq("athlete_id", input.athlete_id)
+    .eq("active", true);
+  if (existingPlansError) throw existingPlansError;
+
+  if (existingPlans && existingPlans.length > 0) {
+    const oldPlanIds = existingPlans.map((p) => p.id);
+    const { error: deletePendingError } = await supabase
+      .from("payments")
+      .delete()
+      .in("plan_id", oldPlanIds)
+      .eq("status", "pending");
+    if (deletePendingError) throw deletePendingError;
+
+    const { error: deletePlansError } = await supabase.from("payment_plans").delete().in("id", oldPlanIds);
+    if (deletePlansError) throw deletePlansError;
+  }
+
   const { data, error } = await supabase.from("payment_plans").insert(input).select().single();
   if (error) throw error;
-  await topUpPlan(data as PaymentPlan);
+  await topUpPlan(data as PaymentPlan, options?.alwaysSkipCreationMonth);
   return data;
 }
 
