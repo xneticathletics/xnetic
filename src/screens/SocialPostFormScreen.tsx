@@ -13,9 +13,9 @@ import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { Branch } from "../lib/api/branches";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { SocialStackParamList } from "../navigation/SocialStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "SocialPostForm">;
+type Props = NativeStackScreenProps<SocialStackParamList, "SocialPostForm">;
 
 export default function SocialPostFormScreen({ navigation }: Props) {
   const { role } = useAuth();

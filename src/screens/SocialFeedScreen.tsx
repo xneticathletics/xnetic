@@ -15,9 +15,9 @@ import {
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { SocialStackParamList } from "../navigation/SocialStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "SocialFeed">;
+type Props = NativeStackScreenProps<SocialStackParamList, "SocialFeed">;
 type Tab = "feed" | "pending";
 
 const GRID_GAP = spacing.sm;

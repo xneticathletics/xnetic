@@ -16,9 +16,9 @@ import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import type { Branch } from "../lib/api/branches";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { EventsStackParamList } from "../navigation/EventsStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "EventForm">;
+type Props = NativeStackScreenProps<EventsStackParamList, "EventForm">;
 
 const TYPE_OPTIONS: { value: EventType; label: string }[] = [
   { value: "etkinlik", label: "Etkinlik" },

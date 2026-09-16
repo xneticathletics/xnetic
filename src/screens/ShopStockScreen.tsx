@@ -4,9 +4,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAllProducts, listProductVariantsAdmin, updateVariantStock, type ShopProductAdmin, type ShopVariantAdmin } from "../lib/api/shop";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "ShopStock">;
+type Props = NativeStackScreenProps<ShopStackParamList, "ShopStock">;
 
 export default function ShopStockScreen({}: Props) {
   const [products, setProducts] = useState<ShopProductAdmin[]>([]);

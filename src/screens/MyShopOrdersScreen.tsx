@@ -4,9 +4,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listMyOrders, variantLabel, type ShopOrder, type ShopOrderStatus } from "../lib/api/shop";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "MyShopOrders">;
+type Props = NativeStackScreenProps<ShopStackParamList, "MyShopOrders">;
 
 const STATUS_LABEL: Record<ShopOrderStatus, string> = {
   pending: "Bekliyor",

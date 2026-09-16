@@ -1,7 +1,7 @@
 import type { UserRole } from "../context/AuthContext";
 
 export type NotificationTarget = {
-  tab: "Ana Menü" | "Profil";
+  tab: "Ana Menü" | "Profil" | "Sosyal" | "Mağaza" | "Etkinlik";
   screen: string;
   params?: Record<string, unknown>;
 };
@@ -90,12 +90,12 @@ export function getNotificationTarget(
     case "event_published":
     case "event_reminder": {
       const eventId = payload?.eventId as string | undefined;
-      return eventId ? { tab: "Ana Menü", screen: "EventDetail", params: { eventId } } : null;
+      return eventId ? { tab: "Etkinlik", screen: "EventDetail", params: { eventId } } : null;
     }
     case "event_registration_submitted": {
       const eventId = payload?.eventId as string | undefined;
       if (!isPlanner || !eventId) return null;
-      return { tab: "Ana Menü", screen: "EventRegistrations", params: { eventId } };
+      return { tab: "Etkinlik", screen: "EventRegistrations", params: { eventId } };
     }
     case "event_registration_approved":
     case "event_registration_rejected":
@@ -107,16 +107,16 @@ export function getNotificationTarget(
       // doğrudan o etkinliğe gidiyor.
       const eventId = payload?.eventId as string | undefined;
       return eventId
-        ? { tab: "Ana Menü", screen: "EventDetail", params: { eventId } }
-        : { tab: "Ana Menü", screen: "MyEventRegistrations" };
+        ? { tab: "Etkinlik", screen: "EventDetail", params: { eventId } }
+        : { tab: "Etkinlik", screen: "MyEventRegistrations" };
     }
     case "social_post_submitted":
-      return isPlanner ? { tab: "Ana Menü", screen: "SocialFeed", params: { initialTab: "pending" } } : null;
+      return isPlanner ? { tab: "Sosyal", screen: "SocialFeed", params: { initialTab: "pending" } } : null;
     case "social_post_approved":
-      return { tab: "Ana Menü", screen: "SocialFeed" };
+      return { tab: "Sosyal", screen: "SocialFeed" };
     case "shop_order":
       // Sadece club_admin alıyor (bkz. src/lib/api/shop.ts notifyNewOrder).
-      return role === "club_admin" ? { tab: "Ana Menü", screen: "ShopOrders" } : null;
+      return role === "club_admin" ? { tab: "Mağaza", screen: "ShopOrders" } : null;
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;
       return announcementId

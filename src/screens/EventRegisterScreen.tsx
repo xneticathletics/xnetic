@@ -8,9 +8,9 @@ import { getMyAthletes, type MyAthlete } from "../lib/api/myAthletes";
 import { getClubBankInfo, type ClubBankInfo } from "../lib/api/clubSettings";
 import { useAuth } from "../context/AuthContext";
 import { useCopyToast } from "../hooks/useCopyToast";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { EventsStackParamList } from "../navigation/EventsStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "EventRegister">;
+type Props = NativeStackScreenProps<EventsStackParamList, "EventRegister">;
 
 const METHODS: { key: EventPaymentMethod; icon: string; title: string; sub: string }[] = [
   { key: "havale", icon: "🏦", title: "Havale/EFT", sub: "Kulübün banka hesabına aktar" },

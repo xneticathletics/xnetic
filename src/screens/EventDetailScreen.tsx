@@ -10,9 +10,9 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useMediaWidth } from "../hooks/useMediaWidth";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { EventsStackParamList } from "../navigation/EventsStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "EventDetail">;
+type Props = NativeStackScreenProps<EventsStackParamList, "EventDetail">;
 
 export default function EventDetailScreen({ route, navigation }: Props) {
   const { eventId } = route.params;

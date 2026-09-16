@@ -23,8 +23,6 @@ import WeeklyScheduleScreen from "../screens/WeeklyScheduleScreen";
 import TodayAttendanceScreen from "../screens/TodayAttendanceScreen";
 import TrainingSessionFormScreen from "../screens/TrainingSessionFormScreen";
 import AttendanceScreen from "../screens/AttendanceScreen";
-import SocialFeedScreen from "../screens/SocialFeedScreen";
-import SocialPostFormScreen from "../screens/SocialPostFormScreen";
 import SessionRosterScreen from "../screens/SessionRosterScreen";
 import InviteUserScreen from "../screens/InviteUserScreen";
 import CoachesListScreen from "../screens/CoachesListScreen";
@@ -110,21 +108,6 @@ import AthleteFitnessProgramScreen from "../screens/AthleteFitnessProgramScreen"
 import MakePaymentScreen from "../screens/MakePaymentScreen";
 import AthleteBulkImportScreen from "../screens/AthleteBulkImportScreen";
 import ComingSoonScreen from "../screens/ComingSoonScreen";
-import ShopScreen from "../screens/ShopScreen";
-import ShopProductDetailScreen from "../screens/ShopProductDetailScreen";
-import ShopPurchaseScreen from "../screens/ShopPurchaseScreen";
-import MyShopOrdersScreen from "../screens/MyShopOrdersScreen";
-import ShopManageScreen from "../screens/ShopManageScreen";
-import ShopProductFormScreen from "../screens/ShopProductFormScreen";
-import ShopOrdersScreen from "../screens/ShopOrdersScreen";
-import ShopStockScreen from "../screens/ShopStockScreen";
-import EventsListScreen from "../screens/EventsListScreen";
-import EventDetailScreen from "../screens/EventDetailScreen";
-import EventFormScreen from "../screens/EventFormScreen";
-import EventsManageScreen from "../screens/EventsManageScreen";
-import EventRegisterScreen from "../screens/EventRegisterScreen";
-import EventRegistrationsScreen from "../screens/EventRegistrationsScreen";
-import MyEventRegistrationsScreen from "../screens/MyEventRegistrationsScreen";
 import PerformanceHubScreen from "../screens/PerformanceHubScreen";
 import type { FoodCategoryKey, ArticleCategoryKey } from "../lib/nutritionCategories";
 
@@ -164,8 +147,6 @@ export type HomeStackParamList = {
   TrainingSessionForm: { sessionId: string | undefined };
   Attendance: { sessionId: string; groupId: string; groupName: string };
   SessionRoster: { sessionId: string; groupId: string; groupName: string };
-  SocialFeed: { initialTab?: "feed" | "pending" } | undefined;
-  SocialPostForm: undefined;
   InviteUser: { presetRole?: "parent" | "athlete" | "coach" } | undefined;
   CoachesList: undefined;
   CoachesOverview: undefined;
@@ -265,21 +246,6 @@ export type HomeStackParamList = {
   MakePayment: { paymentId: string; amount: number; dueDate: string; athleteName: string };
   AthleteBulkImport: undefined;
   ComingSoon: { title: string; description: string };
-  Shop: undefined;
-  ShopProductDetail: { productId: string };
-  ShopPurchase: { productId: string; title: string; price: number };
-  MyShopOrders: undefined;
-  ShopManage: undefined;
-  ShopProductForm: { productId: string | undefined };
-  ShopOrders: undefined;
-  ShopStock: undefined;
-  EventsList: undefined;
-  EventDetail: { eventId: string };
-  EventForm: { eventId: string | undefined };
-  EventsManage: undefined;
-  EventRegister: { eventId: string };
-  EventRegistrations: { eventId: string };
-  MyEventRegistrations: undefined;
   PerformanceHub: undefined;
 };
 
@@ -317,21 +283,6 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Günün Programı" }} />
       <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Günün Programı" }} />
-      {/* gestureEnabled:false — Sosyal/Mağaza/Etkinlik'e sekmeye
-          basılınca gelinir, gerçek bir "geri" hedefi yok (altlarında Ana
-          Sayfa duruyor, kaydırınca oraya dönmek kafa karıştırıcı oluyordu).
-          animation'a KASITLI olarak dokunulmuyor — bkz. dosyanın üstündeki
-          yorum, iki farklı animation denemesi geri tuşunu/gestini kırmıştı.
-          gestureEnabled bambaşka, daha önce hiç sorun çıkarmayan bir ayar;
-          bu ekranlardan PUSH edilen alt sayfalar (Stok, Siparişler, Ürün
-          Ekle, Etkinlik Detayı vb.) kendi Stack.Screen tanımlarında bu
-          override'a sahip değil, normal geri davranışlarını koruyor. */}
-      <Stack.Screen
-        name="SocialFeed"
-        component={SocialFeedScreen}
-        options={{ headerShown: false, title: "Sosyal", gestureEnabled: false }}
-      />
-      <Stack.Screen name="SocialPostForm" component={SocialPostFormScreen} options={{ title: "Yeni Paylaşım" }} />
       <Stack.Screen name="SessionRoster" component={SessionRosterScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="InviteUser" component={InviteUserScreen} options={{ title: "Antrenör Ekle" }} />
       <Stack.Screen name="CoachesList" component={CoachesListScreen} options={{ title: "Antrenörler" }} />
@@ -417,21 +368,6 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="MakePayment" component={MakePaymentScreen} options={{ title: "Ödeme Yap" }} />
       <Stack.Screen name="AthleteBulkImport" component={AthleteBulkImportScreen} options={{ title: "Excelden Aktar" }} />
       <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
-      <Stack.Screen name="Shop" component={ShopScreen} options={{ headerShown: false, title: "Mağaza", gestureEnabled: false }} />
-      <Stack.Screen name="ShopProductDetail" component={ShopProductDetailScreen} options={{ title: "Ürün" }} />
-      <Stack.Screen name="ShopPurchase" component={ShopPurchaseScreen} options={{ title: "Satın Al" }} />
-      <Stack.Screen name="MyShopOrders" component={MyShopOrdersScreen} options={{ title: "Siparişlerim" }} />
-      <Stack.Screen name="ShopManage" component={ShopManageScreen} options={{ headerShown: false, title: "Mağaza", gestureEnabled: false }} />
-      <Stack.Screen name="ShopProductForm" component={ShopProductFormScreen} options={{ title: "Ürün" }} />
-      <Stack.Screen name="ShopOrders" component={ShopOrdersScreen} options={{ title: "Siparişler" }} />
-      <Stack.Screen name="ShopStock" component={ShopStockScreen} options={{ title: "Stok" }} />
-      <Stack.Screen name="EventsList" component={EventsListScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp", gestureEnabled: false }} />
-      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: "Etkinlik" }} />
-      <Stack.Screen name="EventForm" component={EventFormScreen} options={{ title: "Etkinlik" }} />
-      <Stack.Screen name="EventsManage" component={EventsManageScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp", gestureEnabled: false }} />
-      <Stack.Screen name="EventRegister" component={EventRegisterScreen} options={{ title: "Kayıt Ol" }} />
-      <Stack.Screen name="EventRegistrations" component={EventRegistrationsScreen} options={{ title: "Kayıtlar" }} />
-      <Stack.Screen name="MyEventRegistrations" component={MyEventRegistrationsScreen} options={{ title: "Kayıtlarım" }} />
       <Stack.Screen name="PerformanceHub" options={{ title: "Performans" }}>
         {({ navigation }) => <PerformanceHubScreen role={role} navigation={navigation} />}
       </Stack.Screen>

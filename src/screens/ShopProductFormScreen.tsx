@@ -13,9 +13,9 @@ import {
 } from "../lib/api/shop";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "ShopProductForm">;
+type Props = NativeStackScreenProps<ShopStackParamList, "ShopProductForm">;
 
 function comboKey(color: string | null, size: string | null) {
   return `${color ?? ""}|${size ?? ""}`;

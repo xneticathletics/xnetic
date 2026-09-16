@@ -7,9 +7,9 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listActiveProducts, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "Shop">;
+type Props = NativeStackScreenProps<ShopStackParamList, "Shop">;
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
 

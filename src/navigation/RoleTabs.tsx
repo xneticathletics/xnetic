@@ -10,6 +10,9 @@ import AIScreen from "../screens/AIScreen";
 import ProfileStack from "./ProfileStack";
 import SystemSettingsScreen from "../screens/SystemSettingsScreen";
 import MessagesStack from "./MessagesStack";
+import SocialStack from "./SocialStack";
+import ShopStack from "./ShopStack";
+import EventsStack from "./EventsStack";
 import { refreshUnreadMessagesCount, subscribeUnreadMessages } from "../lib/unreadMessagesStore";
 
 const Tab = createBottomTabNavigator();
@@ -96,34 +99,13 @@ function CustomTabBar({
   const leftCount = asistanIndex;
   const rightCount = state.routes.length - asistanIndex - 1;
 
-  // Sosyal/Mağaza/Etkinlik kendi sekmesi hiç FOCUS olmuyor (tabPress hep
-  // preventDefault edip Ana Menü'nün stack'ine yönlendiriyor) — o yüzden
-  // "hangi sekmedeyiz" hissi Ana Menü'nün İÇİNDEKİ aktif ekrana bakılarak
-  // ayrıca hesaplanıyor: gerçekten SocialFeed/Shop(Manage)/Events(Manage)
-  // 'daysak o kısayolun ikonu renkleniyor, Ana Menü'nünki de o sırada SÖNÜK
-  // kalıyor (aksi halde ikisi birden aktif görünüp kafa karıştırırdı).
-  // "Ana Menü" gerçekten ODAKLI değilse (ör. Mesajlar/Profil'e geçilmiş)
-  // activeHomeScreen'e hiç bakmıyoruz — yoksa Ana Menü'nün stack'i son
-  // kaldığı ekranı (ör. EventsManage) hafızada tuttuğu için, o ekrandan
-  // çıkıp sağdaki bir sekmeye geçtiğinde bile Etkinlik/Sosyal/Mağaza ikonu
-  // yanlışlıkla renkli kalmaya devam ediyordu.
-  const isHomeTabFocused = state.routes[state.index]?.name === "Ana Menü";
-  const homeRoute = state.routes.find((r) => r.name === "Ana Menü");
-  const homeNestedState = homeRoute?.state as { index?: number; routes: { name: string }[] } | undefined;
-  const activeHomeScreen = homeNestedState
-    ? homeNestedState.routes[homeNestedState.index ?? homeNestedState.routes.length - 1]?.name
-    : undefined;
-  const isOnSocialFeed = isHomeTabFocused && activeHomeScreen === "SocialFeed";
-  const isOnShop = isHomeTabFocused && (activeHomeScreen === "Shop" || activeHomeScreen === "ShopManage");
-  const isOnEvents = isHomeTabFocused && (activeHomeScreen === "EventsList" || activeHomeScreen === "EventsManage");
-
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key];
-    let isFocused = state.index === index;
-    if (route.name === "Sosyal") isFocused = isOnSocialFeed;
-    else if (route.name === "Mağaza") isFocused = isOnShop;
-    else if (route.name === "Etkinlik") isFocused = isOnEvents;
-    else if (route.name === "Ana Menü") isFocused = isFocused && !isOnSocialFeed && !isOnShop && !isOnEvents;
+    // Sosyal/Mağaza/Etkinlik artık Mesajlar/Profil gibi GERÇEK, bağımsız
+    // sekmeler (bkz. SocialStack/ShopStack/EventsStack) — odak durumu
+    // artık hiçbir özel hesaplamaya gerek kalmadan doğrudan state.index'ten
+    // okunuyor, tıpkı diğer tüm sekmeler gibi.
+    const isFocused = state.index === index;
 
     const onPress = () => {
       const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
@@ -238,43 +220,29 @@ export default function RoleTabs({ role }: { role: UserRole }) {
             iken sol grup Ana Menü/Sosyal/Mağaza (3), sağ grup Etkinlik/
             Mesajlar/Profil (3) — tam 3-3. Süper Admin'de (showShopTabs=
             false) Mesajlar hemen Ana Menü'nün yanında (sol grup), sağda
-            Sistem Ayarları/Profil. Sosyal/Mağaza/Etkinlik kendi ekranı
-            değil — dokununca Ana Menü'nün stack'indeki gerçek SocialFeed/
-            Shop/Events ekranına yönlendiren birer kısayol (Profil
-            sekmesindeki aynı desen). Not: bu 5 ekranda (bkz. HomeStack.tsx)
-            önce animation:"none", sonra kısa bir animation:"fade" denendi
-            — ikisi de Stok/Siparişler/Ürün Ekle gibi üstüne PUSH edilen
-            ekranlardan geri dönüşü bir süre sonra (birkaç geçişten sonra)
-            bozdu (native-stack v7 + react-native-screens + Yeni Mimari'de
-            özelleştirilmiş "animation" ile ilgili bilinen bir kırılganlık
-            alanı). Geri tuşunun her zaman güvenilir çalışması sağdan kayma
-            hissinden daha önemli olduğu için animation özelleştirmesi
-            TAMAMEN kaldırıldı — bu 5 ekran de artık varsayılan geçişi
-            kullanıyor (sağdan kayarak açılıyorlar, ama geri her zaman
-            çalışıyor). */}
+            Sistem Ayarları/Profil.
+
+            Sosyal/Mağaza/Etkinlik ESKİDEN sahte sekmelerdi — dokununca
+            Ana Menü'nün stack'ine PUSH ederek gerçek SocialFeed/Shop/Events
+            ekranına yönlendiriyorlardı, bu da native-stack'in push geçiş
+            animasyonunu (sağdan kayma) kullanmaya zorluyordu. animation'ı
+            özelleştirmek (önce "none", sonra "fade") Stok/Siparişler/Ürün
+            Ekle gibi üstüne PUSH edilen ekranlardan geri dönüşü iki ayrı
+            seferde bozmuştu (native-stack v7 + react-native-screens + Yeni
+            Mimari'de bilinen bir kırılganlık). O yüzden animation'a HİÇ
+            dokunmadan, bunun yerine Mesajlar/Profil'le AYNI deseni
+            uyguluyoruz: her biri artık kendi bağımsız stack'ine sahip
+            GERÇEK bir Tab.Screen (bkz. SocialStack/ShopStack/EventsStack) —
+            bottom-tabs'ın sekme değişimi native-stack'in push/pop'undan
+            tamamen ayrı bir mekanizma olduğu için hiç animasyon kullanmıyor,
+            direkt açılıyor. Mağaza/Etkinlik'in hangi ekranla başlayacağı
+            (yönetim mi, salt görüntüleme mi) artık ilgili Stack'e
+            initialRouteName olarak geçiliyor. */}
         {showShopTabs && (
           <>
-            <Tab.Screen
-              name="Sosyal"
-              listeners={({ navigation }) => ({
-                tabPress: (e) => {
-                  e.preventDefault();
-                  navigation.navigate("Ana Menü", { screen: "SocialFeed" });
-                },
-              })}
-            >
-              {() => null}
-            </Tab.Screen>
-            <Tab.Screen
-              name="Mağaza"
-              listeners={({ navigation }) => ({
-                tabPress: (e) => {
-                  e.preventDefault();
-                  navigation.navigate("Ana Menü", { screen: isClubAdmin || isBranchCoordinator ? "ShopManage" : "Shop" });
-                },
-              })}
-            >
-              {() => null}
+            <Tab.Screen name="Sosyal">{() => <SocialStack />}</Tab.Screen>
+            <Tab.Screen name="Mağaza">
+              {() => <ShopStack initialRouteName={isClubAdmin || isBranchCoordinator ? "ShopManage" : "Shop"} />}
             </Tab.Screen>
           </>
         )}
@@ -285,16 +253,8 @@ export default function RoleTabs({ role }: { role: UserRole }) {
 
         {showShopTabs && (
           <>
-            <Tab.Screen
-              name="Etkinlik"
-              listeners={({ navigation }) => ({
-                tabPress: (e) => {
-                  e.preventDefault();
-                  navigation.navigate("Ana Menü", { screen: isClubAdmin || isBranchCoordinator ? "EventsManage" : "EventsList" });
-                },
-              })}
-            >
-              {() => null}
+            <Tab.Screen name="Etkinlik">
+              {() => <EventsStack initialRouteName={isClubAdmin || isBranchCoordinator ? "EventsManage" : "EventsList"} />}
             </Tab.Screen>
             <Tab.Screen name="Mesajlar">{() => <MessagesStack role={role} />}</Tab.Screen>
           </>

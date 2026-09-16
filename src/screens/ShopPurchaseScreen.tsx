@@ -6,9 +6,9 @@ import { createOrder, listProductVariants, type ShopPaymentMethod, type ShopVari
 import { getClubBankInfo, type ClubBankInfo } from "../lib/api/clubSettings";
 import { useAuth } from "../context/AuthContext";
 import { useCopyToast } from "../hooks/useCopyToast";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "ShopPurchase">;
+type Props = NativeStackScreenProps<ShopStackParamList, "ShopPurchase">;
 
 const METHODS: { key: ShopPaymentMethod; icon: string; title: string; sub: string }[] = [
   { key: "havale", icon: "🏦", title: "Havale/EFT", sub: "Kulübün banka hesabına aktar" },

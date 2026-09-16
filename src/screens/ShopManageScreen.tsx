@@ -7,9 +7,9 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listAllProducts, updateProduct, deleteProduct, getPendingOrderCount, type ShopProductAdmin, type ShopGender } from "../lib/api/shop";
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "ShopManage">;
+type Props = NativeStackScreenProps<ShopStackParamList, "ShopManage">;
 
 export default function ShopManageScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();

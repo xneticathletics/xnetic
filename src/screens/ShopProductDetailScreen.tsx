@@ -6,9 +6,9 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { getProduct, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
 import { useMediaWidth } from "../hooks/useMediaWidth";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { ShopStackParamList } from "../navigation/ShopStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "ShopProductDetail">;
+type Props = NativeStackScreenProps<ShopStackParamList, "ShopProductDetail">;
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
 

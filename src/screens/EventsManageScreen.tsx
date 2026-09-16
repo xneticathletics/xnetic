@@ -8,9 +8,9 @@ import {
   listManageableEvents, getPendingRegistrationCountsByEvent,
   EVENT_TYPE_LABEL, type EventRow, type EventStatus,
 } from "../lib/api/events";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { EventsStackParamList } from "../navigation/EventsStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "EventsManage">;
+type Props = NativeStackScreenProps<EventsStackParamList, "EventsManage">;
 
 const STATUS_LABEL: Record<EventStatus, string> = { draft: "Taslak", published: "Yayında", cancelled: "İptal" };
 const STATUS_COLOR: Record<EventStatus, string> = { draft: colors.muted, published: colors.teal, cancelled: colors.coral };

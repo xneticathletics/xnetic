@@ -6,9 +6,9 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listPublishedEvents, EVENT_TYPE_LABEL, type EventRow } from "../lib/api/events";
 import { useAuth } from "../context/AuthContext";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { EventsStackParamList } from "../navigation/EventsStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "EventsList">;
+type Props = NativeStackScreenProps<EventsStackParamList, "EventsList">;
 
 export default function EventsListScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();

@@ -7,9 +7,9 @@ import {
   listMyRegistrations, cancelMyRegistration, REGISTRATION_STATUS_LABEL,
   type EventRegistrationRow, type EventRegistrationStatus,
 } from "../lib/api/events";
-import type { HomeStackParamList } from "../navigation/HomeStack";
+import type { EventsStackParamList } from "../navigation/EventsStack";
 
-type Props = NativeStackScreenProps<HomeStackParamList, "MyEventRegistrations">;
+type Props = NativeStackScreenProps<EventsStackParamList, "MyEventRegistrations">;
 
 const STATUS_COLOR: Record<EventRegistrationStatus, string> = {
   pending: colors.yellow, approved: colors.teal, rejected: colors.coral, cancelled: colors.muted,
