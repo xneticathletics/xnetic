@@ -12,6 +12,16 @@ import { usePreventRemove } from "@react-navigation/native";
 // bu desenle AthleteFormScreen.tsx'te kullanıldı, buraya ortak hook olarak
 // çıkarıldı).
 //
+// ÖNEMLİ: iOS'ta parmakla kaydırarak (interactive swipe) geri gidilirse,
+// native-stack geçişi native tarafta iyimser (optimistic) şekilde SONUNA
+// kadar oynatır — JS tarafındaki bu Alert'in engellemesi ancak jest bittikten
+// SONRA devreye girebiliyor. Sonuç: ekran önce geriye gidiyormuş gibi
+// görünüp SONRA eski haline "geri sıçrıyor" ve ancak o an Alert çıkıyor —
+// kafa karıştırıcı bir sıra. Bu hook'u kullanan HER ekranın Stack.Screen
+// kaydına `options={{ gestureEnabled: false }}` eklenmeli (header'daki geri
+// oku/Android donanım tuşu bu sorunu yaşamıyor, sadece parmak kaydırma
+// hareketi) — aksi halde bu görsel hata geri gelir.
+//
 // Kaydet başarıyla tamamlanınca handleSave içinde navigation.goBack()'ten
 // HEMEN ÖNCE markSaved() çağrılmalı — aksi halde state güncellemesi henüz
 // ekrana yansımadığı (hasUnsavedChanges hâlâ eski değeri gördüğü) için

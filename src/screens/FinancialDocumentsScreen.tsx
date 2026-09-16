@@ -19,10 +19,10 @@ type Props = NativeStackScreenProps<HomeStackParamList, "FinancialDocuments">;
 const PERIOD_LABEL: Record<string, string> = { weekly: "Haftalık", monthly: "Aylık", yearly: "Yıllık" };
 
 type DocItem =
-  | { kind: "income"; date: string; data: Payment }
-  | { kind: "extraIncome"; date: string; data: ExtraIncome }
-  | { kind: "expense"; date: string; data: Expense }
-  | { kind: "coachPayment"; date: string; data: CoachPayment };
+  | { kind: "income"; date: string; sortAt: string; data: Payment }
+  | { kind: "extraIncome"; date: string; sortAt: string; data: ExtraIncome }
+  | { kind: "expense"; date: string; sortAt: string; data: Expense }
+  | { kind: "coachPayment"; date: string; sortAt: string; data: CoachPayment };
 
 function formatTL(n: number) {
   return `${n.toLocaleString("tr-TR")} ₺`;
@@ -96,11 +96,24 @@ export default function FinancialDocumentsScreen({ navigation }: Props) {
     hasSetDefaultRangeRef.current = true;
   }, [settings.finance_period_start_day]);
 
+  // sortAt: gerçek işlem ANI (varsa saat bilgisi dahil) — date sadece GÜN
+  // bazlı (aralık filtresi için) kalıyor, aynı güne düşen birden fazla
+  // kayıt artık rastgele değil GERÇEK sırayla (en son işlem en üstte)
+  // listeleniyor. Aidat/antrenör ödemesi için "işlem anı" ödendiği an
+  // (paid_at); elle girilen gelir/gider için sistemde kaydedildiği an
+  // (created_at) — income_date/expense_date sadece kullanıcının seçtiği
+  // gün, saat taşımıyor.
   const items = useMemo<DocItem[]>(() => {
-    const income: DocItem[] = payments.map((p) => ({ kind: "income", date: (p.paid_at ?? p.due_date).slice(0, 10), data: p }));
-    const extra: DocItem[] = extraIncome.map((e) => ({ kind: "extraIncome", date: e.income_date, data: e }));
-    const expense: DocItem[] = expenses.map((e) => ({ kind: "expense", date: e.expense_date, data: e }));
-    const coachPay: DocItem[] = coachPayments.map((c) => ({ kind: "coachPayment", date: (c.paid_at ?? c.due_date).slice(0, 10), data: c }));
+    const income: DocItem[] = payments.map((p) => {
+      const at = p.paid_at ?? p.due_date;
+      return { kind: "income", date: at.slice(0, 10), sortAt: at, data: p };
+    });
+    const extra: DocItem[] = extraIncome.map((e) => ({ kind: "extraIncome", date: e.income_date, sortAt: e.created_at, data: e }));
+    const expense: DocItem[] = expenses.map((e) => ({ kind: "expense", date: e.expense_date, sortAt: e.created_at, data: e }));
+    const coachPay: DocItem[] = coachPayments.map((c) => {
+      const at = c.paid_at ?? c.due_date;
+      return { kind: "coachPayment", date: at.slice(0, 10), sortAt: at, data: c };
+    });
     return [...income, ...extra, ...expense, ...coachPay];
   }, [payments, extraIncome, expenses, coachPayments]);
 
@@ -119,7 +132,7 @@ export default function FinancialDocumentsScreen({ navigation }: Props) {
     }
     if (startDate) list = list.filter((item) => item.date >= startDate);
     if (endDate) list = list.filter((item) => item.date <= endDate);
-    return [...list].sort((a, b) => b.date.localeCompare(a.date));
+    return [...list].sort((a, b) => b.sortAt.localeCompare(a.sortAt));
   }, [items, query, startDate, endDate]);
 
   const totals = useMemo(() => {

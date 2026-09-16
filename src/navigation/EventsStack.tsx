@@ -37,7 +37,7 @@ export default function EventsStack({ initialRouteName }: { initialRouteName: "E
     >
       <Stack.Screen name="EventsList" component={EventsListScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp" }} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: "Etkinlik" }} />
-      <Stack.Screen name="EventForm" component={EventFormScreen} options={{ title: "Etkinlik" }} />
+      <Stack.Screen name="EventForm" component={EventFormScreen} options={{ title: "Etkinlik", gestureEnabled: false }} />
       <Stack.Screen name="EventsManage" component={EventsManageScreen} options={{ headerShown: false, title: "Etkinlik/Turnuva/Kamp" }} />
       <Stack.Screen name="EventRegister" component={EventRegisterScreen} options={{ title: "Kayıt Ol" }} />
       <Stack.Screen name="EventRegistrations" component={EventRegistrationsScreen} options={{ title: "Kayıtlar" }} />

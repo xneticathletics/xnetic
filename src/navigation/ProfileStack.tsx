@@ -40,7 +40,7 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       </Stack.Screen>
       <Stack.Screen name="Announcements" component={AnnouncementsScreen} options={{ title: "Duyurular" }} />
       <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: "Duyuru" }} />
-      <Stack.Screen name="AnnouncementForm" component={AnnouncementFormScreen} options={{ title: "Yeni Duyuru" }} />
+      <Stack.Screen name="AnnouncementForm" component={AnnouncementFormScreen} options={{ title: "Yeni Duyuru", gestureEnabled: false }} />
       <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} options={{ title: "Kişisel Bilgiler" }} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: "Giriş ve Şifre İşlemleri" }} />
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ title: "Bildirim Tercihleri" }} />

@@ -32,7 +32,7 @@ export default function SocialStack() {
       }}
     >
       <Stack.Screen name="SocialFeed" component={SocialFeedScreen} options={{ headerShown: false, title: "Sosyal" }} />
-      <Stack.Screen name="SocialPostForm" component={SocialPostFormScreen} options={{ title: "Yeni Paylaşım" }} />
+      <Stack.Screen name="SocialPostForm" component={SocialPostFormScreen} options={{ title: "Yeni Paylaşım", gestureEnabled: false }} />
     </Stack.Navigator>
   );
 }

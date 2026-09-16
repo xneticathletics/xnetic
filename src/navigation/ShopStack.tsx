@@ -44,7 +44,7 @@ export default function ShopStack({ initialRouteName }: { initialRouteName: "Sho
       <Stack.Screen name="ShopPurchase" component={ShopPurchaseScreen} options={{ title: "Satın Al" }} />
       <Stack.Screen name="MyShopOrders" component={MyShopOrdersScreen} options={{ title: "Siparişlerim" }} />
       <Stack.Screen name="ShopManage" component={ShopManageScreen} options={{ headerShown: false, title: "Mağaza" }} />
-      <Stack.Screen name="ShopProductForm" component={ShopProductFormScreen} options={{ title: "Ürün" }} />
+      <Stack.Screen name="ShopProductForm" component={ShopProductFormScreen} options={{ title: "Ürün", gestureEnabled: false }} />
       <Stack.Screen name="ShopOrders" component={ShopOrdersScreen} options={{ title: "Siparişler" }} />
       <Stack.Screen name="ShopStock" component={ShopStockScreen} options={{ title: "Stok" }} />
     </Stack.Navigator>

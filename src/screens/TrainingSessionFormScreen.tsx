@@ -188,7 +188,13 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
     : isCoach && venueGroupIds
     ? (myGroupIds ?? []).filter((id) => venueGroupIds.includes(id))
     : isCoach
-    ? myGroupIds
+    // myGroupIds ağ isteği bitene kadar undefined kalıyor — o an
+    // GroupPickerModal'a undefined geçilirse "sınırlama yok" sayılıp
+    // TÜM gruplar görünürdü (kısa bir an için, ama form açılır açılmaz
+    // hızlıca "Grup Seç"e dokunulursa hep bu yarış durumuna denk
+    // gelinebiliyordu). Boş dizi güvenli varsayılan — liste dolana kadar
+    // hiçbir grup görünmez, YANLIŞLIKLA tüm gruplar görünmez.
+    ? myGroupIds ?? []
     : venueGroupIds && venueGroupIds.length > 0
     ? venueGroupIds
     : undefined;

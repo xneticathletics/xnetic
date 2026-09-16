@@ -265,31 +265,31 @@ export default function HomeStack({ role }: { role: UserRole }) {
       </Stack.Screen>
       <Stack.Screen name="ClubStructure" component={ClubStructureScreen} options={{ title: "Kulüp Yapısı" }} />
       <Stack.Screen name="GroupsList" component={GroupsListScreen} options={{ title: "Gruplar" }} />
-      <Stack.Screen name="GroupForm" component={GroupFormScreen} />
+      <Stack.Screen name="GroupForm" component={GroupFormScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="BranchesList" component={BranchesListScreen} options={{ title: "Branşlar" }} />
       <Stack.Screen name="VenuesList" component={VenuesListScreen} options={{ title: "Salonlar" }} />
-      <Stack.Screen name="VenueForm" component={VenueFormScreen} />
+      <Stack.Screen name="VenueForm" component={VenueFormScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="AthleteGroups" component={AthleteGroupsScreen} options={{ title: "Sporcu Yönetimi" }} />
       <Stack.Screen name="AthletesList" component={AthletesListScreen} />
-      <Stack.Screen name="AthleteForm" component={AthleteFormScreen} />
+      <Stack.Screen name="AthleteForm" component={AthleteFormScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="AthleteDetail" component={AthleteDetailScreen} options={{ title: "Sporcu Detayı" }} />
       <Stack.Screen name="AllAthletes" component={AllAthletesScreen} options={{ title: "Tüm Sporcular" }} />
       <Stack.Screen name="AthleteInjuries" component={AthleteInjuriesScreen} options={{ title: "Sakatlık Geçmişi" }} />
-      <Stack.Screen name="InjuryForm" component={InjuryFormScreen} options={{ title: "Sakatlık Bildir" }} />
+      <Stack.Screen name="InjuryForm" component={InjuryFormScreen} options={{ title: "Sakatlık Bildir", gestureEnabled: false }} />
       <Stack.Screen name="AthleteNotes" component={AthleteNotesScreen} options={{ title: "Koç Notları" }} />
       <Stack.Screen name="TrainingSessions" component={TrainingSessionsScreen} options={{ title: "Antrenman ve Müsabaka Takvimi" }} />
       <Stack.Screen name="DayScheduleDetail" component={DayScheduleDetailScreen} options={{ title: "Gün Detayı" }} />
       <Stack.Screen name="WeeklySchedule" component={WeeklyScheduleScreen} options={{ title: "Haftalık Program" }} />
       <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Günün Programı" }} />
-      <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} />
+      <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Günün Programı" }} />
       <Stack.Screen name="SessionRoster" component={SessionRosterScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="InviteUser" component={InviteUserScreen} options={{ title: "Antrenör Ekle" }} />
       <Stack.Screen name="CoachesList" component={CoachesListScreen} options={{ title: "Antrenörler" }} />
       <Stack.Screen name="CoachesOverview" component={CoachesOverviewScreen} options={{ title: "Antrenör Atamaları" }} />
       <Stack.Screen name="CoachDetail" component={CoachDetailScreen} options={{ title: "Antrenör Detayı" }} />
-      <Stack.Screen name="CoachForm" component={CoachFormScreen} options={{ title: "Antrenörü Düzenle" }} />
-      <Stack.Screen name="MatchForm" component={MatchFormScreen} />
+      <Stack.Screen name="CoachForm" component={CoachFormScreen} options={{ title: "Antrenörü Düzenle", gestureEnabled: false }} />
+      <Stack.Screen name="MatchForm" component={MatchFormScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="MatchResult" component={MatchResultScreen} options={{ title: "Sonuç Gir" }} />
       <Stack.Screen name="MatchResults" component={MatchResultsScreen} options={{ title: "Müsabaka Sonuçları" }} />
       <Stack.Screen name="CoachGroups" component={CoachGroupsScreen} options={{ title: "Grup Atamaları" }} />
@@ -302,24 +302,24 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="MyAttendance" component={MyAttendanceScreen} options={{ title: "Antrenman Katılım Durumu" }} />
       <Stack.Screen name="MyPayments" component={MyPaymentsScreen} options={{ title: "Aidat" }} />
       <Stack.Screen name="PaymentsList" component={PaymentsListScreen} />
-      <Stack.Screen name="PaymentForm" component={PaymentFormScreen} options={{ title: "Yeni Aidat Planı" }} />
+      <Stack.Screen name="PaymentForm" component={PaymentFormScreen} options={{ title: "Yeni Aidat Planı", gestureEnabled: false }} />
       <Stack.Screen name="StandardFee" component={StandardFeeScreen} options={{ title: "Sabit Aidat Ücreti" }} />
       <Stack.Screen name="PaymentGroups" component={PaymentGroupsScreen} options={{ title: "Finans" }} />
       <Stack.Screen name="PaymentAthletes" component={PaymentAthletesScreen} options={{ title: "Sporcular" }} />
       <Stack.Screen name="AthletePayments" component={AthletePaymentsScreen} options={{ title: "Aidat Geçmişi" }} />
       <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} options={{ title: "Makbuz" }} />
-      <Stack.Screen name="ExpenseForm" component={ExpenseFormScreen} options={{ title: "Yeni Gider" }} />
-      <Stack.Screen name="IncomeForm" component={IncomeFormScreen} options={{ title: "Yeni Gelir" }} />
+      <Stack.Screen name="ExpenseForm" component={ExpenseFormScreen} options={{ title: "Yeni Gider", gestureEnabled: false }} />
+      <Stack.Screen name="IncomeForm" component={IncomeFormScreen} options={{ title: "Yeni Gelir", gestureEnabled: false }} />
       <Stack.Screen name="FinancialDocuments" component={FinancialDocumentsScreen} options={{ title: "Finansal Dökümanlarım" }} />
       <Stack.Screen name="CoachPayments" component={CoachPaymentsScreen} options={{ title: "Antrenör Ödemeleri" }} />
-      <Stack.Screen name="CoachPaymentForm" component={CoachPaymentFormScreen} options={{ title: "Yeni Ödeme Planı" }} />
-      <Stack.Screen name="CoachAdvanceForm" component={CoachAdvanceFormScreen} options={{ title: "Avans Ver" }} />
+      <Stack.Screen name="CoachPaymentForm" component={CoachPaymentFormScreen} options={{ title: "Yeni Ödeme Planı", gestureEnabled: false }} />
+      <Stack.Screen name="CoachAdvanceForm" component={CoachAdvanceFormScreen} options={{ title: "Avans Ver", gestureEnabled: false }} />
       <Stack.Screen name="AthleticPerformance" component={AthleticPerformanceScreen} options={{ title: "Performans Ölçümleri" }} />
       <Stack.Screen name="PerformanceCategory" component={PerformanceCategoryScreen} />
       <Stack.Screen name="PerformanceTestDetail" component={PerformanceTestDetailScreen} />
-      <Stack.Screen name="PerformanceTestForm" component={PerformanceTestFormScreen} options={{ title: "Test Ekle" }} />
+      <Stack.Screen name="PerformanceTestForm" component={PerformanceTestFormScreen} options={{ title: "Test Ekle", gestureEnabled: false }} />
       <Stack.Screen name="TestGroupsList" component={TestGroupsListScreen} options={{ title: "Test Grupları" }} />
-      <Stack.Screen name="TestGroupForm" component={TestGroupFormScreen} options={{ title: "Yeni Test Grubu" }} />
+      <Stack.Screen name="TestGroupForm" component={TestGroupFormScreen} options={{ title: "Yeni Test Grubu", gestureEnabled: false }} />
       <Stack.Screen name="TestGroupDetail" component={TestGroupDetailScreen} />
       <Stack.Screen name="WellnessCheckin" component={WellnessCheckinScreen} options={{ title: "Günlük Check-in" }} />
       <Stack.Screen name="MembershipFreeze" component={MembershipFreezeScreen} options={{ title: "Kayıt Dondurma" }} />
@@ -328,31 +328,31 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="Fitness" component={FitnessScreen} options={{ title: "Fitness" }} />
       <Stack.Screen name="FitnessTraining" component={FitnessTrainingScreen} options={{ title: "Egzersizler" }} />
       <Stack.Screen name="FitnessProgram" component={FitnessProgramScreen} options={{ title: "Program Oluştur" }} />
-      <Stack.Screen name="FitnessProgramBuilder" component={FitnessProgramBuilderScreen} options={{ title: "Gruba Program Oluştur" }} />
+      <Stack.Screen name="FitnessProgramBuilder" component={FitnessProgramBuilderScreen} options={{ title: "Gruba Program Oluştur", gestureEnabled: false }} />
       <Stack.Screen name="FitnessProgramDetail" component={FitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />
       <Stack.Screen name="FitnessCategory" component={FitnessCategoryScreen} />
       <Stack.Screen name="FitnessGroups" component={FitnessGroupsScreen} options={{ title: "Fitness Grubu Oluştur" }} />
-      <Stack.Screen name="FitnessGroupForm" component={FitnessGroupFormScreen} options={{ title: "Fitness Grubu" }} />
+      <Stack.Screen name="FitnessGroupForm" component={FitnessGroupFormScreen} options={{ title: "Fitness Grubu", gestureEnabled: false }} />
       <Stack.Screen name="FitnessExerciseDetail" component={FitnessExerciseDetailScreen} />
-      <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Egzersiz Ekle" }} />
+      <Stack.Screen name="FitnessExerciseForm" component={FitnessExerciseFormScreen} options={{ title: "Egzersiz Ekle", gestureEnabled: false }} />
       <Stack.Screen name="FitnessExerciseVisibility" component={FitnessExerciseVisibilityScreen} options={{ title: "Hareketleri Yönet" }} />
       <Stack.Screen name="IndividualFitnessProgramsHub" component={IndividualFitnessProgramsHubScreen} options={{ title: "Bireysel Program Oluştur" }} />
       <Stack.Screen name="IndividualFitnessProgramList" component={IndividualFitnessProgramListScreen} options={{ title: "Bireysel Programım" }} />
-      <Stack.Screen name="IndividualFitnessProgramBuilder" component={IndividualFitnessProgramBuilderScreen} options={{ title: "Program Ekle" }} />
+      <Stack.Screen name="IndividualFitnessProgramBuilder" component={IndividualFitnessProgramBuilderScreen} options={{ title: "Program Ekle", gestureEnabled: false }} />
       <Stack.Screen name="IndividualFitnessProgramDetail" component={IndividualFitnessProgramDetailScreen} options={{ title: "Program Detayı" }} />
       <Stack.Screen name="Nutrition" component={NutritionScreen} options={{ title: "Beslenme" }} />
       <Stack.Screen name="NutritionFoods" component={NutritionFoodsScreen} options={{ title: "Besinler" }} />
       <Stack.Screen name="NutritionFoodCategory" component={NutritionFoodCategoryScreen} />
       <Stack.Screen name="NutritionFoodDetail" component={NutritionFoodDetailScreen} options={{ title: "Besin Detayı" }} />
-      <Stack.Screen name="NutritionFoodForm" component={NutritionFoodFormScreen} options={{ title: "Besin" }} />
+      <Stack.Screen name="NutritionFoodForm" component={NutritionFoodFormScreen} options={{ title: "Besin", gestureEnabled: false }} />
       <Stack.Screen name="NutritionRecipes" component={NutritionRecipesScreen} options={{ title: "Sporcu Tarifleri" }} />
       <Stack.Screen name="NutritionRecipeCategory" component={NutritionRecipeCategoryScreen} />
       <Stack.Screen name="NutritionRecipeDetail" component={NutritionRecipeDetailScreen} options={{ title: "Tarif" }} />
-      <Stack.Screen name="NutritionRecipeForm" component={NutritionRecipeFormScreen} options={{ title: "Tarif" }} />
+      <Stack.Screen name="NutritionRecipeForm" component={NutritionRecipeFormScreen} options={{ title: "Tarif", gestureEnabled: false }} />
       <Stack.Screen name="NutritionArticles" component={NutritionArticlesScreen} options={{ title: "Beslenme Rehberi" }} />
       <Stack.Screen name="NutritionArticleCategory" component={NutritionArticleCategoryScreen} />
       <Stack.Screen name="NutritionArticleDetail" component={NutritionArticleDetailScreen} options={{ title: "Yazı" }} />
-      <Stack.Screen name="NutritionArticleForm" component={NutritionArticleFormScreen} options={{ title: "Yazı" }} />
+      <Stack.Screen name="NutritionArticleForm" component={NutritionArticleFormScreen} options={{ title: "Yazı", gestureEnabled: false }} />
       <Stack.Screen name="SuperAdminClubs" component={SuperAdminClubsScreen} options={{ title: "Kulüpler" }} />
       <Stack.Screen name="SuperAdminSubscriptions" component={SuperAdminSubscriptionsScreen} options={{ title: "Abonelikler" }} />
       <Stack.Screen name="SuperAdminReport" component={SuperAdminReportScreen} options={{ title: "Platform Raporu" }} />
