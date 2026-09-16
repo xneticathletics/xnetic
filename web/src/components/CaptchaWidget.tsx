@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
 // Mobildeki CaptchaModal.tsx'in web karşılığı — burada gerçek bir tarayıcı
 // olduğu için WebView'e hiç gerek yok, Cloudflare Turnstile script'i
@@ -30,9 +30,24 @@ declare global {
   }
 }
 
-export default function CaptchaWidget({ onToken }: { onToken: (token: string) => void }) {
+// Bir sayfada captcha token'ı BİRDEN FAZLA korumalı işlem için gerekiyorsa
+// (ör. CreateClubPage: önce create-club edge fonksiyonu, sonra otomatik
+// signInWithPassword) — Turnstile token'ları TEK KULLANIMLIK, aynı token'ı
+// ikinci bir doğrulamaya göndermek Cloudflare'dan "timeout-or-duplicate"
+// hatası döndürür. Bu yüzden widget'ı programatik olarak resetleyip TAZE
+// bir token almak için dışarıya bir ref API'si açıyoruz.
+export type CaptchaWidgetHandle = { reset: () => void };
+
+export default forwardRef<CaptchaWidgetHandle, { onToken: (token: string) => void }>(function CaptchaWidget(
+  { onToken },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    reset: () => window.turnstile?.reset(widgetIdRef.current ?? undefined),
+  }));
 
   useEffect(() => {
     let cancelled = false;
@@ -70,4 +85,4 @@ export default function CaptchaWidget({ onToken }: { onToken: (token: string) =>
   }, []);
 
   return <div ref={containerRef} className="w-full" />;
-}
+});

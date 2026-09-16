@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { inputClass } from "../components/FormField";
@@ -7,7 +7,7 @@ import { getPlatformSettings, type PlatformSettings } from "../lib/api/platformS
 import { createClub, type BillingPeriod } from "../lib/api/clubSignup";
 import { uploadClubLogo } from "../lib/api/clubLogo";
 import ClubAdminConsentModal from "../components/ClubAdminConsentModal";
-import CaptchaWidget from "../components/CaptchaWidget";
+import CaptchaWidget, { type CaptchaWidgetHandle } from "../components/CaptchaWidget";
 
 const MARKETING_URL = import.meta.env.VITE_MARKETING_URL as string;
 
@@ -66,6 +66,25 @@ export default function CreateClubPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // create-club fonksiyonu ilk token'ı tüketiyor (Cloudflare'a karşı
+  // doğruluyor) — Turnstile token'ları tek kullanımlık olduğu için hesap
+  // oluşturma sonrası otomatik girişte AYNI token yeniden kullanılamıyor
+  // ("timeout-or-duplicate" hatası). Widget'ı resetleyip taze bir token
+  // gelmesini bu ref üzerinden bekliyoruz.
+  const captchaWidgetRef = useRef<CaptchaWidgetHandle>(null);
+  const captchaResolverRef = useRef<((token: string) => void) | null>(null);
+
+  const handleCaptchaToken = (token: string) => {
+    setCaptchaToken(token);
+    captchaResolverRef.current?.(token);
+    captchaResolverRef.current = null;
+  };
+
+  const getFreshCaptchaToken = (): Promise<string> =>
+    new Promise((resolve) => {
+      captchaResolverRef.current = resolve;
+      captchaWidgetRef.current?.reset();
+    });
 
   if (!loading && session) {
     return <Navigate to="/" replace />;
@@ -119,8 +138,10 @@ export default function CreateClubPage() {
       });
       // Hesap oluşturulduktan hemen sonra aynı bilgilerle giriş yapılır —
       // LoginPage'deki yönlendirme, oturum gelince otomatik olarak
-      // Ana Sayfa'ya geçirir.
-      const { error: signInError } = await signIn(email.trim(), password, captchaToken ?? undefined);
+      // Ana Sayfa'ya geçirir. create-club'ın tükettiği token'ı DEĞİL,
+      // taze bir token kullanmalı (bkz. getFreshCaptchaToken yorumu).
+      const freshCaptchaToken = await getFreshCaptchaToken();
+      const { error: signInError } = await signIn(email.trim(), password, freshCaptchaToken);
       if (signInError) throw new Error(signInError);
 
       if (logoFile) {
@@ -304,7 +325,7 @@ export default function CreateClubPage() {
             </label>
 
             <div className="mb-4">
-              <CaptchaWidget onToken={setCaptchaToken} />
+              <CaptchaWidget ref={captchaWidgetRef} onToken={handleCaptchaToken} />
             </div>
 
             {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}

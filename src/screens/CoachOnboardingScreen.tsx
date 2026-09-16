@@ -87,18 +87,23 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
     setSaving(true);
     setError(null);
     try {
+      await uploadMyPhoto(photoUri);
+
+      // Branş(lar) MUTLAKA onboarding_completed=true olmadan ÖNCE
+      // kaydedilmeli — coach_branches'e kendi satırını yazma izni
+      // (bkz. migration 20260916120000) sadece onboarding sürerken
+      // açık, tamamlandıktan sonra kapanıyor.
+      const userId = await getCurrentAppUserId();
+      if (userId) {
+        await setCoachBranches(userId, branchSelections.map((s) => ({ branch_id: s.branch.id, level: s.level })));
+      }
+
       await completeMyOnboarding({
         name: name.trim(),
         phone: phone.trim(),
         birthDate,
         educationLevel,
       });
-      await uploadMyPhoto(photoUri);
-
-      const userId = await getCurrentAppUserId();
-      if (userId) {
-        await setCoachBranches(userId, branchSelections.map((s) => ({ branch_id: s.branch.id, level: s.level })));
-      }
 
       onComplete();
     } catch (e: any) {
