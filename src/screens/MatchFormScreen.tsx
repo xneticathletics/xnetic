@@ -385,12 +385,16 @@ export default function MatchFormScreen({ route, navigation }: Props) {
           allowedIds={
             isCoach
               ? (myGroupIds ?? []).filter((id) => {
+                  const g = allGroups.find((g) => g.id === id);
+                  // Müsabaka sadece müsabık gruplara eklenebilir — spor
+                  // okulu grupları listede hiç görünmemeli.
+                  if (g?.athlete_type !== "musabik") return false;
                   if (!selectedBranchFilter) return true;
-                  return allGroups.find((g) => g.id === id)?.branch === selectedBranchFilter;
+                  return g.branch === selectedBranchFilter;
                 })
-              : selectedBranchFilter
-              ? allGroups.filter((g) => g.branch === selectedBranchFilter).map((g) => g.id)
-              : undefined
+              : allGroups
+                  .filter((g) => g.athlete_type === "musabik" && (!selectedBranchFilter || g.branch === selectedBranchFilter))
+                  .map((g) => g.id)
           }
         />
         <BranchPickerModal
