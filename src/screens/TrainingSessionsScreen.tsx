@@ -595,7 +595,12 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
               >
                 <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
                 <View style={styles.dayDotsRow}>
-                  {hasSessions && <View style={[styles.dayDot, { backgroundColor: colors.yellow }]} />}
+                  {/* Kutu seçiliyken zemin zaten sarı doluyor (dayBoxSelected)
+                      — antrenman noktası da sarı olursa üstüne karışıp
+                      kayboluyordu (özellikle "bugün" varsayılan olarak hem
+                      seçili hem bugün oluyor). Seçiliyken koyu, değilken
+                      sarı gösteriyoruz. */}
+                  {hasSessions && <View style={[styles.dayDot, { backgroundColor: isSelected ? colors.bg : colors.yellow }]} />}
                   {hasMatches && <View style={[styles.dayDot, { backgroundColor: colors.coral }]} />}
                 </View>
               </View>
