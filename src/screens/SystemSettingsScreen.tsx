@@ -181,7 +181,7 @@ export default function SystemSettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Abonelik Ödeme Hesabı (Havale/EFT)</Text>
           <Text style={styles.hint}>
-            Kulüp Oluştur sayfasında ve abonelik onayı bekleyen kulüp adminlerine bu hesap gösterilir.
+            Kulüp Oluştur sayfasında ve abonelik onayı bekleyen kulüp yöneticilerine bu hesap gösterilir.
           </Text>
           <Text style={styles.label}>Hesap Sahibi</Text>
           <TextInput

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 // gerçek kulüp verisine dokunmadan her rolün Ana Sayfa kutucuk düzenini
 // önizlemesi için.
 const ROLES: { key: string; label: string; icon: string; accent: string }[] = [
-  { key: "club_admin", label: "Kulüp Admini", icon: "🏢", accent: "#FFC845" },
+  { key: "club_admin", label: "Kulüp Yöneticisi", icon: "🏢", accent: "#FFC845" },
   { key: "coordinator", label: "Branş Koordinatörü", icon: "🎖️", accent: "#9b7bff" },
   { key: "coach", label: "Antrenör", icon: "🧑‍🏫", accent: "#3fd6c6" },
   { key: "parent", label: "Veli", icon: "👨‍👩‍👧", accent: "#9b7bff" },

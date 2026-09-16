@@ -2,7 +2,7 @@ type Role = { icon: string; title: string; surface: string; points: string[]; co
 
 const ROLES: Role[] = [
   {
-    icon: "🏢", title: "Kulüp Admini", surface: "Web Paneli · Mobil Uygulama", color: "text-yellow",
+    icon: "🏢", title: "Kulüp Yöneticisi", surface: "Web Paneli · Mobil Uygulama", color: "text-yellow",
     points: ["Sporcu, grup, şube ve tesis yönetimi", "Finans, aidat ve antrenör ödemeleri", "Antrenör/veli/sporcu davet etme"],
   },
   {

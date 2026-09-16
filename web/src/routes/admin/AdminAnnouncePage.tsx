@@ -50,8 +50,8 @@ export default function AdminAnnouncePage() {
     <div className="max-w-xl">
       <h1 className="mb-1 text-xl font-bold text-ink">Duyurular</h1>
       <p className="mb-6 rounded-lg border border-line bg-surface p-3 text-xs leading-relaxed text-muted">
-        Bu duyuru SADECE kulüp adminlerine gider — Süper Admin olarak hiçbir kulübün veli, sporcu ya da antrenör
-        verisine erişimin yok, bu yüzden gizlilik gereği yayın kapsamı kasıtlı olarak kulüp adminleriyle sınırlı.
+        Bu duyuru SADECE kulüp yöneticilerine gider — Süper Admin olarak hiçbir kulübün veli, sporcu ya da antrenör
+        verisine erişimin yok, bu yüzden gizlilik gereği yayın kapsamı kasıtlı olarak kulüp yöneticileriyle sınırlı.
       </p>
 
       <FormField label="Başlık *">
@@ -73,7 +73,7 @@ export default function AdminAnnouncePage() {
 
       {error && <p className="mb-3 text-sm font-semibold text-coral">{error}</p>}
       {successCount !== null && (
-        <p className="mb-3 text-sm font-semibold text-teal">Gönderildi — {successCount} kulüp adminine ulaştı.</p>
+        <p className="mb-3 text-sm font-semibold text-teal">Gönderildi — {successCount} kulüp yöneticisine ulaştı.</p>
       )}
 
       <button

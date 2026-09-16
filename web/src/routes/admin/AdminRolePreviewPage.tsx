@@ -44,7 +44,7 @@ const TILES_BY_ROLE_KEY: Record<string, Tile[]> = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  club_admin: "Kulüp Admini",
+  club_admin: "Kulüp Yöneticisi",
   coordinator: "Branş Koordinatörü",
   coach: "Antrenör",
   parent: "Veli",

@@ -257,7 +257,7 @@ export default function MembershipFreezeScreen({ route, navigation }: Props) {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.historyRange}>{formatDate(f.start_date)} - {formatDate(f.end_date)}</Text>
                   <Text style={styles.historyBy}>
-                    {f.requested_by_role === "admin" ? "Admin" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
+                    {f.requested_by_role === "admin" ? "Kulüp Yöneticisi" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
                   </Text>
                 </View>
                 {canDeleteFreeze && (

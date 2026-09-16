@@ -285,7 +285,7 @@ export default function CreateClubPage() {
             </label>
 
             <label className="mb-3 block">
-              <span className="mb-1 block text-xs font-semibold text-muted">Adın Soyadın (Kulüp Admini) *</span>
+              <span className="mb-1 block text-xs font-semibold text-muted">Adın Soyadın (Kulüp Yöneticisi) *</span>
               <input required value={adminName} onChange={(e) => setAdminName(e.target.value)} placeholder="Örn. Ahmet Yılmaz" className={inputClass} />
             </label>
 

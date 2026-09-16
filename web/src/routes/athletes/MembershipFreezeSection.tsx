@@ -159,7 +159,7 @@ export default function MembershipFreezeSection({ athleteId }: { athleteId: stri
                   {formatDate(f.start_date)} - {formatDate(f.end_date)}
                 </span>
                 <span className="ml-1.5 text-muted">
-                  · {f.requested_by_role === "admin" ? "Admin" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
+                  · {f.requested_by_role === "admin" ? "Kulüp Yöneticisi" : f.requested_by_role === "coach" ? "Antrenör" : "Veli"}
                 </span>
                 {f.reason && <span className="ml-1.5 text-muted">· {f.reason}</span>}
               </span>

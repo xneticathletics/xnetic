@@ -9,7 +9,7 @@ import type { UserRole } from "../context/AuthContext";
 type Props = NativeStackScreenProps<HomeStackParamList, "SuperAdminScreens">;
 
 const ROLES: { role: UserRole; label: string; icon: string; coordinator?: boolean; accent: string }[] = [
-  { role: "club_admin", label: "Kulüp Admini", icon: "🏢", accent: colors.yellow },
+  { role: "club_admin", label: "Kulüp Yöneticisi", icon: "🏢", accent: colors.yellow },
   { role: "coach", label: "Branş Koordinatörü", icon: "🏷️", coordinator: true, accent: colors.violet },
   { role: "coach", label: "Antrenör", icon: "🧑‍🏫", accent: colors.teal },
   { role: "parent", label: "Veli", icon: "👪", accent: colors.coral },

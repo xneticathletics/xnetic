@@ -126,7 +126,7 @@ export default function AdminSettingsPage() {
       <div className="mb-6 rounded-2xl border border-line bg-surface p-5">
         <h2 className="mb-1 text-sm font-bold text-ink">Abonelik Ödeme Hesabı (Havale/EFT)</h2>
         <p className="mb-4 text-xs text-muted">
-          Kulüp Oluştur sayfasında ve abonelik onayı bekleyen kulüp adminlerine bu hesap gösterilir.
+          Kulüp Oluştur sayfasında ve abonelik onayı bekleyen kulüp yöneticilerine bu hesap gösterilir.
         </p>
         <FormField label="Hesap Sahibi">
           <input className={inputClass} value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} placeholder="X-NETIC Spor Sistemleri" />

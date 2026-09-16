@@ -10,7 +10,7 @@ import type { NotificationEventType } from "./notifications";
 export type RoleBucket = "club_admin" | "coordinator" | "coach" | "athlete" | "parent";
 
 export const ROLE_BUCKETS: { key: RoleBucket; label: string }[] = [
-  { key: "club_admin", label: "Admin" },
+  { key: "club_admin", label: "Kulüp Yöneticisi" },
   { key: "coordinator", label: "Koordinatör Antrenör" },
   { key: "coach", label: "Antrenör" },
   { key: "athlete", label: "Sporcu" },

@@ -60,7 +60,7 @@ export default function SuperAdminAnnounceScreen({ navigation }: Props) {
       setTitle("");
       setBody("");
       handleRemoveAttachment();
-      Alert.alert("Gönderildi", `Duyuru ${count} kulüp adminine gönderildi.`, [{ text: "Tamam" }]);
+      Alert.alert("Gönderildi", `Duyuru ${count} kulüp yöneticisine gönderildi.`, [{ text: "Tamam" }]);
     } catch (e: any) {
       setError(e.message ?? "Gönderilemedi");
     } finally {
@@ -72,7 +72,7 @@ export default function SuperAdminAnnounceScreen({ navigation }: Props) {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
         <Text style={styles.infoBox}>
-          Bu duyuru SADECE kulüp adminlerine gönderilir — hiçbir kulübün veli/sporcu/antrenör
+          Bu duyuru SADECE kulüp yöneticilerine gönderilir — hiçbir kulübün veli/sporcu/antrenör
           verisine erişim gerekmez, gizlilik ve güvenlik gereği kapsam bilerek bu şekilde sınırlı tutuldu.
         </Text>
 
@@ -114,7 +114,7 @@ export default function SuperAdminAnnounceScreen({ navigation }: Props) {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity style={styles.button} onPress={handleSend} disabled={sending}>
-          {sending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Kulüp Adminlerine Gönder</Text>}
+          {sending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Kulüp Yöneticilerine Gönder</Text>}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

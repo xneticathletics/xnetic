@@ -25,7 +25,7 @@ Verileriniz; hesabınızın oluşturulması ve kulüp yönetim panelinin kulland
 KVKK'nın 11. maddesi uyarınca kişisel verinizin işlenip işlenmediğini öğrenme, buna ilişkin bilgi talep etme, düzeltilmesini/silinmesini isteme ve kanuna aykırı işleme nedeniyle uğradığınız zararın giderilmesini talep etme haklarına sahipsiniz.
 
 5. Sporcu/Veli Verilerine Erişiminiz Hakkında Önemli Not
-Kulüp admini olarak, kulübünüze kaydettiğiniz sporcu ve velilere ait kişisel veriye erişebilirsiniz. Bu verilerin KVKK'ya uygun şekilde, yalnızca kulüp yönetimi amacınızla sınırlı olarak kullanılması ve yetkisiz üçüncü kişilere aktarılmaması sizin sorumluluğunuzdadır.
+Kulüp yöneticisi olarak, kulübünüze kaydettiğiniz sporcu ve velilere ait kişisel veriye erişebilirsiniz. Bu verilerin KVKK'ya uygun şekilde, yalnızca kulüp yönetimi amacınızla sınırlı olarak kullanılması ve yetkisiz üçüncü kişilere aktarılmaması sizin sorumluluğunuzdadır.
 
 6. Beyan
 Yukarıdaki bilgilendirmeyi okuduğumu ve anladığımı; kendi kişisel verilerimin yukarıda belirtilen amaç ve kapsamla işlenmesine açık rızam olduğunu ve kulüp adına erişeceğim sporcu/veli verilerini KVKK'ya uygun şekilde koruyacağımı beyan ve taahhüt ederim.`,

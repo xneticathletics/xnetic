@@ -295,7 +295,7 @@ export default function AthleteGroupsScreen({ navigation }: Props) {
           !loading ? (
             <Text style={styles.empty}>
               {isCoach
-                ? "Henüz sana atanmış bir grup yok. Kulüp Admini ile iletişime geç."
+                ? "Henüz sana atanmış bir grup yok. Kulüp Yöneticisi ile iletişime geç."
                 : "Henüz grup yok. Profil → Kulüp Ayarları'ndan grup ekleyebilirsin."}
             </Text>
           ) : null

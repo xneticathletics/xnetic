@@ -171,7 +171,7 @@ export default function AdminClubDetailPage() {
       </p>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-bold text-ink">Kulüp Adminleri</h2>
+        <h2 className="mb-3 text-sm font-bold text-ink">Kulüp Yöneticileri</h2>
         <DataTable columns={adminColumns} rows={admins} rowKey={(a) => a.id} loading={false} emptyText="Bu kulübün admini yok." />
       </section>
 

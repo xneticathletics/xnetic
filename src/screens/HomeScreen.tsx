@@ -58,7 +58,7 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "abonelik", label: "Abonelikler", sub: "", icon: "💳" },
     { key: "sa_finans", label: "Finans", sub: "X-NETIC'in kendi gelir/gideri", icon: "💰" },
     { key: "ekranlar", label: "Ekranlar", sub: "Rol önizlemeleri", icon: "🖥️" },
-    { key: "sa_duyurular", label: "Duyurular", sub: "Kulüp adminlerine gönder", icon: "📣" },
+    { key: "sa_duyurular", label: "Duyurular", sub: "Kulüp yöneticilerine gönder", icon: "📣" },
     { key: "fitness_kutuphane", label: "Egzersiz Kütüphanesi", sub: "Tüm kulüplerde görünen ortak hareketler", icon: "📚" },
     { key: "performans_kutuphane", label: "Performans Testleri Kütüphanesi", sub: "Tüm kulüplerde görünen ortak testler", icon: "⏱️" },
   ],
