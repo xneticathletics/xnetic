@@ -7,7 +7,8 @@ import {
 } from "../lib/api/trainingSessions";
 import type { Group } from "../lib/api/groups";
 import { listGroups } from "../lib/api/groups";
-import type { Venue } from "../lib/api/venues";
+import { listVenues, type Venue } from "../lib/api/venues";
+import { listBranches } from "../lib/api/branches";
 import GroupPickerModal from "../components/GroupPickerModal";
 import VenuePickerModal from "../components/VenuePickerModal";
 import DatePickerModal from "../components/DatePickerModal";
@@ -50,8 +51,9 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const sessionId = route.params?.sessionId;
   const isEdit = !!sessionId;
   const { role } = useAuth();
-  const { isLocked } = useBranchSelect();
+  const { isLocked, selectedBranch } = useBranchSelect();
   const isCoach = role === "coach";
+  const isBranchCoordinator = isCoach && isLocked;
   const { scrollRef, handleFocus } = useKeyboardScroll();
 
   const [form, setForm] = useState<TrainingSessionInput>(emptyForm);
@@ -64,6 +66,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
   const [myGroupIds, setMyGroupIds] = useState<string[] | undefined>(undefined);
   const [myBranchGroupIds, setMyBranchGroupIds] = useState<string[]>([]);
   const [authorizedVenueIds, setAuthorizedVenueIds] = useState<string[]>([]);
+  const [coordinatorVenueIds, setCoordinatorVenueIds] = useState<string[] | undefined>(undefined);
   const [allGroups, setAllGroups] = useState<Group[]>([]);
 
   // Bir "salon yetkilisi" (koordinatör olmayan ama en az bir salon
@@ -96,6 +99,21 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
     getMyCoachedGroupIds().then(setMyGroupIds).catch(() => setMyGroupIds([]));
     getMyAuthorizedVenueIds().then(setAuthorizedVenueIds).catch(() => setAuthorizedVenueIds([]));
   }, [isCoach]);
+
+  // Branş koordinatörü salon seçerken TÜM salonları değil, sadece kendi
+  // branşına ait olanları görmeli (bkz. CoachDetailScreen'deki Salon
+  // Yetkisi düzeltmesiyle aynı desen — bir salon birden fazla branşa ait
+  // olabildiği için venues.branch_ids'e bakılıyor, hangi grupların o
+  // salonu kullandığına değil).
+  useEffect(() => {
+    if (!isBranchCoordinator || !selectedBranch) { setCoordinatorVenueIds(undefined); return; }
+    Promise.all([listVenues(), listBranches()])
+      .then(([venues, branches]) => {
+        const branchIds = new Set(branches.filter((b) => b.name === selectedBranch).map((b) => b.id));
+        setCoordinatorVenueIds(venues.filter((v) => v.branch_ids.some((id) => branchIds.has(id))).map((v) => v.id));
+      })
+      .catch(() => setCoordinatorVenueIds([]));
+  }, [isBranchCoordinator, selectedBranch]);
 
   // Salon yetkilisi (koordinatör değilse), kendi koçluğunu yapmadığı
   // gruplar dahil kendi branşındaki TÜM grupları görebilmeli.
@@ -339,7 +357,7 @@ export default function TrainingSessionFormScreen({ route, navigation }: Props) 
       <VenuePickerModal
         visible={venuePickerVisible}
         selectedId={form.venue_id}
-        allowedIds={isVenueAuthorityCoach ? authorizedVenueIds : undefined}
+        allowedIds={isVenueAuthorityCoach ? authorizedVenueIds : isBranchCoordinator ? coordinatorVenueIds : undefined}
         onSelect={handleVenueSelect}
         onClose={() => setVenuePickerVisible(false)}
       />

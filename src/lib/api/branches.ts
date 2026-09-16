@@ -87,17 +87,29 @@ export type BranchStats = { activeAthleteCount: number; coachCount: number; venu
 // Branş koordinatörünün Ana Sayfa'sındaki özet satır için — admin'in kulüp
 // geneli istatistik satırıyla aynı fikir, sadece bu branşa sınırlı.
 export async function getBranchStats(branch: string): Promise<BranchStats> {
-  const { data: groups, error: groupsError } = await supabase
-    .from("groups")
-    .select("id, venue_id, head_coach_id")
-    .eq("branch", branch);
-  if (groupsError) throw groupsError;
+  // Salon sayısı grupların şu an kullandığı venue_id'lerden DEĞİL,
+  // venues.branch_ids'ten hesaplanıyor — bir salon bu branşa atanmış
+  // olabilir ama o anda hiç grup orada olmayabilir (ya da bir salon birden
+  // fazla branşa ait olabilir), gruplardan saymak eksik/yanlış sayı verirdi
+  // (bkz. CoachDetailScreen'deki aynı kök nedenli Salon Yetkisi düzeltmesi).
+  const [groupsResult, branchResult, venuesResult] = await Promise.all([
+    supabase.from("groups").select("id, head_coach_id").eq("branch", branch),
+    supabase.from("branches").select("id").eq("name", branch).maybeSingle(),
+    supabase.from("venues").select("id, branch_ids"),
+  ]);
+  if (groupsResult.error) throw groupsResult.error;
+  if (branchResult.error) throw branchResult.error;
+  if (venuesResult.error) throw venuesResult.error;
 
-  const groupIds = (groups ?? []).map((g) => g.id);
-  const venueIds = new Set((groups ?? []).map((g) => g.venue_id).filter((v): v is string => !!v));
-  const coachIds = new Set((groups ?? []).map((g) => g.head_coach_id).filter((c): c is string => !!c));
+  const groups = groupsResult.data ?? [];
+  const groupIds = groups.map((g) => g.id);
+  const coachIds = new Set(groups.map((g) => g.head_coach_id).filter((c): c is string => !!c));
+  const branchId = branchResult.data?.id;
+  const venueCount = branchId
+    ? (venuesResult.data ?? []).filter((v) => (v.branch_ids ?? []).includes(branchId)).length
+    : 0;
 
-  if (groupIds.length === 0) return { activeAthleteCount: 0, coachCount: 0, venueCount: 0 };
+  if (groupIds.length === 0) return { activeAthleteCount: 0, coachCount: 0, venueCount };
 
   const [assistantsResult, athleteCountResult] = await Promise.all([
     supabase.from("group_coaches").select("coach_id").in("group_id", groupIds),
@@ -108,7 +120,7 @@ export async function getBranchStats(branch: string): Promise<BranchStats> {
   return {
     activeAthleteCount: athleteCountResult.count ?? 0,
     coachCount: coachIds.size,
-    venueCount: venueIds.size,
+    venueCount,
   };
 }
 
