@@ -13,7 +13,7 @@ import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { getCurrentUserName, getCurrentAppUserId } from "../lib/api/currentUser";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { useClubSettings } from "../context/ClubSettingsContext";
-import { getClubLogoUrl } from "../lib/api/clubLogo";
+import { getClubLogoUrl, getClubLogoVersion } from "../lib/api/clubLogo";
 import { getClubName } from "../lib/api/clubSettings";
 import { getActiveAthleteCount } from "../lib/api/athletes";
 import { listCoaches } from "../lib/api/coaches";
@@ -172,12 +172,14 @@ export default function HomeScreen({
   const [coachCount, setCoachCount] = useState<number | null>(null);
   const [branchStats, setBranchStats] = useState<BranchStats | null>(null);
   const [clubLogoFailed, setClubLogoFailed] = useState(false);
-  // clubId değişmediği sürece AYNI URL string'ini/nesnesini döner —
-  // getClubLogoUrl() artık zaten sabit bir URL veriyor, ama her render'da
-  // yeni bir {uri:...} nesnesi oluşturmamak için burada da memoize ediyoruz.
+  const [clubLogoVersion, setClubLogoVersion] = useState<string | null>(null);
+  // clubId/clubLogoVersion değişmediği sürece AYNI URL string'ini/nesnesini
+  // döner — logo gerçekten yeniden yüklenmediyse RN'in <Image> önbelleği
+  // aynı görseli anında gösterir; yeniden yüklendiğinde (version değişince)
+  // yeni URL'e geçilip önbellek doğru şekilde kırılır.
   const clubLogoSource = useMemo(
-    () => (clubId ? { uri: getClubLogoUrl(clubId) } : null),
-    [clubId]
+    () => (clubId ? { uri: getClubLogoUrl(clubId, clubLogoVersion) } : null),
+    [clubId, clubLogoVersion]
   );
   const [clubName, setClubName] = useState<string | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
@@ -188,9 +190,10 @@ export default function HomeScreen({
   // çalışıyor, geri dönüşte tekrar tetiklenmiyordu).
   useFocusEffect(
     useCallback(() => {
-      if (!clubId) { setClubName(null); return; }
+      if (!clubId) { setClubName(null); setClubLogoVersion(null); return; }
       let cancelled = false;
       getClubName(clubId).then((n) => { if (!cancelled) setClubName(n); }).catch(() => {});
+      getClubLogoVersion(clubId).then((v) => { if (!cancelled) setClubLogoVersion(v); }).catch(() => {});
       return () => { cancelled = true; };
     }, [clubId])
   );

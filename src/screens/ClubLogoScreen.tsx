@@ -6,7 +6,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { getClubLogoUrl, uploadClubLogo } from "../lib/api/clubLogo";
+import { getClubLogoUrl, getClubLogoVersion, uploadClubLogo } from "../lib/api/clubLogo";
 import { getClubName, updateClubName } from "../lib/api/clubSettings";
 import { useAuth } from "../context/AuthContext";
 import type { ClubSettingsStackParamList } from "../navigation/ClubSettingsStack";
@@ -28,6 +28,13 @@ export default function ClubLogoScreen({}: Props) {
     getClubName(clubId)
       .then((n) => setClubName(n ?? ""))
       .finally(() => setNameLoading(false));
+    // Ekran her açıldığında en son yüklenen logoyu göstersin diye — ilk
+    // state zaten sabit (versiyonsuz) bir URL kullanıyordu, bu da daha
+    // önce başka bir cihazda/oturumda değiştirilmiş bir logoyu (RN'in
+    // Image önbelleği aynı URL'i eskiden görmüşse) bayat gösterebilirdi.
+    getClubLogoVersion(clubId)
+      .then((v) => setLogoUrl(getClubLogoUrl(clubId, v)))
+      .catch(() => {});
   }, [clubId]);
 
   const handlePick = async () => {
