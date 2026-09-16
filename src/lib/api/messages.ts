@@ -92,21 +92,23 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
       });
     }
 
-    // Branş koordinatörüyse, kendi branşındaki TÜM antrenörleri de ekle —
-    // koordinatör sadece koçluk yaptığı gruplarla sınırlı kalmamalı,
-    // branşını yönetebilmesi için branşındaki herkesle mesajlaşabilmeli.
-    // (can_message_recipient() DB fonksiyonu bunu ayrıca zorunlu kılıyor.)
-    const { data: coordBranch, error: coordError } = await supabase
-      .from("branches")
-      .select("id")
-      .eq("coordinator_user_id", myUserId)
-      .maybeSingle();
-    if (coordError) throw coordError;
-    if (coordBranch) {
+    // Aynı branşı paylaşan HERHANGİ iki antrenör mesajlaşabilir (sadece
+    // koordinatör değil, düz antrenör de). Ayrıca koordinatörse (kendi
+    // coach_branches'i o branşı kapsamasa bile) branşındaki herkes ekleniyor.
+    // (can_message_recipient() DB fonksiyonu ikisini de ayrıca zorunlu kılıyor.)
+    const [myBranchesResult, coordBranchResult] = await Promise.all([
+      supabase.from("coach_branches").select("branch_id").eq("coach_id", myUserId),
+      supabase.from("branches").select("id").eq("coordinator_user_id", myUserId).maybeSingle(),
+    ]);
+    if (myBranchesResult.error) throw myBranchesResult.error;
+    if (coordBranchResult.error) throw coordBranchResult.error;
+    const branchIds = new Set((myBranchesResult.data ?? []).map((r) => r.branch_id));
+    if (coordBranchResult.data) branchIds.add(coordBranchResult.data.id);
+    if (branchIds.size > 0) {
       const { data: branchCoaches, error: branchCoachesError } = await supabase
         .from("coach_branches")
         .select("users:coach_id(id, name, photo_url, role)")
-        .eq("branch_id", coordBranch.id)
+        .in("branch_id", Array.from(branchIds))
         .neq("coach_id", myUserId);
       if (branchCoachesError) throw branchCoachesError;
       (branchCoaches as any[] ?? []).forEach((r) => { if (r.users) contacts.set(r.users.id, r.users); });
@@ -140,6 +142,20 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
         .in("name", branchNames);
       if (coordError) throw coordError;
       (coordData as any[] ?? []).forEach((b) => { if (b.coordinator) contacts.set(b.coordinator.id, b.coordinator); });
+    }
+
+    // Sporcu, kendi grubundaki diğer sporculara da yazabilir (sadece
+    // athlete->athlete — veli->veli ya da veli->başka sporcu kapsam dışı,
+    // bkz. can_message_recipient() DB fonksiyonundaki aynı kısıtlama).
+    if (role === "athlete") {
+      const { data: groupmates, error: groupmatesError } = await supabase
+        .from("athletes")
+        .select("athlete_account:athlete_user_id(id, name, photo_url, role)")
+        .in("group_id", groupIds)
+        .eq("status", "active")
+        .neq("athlete_user_id", myUserId);
+      if (groupmatesError) throw groupmatesError;
+      (groupmates as any[] ?? []).forEach((r) => { if (r.athlete_account) contacts.set(r.athlete_account.id, r.athlete_account); });
     }
   }
   return Array.from(contacts.values()).sort((a, b) => a.name.localeCompare(b.name, "tr"));
