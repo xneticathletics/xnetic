@@ -15,15 +15,21 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-line/80 bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-        <a href="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
-          <img src="/logo-mark.png" alt="X-NETIC" className="h-16 w-16 drop-shadow-lg" />
-          <span className="flex flex-col items-center leading-tight">
-            <span className="text-xl font-extrabold tracking-tight text-ink">X-NETIC</span>
-            <span className="text-xs font-bold uppercase tracking-wider text-ink">Spor Sistemleri</span>
+        <a href="/" className="flex shrink-0 items-center gap-2 sm:gap-3" onClick={() => setMenuOpen(false)}>
+          <img src="/logo-mark.png" alt="X-NETIC" className="h-12 w-12 drop-shadow-lg sm:h-16 sm:w-16" />
+          {/* Mobilde iki satır (X-NETIC / SPOR SİSTEMLERİ) birbirine göre
+              ORTALANMIŞTI (items-center) — farklı uzunluktaki iki satır
+              ortalanınca sola hizası kayıyor, dar telefon ekranlarında
+              logoyla hizasız/dağınık görünüyordu. sm: ve üzeri (tablet/
+              masaüstü) BİLEREK aynı (items-center) bırakıldı, sadece
+              mobilde sola hizalı. */}
+          <span className="flex flex-col items-start leading-tight sm:items-center">
+            <span className="whitespace-nowrap text-lg font-extrabold tracking-tight text-ink sm:text-xl">X-NETIC</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-ink sm:text-xs">Spor Sistemleri</span>
           </span>
         </a>
 
-        <nav className="hidden items-center gap-3 text-sm font-bold text-muted md:flex">
+        <nav className="hidden items-center gap-3 text-sm font-bold text-muted lg:flex">
           {NAV_LINKS.map((l) => (
             <a
               key={l.href}
@@ -59,7 +65,7 @@ export default function Header() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Menü"
             aria-expanded={menuOpen}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-ink md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-ink lg:hidden"
           >
             <span className="text-lg leading-none">{menuOpen ? "✕" : "☰"}</span>
           </button>
@@ -67,7 +73,7 @@ export default function Header() {
       </div>
 
       {menuOpen && (
-        <nav className="border-t border-line bg-bg px-5 py-4 md:hidden">
+        <nav className="border-t border-line bg-bg px-5 py-4 lg:hidden">
           <ul className="space-y-1">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
