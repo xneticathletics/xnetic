@@ -198,18 +198,6 @@ export default function ProfileScreen({
           aynı kutu stilinde — tek satır kart yerine iki de burada. */}
       {role !== "super_admin" && (
         <View style={styles.settingsGrid}>
-          <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Badges")}>
-            <View style={[styles.settingsIconBadge, { backgroundColor: colors.yellowSoft }]}>
-              <Text style={styles.settingsIcon}>🏅</Text>
-            </View>
-            <Text style={styles.settingsTitle}>Rozetlerim</Text>
-            <Text style={styles.settingsSub}>Kazandığın ödüller</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {role !== "super_admin" && (
-        <View style={styles.settingsGrid}>
           {role === "club_admin" && (
             <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ClubSettings")}>
               <View style={styles.settingsIconBadge}>
@@ -226,6 +214,18 @@ export default function ProfileScreen({
             <Text style={styles.settingsTitle}>Duyurular</Text>
             <Text style={styles.settingsSub}>Tüm duyuruları görüntüle</Text>
           </TouchableOpacity>
+          {/* Rozetler sadece veli/sporcuda — admin ve antrenörün buna
+              ihtiyacı yok (kullanıcı isteği). Diğer kutularla aynı satırda,
+              küçük ve yan yana. */}
+          {(role === "parent" || role === "athlete") && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Badges")}>
+              <View style={[styles.settingsIconBadge, { backgroundColor: colors.yellowSoft }]}>
+                <Text style={styles.settingsIcon}>🏅</Text>
+              </View>
+              <Text style={styles.settingsTitle}>Rozetlerim</Text>
+              <Text style={styles.settingsSub}>Kazandığın ödüller</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 

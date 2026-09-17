@@ -81,14 +81,34 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    // Çağıranın club_id + rolünü bul, sadece Admin davet edebilsin.
+    // Çağıranın club_id + rolünü bul, sadece Admin (ve aşağıda kontrol
+    // edilen branş koordinatörü) davet edebilsin.
     const { data: callerRow, error: callerRowError } = await admin
       .from("users")
-      .select("club_id, role")
+      .select("id, club_id, role")
       .eq("auth_user_id", callerAuth.user.id)
       .single();
     if (callerRowError || !callerRow) throw new Error("Kullanıcı bulunamadı.");
-    if (callerRow.role !== "club_admin" && callerRow.role !== "super_admin") {
+
+    // Branş koordinatörü (coach rolünde ama bir branşın coordinator_user_id'si
+    // kendisi olan) de veli/sporcu hesabı davet edebilmeli — kullanıcı isteği.
+    // athletes tablosundaki RLS zaten koordinatörün sadece KENDİ branşındaki
+    // sporculara hesap bağlayabilmesini sağlıyor (is_my_coached_group ->
+    // branches.coordinator_user_id kontrolü), bu yüzden burada ayrıca branş
+    // sınırlaması gerekmiyor — sadece "hangi ROLLERİ davet edebilir" sınırlı.
+    let isCoordinator = false;
+    if (callerRow.role === "coach") {
+      const { data: coordBranch } = await admin
+        .from("branches")
+        .select("name")
+        .eq("coordinator_user_id", callerRow.id)
+        .eq("club_id", callerRow.club_id)
+        .limit(1)
+        .maybeSingle();
+      isCoordinator = !!coordBranch;
+    }
+
+    if (callerRow.role !== "club_admin" && callerRow.role !== "super_admin" && !isCoordinator) {
       throw new Error("Bu işlem için yetkiniz yok.");
     }
 
@@ -103,6 +123,12 @@ Deno.serve(async (req) => {
     const INVITABLE_ROLES_BY_CLUB_ADMIN = ["club_admin", "coach", "parent", "athlete"];
     if (callerRow.role === "club_admin" && !INVITABLE_ROLES_BY_CLUB_ADMIN.includes(role)) {
       throw new Error("Bu rolü atama yetkiniz yok.");
+    }
+    // Branş koordinatörü SADECE veli/sporcu hesabı davet edebilir — kendine
+    // ya da başkasına coach/club_admin/super_admin rolü asla veremez.
+    const INVITABLE_ROLES_BY_COORDINATOR = ["parent", "athlete"];
+    if (isCoordinator && callerRow.role !== "club_admin" && !INVITABLE_ROLES_BY_COORDINATOR.includes(role)) {
+      throw new Error("Branş koordinatörü sadece veli/sporcu hesabı davet edebilir.");
     }
 
     const trimmedIdentifier = String(identifier).trim();
