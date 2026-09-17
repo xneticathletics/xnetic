@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getClubLogoUrl, getClubLogoVersion, uploadClubLogo } from "../lib/api/clubLogo";
+import { cropToSquare } from "../lib/cropToSquare";
 import { getClubName, updateClubName } from "../lib/api/clubSettings";
 import { useAuth } from "../context/AuthContext";
 import type { ClubSettingsStackParamList } from "../navigation/ClubSettingsStack";
@@ -44,7 +45,7 @@ export default function ClubLogoScreen({}: Props) {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], quality: 0.8, allowsEditing: true, aspect: [1, 1],
+      mediaTypes: ["images"], quality: 0.8,
     });
     if (result.canceled || !result.assets?.[0]?.uri) return;
 
@@ -52,7 +53,9 @@ export default function ClubLogoScreen({}: Props) {
 
     setUploading(true);
     try {
-      const url = await uploadClubLogo(result.assets[0].uri, clubId);
+      const asset = result.assets[0];
+      const cropped = await cropToSquare(asset.uri, asset.width, asset.height);
+      const url = await uploadClubLogo(cropped, clubId);
       setLogoUrl(url);
       setLogoFailed(false);
       Alert.alert("Kaydedildi", "Kulüp logosu güncellendi — Ana Sayfa'da görünecek.", [{ text: "Tamam" }]);

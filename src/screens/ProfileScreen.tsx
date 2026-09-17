@@ -12,6 +12,7 @@ import { getMyAthletes } from "../lib/api/myAthletes";
 import { uploadAthletePhoto, updateAthlete } from "../lib/api/athletes";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import { requestAccountDeletion } from "../lib/api/accountDeletion";
+import { cropToSquare } from "../lib/cropToSquare";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   club_admin: "Kulüp Yöneticisi",
@@ -94,14 +95,13 @@ export default function ProfileScreen({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       quality: 0.7,
-      allowsEditing: true,
-      aspect: [1, 1],
     });
     if (result.canceled || !result.assets?.[0]?.uri) return;
 
     setUploading(true);
     try {
-      const uri = result.assets[0].uri;
+      const asset = result.assets[0];
+      const uri = await cropToSquare(asset.uri, asset.width, asset.height);
       let url: string;
       if (role === "athlete" && myAthleteId) {
         url = await uploadAthletePhoto(myAthleteId, uri);

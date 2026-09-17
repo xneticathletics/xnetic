@@ -13,6 +13,7 @@ import { setCoachBranches } from "../lib/api/coaches";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { formatPhoneNumber } from "../lib/phoneFormat";
 import BirthDateInput from "../components/BirthDateInput";
+import { cropToSquare } from "../lib/cropToSquare";
 
 const EDUCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "lise", label: "Lise" },
@@ -69,9 +70,12 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], quality: 0.7, allowsEditing: true, aspect: [1, 1],
+      mediaTypes: ["images"], quality: 0.7,
     });
-    if (!result.canceled && result.assets?.[0]?.uri) setPhotoUri(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      const asset = result.assets[0];
+      setPhotoUri(await cropToSquare(asset.uri, asset.width, asset.height));
+    }
   };
 
   const handleSubmit = async () => {

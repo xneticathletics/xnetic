@@ -14,6 +14,7 @@ import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { formatPhoneNumber } from "../lib/phoneFormat";
+import { cropToSquare } from "../lib/cropToSquare";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachForm">;
 
@@ -92,9 +93,12 @@ export default function CoachFormScreen({ route, navigation }: Props) {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], quality: 0.7, allowsEditing: true, aspect: [1, 1],
+      mediaTypes: ["images"], quality: 0.7,
     });
-    if (!result.canceled && result.assets?.[0]?.uri) setPhotoUri(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      const asset = result.assets[0];
+      setPhotoUri(await cropToSquare(asset.uri, asset.width, asset.height));
+    }
   };
 
   const handleSave = async () => {

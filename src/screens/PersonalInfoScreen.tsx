@@ -18,6 +18,7 @@ import { getCoach, updateCoach } from "../lib/api/coaches";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { formatPhoneNumber } from "../lib/phoneFormat";
 import BirthDateInput from "../components/BirthDateInput";
+import { cropToSquare } from "../lib/cropToSquare";
 // Veli'nin kendi fotoğraf yükleme hakkı yok (Profil ekranındaki kuralla
 // aynı) — Sporcu kendi athletes kaydını, diğerleri kendi users kaydını günceller.
 const CAN_UPLOAD_PHOTO: Record<UserRole, boolean> = {
@@ -117,13 +118,14 @@ export default function PersonalInfoScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], quality: 0.7, allowsEditing: true, aspect: [1, 1],
+      mediaTypes: ["images"], quality: 0.7,
     });
     if (result.canceled || !result.assets?.[0]?.uri) return;
 
     setUploadingPhoto(true);
     try {
-      const uri = result.assets[0].uri;
+      const asset = result.assets[0];
+      const uri = await cropToSquare(asset.uri, asset.width, asset.height);
       const url = role === "athlete" && myAthleteId
         ? await uploadAthletePhoto(myAthleteId, uri)
         : await uploadMyPhoto(uri);

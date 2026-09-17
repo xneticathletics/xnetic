@@ -22,6 +22,7 @@ import BranchPickerModal from "../components/BranchPickerModal";
 import LinkedAccountField from "../components/LinkedAccountField";
 import BirthDateInput from "../components/BirthDateInput";
 import DateMaskInput from "../components/DateMaskInput";
+import { cropToSquare } from "../lib/cropToSquare";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
@@ -200,11 +201,10 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       quality: 0.7,
-      allowsEditing: true,
-      aspect: [1, 1],
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
-      setPhotoUri(result.assets[0].uri);
+      const asset = result.assets[0];
+      setPhotoUri(await cropToSquare(asset.uri, asset.width, asset.height));
     }
   };
 
