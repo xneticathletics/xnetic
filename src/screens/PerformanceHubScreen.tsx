@@ -5,7 +5,6 @@ import { colors, radius, spacing } from "../theme/tokens";
 import type { UserRole } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useBranchSelect } from "../context/BranchSelectContext";
-import { getMyAthletes } from "../lib/api/myAthletes";
 
 type Props = {
   role: UserRole;
@@ -19,9 +18,12 @@ type HubItem = { key: string; icon: string; title: string; sub: string; onPress:
 // Ana Sayfa'da ayrı ayrı duran Fitness/Performans Ölçümleri/Beslenme
 // kutucuklarının birleştiği tek giriş noktası. Hangi alt öğelerin
 // görüneceği role göre değişir: Kulüp Admini/Branş Koordinatörü üçünü de,
-// Antrenör sadece Fitness+Beslenme'yi, Sporcu Performansım+Beslenme'yi
-// görür. Veli'de bu bölüm hiç yok (bkz. HomeScreen.tsx — "sporcum"
-// üzerinden zaten her şeyi görüyor), bu yüzden bu ekrana hiç gelmiyor.
+// Antrenör Fitness+Beslenme'yi görür. Sporcu artık bu ekrana hiç gelmiyor
+// (kullanıcı isteği — ara "Performansım" menüsü kaldırıldı, Ana Sayfa'daki
+// "Performans" kutucuğu doğrudan AthleteTrackingHub'a gidiyor, "Beslenme"
+// de kendi ayrı kutucuğuna taşındı, bkz. HomeScreen.tsx). Veli'de bu bölüm
+// hiç yok (bkz. HomeScreen.tsx — "sporcum" üzerinden zaten her şeyi
+// görüyor), bu yüzden bu ekrana hiç gelmiyor.
 export default function PerformanceHubScreen({ role, navigation }: Props) {
   const { isLocked } = useBranchSelect();
   const isBranchCoordinator = role === "coach" && isLocked;
@@ -50,15 +52,6 @@ export default function PerformanceHubScreen({ role, navigation }: Props) {
       key: "performans", icon: "⏱️", title: "Performans Ölçümleri",
       sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri",
       onPress: () => navigation.navigate("AthleticPerformance"),
-    });
-  } else if (role === "athlete") {
-    items.push({
-      key: "performansim", icon: "📊", title: "Performansım", sub: "Ölçümlerini ve gelişimini gör",
-      onPress: async () => {
-        const athletes = await getMyAthletes();
-        const me = athletes[0];
-        if (me) navigation.navigate("AthleteTrackingHub", { athleteId: me.id, athleteName: me.full_name });
-      },
     });
   }
 

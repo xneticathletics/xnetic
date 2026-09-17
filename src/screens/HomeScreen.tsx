@@ -48,7 +48,8 @@ export const TILES_BY_ROLE: Record<UserRole, Tile[]> = {
     { key: "antrenman", label: "Takvim", sub: "Antrenmanlar ve Müsabaka", icon: "📅" },
     { key: "yoklama", label: "Antrenman Katılım Durumu", sub: "", icon: "📋" },
     { key: "wellness", label: "Günlük Check-in", sub: "Uyku, enerji ve ruh hâlini kaydet", icon: "🌡️" },
-    { key: "performans_hub", label: "Performans", sub: "Performans ve beslenme", icon: "📊" },
+    { key: "performans_hub", label: "Performans", sub: "Ölçümlerini ve gelişimini gör", icon: "📊" },
+    { key: "beslenme", label: "Beslenme", sub: "Besinler ve tarifler", icon: "🥗" },
   ],
   club_admin: [
     { key: "sporcu", label: "Sporcu Yönetimi", sub: "Sporcular, gruplar", icon: "👥" },
@@ -113,7 +114,18 @@ async function handleTilePress(
   } else if (key === "ozet" && role === "parent") {
     navigation.navigate("MyPayments");
   } else if (key === "performans_hub") {
-    navigation.navigate("PerformanceHub");
+    // Sporcu için ara "Performansım" menüsü kaldırıldı (kullanıcı isteği)
+    // — doğrudan kendi takip ekranına gidiyor, admin/koordinatör/antrenör
+    // hâlâ birden çok seçenek sunan PerformanceHub'a gidiyor.
+    if (role === "athlete") {
+      const athletes = await getMyAthletes();
+      const me = athletes[0];
+      if (me) navigation.navigate("AthleteTrackingHub", { athleteId: me.id, athleteName: me.full_name });
+    } else {
+      navigation.navigate("PerformanceHub");
+    }
+  } else if (key === "beslenme") {
+    navigation.navigate("Nutrition");
   } else if (key === "wellness") {
     navigation.navigate("WellnessCheckin");
   } else if (key === "freeze") {
