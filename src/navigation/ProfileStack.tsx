@@ -8,7 +8,6 @@ import AnnouncementDetailScreen from "../screens/AnnouncementDetailScreen";
 import AnnouncementFormScreen from "../screens/AnnouncementFormScreen";
 import PersonalInfoScreen from "../screens/PersonalInfoScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
-import NotificationPreferencesScreen from "../screens/NotificationPreferencesScreen";
 import SupportScreen from "../screens/SupportScreen";
 import BadgesScreen from "../screens/BadgesScreen";
 import BadgeTierSettingsScreen from "../screens/BadgeTierSettingsScreen";
@@ -21,7 +20,6 @@ export type ProfileStackParamList = {
   AnnouncementForm: undefined;
   PersonalInfo: undefined;
   ChangePassword: undefined;
-  NotificationPreferences: undefined;
   Support: undefined;
   Badges: undefined;
   BadgeTierSettings: undefined;
@@ -47,7 +45,6 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       <Stack.Screen name="AnnouncementForm" component={AnnouncementFormScreen} options={{ title: "Yeni Duyuru", gestureEnabled: false }} />
       <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} options={{ title: "Kişisel Bilgiler" }} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: "Giriş ve Şifre İşlemleri" }} />
-      <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ title: "Bildirim Tercihleri" }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Yardım / Destek" }} />
       <Stack.Screen name="Badges" component={BadgesScreen} options={{ title: "Rozetlerim" }} />
       <Stack.Screen name="BadgeTierSettings" component={BadgeTierSettingsScreen} options={{ title: "Rozet Ayarları" }} />

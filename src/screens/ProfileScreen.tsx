@@ -256,19 +256,11 @@ export default function ProfileScreen({
           <Text style={styles.settingsTitle}>Giriş ve Şifre İşlemleri</Text>
           <Text style={styles.settingsSub}>Giriş bilgisi, şifre</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.settingsGrid}>
-        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("NotificationPreferences")}>
-          <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
-            <Text style={styles.settingsIcon}>🔔</Text>
-          </View>
-          <Text style={styles.settingsTitle}>Bildirim Tercihleri</Text>
-          <Text style={styles.settingsSub}>Almak istemediklerin</Text>
-        </TouchableOpacity>
-
+        {/* Bildirim Tercihleri kaldırıldı (kullanıcı isteği, tüm roller) —
+            Destek tek başına kalmasın diye buraya taşındı. */}
         <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Support")}>
-          <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
+          <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
             <Text style={styles.settingsIcon}>💬</Text>
           </View>
           <Text style={styles.settingsTitle}>Yardım / Destek</Text>

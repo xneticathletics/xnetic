@@ -325,11 +325,9 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
   },
   {
     keywords: ["bildirimleri gör", "zil ikonu", "bildirim ayarı", "bildirim kapat"],
-    title: "Bildirimleri görme ve ayarlama",
-    sampleQuestion: "Bildirim ayarlarımı nereden değiştiririm?",
-    answer:
-      "Ekranın üstündeki zil ikonuna dokun — tüm bildirimlerini listeler.\n" +
-      "Profil → Bildirim Tercihleri'nden, hangi bildirim türlerini almak istemediğini de seçebilirsin.",
+    title: "Bildirimleri görme",
+    sampleQuestion: "Bildirimlerimi nereden görürüm?",
+    answer: "Ekranın üstündeki zil ikonuna dokun — tüm bildirimlerini listeler.",
   },
   {
     keywords: ["profilimi güncelle", "bilgilerimi değiştir", "telefonumu değiştir", "adımı soyadımı değiştir", "fotoğrafımı değiştir"],

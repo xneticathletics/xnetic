@@ -10,12 +10,14 @@ export type AppNotification = {
   payload: { attachmentUrl?: string; announcementId?: string; athleteId?: string; athleteName?: string } | null;
 };
 
-// Admin, web panel Kullanıcılar sayfasından bir kişinin hangi bildirim
-// türlerini almayacağını (users.muted_notification_types) yönetebiliyor —
-// bu liste hem burada hem webdeki web/src/lib/api/notifications.ts'te
-// birebir aynı key/label çiftleriyle tutulur (ayrı dosyalar, ortak sabit
-// paylaşılamıyor). Yeni bir sendNotification çağrı noktası eklerken buraya
-// da (ve web'e de) karşılık gelen bir key eklenmeli.
+// Admin, web'den (Kulüp Ayarları → Bildirim Tercihleri, rol bazında toplu)
+// bir rolün TÜM üyelerinin hangi bildirim türlerini almayacağını
+// (users.muted_notification_types) yönetebiliyor — bkz.
+// web/src/lib/api/notificationRolePrefs.ts. Mobil tarafta kişinin KENDİ
+// bunu seçebildiği ayrı bir ekran vardı (Profil → Bildirim Tercihleri),
+// kullanıcı isteğiyle kaldırıldı (2026-09-18) — event_type listesi hâlâ
+// burada, sadece hangi türlerin susturulabileceğine dair etiketli liste
+// (NOTIFICATION_EVENT_TYPES) mobile tarafında artık kullanılmıyor.
 export type NotificationEventType =
   | "match_result"
   | "absence"
@@ -30,9 +32,8 @@ export type NotificationEventType =
   | "match_scheduled"
   // Süper admine (yeni kulüp ödemesi, abonelik süresi doldu, yenileme
   // bildirdi) ve kulüp adminine (süresi doldu/yakında dolacak) giden
-  // abonelik uyarıları — bilerek NOTIFICATION_EVENT_TYPES'a (Bildirim
-  // Tercihleri ekranı) EKLENMİYOR, sadece getNotificationTarget'ın
-  // yönlendirme yapabilmesi için bir event_type gerekiyordu.
+  // abonelik uyarıları — sadece getNotificationTarget'ın yönlendirme
+  // yapabilmesi için bir event_type gerekiyordu.
   | "subscription_alert"
   // Etkinlik/Turnuva/Kamp modülü — bkz. src/lib/api/events.ts.
   | "event_published"
@@ -52,30 +53,6 @@ export type NotificationEventType =
   // migration'ı (pg_cron, her sabah). Yönlendirmesi yok (tıklanınca hiçbir
   // yere gitmez), getNotificationTarget default: null'a düşer.
   | "birthday";
-
-export const NOTIFICATION_EVENT_TYPES: { key: NotificationEventType; label: string }[] = [
-  { key: "match_result", label: "Maç Sonucu" },
-  { key: "absence", label: "Antrenmana Katılmama" },
-  { key: "consecutive_absence", label: "Devamsızlık Uyarısı" },
-  { key: "fitness_program", label: "Yeni Fitness Programı" },
-  { key: "membership_freeze", label: "Kayıt Dondurma" },
-  { key: "session_excuse", label: "Antrenmana Katılamayacak Bildirimi" },
-  { key: "payment_claim", label: "Ödeme Bildirimi (Admin'e)" },
-  { key: "payment_reminder", label: "Aidat Hatırlatması" },
-  { key: "announcement", label: "Yeni Duyuru" },
-  { key: "training_session", label: "Yeni Antrenman" },
-  { key: "match_scheduled", label: "Yeni Maç Programı" },
-  { key: "event_published", label: "Yeni Etkinlik/Turnuva/Kamp" },
-  { key: "event_registration_submitted", label: "Etkinlik Kayıt Bildirimi (Admin'e)" },
-  { key: "event_registration_approved", label: "Etkinlik Kaydı Onaylandı" },
-  { key: "event_registration_rejected", label: "Etkinlik Kaydı Reddedildi" },
-  { key: "event_cancelled", label: "Etkinlik İptal Edildi" },
-  { key: "event_reminder", label: "Etkinlik Hatırlatması" },
-  { key: "social_post_submitted", label: "Sosyal Alan Onay Bekliyor" },
-  { key: "social_post_approved", label: "Paylaşımın Onaylandı" },
-  { key: "shop_order", label: "Yeni Mağaza Siparişi" },
-  { key: "birthday", label: "Doğum Günü Mesajı" },
-];
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç
 // gerekmiyor (sadece bir bildirim satırının birincil anahtarı). crypto.
@@ -188,30 +165,6 @@ export async function markAllNotificationsRead() {
   if (error) throw error;
 }
 
-// Profil > Bildirim Tercihleri'nde — kişinin KENDİ hangi bildirim
-// türlerini almak istemediğini seçmesi için (admin'in web'den rol bazında
-// yönettiği topluca ayarın aksine, bu sadece kendi hesabını etkiler).
-export async function getMyMutedNotificationTypes(): Promise<NotificationEventType[]> {
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user) return [];
-  const { data, error } = await supabase
-    .from("users")
-    .select("muted_notification_types")
-    .eq("auth_user_id", authData.user.id)
-    .single();
-  if (error) throw error;
-  return (data?.muted_notification_types as NotificationEventType[]) ?? [];
-}
-
-export async function updateMyMutedNotificationTypes(types: NotificationEventType[]): Promise<void> {
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user) throw new Error("Oturum bulunamadı.");
-  const { error } = await supabase
-    .from("users")
-    .update({ muted_notification_types: types })
-    .eq("auth_user_id", authData.user.id);
-  if (error) throw error;
-}
 
 export type PendingPasswordResetRequest = { notificationId: string; requesterId: string };
 
