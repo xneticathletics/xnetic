@@ -12,6 +12,9 @@ type Screen =
   | { kind: "sporcuDetail"; id: string }
   | { kind: "antrenorList" }
   | { kind: "antrenorDetail"; id: string }
+  | { kind: "antrenorAtamalari" }
+  | { kind: "performansHub" }
+  | { kind: "programOlustur" }
   | { kind: "finans" }
   | { kind: "financeGroup"; group: string; branch: string }
   | { kind: "takvim" }
@@ -283,9 +286,7 @@ const HOME_TILES: { key: Screen; icon: string; label: string; sub: string }[] = 
   { key: { kind: "takvim" }, icon: "📅", label: "Takvim", sub: "Antrenman ve Müsabakalar" },
   { key: { kind: "clubStructure" }, icon: "🏛️", label: "Kulüp Yapısı", sub: "Grup, branş, salon" },
   { key: { kind: "finans" }, icon: "💰", label: "Finans", sub: "Aidat ve giderler" },
-  { key: { kind: "performansCategories" }, icon: "⏱️", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet" },
-  { key: { kind: "beslenme" }, icon: "🥗", label: "Beslenme", sub: "Besinler ve Rehber" },
-  { key: { kind: "fitnessHub" }, icon: "💪", label: "Fitness", sub: "Check-in ve çalışma takibi" },
+  { key: { kind: "performansHub" }, icon: "📊", label: "Performans", sub: "Fitness, ölçüm ve beslenme" },
   { key: { kind: "infoList", title: "Mağaza", backLabel: "Ana Ekran", items: MAGAZA_ITEMS }, icon: "🛍️", label: "Mağaza", sub: "Ürünler ve siparişler" },
   { key: { kind: "infoList", title: "Etkinlik/Turnuva/Kamp", backLabel: "Ana Ekran", items: ETKINLIK_ITEMS }, icon: "🏆", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet" },
   { key: { kind: "sosyalAlan" }, icon: "📸", label: "Sosyal Alan", sub: "Fotoğraf ve videolar" },
@@ -387,8 +388,13 @@ export default function PhoneDemo() {
           {screen.kind === "home" && <HomeScreen onSelect={push} />}
           {screen.kind === "sporcuList" && <AthleteListScreen onBack={back} onSelect={(id) => push({ kind: "sporcuDetail", id })} />}
           {screen.kind === "sporcuDetail" && <AthleteDetailScreen id={screen.id} onBack={back} />}
-          {screen.kind === "antrenorList" && <CoachListScreen onBack={back} onSelect={(id) => push({ kind: "antrenorDetail", id })} />}
+          {screen.kind === "antrenorList" && (
+            <CoachListScreen onBack={back} onSelect={(id) => push({ kind: "antrenorDetail", id })} onAssignments={() => push({ kind: "antrenorAtamalari" })} />
+          )}
           {screen.kind === "antrenorDetail" && <CoachDetailScreen id={screen.id} onBack={back} />}
+          {screen.kind === "antrenorAtamalari" && <CoachAssignmentsScreen onBack={back} />}
+          {screen.kind === "performansHub" && <PerformansHubScreen onBack={back} onSelect={push} />}
+          {screen.kind === "programOlustur" && <ProgramOlusturScreen onBack={back} onSelect={push} />}
           {screen.kind === "finans" && <FinanceScreen onBack={back} onSelectGroup={(group, branch) => push({ kind: "financeGroup", group, branch })} />}
           {screen.kind === "financeGroup" && <FinanceGroupScreen group={screen.group} branch={screen.branch} onBack={back} />}
           {screen.kind === "takvim" && <CalendarScreen onBack={back} />}
@@ -583,7 +589,9 @@ function AthleteDetailScreen({ id, onBack }: { id: string; onBack: () => void })
   );
 }
 
-function CoachListScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (id: string) => void }) {
+function CoachListScreen({
+  onBack, onSelect, onAssignments,
+}: { onBack: () => void; onSelect: (id: string) => void; onAssignments: () => void }) {
   const [query, setQuery] = useState("");
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
   const [venueFilter, setVenueFilter] = useState<string | null>(null);
@@ -667,7 +675,9 @@ function CoachListScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (
         {filtered.length === 0 && <p className="col-span-2 py-6 text-center text-xs text-muted">Eşleşen antrenör bulunamadı.</p>}
       </div>
 
-      <div className="mt-3 rounded-full bg-yellow py-2.5 text-center text-xs font-bold text-bg">Antrenör Atamaları</div>
+      <button onClick={onAssignments} className="mt-3 w-full rounded-full bg-yellow py-2.5 text-center text-xs font-bold text-bg">
+        Antrenör Atamaları
+      </button>
     </div>
   );
 }
@@ -753,6 +763,54 @@ function CoachDetailScreen({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function CoachAssignmentsScreen({ onBack }: { onBack: () => void }) {
+  return (
+    <div>
+      <BackHeader label="Antrenörler" onBack={onBack} />
+      <h3 className="text-base font-extrabold text-ink">Antrenör Atamaları</h3>
+      <p className="mb-3 text-[11px] text-muted">Tüm gruplar ve görevli antrenörleri — dokunarak ata/değiştir</p>
+
+      {BRANCHES.map((branch) => {
+        const branchGroups = GROUPS.filter((g) => g.branch === branch);
+        return (
+          <div key={branch} className="mb-4">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-yellow">
+              <span className="h-3 w-1 rounded-full bg-yellow" /> {branch}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {branchGroups.map((g) => {
+                const matched = COACHES.filter((c) => c.branch === branch && c.groups.includes(g.group));
+                const rows: { role: string; name: string | null }[] = [
+                  { role: "B", name: matched[0]?.name ?? null },
+                  { role: "Y1", name: matched[1]?.name ?? null },
+                  { role: "Y2", name: matched[2]?.name ?? null },
+                ];
+                const venue = matched.find((c) => c.venue)?.venue ?? VENUES[0];
+                return (
+                  <div key={`${branch}-${g.group}`} className="rounded-lg border border-line bg-surface p-2.5">
+                    <p className="text-xs font-bold text-ink">{g.group}</p>
+                    <p className="mb-1.5 truncate text-[9px] text-muted">{venue}</p>
+                    {rows.map((r) => (
+                      <div key={r.role} className="flex items-center justify-between border-t border-line py-1 first:border-t-0">
+                        <span className="text-[9px] font-bold text-muted">{r.role}</span>
+                        {r.name ? (
+                          <span className="truncate text-[10px] font-semibold text-teal">{r.name}</span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-yellow">Ata</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1032,18 +1090,35 @@ function CalendarScreen({ onBack }: { onBack: () => void }) {
 function FitnessHubScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
   const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
     { icon: "🌡️", label: "Wellness Check-in", sub: "Uyku, enerji ve ruh hâli takibi", border: "border-teal", target: { kind: "wellness" } },
-    { icon: "🏋️", label: "Çalışma", sub: "Göğüs, sırt, bacak, kol, omuz", border: "border-coral", target: { kind: "calisma" } },
+    { icon: "🏋️", label: "Egzersizler", sub: "Göğüs, sırt, bacak, kol, omuz", border: "border-coral", target: { kind: "calisma" } },
+    { icon: "📋", label: "Program Oluştur", sub: "Örnek programlar, gruplar, bireysel programlar", border: "border-yellow", target: { kind: "programOlustur" } },
+  ];
+  return (
+    <div>
+      <BackHeader label="Performans" onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">Fitness</h3>
+      <div className="grid grid-cols-2 gap-2.5">
+        {tiles.map((t) => (
+          <GridTile key={t.label} icon={t.icon} label={t.label} sub={t.sub} border={t.border} onClick={() => onSelect(t.target)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProgramOlusturScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
+  const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
+    { icon: "📋", label: "Örnek Programlar", sub: "Hazır kuvvet/kondisyon programları", border: "border-teal", target: { kind: "fitnessProgram" } },
     {
-      icon: "🎯", label: "Fitness Grupları", sub: "Branştaki müsabık sporculardan özel gruplar", border: "border-yellow",
-      target: { kind: "infoList", title: "Fitness Grupları", backLabel: "Fitness", items: FITNESS_GRUPLARI_ITEMS },
+      icon: "🎯", label: "Gruplar", sub: "Branştaki müsabık sporculardan özel gruplar", border: "border-yellow",
+      target: { kind: "infoList", title: "Fitness Grupları", backLabel: "Program Oluştur", items: FITNESS_GRUPLARI_ITEMS },
     },
-    { icon: "📋", label: "Program", sub: "Örnek Programlar", border: "border-teal", target: { kind: "fitnessProgram" } },
     { icon: "📝", label: "Bireysel Programlar", sub: "Sporcuların kendi yazdığı programlar", border: "border-coral", target: { kind: "individualProgram" } },
   ];
   return (
     <div>
-      <BackHeader label="Ana Ekran" onBack={onBack} />
-      <h3 className="mb-3 text-base font-extrabold text-ink">Fitness</h3>
+      <BackHeader label="Fitness" onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">Program Oluştur</h3>
       <div className="grid grid-cols-2 gap-2.5">
         {tiles.map((t) => (
           <GridTile key={t.label} icon={t.icon} label={t.label} sub={t.sub} border={t.border} onClick={() => onSelect(t.target)} />
@@ -1072,21 +1147,33 @@ function FitnessProgramScreen({ onBack }: { onBack: () => void }) {
 }
 
 function PerformanceCategoriesScreen({ onBack, onSelect }: { onBack: () => void; onSelect: () => void }) {
-  const cats = [
-    { icon: "🏃", label: "Sürat", action: onSelect },
-    { icon: "🦘", label: "Sıçrama" },
-    { icon: "💪", label: "Kuvvet" },
-    { icon: "🫁", label: "Dayanıklılık" },
+  const cats: { icon: string; label: string; border: string; action?: () => void }[] = [
+    { icon: "📏", label: "Antropometrik", border: "border-yellow" },
+    { icon: "🏃", label: "Sürat", border: "border-coral", action: onSelect },
+    { icon: "🔄", label: "Çeviklik", border: "border-teal" },
+    { icon: "💥", label: "Sıçrama / Patlayıcı Kuvvet", border: "border-yellow" },
+    { icon: "💪", label: "Kuvvet", border: "border-violet" },
+    { icon: "🫁", label: "Dayanıklılık", border: "border-coral" },
+    { icon: "🤸", label: "Esneklik", border: "border-teal" },
+    { icon: "⚖️", label: "Denge / Koordinasyon", border: "border-violet" },
   ];
   return (
     <div>
-      <BackHeader label="Ana Ekran" onBack={onBack} />
+      <BackHeader label="Performans" onBack={onBack} />
       <h3 className="mb-3 text-base font-extrabold text-ink">Performans Ölçümleri</h3>
-      <div className="grid grid-cols-2 gap-2.5">
+
+      <div className="mb-2 rounded-full bg-yellow py-2.5 text-center text-xs font-bold text-bg">📊 Ölçümler</div>
+      <div className="mb-3 grid grid-cols-2 gap-1.5">
+        <div className="rounded-full bg-yellow py-2 text-center text-[10px] font-bold text-bg">+ Test Ekle</div>
+        <div className="rounded-full bg-yellow py-2 text-center text-[10px] font-bold text-bg">+ Test Grubu Ekle</div>
+      </div>
+      <p className="mb-3 text-[10px] leading-relaxed text-muted">Bir kategori seç, testi seç, sporcunun ölçümünü kaydet.</p>
+
+      <div className="grid grid-cols-3 gap-2">
         {cats.map((c) => (
-          <button key={c.label} onClick={c.action} className="rounded-xl border border-line bg-surface p-4 text-center">
-            <div className="mb-1 text-xl">{c.icon}</div>
-            <p className="text-xs font-bold text-ink">{c.label}</p>
+          <button key={c.label} onClick={c.action} className={`rounded-xl border ${c.border} bg-surface p-2.5 text-center`}>
+            <div className="mb-1 text-lg">{c.icon}</div>
+            <p className="text-[10px] font-bold leading-tight text-ink">{c.label}</p>
           </button>
         ))}
       </div>
@@ -1177,6 +1264,25 @@ function ClubStructureListScreen({ listType, onBack }: { listType: "gruplar" | "
   );
 }
 
+function PerformansHubScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
+  const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
+    { icon: "💪", label: "Fitness", sub: "Check-in ve çalışma takibi", border: "border-yellow", target: { kind: "fitnessHub" } },
+    { icon: "⏱️", label: "Performans Ölçümleri", sub: "Hız, sıçrama, kuvvet ve dayanıklılık testleri", border: "border-teal", target: { kind: "performansCategories" } },
+    { icon: "🥗", label: "Beslenme", sub: "Besinler ve tarifler", border: "border-coral", target: { kind: "beslenme" } },
+  ];
+  return (
+    <div>
+      <BackHeader label="Ana Ekran" onBack={onBack} />
+      <h3 className="mb-3 text-base font-extrabold text-ink">Performans</h3>
+      <div className="grid grid-cols-2 gap-2.5">
+        {tiles.map((t) => (
+          <GridTile key={t.label} icon={t.icon} label={t.label} sub={t.sub} border={t.border} onClick={() => onSelect(t.target)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function BeslenmeScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s: Screen) => void }) {
   const tiles: { icon: string; label: string; sub: string; border: string; target: Screen }[] = [
     { icon: "🍎", label: "Besinler", sub: "Besin değerleri ve faydaları", border: "border-teal", target: { kind: "infoList", title: "Besinler", backLabel: "Beslenme", items: BESINLER_ITEMS } },
@@ -1185,7 +1291,7 @@ function BeslenmeScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s
   ];
   return (
     <div>
-      <BackHeader label="Ana Ekran" onBack={onBack} />
+      <BackHeader label="Performans" onBack={onBack} />
       <h3 className="mb-2 text-base font-extrabold text-ink">Beslenme</h3>
       <p className="mb-4 text-[11px] leading-relaxed text-muted">
         Buradaki bilgiler bilimsel makalelere ve büyük kuruluşlara dayanır; her içerikte kaynakça belirtilir.
