@@ -88,15 +88,25 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
     }, [load])
   );
 
+  // Salon yetkilisi (koordinatör olmayan ama bir salonun sorumlusu olan
+  // antrenör) kendi branşındaki TÜM gruplar için program girebilmeli —
+  // salonunu kullanan, koçluğunu yapmadığı gruplar dahil (bkz. venueAllowedIds
+  // yukarıda, aynı ayrım). Bu kontrol EKSİKTİ: düz (salon yetkisi olmayan)
+  // bir antrenör de aynı "else" dalına düşüp branşının TÜM gruplarını
+  // görüyordu — sadece kendine atanmış grupları görmesi gerekirken.
+  const isVenueAuthorityCoach = role === "coach" && !isCoordinator && authorizedVenueIds.length > 0;
+
   // Admin: kulüpteki TÜM sabit-programlı gruplar. Koordinatör: sadece
   // kendi branşındaki (getMyCoachedGroupIds zaten koordinatörün tüm
   // branşını kapsıyor). Salon yetkilisi: kendi branşındaki tüm gruplar
-  // (coach_branches üzerinden), koçluğunu yapmadığı gruplar dahil.
+  // (coach_branches üzerinden), koçluğunu yapmadığı gruplar dahil. Düz
+  // antrenör: SADECE kendine atanmış (head/yardımcı antrenör olduğu) gruplar.
   const manageableGroups = useMemo(() => {
     if (role === "club_admin") return groups.filter((g) => g.fixed_schedule);
     if (isCoordinator) return groups.filter((g) => g.fixed_schedule && myCoachedGroupIds.includes(g.id));
-    return groups.filter((g) => g.fixed_schedule && myBranchGroupIds.includes(g.id));
-  }, [role, isCoordinator, groups, myCoachedGroupIds, myBranchGroupIds]);
+    if (isVenueAuthorityCoach) return groups.filter((g) => g.fixed_schedule && myBranchGroupIds.includes(g.id));
+    return groups.filter((g) => g.fixed_schedule && myCoachedGroupIds.includes(g.id));
+  }, [role, isCoordinator, isVenueAuthorityCoach, groups, myCoachedGroupIds, myBranchGroupIds]);
 
   const manageableGroupIds = useMemo(() => manageableGroups.map((g) => g.id), [manageableGroups]);
 
