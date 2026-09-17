@@ -13,8 +13,18 @@ export function navigateFromRoot(target: NotificationTarget) {
   // render eder) — oradan içeri, hedef sekmeye ve o sekmenin kendi
   // stack'indeki ekrana iniyoruz. React Navigation'ın "iç içe navigate"
   // deseni: navigate(dışTakipEkranı, { screen, params: { screen, params } }).
-  (navigationRef.navigate as (...args: any[]) => void)("App", {
-    screen: target.tab,
-    params: { screen: target.screen, params: target.params },
+  //
+  // Hedef ekran o sekmenin KENDİ başlangıç ekranından farklıysa (ör.
+  // "Mağaza" sekmesinin başlangıcı ShopManage ama bildirim ShopOrders'a
+  // gitmek istiyor), sekmeyi TEK bir iç içe navigate ile doğrudan o
+  // ekranla kurmak native-stack v7'de bazen geri gitmeyi/sekme
+  // değiştirmeyi tepkisiz bırakıyor (bkz. RoleTabs.tsx'teki "bilinen
+  // kırılganlık" notu). Önce sekmeyi kendi başlangıç ekranıyla açıp,
+  // hedefi BİR SONRAKİ adımda push ederek stack'in normal, iki adımlı
+  // şekilde kurulmasını sağlıyoruz.
+  const navigate = navigationRef.navigate as (...args: any[]) => void;
+  navigate("App", { screen: target.tab });
+  requestAnimationFrame(() => {
+    navigate("App", { screen: target.tab, params: { screen: target.screen, params: target.params } });
   });
 }

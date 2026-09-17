@@ -86,7 +86,17 @@ export default function NotificationBell({
     if (target.tab === "Ana Menü") {
       navigation.navigate(target.screen as any, target.params as any);
     } else {
-      (navigation.getParent()?.navigate as any)(target.tab, { screen: target.screen, params: target.params });
+      // Sekmenin kendi stack'i hedef ekranla (kökten farklı bir ekranla)
+      // TEK bir iç içe navigate çağrısıyla ilk kez kuruluyorsa, native-stack
+      // v7 bazen geri gitme/sekme değiştirmeyi tepkisiz bırakıyor (bkz.
+      // navigation.ts'teki "bilinen kırılganlık" notu) — sekmeyi önce kendi
+      // başlangıç ekranıyla açıp, hedefi BİR SONRAKİ adımda push ederek
+      // stack'in normal, iki adımlı şekilde kurulmasını sağlıyoruz.
+      const parent = navigation.getParent();
+      (parent?.navigate as any)(target.tab);
+      requestAnimationFrame(() => {
+        (parent?.navigate as any)(target.tab, { screen: target.screen, params: target.params });
+      });
     }
   };
 
