@@ -53,7 +53,7 @@ export const BADGE_CATALOG: Record<BadgeType, { title: (tier: number) => string;
   sampiyon: {
     title: () => "Şampiyon",
     icon: "🏆",
-    description: () => "Branş koordinatörün tarafından şampiyon seçildin!",
+    description: () => "Tebrikler Şampiyon! Emeğinin karşılığını aldın.",
   },
   sosyal_paylasim: {
     title: (t) => (t >= 50 ? "Sosyal Medya Fenomeni" : t >= 25 ? "Sosyal Yıldız" : "Paylaşımcı"),

@@ -545,7 +545,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <Text style={styles.freezeButtonText}>Kaydı Dondur</Text>
           </TouchableOpacity>
 
-          {isCoordinator && (
+          {(isCoordinator || role === "club_admin") && (
             <TouchableOpacity style={styles.championButton} onPress={handleAwardChampion} disabled={awardingChampion}>
               {awardingChampion ? (
                 <ActivityIndicator color={colors.yellow} />
