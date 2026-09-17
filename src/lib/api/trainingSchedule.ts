@@ -95,7 +95,10 @@ export type GenerateScheduleResult = {
 // hangi slotların (a) zaten bizim tarafımızdan üretilmiş (idempotent,
 // sessizce atla) hangilerinin (b) BAŞKA bir grup tarafından dolu
 // (çakışma, atla + raporla) olduğunu ayırt eder.
-export async function generateSessionsFromTemplates(groupIds?: string[]): Promise<GenerateScheduleResult> {
+export async function generateSessionsFromTemplates(
+  groupIds?: string[],
+  options?: { notify?: boolean }
+): Promise<GenerateScheduleResult> {
   let query = supabase.from("training_schedule_templates").select(TEMPLATE_FIELDS).eq("active", true);
   if (groupIds && groupIds.length > 0) query = query.in("group_id", groupIds);
   const { data: templatesData, error: templatesError } = await query;
@@ -174,7 +177,17 @@ export async function generateSessionsFromTemplates(groupIds?: string[]): Promis
     affectedGroupIds.add(c.group_id);
   }
 
-  if (createdCount > 0) await notifyScheduleUpdated(Array.from(affectedGroupIds));
+  // notify varsayılan olarak AÇIK — WeeklyScheduleScreen'deki "Planı Gönder"
+  // gibi kullanıcının BİLEREK tetiklediği çağrılarda bildirim gitmesi
+  // doğru. Ama TrainingSessionsScreen'deki PASİF, throttle'lı arka plan
+  // tazelemesi (kullanıcı sadece Takvim'i AÇTIĞI için tetiklenir, hiçbir
+  // şey DEĞİŞTİRMEDEN) notify:false geçiyor — aksi halde şablon hiç
+  // değişmemişken sırf zaman ilerleyip yeni bir hafta ufka girdiği için
+  // (aidattaki topUpAllActivePlans ile birebir aynı mekanizma) her açılışta
+  // antrenör/veli/sporcuya "program güncellendi" bildirimi gidiyordu —
+  // kullanıcının "hiçbir değişiklik yapmadım ama bildirim gitti" şikayetinin
+  // kök nedeni buydu.
+  if (createdCount > 0 && options?.notify !== false) await notifyScheduleUpdated(Array.from(affectedGroupIds));
 
   return { created: createdCount, skippedConflict };
 }

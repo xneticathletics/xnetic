@@ -186,7 +186,7 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       const canManage = !isCoach || myVenueIds.length > 0;
       if (canManage && Date.now() - lastTemplateGenAt > TEMPLATE_GEN_THROTTLE_MS) {
         lastTemplateGenAt = Date.now();
-        await generateSessionsFromTemplates().catch(() => {});
+        await generateSessionsFromTemplates(undefined, { notify: false }).catch(() => {});
       }
 
       let fetched: TrainingSession[];
