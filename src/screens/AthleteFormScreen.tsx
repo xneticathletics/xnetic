@@ -261,7 +261,14 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         await createPaymentPlan({ athlete_id: saved.id, amount: feeAmount, first_payment_date: feeFirstPaymentDate });
       }
       markSaved();
-      navigation.goBack();
+      // Yeni sporcu eklerken Sporcu Yönetimi listesine değil, doğrudan yeni
+      // oluşturulan sporcunun profiline giriliyor — replace kullanılıyor ki
+      // geri tuşu formu değil listeyi göstersin (kullanıcı isteği).
+      if (!isEdit && saved?.id) {
+        navigation.replace("AthleteDetail", { athleteId: saved.id });
+      } else {
+        navigation.goBack();
+      }
     } catch (e: any) {
       setError(e.message ?? "Kaydedilemedi");
     } finally {
