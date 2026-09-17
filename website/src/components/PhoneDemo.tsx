@@ -371,6 +371,11 @@ export default function PhoneDemo() {
   const push = (s: Screen) => setStack((prev) => [...prev, s]);
   const back = () => setStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   const goHome = () => setStack([{ kind: "home" }]);
+  // Alt menüdeki sekmeler (Sosyal/Mağaza/Etkinlik) gerçek uygulamadaki gibi
+  // bağımsız sekmeler — o ekranın "geri"si Ana Sayfa'ya dönsün diye stack'i
+  // [home, target] olarak sıfırlıyoruz, mevcut derin geçmişin üzerine
+  // yığmıyoruz (push'tan farklı olarak).
+  const switchTab = (s: Screen) => setStack([{ kind: "home" }, s]);
 
   return (
     <div className="mx-auto w-[300px] select-none">
@@ -413,14 +418,24 @@ export default function PhoneDemo() {
           </div>
           <div className="flex items-end justify-around border-t border-line bg-bg px-2 pb-2 pt-1.5">
             <TabIcon icon="🏠" label="Ana Menü" active={screen.kind === "home"} onClick={goHome} />
-            <TabIcon icon="💬" label="Mesajlar" />
+            <TabIcon icon="📸" label="Sosyal" active={screen.kind === "sosyalAlan"} onClick={() => switchTab({ kind: "sosyalAlan" })} />
+            <TabIcon
+              icon="🛍️" label="Mağaza"
+              active={screen.kind === "infoList" && screen.title === "Mağaza"}
+              onClick={() => switchTab({ kind: "infoList", title: "Mağaza", backLabel: "Ana Ekran", items: MAGAZA_ITEMS })}
+            />
             <div className="-mt-3 flex flex-col items-center gap-0.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow p-1.5 shadow-lg">
                 <img src="/xnetic-mark-blue.png" alt="X-NETIC" className="h-full w-full object-contain" />
               </div>
               <span className="text-[8px] font-semibold text-muted">Asistan</span>
             </div>
-            <TabIcon icon="⚙️" label="Kulüp Ayarları" />
+            <TabIcon
+              icon="🏆" label="Etkinlik"
+              active={screen.kind === "infoList" && screen.title === "Etkinlik/Turnuva/Kamp"}
+              onClick={() => switchTab({ kind: "infoList", title: "Etkinlik/Turnuva/Kamp", backLabel: "Ana Ekran", items: ETKINLIK_ITEMS })}
+            />
+            <TabIcon icon="💬" label="Mesajlar" />
             <TabIcon icon="👤" label="Profil" />
           </div>
         </div>
