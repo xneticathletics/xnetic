@@ -17,6 +17,7 @@ import { listGroups, type Group } from "../lib/api/groups";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
 import Avatar from "../components/Avatar";
+import { awardChampionBadge } from "../lib/api/badges";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteDetail">;
 
@@ -126,6 +127,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("info");
   const [loading, setLoading] = useState(true);
   const [typeSaving, setTypeSaving] = useState(false);
+  const [awardingChampion, setAwardingChampion] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Sayfaya her dönüşte tüm ekranı kaplayan yükleniyor göstergesi rahatsız
   // edici olduğu için sadece İLK yüklemede gösteriyoruz — sonraki
@@ -223,6 +225,31 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
     athlete && navigation.navigate("AthleteInjuries", { athleteId: athlete.id, athleteName: athlete.full_name });
   const goToNotes = () =>
     athlete && navigation.navigate("AthleteNotes", { athleteId: athlete.id, athleteName: athlete.full_name });
+  const handleAwardChampion = () => {
+    if (!athlete) return;
+    Alert.alert(
+      "Şampiyon Rozeti Ver",
+      `${athlete.full_name} adlı sporcuya Şampiyon rozeti vermek istediğine emin misin?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Rozeti Ver",
+          onPress: async () => {
+            setAwardingChampion(true);
+            try {
+              await awardChampionBadge(athlete.id);
+              Alert.alert("Verildi", "Şampiyon rozeti verildi — bir sonraki girişinde kutlanacak.", [{ text: "Tamam" }]);
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Rozet verilemedi", [{ text: "Tamam" }]);
+            } finally {
+              setAwardingChampion(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleExtraGroupsConfirm = async (selected: Group[]) => {
     if (!athlete) return;
     try {
@@ -518,6 +545,16 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <Text style={styles.freezeButtonText}>Kaydı Dondur</Text>
           </TouchableOpacity>
 
+          {isCoordinator && (
+            <TouchableOpacity style={styles.championButton} onPress={handleAwardChampion} disabled={awardingChampion}>
+              {awardingChampion ? (
+                <ActivityIndicator color={colors.yellow} />
+              ) : (
+                <Text style={styles.championButtonText}>🏆 Şampiyon Rozeti Ver</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
           <GroupMultiPickerModal
             visible={extraGroupModalVisible}
             selectedIds={extraGroups.map((eg) => eg.group_id)}
@@ -690,6 +727,11 @@ const styles = StyleSheet.create({
     alignItems: "center", marginBottom: spacing.sm,
   },
   freezeButtonText: { color: colors.coral, fontWeight: "700", fontSize: 14 },
+  championButton: {
+    borderWidth: 1, borderColor: colors.yellow, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: "center", marginBottom: spacing.sm,
+  },
+  championButtonText: { color: colors.yellow, fontWeight: "700", fontSize: 14 },
   deleteButton: { alignItems: "center", paddingVertical: spacing.lg, marginBottom: spacing.xl },
   deleteButtonText: { color: colors.coral, fontWeight: "700", fontSize: 13 },
 });
