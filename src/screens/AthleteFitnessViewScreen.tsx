@@ -186,8 +186,15 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
         ))
       )}
 
-      <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Egzersiz Geçmişi</Text>
-      {sessionGroups.length === 0 && <Text style={styles.empty}>Henüz kaydedilmiş bir çalışma kaydı yok.</Text>}
+      {/* Yukarıdaki "Tamamlanan Grup Programları" ile karıştırılabiliyordu
+          (kullanıcı sorusu) — o TAMAMLANDI işaretlenen grup programlarını
+          gösteriyor, bu ise sporcunun bireysel programlardan hareket hareket
+          girdiği ölçümleri (set/tekrar/ağırlık) gün bazında gösteriyor —
+          farklı bir veri kaynağı, o yüzden başlık netleştirildi. */}
+      <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Bireysel Egzersiz Geçmişi</Text>
+      {sessionGroups.length === 0 && (
+        <Text style={styles.empty}>Henüz bireysel bir programdan girilmiş hareket kaydı yok.</Text>
+      )}
 
       {sessionGroups.map((s) => {
         const isExpanded = expandedDates.has(s.dateKey);
