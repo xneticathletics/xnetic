@@ -526,7 +526,13 @@ export default function HomeScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.lg },
+  // alignItems eskiden "center" idi — rozet rafı (BadgeShelf) kazanılan
+  // rozet sayısına/ekran genişliğine göre farklı satır sayısına sarınca
+  // logo, headerRight'ın o anki yüksekliğine göre yukarı/aşağı kayıyordu
+  // (kullanıcı isteği: "ana ekran oynak olmasın"). "flex-start" ile logo
+  // her zaman üstte sabit kalıyor, altındaki içerik ne kadar büyürse
+  // büyüsün logonun konumunu etkilemiyor.
+  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md, marginBottom: spacing.lg },
   heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.bg },
   heroLogoSmall: { width: 84, height: 84 },
   headerRight: { flex: 1, justifyContent: "space-between" },

@@ -123,10 +123,11 @@ export const BADGE_TIER_COLOR: Record<"bronze" | "silver" | "gold", string> = {
 };
 
 // base: o bileşenin normal (bronze) boyutu — silver/gold buna göre büyür.
-// Kullanıcı isteği: fark daha belirgin olsun — bronz aynı kalıyor, gümüş
-// ve altın daha da büyütüldü.
+// Önceki değerler (1.7x/1.35x) Ana Sayfa'daki rozet rafını ekran
+// boyutuna göre farklı satır sayısına sardırıp logo ile hizayı kaydırıyordu
+// (bkz. HomeScreen.tsx headerRow) — kullanıcı isteğiyle biraz küçültüldü.
 export function badgeIconSize(tierLevel: "bronze" | "silver" | "gold", base: number): number {
-  return tierLevel === "gold" ? Math.round(base * 1.7) : tierLevel === "silver" ? Math.round(base * 1.35) : base;
+  return tierLevel === "gold" ? Math.round(base * 1.45) : tierLevel === "silver" ? Math.round(base * 1.2) : base;
 }
 
 // Sadece gold seviyede uygulanan gölge/parlama — React Native'in yerleşik
