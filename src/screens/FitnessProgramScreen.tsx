@@ -26,11 +26,14 @@ export default function FitnessProgramScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       {/* Bireysel Programlar artık ayrı üst-seviye kutu değil — bu sayfanın
-          en üstünde, aynı bölgede toplandı. Fitness Grubu Oluştur artık
-          burada değil — Gruba Program Oluştur akışının (FitnessProgramBuilder)
-          kendi içine taşındı, çünkü program oluştururken zaten bir fitness
-          grubu seçmen gerekiyor. */}
+          en üstünde, aynı bölgede toplandı. Fitness Grubu Oluştur (kullanıcı
+          isteği: bu sayfanın en solunda, kendi butonu olarak) buraya geri
+          eklendi — önceden sadece Gruba Program Oluştur akışının
+          (FitnessProgramBuilder) içine gömülüydü, bulması zordu. */}
       <View style={styles.actionsRow}>
+        <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("FitnessGroups")}>
+          <Text style={styles.actionBoxText}>Fitness Grubu Oluştur</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.actionBox} onPress={() => navigation.navigate("FitnessProgramBuilder")}>
           <Text style={styles.actionBoxText}>Gruba Program Oluştur</Text>
         </TouchableOpacity>
@@ -78,10 +81,10 @@ export default function FitnessProgramScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
-  actionsRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.lg },
+  actionsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.lg },
   actionBox: {
-    flexGrow: 1, flexBasis: "47%", backgroundColor: colors.yellow, borderRadius: radius.md,
-    paddingVertical: 14, paddingHorizontal: spacing.sm, alignItems: "center",
+    flex: 1, backgroundColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 14, paddingHorizontal: spacing.xs, alignItems: "center",
   },
   actionBoxText: { color: colors.bg, fontWeight: "700", fontSize: 13, textAlign: "center" },
   placeholder: {
