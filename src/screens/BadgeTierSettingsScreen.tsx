@@ -2,11 +2,13 @@ import React, { useCallback, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { DEFAULT_BADGE_TIERS, BADGE_CATALOG, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
+import { DEFAULT_BADGE_TIERS, BADGE_CATALOG, awardChampionBadge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
 import {
   AUTO_BADGE_TYPES, BADGE_TYPE_LABELS, BADGE_TYPE_UNITS,
   listBadgeTierSettings, saveBadgeTierSetting, resetBadgeTierSetting,
 } from "../lib/api/badgeTierSettings";
+import AthletePickerModal from "../components/AthletePickerModal";
+import type { Athlete } from "../lib/api/athletes";
 
 // Kullanıcı isteği: özel rozet şablonları yerine, MEVCUT 7 otomatik rozet
 // kategorisinin eşik sayılarını (5-10-20 gibi) burada değiştirebilelim —
@@ -16,6 +18,9 @@ export default function BadgeTierSettingsScreen() {
   const [tiers, setTiers] = useState<Record<AutoBadgeType, TierThresholds> | null>(null);
   const [draft, setDraft] = useState<Record<AutoBadgeType, [string, string, string]> | null>(null);
   const [savingType, setSavingType] = useState<AutoBadgeType | null>(null);
+  const [championAthlete, setChampionAthlete] = useState<Athlete | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [awardingChampion, setAwardingChampion] = useState(false);
 
   const load = useCallback(() => {
     listBadgeTierSettings().then((rows) => {
@@ -80,12 +85,68 @@ export default function BadgeTierSettingsScreen() {
     }
   };
 
+  const handleAwardChampion = () => {
+    if (!championAthlete) return;
+    Alert.alert(
+      "Şampiyon Rozeti Ver",
+      `${championAthlete.full_name} adlı sporcuya Şampiyon rozeti vermek istediğine emin misin?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Rozeti Ver",
+          onPress: async () => {
+            setAwardingChampion(true);
+            try {
+              await awardChampionBadge(championAthlete.id);
+              Alert.alert("Verildi", "Şampiyon rozeti verildi — bir sonraki girişinde kutlanacak.", [{ text: "Tamam" }]);
+              setChampionAthlete(null);
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Rozet verilemedi", [{ text: "Tamam" }]);
+            } finally {
+              setAwardingChampion(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.infoBox}>
         Sporcuların hangi sayıya ulaşınca rozet kazanacağını buradan değiştirebilirsin.
         Kazanım hâlâ tamamen otomatik — sadece eşik sayıları kulübüne özel.
       </Text>
+
+      {/* Şampiyon rozeti tek istisna — otomatik değil, elle veriliyor.
+          Sporcu Profili'nden buraya taşındı (kullanıcı isteği), aynı yerde
+          diğer rozet işlemleriyle birlikte olsun diye. */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardIcon}>{BADGE_CATALOG.sampiyon.icon}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>Şampiyon Rozeti Ver</Text>
+            <Text style={styles.cardSub}>Elle verilir, bir sporcu seç</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.athletePickButton} onPress={() => setPickerVisible(true)}>
+          <Text style={styles.athletePickButtonText}>
+            {championAthlete ? championAthlete.full_name : "Sporcu Seç…"}
+          </Text>
+        </TouchableOpacity>
+        {championAthlete && (
+          <View style={styles.actionRow}>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity onPress={handleAwardChampion} disabled={awardingChampion} style={styles.saveButton}>
+              {awardingChampion ? (
+                <ActivityIndicator color={colors.bg} size="small" />
+              ) : (
+                <Text style={styles.saveButtonText}>🏆 Rozeti Ver</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
 
       {AUTO_BADGE_TYPES.map((type) => {
         const isDefault = tiers[type].every((v, i) => v === DEFAULT_BADGE_TIERS[type][i]);
@@ -127,6 +188,13 @@ export default function BadgeTierSettingsScreen() {
           </View>
         );
       })}
+
+      <AthletePickerModal
+        visible={pickerVisible}
+        selectedId={championAthlete?.id ?? null}
+        onSelect={setChampionAthlete}
+        onClose={() => setPickerVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -147,6 +215,11 @@ const styles = StyleSheet.create({
   cardIcon: { fontSize: 24 },
   cardTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   cardSub: { color: colors.muted, fontSize: 11, marginTop: 1 },
+  athletePickButton: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    paddingVertical: 10, paddingHorizontal: spacing.md, backgroundColor: colors.bg,
+  },
+  athletePickButtonText: { color: colors.ink, fontSize: 14, fontWeight: "600" },
   inputRow: { flexDirection: "row", gap: spacing.sm },
   inputGroup: { flex: 1 },
   inputLabel: { color: colors.muted, fontSize: 11, fontWeight: "600", marginBottom: 4 },
