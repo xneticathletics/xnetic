@@ -331,13 +331,26 @@ async function notifyRegistrationReviewed(
     status === "approved"
       ? `"${eventTitle}" etkinliği için kaydın onaylandı.`
       : `"${eventTitle}" etkinliği için kaydın reddedildi.`;
-  await sendNotification(
-    registration.registered_by,
-    title,
-    body,
-    status === "approved" ? "event_registration_approved" : "event_registration_rejected",
-    { eventId: registration.event_id }
-  ).catch(() => {});
+
+  // Sadece registered_by'a (kaydı YAPAN hesaba — genelde veli) değil,
+  // sporcunun KENDİ girişi varsa ona da gidiyor — bir çocuğun kendi
+  // hesabından da bu haberi alması gerekiyor (kullanıcı isteği), diğer
+  // bildirimlerdeki athlete_user_id/parent_user_id deseniyle aynı.
+  const { data: athlete } = await supabase
+    .from("athletes")
+    .select("athlete_user_id, parent_user_id")
+    .eq("id", registration.athlete_id)
+    .maybeSingle();
+  const recipients = new Set<string>([registration.registered_by]);
+  if (athlete?.athlete_user_id) recipients.add(athlete.athlete_user_id);
+  if (athlete?.parent_user_id) recipients.add(athlete.parent_user_id);
+
+  const eventType = status === "approved" ? "event_registration_approved" : "event_registration_rejected";
+  await Promise.all(
+    Array.from(recipients).map((id) =>
+      sendNotification(id, title, body, eventType, { eventId: registration.event_id }).catch(() => {})
+    )
+  );
 }
 
 // Etkinlik iptal edilince, henüz reddedilmemiş/iptal edilmemiş (yani hâlâ
@@ -346,19 +359,25 @@ async function notifyRegistrationReviewed(
 async function notifyEventCancelled(event: Pick<EventRow, "id" | "title">): Promise<void> {
   const { data: regs } = await supabase
     .from("event_registrations")
-    .select("registered_by, status, amount_due")
+    .select("registered_by, status, amount_due, athlete:athlete_id(athlete_user_id, parent_user_id)")
     .eq("event_id", event.id)
     .in("status", ["pending", "approved"]);
   if (!regs || regs.length === 0) return;
 
   const title = "Etkinlik İptal Edildi";
   await Promise.all(
-    regs.map((r) => {
+    (regs as any[]).flatMap((r) => {
       const body =
         r.status === "approved" && r.amount_due > 0
           ? `"${event.title}" etkinliği iptal edildi. Ödeme yaptıysan kulüp yönetimiyle iletişime geçebilirsin.`
           : `"${event.title}" etkinliği iptal edildi.`;
-      return sendNotification(r.registered_by, title, body, "event_cancelled", { eventId: event.id }).catch(() => {});
+      // Kaydı yapan hesap (genelde veli) + sporcunun kendi girişi varsa ona da.
+      const recipients = new Set<string>([r.registered_by]);
+      if (r.athlete?.athlete_user_id) recipients.add(r.athlete.athlete_user_id);
+      if (r.athlete?.parent_user_id) recipients.add(r.athlete.parent_user_id);
+      return Array.from(recipients).map((id) =>
+        sendNotification(id, title, body, "event_cancelled", { eventId: event.id }).catch(() => {})
+      );
     })
   );
 }
