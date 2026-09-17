@@ -18,6 +18,7 @@ export type Contact = {
   name: string;
   photo_url: string | null;
   role: UserRole;
+  club_name?: string | null;
 };
 
 export type Conversation = {
@@ -48,12 +49,14 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
   const addAdmins = async () => {
     const { data, error } = await supabase
       .from("users")
-      .select("id, name, photo_url, role")
+      .select("id, name, photo_url, role, clubs(name)")
       .eq("role", "club_admin")
       .eq("is_active", true)
       .neq("id", myUserId);
     if (error) throw error;
-    (data ?? []).forEach((u) => contacts.set(u.id, u as Contact));
+    (data as any[] ?? []).forEach((u) =>
+      contacts.set(u.id, { id: u.id, name: u.name, photo_url: u.photo_url, role: u.role, club_name: u.clubs?.name ?? null })
+    );
   };
 
   if (role === "club_admin") {

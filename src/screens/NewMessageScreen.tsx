@@ -90,7 +90,13 @@ export default function NewMessageScreen({ navigation, role }: Props) {
                 <Text style={styles.avatarText}>{item.name.slice(0, 1).toUpperCase()}</Text>
               </View>
             )}
-            <Text style={styles.rowName}>{item.name}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowName}>{item.name}</Text>
+              {/* Sadece süper adminin kulüp yöneticileri listesinde dolu
+                  gelir (bkz. listMyContacts) — süper admin hangi ismin
+                  hangi kulübe ait olduğunu görebilsin diye. */}
+              {!!item.club_name && <Text style={styles.rowSub}>{item.club_name}</Text>}
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -126,4 +132,5 @@ const styles = StyleSheet.create({
   avatarImage: { width: 40, height: 40, borderRadius: radius.full },
   avatarText: { color: colors.ink, fontWeight: "700" },
   rowName: { color: colors.ink, fontSize: 14, fontWeight: "600" },
+  rowSub: { color: colors.muted, fontSize: 12, marginTop: 1 },
 });
