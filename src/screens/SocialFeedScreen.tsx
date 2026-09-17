@@ -465,7 +465,9 @@ const styles = StyleSheet.create({
   fullImage: { height: "100%" },
   // Fotoğraftan farklı olarak biraz küçük ve dikeyde ortalı — video ekranın
   // en tepesinden (status bar'a yakın) başlamasın diye (kullanıcı isteği).
-  fullVideo: { height: "70%" },
+  // %70 çok küçük kalıyordu (yeni kullanıcı isteği), %85'e büyütüldü —
+  // yine de tam ekran (%100) değil, status bar'a değmiyor.
+  fullVideo: { height: "85%" },
   viewerInfoBar: {
     backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xs,
   },
