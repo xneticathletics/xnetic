@@ -20,8 +20,10 @@ import { listCoaches } from "../lib/api/coaches";
 import { listBranches, getBranchStats, type BranchStats } from "../lib/api/branches";
 import { getPlatformStats, type PlatformStats } from "../lib/api/superAdmin";
 import NotificationBell from "../components/NotificationBell";
-import BadgeCelebrationCard from "../components/BadgeCelebrationCard";
-import { checkMyBadges, markBadgeSeen, type Badge } from "../lib/api/badges";
+import BadgeEarnedModal from "../components/BadgeEarnedModal";
+import BadgeInfoModal from "../components/BadgeInfoModal";
+import BadgeShelf from "../components/BadgeShelf";
+import { checkMyBadges, markBadgeSeen, listMyBadges, type Badge } from "../lib/api/badges";
 
 export type Tile = { key: string; label: string; sub: string; icon: string };
 
@@ -192,9 +194,15 @@ export default function HomeScreen({
   );
   const [clubName, setClubName] = useState<string | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
-  // Henüz kutlanmamış (seen_at IS NULL) rozetler — sırayla, birer birer
-  // gösteriliyor (bkz. handleBadgeSeen).
+  // Henüz kutlanmamış (seen_at IS NULL) rozetler — tam ekran popup olarak
+  // sırayla, birer birer gösteriliyor. myBadges ise kulüp adının altındaki
+  // rafta duran TÜM kazanılmış rozetler (kazandıkça büyüyen liste).
   const [pendingBadges, setPendingBadges] = useState<Badge[]>([]);
+  const [myBadges, setMyBadges] = useState<Badge[]>([]);
+  const [infoBadge, setInfoBadge] = useState<Badge | null>(null);
+  // Rozet sistemi sadece veli/sporcuda — admin/antrenörün buna ihtiyacı
+  // yok (kullanıcı isteği, bkz. ProfileScreen'deki aynı kısıtlama).
+  const showBadges = role === "parent" || role === "athlete";
 
   // Kulüp Ayarları → Kulüp Logosu'ndan isim değiştirilip Ana Sayfa'ya
   // dönüldüğünde de güncel görünsün diye clubId değişiminde değil, HER
@@ -210,38 +218,40 @@ export default function HomeScreen({
     }, [clubId])
   );
 
-  // Rozet kontrolü — super_admin'in sporcusu/kulübü olmadığı için atlanıyor.
-  // Dönen (henüz kutlanmamış) rozetlerin HEPSİ hemen "görüldü" işaretlenir
-  // (sunucu tarafı temiz kalsın, bir daha dönmesinler) ama ekranda sırayla,
-  // birer birer (bkz. aşağıdaki otomatik ilerleme) gösterilmeye devam eder —
-  // bu sadece istemci tarafı bir sunum kuyruğu.
+  // Rafı (kulüp adının altı) her odaklanmada tazele — Rozetlerim ekranından
+  // dönüşte de güncel kalsın diye.
   useFocusEffect(
     useCallback(() => {
-      if (role === "super_admin") return;
+      if (!showBadges) return;
+      let cancelled = false;
+      listMyBadges().then((rows) => { if (!cancelled) setMyBadges(rows); }).catch(() => {});
+      return () => { cancelled = true; };
+    }, [showBadges])
+  );
+
+  // Yeni rozet kontrolü — hafif throttle'lı (aidattaki topUp deseniyle
+  // aynı). Dönen (henüz kutlanmamış) rozetler tam ekran popup kuyruğuna
+  // alınır; her biri "Harika!" ile kapatılınca hem sunucuda "görüldü"
+  // işaretlenir hem de rafa (myBadges) eklenir.
+  useFocusEffect(
+    useCallback(() => {
+      if (!showBadges) return;
       if (Date.now() - lastBadgeCheckAt < BADGE_CHECK_THROTTLE_MS) return;
       lastBadgeCheckAt = Date.now();
       let cancelled = false;
       checkMyBadges()
-        .then((rows) => {
-          if (cancelled || rows.length === 0) return;
-          setPendingBadges(rows);
-          rows.forEach((b) => markBadgeSeen(b.id).catch(() => {}));
-        })
+        .then((rows) => { if (!cancelled && rows.length > 0) setPendingBadges(rows); })
         .catch(() => {});
       return () => { cancelled = true; };
-    }, [role])
+    }, [showBadges])
   );
 
-  // Birden fazla yeni rozet varsa, ilkini birkaç saniye gösterip sıradakine
-  // geçer — hepsi zaten sunucuda "görüldü" işaretlendi, bu sadece sunum sırası.
-  useEffect(() => {
-    if (pendingBadges.length <= 1) return;
-    const timer = setTimeout(() => setPendingBadges((prev) => prev.slice(1)), 4500);
-    return () => clearTimeout(timer);
-  }, [pendingBadges]);
-
-  const goToBadges = () => {
-    (navigation.getParent()?.navigate as any)("Profil", { screen: "Badges" });
+  const handleDismissEarnedBadge = () => {
+    const current = pendingBadges[0];
+    if (!current) return;
+    markBadgeSeen(current.id).catch(() => {});
+    setMyBadges((prev) => (prev.some((b) => b.id === current.id) ? prev : [current, ...prev]));
+    setPendingBadges((prev) => prev.slice(1));
   };
 
   // Branş seçimi (Sporcu Yönetimi, Antrenman Programı, Aidat Takibi vb.
@@ -376,6 +386,7 @@ export default function HomeScreen({
                 Hoş geldin{userName ? <>, <Text style={styles.greetingAccent}>{userName}</Text></> : null}
               </Text>
               {!!clubName && <Text style={styles.clubNameText}>{clubName}</Text>}
+              {showBadges && <BadgeShelf badges={myBadges} onSelect={setInfoBadge} />}
             </View>
             <NotificationBell navigation={navigation} />
           </View>
@@ -444,8 +455,9 @@ export default function HomeScreen({
       </View>
 
       {pendingBadges.length > 0 && (
-        <BadgeCelebrationCard badge={pendingBadges[0]} onPress={goToBadges} />
+        <BadgeEarnedModal badge={pendingBadges[0]} onDismiss={handleDismissEarnedBadge} />
       )}
+      {infoBadge && <BadgeInfoModal badge={infoBadge} onClose={() => setInfoBadge(null)} />}
 
       {role !== "super_admin" && (
         <View style={styles.announcementsSection}>

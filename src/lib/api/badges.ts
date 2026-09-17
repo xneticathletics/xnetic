@@ -27,24 +27,26 @@ export type Badge = {
 // Rozetlerin görünen adı/açıklaması/ikonu — sabit referans veri (bkz.
 // src/lib/fitnessExercises.ts'teki aynı hardcoded katalog deseni). Hesaplama
 // SUNUCUDA (check_my_badges) yapılıyor, burası SADECE görüntüleme metadata'sı.
+// title KISA VE YARATICI bir lakap (kullanıcı isteği) — sayıyı/detayı
+// description'da veriyoruz, başlıkta tekrar etmiyoruz.
 export const BADGE_CATALOG: Record<BadgeType, { title: (tier: number) => string; icon: string; description: (tier: number) => string }> = {
   antrenman_serisi: {
-    title: (t) => `${t} Antrenmanlık Seri`,
+    title: (t) => (t >= 20 ? "Demir Disiplin" : t >= 10 ? "Kararlı" : "Azimli"),
     icon: "🔥",
     description: (t) => `Kesintisiz ${t} antrenmana katıldın.`,
   },
   grup_fitness: {
-    title: (t) => `${t} Grup Fitness`,
+    title: (t) => (t >= 20 ? "Fitness Canavarı" : t >= 10 ? "Güçlü" : "Formda"),
     icon: "💪",
     description: (t) => `${t} grup fitness antrenmanı tamamladın.`,
   },
   bireysel_fitness: {
-    title: (t) => `${t} Bireysel Fitness`,
+    title: (t) => (t >= 20 ? "Bağımsız Savaşçı" : t >= 10 ? "Öz Disiplin" : "Kendi Yolunda"),
     icon: "🏋️",
     description: (t) => `${t} gün bireysel fitness çalışması yaptın.`,
   },
   kulup_kidem: {
-    title: (t) => `${t}. Yıl`,
+    title: (t) => (t >= 5 ? "Kıdemli" : t >= 3 ? "Kulübün Bir Parçası" : "Yeni Nesil"),
     icon: "🎖️",
     description: (t) => `Kulüpte ${t}. yılın!`,
   },
@@ -54,17 +56,17 @@ export const BADGE_CATALOG: Record<BadgeType, { title: (tier: number) => string;
     description: () => "Branş koordinatörün tarafından şampiyon seçildin!",
   },
   sosyal_paylasim: {
-    title: (t) => `${t} Paylaşım`,
+    title: (t) => (t >= 50 ? "Sosyal Medya Fenomeni" : t >= 25 ? "Sosyal Yıldız" : "Paylaşımcı"),
     icon: "📸",
     description: (t) => `Sosyal Alan'da ${t} paylaşım yaptın.`,
   },
   magaza_alisverisi: {
-    title: (t) => `${t} Alışveriş`,
+    title: (t) => (t >= 20 ? "VIP Alıcı" : t >= 10 ? "Sadık Müşteri" : "Alışverişçi"),
     icon: "🛍️",
     description: (t) => `Mağazadan ${t} ürün aldın.`,
   },
   mesajlasma: {
-    title: (t) => `${t} Arkadaş`,
+    title: (t) => (t >= 30 ? "Herkesin Arkadaşı" : t >= 20 ? "İletişim Ustası" : "Sosyal Kelebek"),
     icon: "💬",
     description: (t) => `${t} farklı kişiyle mesajlaştın.`,
   },
