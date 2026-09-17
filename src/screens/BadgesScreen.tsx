@@ -1,23 +1,36 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listMyBadges, BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
+import { listMyBadges, fromBuiltIn, BADGE_TIER_COLOR, badgeIconSize, badgeGlowStyle, type AnyBadge } from "../lib/api/badges";
+import { listMyCustomBadgesEarned, normalizeCustomEarnedRows } from "../lib/api/badgeTemplates";
+import { getCurrentAppUserId } from "../lib/api/currentUser";
+import { getMyAthletes } from "../lib/api/myAthletes";
 
 const BASE_ICON_SIZE = 56;
 
 export default function BadgesScreen() {
-  const [badges, setBadges] = useState<Badge[]>([]);
+  const [badges, setBadges] = useState<AnyBadge[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       setLoading(true);
-      listMyBadges()
-        .then((rows) => { if (!cancelled) setBadges(rows); })
-        .catch(() => {})
-        .finally(() => { if (!cancelled) setLoading(false); });
+      (async () => {
+        try {
+          const [userId, myAthletes, builtIn] = await Promise.all([getCurrentAppUserId(), getMyAthletes(), listMyBadges()]);
+          const athleteIds = myAthletes.map((a) => a.id);
+          const customRows = await listMyCustomBadgesEarned(athleteIds, userId);
+          const custom = await normalizeCustomEarnedRows(customRows);
+          const merged = [...builtIn.map(fromBuiltIn), ...custom].sort((a, b) => b.earned_at.localeCompare(a.earned_at));
+          if (!cancelled) setBadges(merged);
+        } catch {
+          if (!cancelled) setBadges([]);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
       return () => { cancelled = true; };
     }, [])
   );
@@ -39,23 +52,25 @@ export default function BadgesScreen() {
       ) : (
         <View style={styles.grid}>
           {badges.map((b) => {
-            const catalog = BADGE_CATALOG[b.badge_type];
-            const level = badgeVisualTier(b);
-            const tierColor = BADGE_TIER_COLOR[level];
-            const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
+            const tierColor = BADGE_TIER_COLOR[b.visualTier];
+            const iconSize = badgeIconSize(b.visualTier, BASE_ICON_SIZE);
             return (
               <View key={b.id} style={[styles.card, { borderColor: tierColor }]}>
                 <View
                   style={[
                     styles.iconBadge,
                     { width: iconSize, height: iconSize, borderRadius: iconSize / 2, backgroundColor: `${tierColor}22`, borderColor: tierColor },
-                    badgeGlowStyle(level),
+                    badgeGlowStyle(b.visualTier),
                   ]}
                 >
-                  <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
+                  {b.iconIsImage ? (
+                    <Image source={{ uri: b.icon }} style={{ width: iconSize - 10, height: iconSize - 10, borderRadius: (iconSize - 10) / 2 }} />
+                  ) : (
+                    <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{b.icon}</Text>
+                  )}
                 </View>
-                <Text style={[styles.title, { color: tierColor }]} numberOfLines={2}>{catalog.title(b.tier)}</Text>
-                <Text style={styles.desc} numberOfLines={2}>{catalog.description(b.tier)}</Text>
+                <Text style={[styles.title, { color: tierColor }]} numberOfLines={2}>{b.title}</Text>
+                <Text style={styles.desc} numberOfLines={2}>{b.description}</Text>
                 <Text style={styles.date}>{new Date(b.earned_at).toLocaleDateString("tr-TR")}</Text>
               </View>
             );

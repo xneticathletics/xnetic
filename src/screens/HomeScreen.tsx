@@ -23,7 +23,8 @@ import NotificationBell from "../components/NotificationBell";
 import BadgeEarnedModal from "../components/BadgeEarnedModal";
 import BadgeInfoModal from "../components/BadgeInfoModal";
 import BadgeShelf from "../components/BadgeShelf";
-import { checkMyBadges, markBadgeSeen, listMyBadges, type Badge } from "../lib/api/badges";
+import { checkMyBadges, markBadgeSeen, listMyBadges, fromBuiltIn, type AnyBadge } from "../lib/api/badges";
+import { checkMyCustomBadges, markCustomBadgeSeen, listMyCustomBadgesEarned, normalizeCustomEarnedRows } from "../lib/api/badgeTemplates";
 
 export type Tile = { key: string; label: string; sub: string; icon: string };
 
@@ -196,10 +197,12 @@ export default function HomeScreen({
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   // Henüz kutlanmamış (seen_at IS NULL) rozetler — tam ekran popup olarak
   // sırayla, birer birer gösteriliyor. myBadges ise kulüp adının altındaki
-  // rafta duran TÜM kazanılmış rozetler (kazandıkça büyüyen liste).
-  const [pendingBadges, setPendingBadges] = useState<Badge[]>([]);
-  const [myBadges, setMyBadges] = useState<Badge[]>([]);
-  const [infoBadge, setInfoBadge] = useState<Badge | null>(null);
+  // rafta duran TÜM kazanılmış rozetler (kazandıkça büyüyen liste). Sabit
+  // (8 kategorilik) VE admin/koordinatörün özel şablonları AnyBadge'e
+  // normalize edilip TEK listede karışık gösteriliyor.
+  const [pendingBadges, setPendingBadges] = useState<AnyBadge[]>([]);
+  const [myBadges, setMyBadges] = useState<AnyBadge[]>([]);
+  const [infoBadge, setInfoBadge] = useState<AnyBadge | null>(null);
   // Rozet sistemi sadece veli/sporcuda — admin/antrenörün buna ihtiyacı
   // yok (kullanıcı isteği, bkz. ProfileScreen'deki aynı kısıtlama).
   const showBadges = role === "parent" || role === "athlete";
@@ -219,12 +222,23 @@ export default function HomeScreen({
   );
 
   // Rafı (kulüp adının altı) her odaklanmada tazele — Rozetlerim ekranından
-  // dönüşte de güncel kalsın diye.
+  // dönüşte de güncel kalsın diye. Sabit + özel rozetler birlikte çekilip
+  // birleştiriliyor.
   useFocusEffect(
     useCallback(() => {
       if (!showBadges) return;
       let cancelled = false;
-      listMyBadges().then((rows) => { if (!cancelled) setMyBadges(rows); }).catch(() => {});
+      (async () => {
+        try {
+          const [userId, myAthletes, builtIn] = await Promise.all([getCurrentAppUserId(), getMyAthletes(), listMyBadges()]);
+          const athleteIds = myAthletes.map((a) => a.id);
+          const customRows = await listMyCustomBadgesEarned(athleteIds, userId);
+          const custom = await normalizeCustomEarnedRows(customRows);
+          if (!cancelled) setMyBadges([...builtIn.map(fromBuiltIn), ...custom].sort((a, b) => b.earned_at.localeCompare(a.earned_at)));
+        } catch {
+          // sessiz — raf kritik değil.
+        }
+      })();
       return () => { cancelled = true; };
     }, [showBadges])
   );
@@ -239,8 +253,13 @@ export default function HomeScreen({
       if (Date.now() - lastBadgeCheckAt < BADGE_CHECK_THROTTLE_MS) return;
       lastBadgeCheckAt = Date.now();
       let cancelled = false;
-      checkMyBadges()
-        .then((rows) => { if (!cancelled && rows.length > 0) setPendingBadges(rows); })
+      Promise.all([checkMyBadges(), checkMyCustomBadges()])
+        .then(async ([builtInRows, customRows]) => {
+          if (cancelled) return;
+          const custom = await normalizeCustomEarnedRows(customRows);
+          const merged = [...builtInRows.map(fromBuiltIn), ...custom];
+          if (!cancelled && merged.length > 0) setPendingBadges(merged);
+        })
         .catch(() => {});
       return () => { cancelled = true; };
     }, [showBadges])
@@ -249,7 +268,7 @@ export default function HomeScreen({
   const handleDismissEarnedBadge = () => {
     const current = pendingBadges[0];
     if (!current) return;
-    markBadgeSeen(current.id).catch(() => {});
+    (current.source === "built-in" ? markBadgeSeen(current.id) : markCustomBadgeSeen(current.id)).catch(() => {});
     setMyBadges((prev) => (prev.some((b) => b.id === current.id) ? prev : [current, ...prev]));
     setPendingBadges((prev) => prev.slice(1));
   };

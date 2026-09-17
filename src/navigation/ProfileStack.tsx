@@ -11,6 +11,8 @@ import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import NotificationPreferencesScreen from "../screens/NotificationPreferencesScreen";
 import SupportScreen from "../screens/SupportScreen";
 import BadgesScreen from "../screens/BadgesScreen";
+import BadgeTemplatesScreen from "../screens/BadgeTemplatesScreen";
+import BadgeTemplateFormScreen from "../screens/BadgeTemplateFormScreen";
 import ClubSettingsStack from "./ClubSettingsStack";
 
 export type ProfileStackParamList = {
@@ -23,6 +25,8 @@ export type ProfileStackParamList = {
   NotificationPreferences: undefined;
   Support: undefined;
   Badges: undefined;
+  BadgeTemplates: undefined;
+  BadgeTemplateForm: undefined;
   ClubSettings: undefined;
 };
 
@@ -48,6 +52,8 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ title: "Bildirim Tercihleri" }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Yardım / Destek" }} />
       <Stack.Screen name="Badges" component={BadgesScreen} options={{ title: "Rozetlerim" }} />
+      <Stack.Screen name="BadgeTemplates" component={BadgeTemplatesScreen} options={{ title: "Rozet İşlemleri" }} />
+      <Stack.Screen name="BadgeTemplateForm" component={BadgeTemplateFormScreen} options={{ title: "Yeni Rozet", gestureEnabled: false }} />
       {role === "club_admin" && (
         <Stack.Screen name="ClubSettings" component={ClubSettingsStack} options={{ headerShown: false }} />
       )}

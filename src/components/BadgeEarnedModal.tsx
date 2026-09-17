@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Modal, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, Image, StyleSheet, Animated, Easing, Modal, Dimensions } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
+import { BADGE_TIER_COLOR, badgeIconSize, badgeGlowStyle, type AnyBadge } from "../lib/api/badges";
 
 const CONFETTI_COLORS = [colors.yellow, colors.teal, colors.coral, colors.violet];
 const CONFETTI_COUNT = 60;
@@ -62,7 +62,7 @@ function ConfettiPiece({ index }: { index: number }) {
 // yayılıyor, kutu ekranın ÜST kısmında beliriyor (kullanıcı isteği).
 // Kapatınca (dokununca) HomeScreen bu rozeti "görüldü" işaretleyip
 // kulüp adının altındaki rozet rafına yerleştiriyor.
-export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; onDismiss: () => void }) {
+export default function BadgeEarnedModal({ badge, onDismiss }: { badge: AnyBadge; onDismiss: () => void }) {
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -70,10 +70,8 @@ export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; o
     Animated.spring(slide, { toValue: 1, friction: 7, tension: 60, useNativeDriver: true }).start();
   }, [slide, badge.id]);
 
-  const catalog = BADGE_CATALOG[badge.badge_type];
-  const level = badgeVisualTier(badge);
-  const tierColor = BADGE_TIER_COLOR[level];
-  const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
+  const tierColor = BADGE_TIER_COLOR[badge.visualTier];
+  const iconSize = badgeIconSize(badge.visualTier, BASE_ICON_SIZE);
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] });
 
   return (
@@ -88,14 +86,18 @@ export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; o
               style={[
                 styles.iconBadge,
                 { width: iconSize, height: iconSize, borderRadius: iconSize / 2, backgroundColor: `${tierColor}22`, borderColor: tierColor },
-                badgeGlowStyle(level),
+                badgeGlowStyle(badge.visualTier),
               ]}
             >
-              <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
+              {badge.iconIsImage ? (
+                <Image source={{ uri: badge.icon }} style={{ width: iconSize - 14, height: iconSize - 14, borderRadius: (iconSize - 14) / 2 }} />
+              ) : (
+                <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{badge.icon}</Text>
+              )}
             </View>
             <Text style={styles.eyebrow}>🎉 Yeni Rozet Kazandın!</Text>
-            <Text style={[styles.title, { color: tierColor }]}>{catalog.title(badge.tier)}</Text>
-            <Text style={styles.desc}>{catalog.description(badge.tier)}</Text>
+            <Text style={[styles.title, { color: tierColor }]}>{badge.title}</Text>
+            <Text style={styles.desc}>{badge.description}</Text>
             <TouchableOpacity style={[styles.dismissButton, { backgroundColor: tierColor }]} onPress={onDismiss} activeOpacity={0.85}>
               <Text style={styles.dismissButtonText}>Harika!</Text>
             </TouchableOpacity>

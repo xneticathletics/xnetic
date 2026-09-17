@@ -229,6 +229,21 @@ export default function ProfileScreen({
         </View>
       )}
 
+      {/* Rozet İşlemleri sadece admin/branş koordinatöründe — kendi rozet
+          şablonlarını oluşturup yönettikleri yer (kullanıcı isteği).
+          Rozetlerim'in (kazanılan) tam tersi. */}
+      {(role === "club_admin" || isBranchCoordinator) && (
+        <View style={styles.settingsGrid}>
+          <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("BadgeTemplates")}>
+            <View style={[styles.settingsIconBadge, { backgroundColor: colors.violetSoft }]}>
+              <Text style={styles.settingsIcon}>🎖️</Text>
+            </View>
+            <Text style={styles.settingsTitle}>Rozet İşlemleri</Text>
+            <Text style={styles.settingsSub}>Yeni rozet oluştur, yönet</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.settingsGrid}>
         <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("PersonalInfo")}>
           <View style={styles.settingsIconBadge}>

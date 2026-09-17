@@ -1,6 +1,6 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
+import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { BADGE_TIER_COLOR, badgeIconSize, badgeGlowStyle, type AnyBadge } from "../lib/api/badges";
 
 const BASE_CHIP_SIZE = 28;
 
@@ -8,15 +8,15 @@ const BASE_CHIP_SIZE = 28;
 // buraya bir tane daha eklenir (kullanıcı isteği: "aldıkça orası dolacak").
 // Duyurular'ın üstünde ayrı bir kutu YOK artık, sadece bu satır. Seviye
 // sadece renkle değil BOYUTLA da fark ediliyor (kullanıcı isteği) — gold
-// ayrıca hafif parlıyor.
-export default function BadgeShelf({ badges, onSelect }: { badges: Badge[]; onSelect: (badge: Badge) => void }) {
+// ayrıca hafif parlıyor. AnyBadge sayesinde sabit VE özel (admin tanımlı)
+// rozetler aynı rafta karışık gösterilebiliyor.
+export default function BadgeShelf({ badges, onSelect }: { badges: AnyBadge[]; onSelect: (badge: AnyBadge) => void }) {
   if (badges.length === 0) return null;
   return (
     <View style={styles.row}>
       {badges.map((b) => {
-        const level = badgeVisualTier(b);
-        const tierColor = BADGE_TIER_COLOR[level];
-        const size = badgeIconSize(level, BASE_CHIP_SIZE);
+        const tierColor = BADGE_TIER_COLOR[b.visualTier];
+        const size = badgeIconSize(b.visualTier, BASE_CHIP_SIZE);
         return (
           <TouchableOpacity
             key={b.id}
@@ -24,10 +24,14 @@ export default function BadgeShelf({ badges, onSelect }: { badges: Badge[]; onSe
             style={[
               styles.chip,
               { width: size, height: size, borderRadius: size / 2, borderColor: tierColor, backgroundColor: `${tierColor}1a` },
-              badgeGlowStyle(level),
+              badgeGlowStyle(b.visualTier),
             ]}
           >
-            <Text style={{ fontSize: Math.round(size * 0.46) }}>{BADGE_CATALOG[b.badge_type].icon}</Text>
+            {b.iconIsImage ? (
+              <Image source={{ uri: b.icon }} style={{ width: size - 8, height: size - 8, borderRadius: (size - 8) / 2 }} />
+            ) : (
+              <Text style={{ fontSize: Math.round(size * 0.46) }}>{b.icon}</Text>
+            )}
           </TouchableOpacity>
         );
       })}
