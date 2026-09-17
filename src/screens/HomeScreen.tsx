@@ -23,7 +23,8 @@ import NotificationBell from "../components/NotificationBell";
 import BadgeEarnedModal from "../components/BadgeEarnedModal";
 import BadgeInfoModal from "../components/BadgeInfoModal";
 import BadgeShelf from "../components/BadgeShelf";
-import { checkMyBadges, markBadgeSeen, listMyBadges, type Badge } from "../lib/api/badges";
+import { checkMyBadges, markBadgeSeen, listMyBadges, type Badge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
+import { listBadgeTierSettings } from "../lib/api/badgeTierSettings";
 
 export type Tile = { key: string; label: string; sub: string; icon: string };
 
@@ -200,6 +201,7 @@ export default function HomeScreen({
   const [pendingBadges, setPendingBadges] = useState<Badge[]>([]);
   const [myBadges, setMyBadges] = useState<Badge[]>([]);
   const [infoBadge, setInfoBadge] = useState<Badge | null>(null);
+  const [clubBadgeTiers, setClubBadgeTiers] = useState<Partial<Record<AutoBadgeType, TierThresholds>>>({});
   // Rozet sistemi sadece veli/sporcuda — admin/antrenörün buna ihtiyacı
   // yok (kullanıcı isteği, bkz. ProfileScreen'deki aynı kısıtlama).
   const showBadges = role === "parent" || role === "athlete";
@@ -225,6 +227,7 @@ export default function HomeScreen({
       if (!showBadges) return;
       let cancelled = false;
       listMyBadges().then((rows) => { if (!cancelled) setMyBadges(rows); }).catch(() => {});
+      listBadgeTierSettings().then((tiers) => { if (!cancelled) setClubBadgeTiers(tiers); }).catch(() => {});
       return () => { cancelled = true; };
     }, [showBadges])
   );
@@ -386,7 +389,7 @@ export default function HomeScreen({
                 Hoş geldin{userName ? <>, <Text style={styles.greetingAccent}>{userName}</Text></> : null}
               </Text>
               {!!clubName && <Text style={styles.clubNameText}>{clubName}</Text>}
-              {showBadges && <BadgeShelf badges={myBadges} onSelect={setInfoBadge} />}
+              {showBadges && <BadgeShelf badges={myBadges} onSelect={setInfoBadge} clubTiers={clubBadgeTiers} />}
             </View>
             <NotificationBell navigation={navigation} />
           </View>
@@ -455,9 +458,9 @@ export default function HomeScreen({
       </View>
 
       {pendingBadges.length > 0 && (
-        <BadgeEarnedModal badge={pendingBadges[0]} onDismiss={handleDismissEarnedBadge} />
+        <BadgeEarnedModal badge={pendingBadges[0]} onDismiss={handleDismissEarnedBadge} clubTiers={clubBadgeTiers} />
       )}
-      {infoBadge && <BadgeInfoModal badge={infoBadge} onClose={() => setInfoBadge(null)} />}
+      {infoBadge && <BadgeInfoModal badge={infoBadge} onClose={() => setInfoBadge(null)} clubTiers={clubBadgeTiers} />}
 
       {role !== "super_admin" && (
         <View style={styles.announcementsSection}>

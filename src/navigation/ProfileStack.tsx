@@ -11,6 +11,7 @@ import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import NotificationPreferencesScreen from "../screens/NotificationPreferencesScreen";
 import SupportScreen from "../screens/SupportScreen";
 import BadgesScreen from "../screens/BadgesScreen";
+import BadgeTierSettingsScreen from "../screens/BadgeTierSettingsScreen";
 import ClubSettingsStack from "./ClubSettingsStack";
 
 export type ProfileStackParamList = {
@@ -23,6 +24,7 @@ export type ProfileStackParamList = {
   NotificationPreferences: undefined;
   Support: undefined;
   Badges: undefined;
+  BadgeTierSettings: undefined;
   ClubSettings: undefined;
 };
 
@@ -48,6 +50,7 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={{ title: "Bildirim Tercihleri" }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Yardım / Destek" }} />
       <Stack.Screen name="Badges" component={BadgesScreen} options={{ title: "Rozetlerim" }} />
+      <Stack.Screen name="BadgeTierSettings" component={BadgeTierSettingsScreen} options={{ title: "Rozet Ayarları" }} />
       {role === "club_admin" && (
         <Stack.Screen name="ClubSettings" component={ClubSettingsStack} options={{ headerShown: false }} />
       )}

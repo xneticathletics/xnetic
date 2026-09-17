@@ -2,20 +2,22 @@ import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listMyBadges, BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
+import { listMyBadges, BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
+import { listBadgeTierSettings } from "../lib/api/badgeTierSettings";
 
 const BASE_ICON_SIZE = 56;
 
 export default function BadgesScreen() {
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [clubTiers, setClubTiers] = useState<Partial<Record<AutoBadgeType, TierThresholds>>>({});
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       setLoading(true);
-      listMyBadges()
-        .then((rows) => { if (!cancelled) setBadges(rows); })
+      Promise.all([listMyBadges(), listBadgeTierSettings()])
+        .then(([rows, tiers]) => { if (!cancelled) { setBadges(rows); setClubTiers(tiers); } })
         .catch(() => {})
         .finally(() => { if (!cancelled) setLoading(false); });
       return () => { cancelled = true; };
@@ -40,7 +42,7 @@ export default function BadgesScreen() {
         <View style={styles.grid}>
           {badges.map((b) => {
             const catalog = BADGE_CATALOG[b.badge_type];
-            const level = badgeVisualTier(b);
+            const level = badgeVisualTier(b, clubTiers);
             const tierColor = BADGE_TIER_COLOR[level];
             const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
             return (
@@ -54,7 +56,7 @@ export default function BadgesScreen() {
                 >
                   <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
                 </View>
-                <Text style={[styles.title, { color: tierColor }]} numberOfLines={2}>{catalog.title(b.tier)}</Text>
+                <Text style={[styles.title, { color: tierColor }]} numberOfLines={2}>{catalog.title(level)}</Text>
                 <Text style={styles.desc} numberOfLines={2}>{catalog.description(b.tier)}</Text>
                 <Text style={styles.date}>{new Date(b.earned_at).toLocaleDateString("tr-TR")}</Text>
               </View>

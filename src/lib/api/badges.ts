@@ -25,29 +25,53 @@ export type Badge = {
   awarded_by: string | null;
 };
 
+// Şampiyon hariç 7 otomatik kategorinin eşik (tier) üçlüsü — admin/branş
+// koordinatörü bunları kulüp bazında değiştirebilir (bkz. badgeTierSettings.ts).
+// Burdaki değerler DB'deki badge_tier_thresholds() fonksiyonundaki
+// varsayılanlarla birebir aynı olmalı.
+export type TierThresholds = [number, number, number];
+export type AutoBadgeType = Exclude<BadgeType, "sampiyon">;
+
+export const DEFAULT_BADGE_TIERS: Record<AutoBadgeType, TierThresholds> = {
+  antrenman_serisi: [5, 10, 20],
+  grup_fitness: [5, 10, 20],
+  bireysel_fitness: [5, 10, 20],
+  kulup_kidem: [1, 3, 5],
+  sosyal_paylasim: [10, 25, 50],
+  magaza_alisverisi: [5, 10, 20],
+  mesajlasma: [10, 20, 30],
+};
+
 // Rozetlerin görünen adı/açıklaması/ikonu — sabit referans veri (bkz.
 // src/lib/fitnessExercises.ts'teki aynı hardcoded katalog deseni). Hesaplama
 // SUNUCUDA (check_my_badges) yapılıyor, burası SADECE görüntüleme metadata'sı.
 // title KISA VE YARATICI bir lakap (kullanıcı isteği) — sayıyı/detayı
 // description'da veriyoruz, başlıkta tekrar etmiyoruz.
-export const BADGE_CATALOG: Record<BadgeType, { title: (tier: number) => string; icon: string; description: (tier: number) => string }> = {
+type VisualTier = "bronze" | "silver" | "gold";
+
+// title artık RAKAM değil, zaten hesaplanmış GÖRSEL SEVİYE (bronze/silver/
+// gold) alıyor — eşik sayıları admin tarafından değiştirilebildiği için
+// (bkz. badgeTierSettings.ts) burada eşiği tekrar hardcoded varsaymak
+// yanlış sonuç verirdi. description hâlâ ham sayıyı gösteriyor (her zaman
+// doğru, çünkü gerçekte ulaşılan sayı).
+export const BADGE_CATALOG: Record<BadgeType, { title: (level: VisualTier) => string; icon: string; description: (tier: number) => string }> = {
   antrenman_serisi: {
-    title: (t) => (t >= 20 ? "Demir Disiplin" : t >= 10 ? "Kararlı" : "Azimli"),
+    title: (l) => (l === "gold" ? "Demir Disiplin" : l === "silver" ? "Kararlı" : "Azimli"),
     icon: "🔥",
     description: (t) => `Kesintisiz ${t} antrenmana katıldın.`,
   },
   grup_fitness: {
-    title: (t) => (t >= 20 ? "Fitness Canavarı" : t >= 10 ? "Güçlü" : "Formda"),
+    title: (l) => (l === "gold" ? "Fitness Canavarı" : l === "silver" ? "Güçlü" : "Formda"),
     icon: "💪",
     description: (t) => `${t} grup fitness antrenmanı tamamladın.`,
   },
   bireysel_fitness: {
-    title: (t) => (t >= 20 ? "Bağımsız Savaşçı" : t >= 10 ? "Öz Disiplin" : "Kendi Yolunda"),
+    title: (l) => (l === "gold" ? "Bağımsız Savaşçı" : l === "silver" ? "Öz Disiplin" : "Kendi Yolunda"),
     icon: "🏋️",
     description: (t) => `${t} gün bireysel fitness çalışması yaptın.`,
   },
   kulup_kidem: {
-    title: (t) => (t >= 5 ? "Kıdemli" : t >= 3 ? "Kulübün Bir Parçası" : "Yeni Nesil"),
+    title: (l) => (l === "gold" ? "Kıdemli" : l === "silver" ? "Kulübün Bir Parçası" : "Yeni Nesil"),
     icon: "🎖️",
     description: (t) => `Kulüpte ${t}. yılın!`,
   },
@@ -57,17 +81,17 @@ export const BADGE_CATALOG: Record<BadgeType, { title: (tier: number) => string;
     description: () => "Tebrikler Şampiyon! Emeğinin karşılığını aldın.",
   },
   sosyal_paylasim: {
-    title: (t) => (t >= 50 ? "Sosyal Medya Fenomeni" : t >= 25 ? "Sosyal Yıldız" : "Paylaşımcı"),
+    title: (l) => (l === "gold" ? "Sosyal Medya Fenomeni" : l === "silver" ? "Sosyal Yıldız" : "Paylaşımcı"),
     icon: "📸",
     description: (t) => `Sosyal Alan'da ${t} paylaşım yaptın.`,
   },
   magaza_alisverisi: {
-    title: (t) => (t >= 20 ? "VIP Alıcı" : t >= 10 ? "Sadık Müşteri" : "Alışverişçi"),
+    title: (l) => (l === "gold" ? "VIP Alıcı" : l === "silver" ? "Sadık Müşteri" : "Alışverişçi"),
     icon: "🛍️",
     description: (t) => `Mağazadan ${t} ürün aldın.`,
   },
   mesajlasma: {
-    title: (t) => (t >= 30 ? "Herkesin Arkadaşı" : t >= 20 ? "İletişim Ustası" : "Sosyal Kelebek"),
+    title: (l) => (l === "gold" ? "Herkesin Arkadaşı" : l === "silver" ? "İletişim Ustası" : "Sosyal Kelebek"),
     icon: "💬",
     description: (t) => `${t} farklı kişiyle mesajlaştın.`,
   },
@@ -75,13 +99,16 @@ export const BADGE_CATALOG: Record<BadgeType, { title: (tier: number) => string;
 
 // Tier'e göre görsel yükseliş — en yüksek tier her kategoride "gösterişli"
 // olsun isteniyordu (bkz. kullanıcı isteği). Şampiyon rozeti tier'siz
-// (her zaman tek), o da en gösterişli (glow) grupta.
-export function badgeVisualTier(badge: Pick<Badge, "badge_type" | "tier">): "bronze" | "silver" | "gold" {
+// (her zaman tek), o da en gösterişli (glow) grupta. `clubTiers` verilirse
+// (kulübün özelleştirdiği eşikler) onlara göre, yoksa varsayılanlara göre
+// karşılaştırır.
+export function badgeVisualTier(
+  badge: Pick<Badge, "badge_type" | "tier">,
+  clubTiers?: Partial<Record<AutoBadgeType, TierThresholds>>
+): VisualTier {
   if (badge.badge_type === "sampiyon") return "gold";
-  if (badge.badge_type === "kulup_kidem") return badge.tier >= 5 ? "gold" : badge.tier >= 3 ? "silver" : "bronze";
-  if (badge.badge_type === "sosyal_paylasim") return badge.tier >= 50 ? "gold" : badge.tier >= 25 ? "silver" : "bronze";
-  if (badge.badge_type === "mesajlasma") return badge.tier >= 30 ? "gold" : badge.tier >= 20 ? "silver" : "bronze";
-  return badge.tier >= 20 ? "gold" : badge.tier >= 10 ? "silver" : "bronze";
+  const [, t2, t3] = clubTiers?.[badge.badge_type] ?? DEFAULT_BADGE_TIERS[badge.badge_type];
+  return badge.tier >= t3 ? "gold" : badge.tier >= t2 ? "silver" : "bronze";
 }
 
 // Rozet görsellerinde (raf, popup, liste) tekrarlanan renk/boyut/parlama

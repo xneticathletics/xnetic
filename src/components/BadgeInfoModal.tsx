@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
+import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
 
 const BASE_ICON_SIZE = 60;
 
@@ -9,9 +9,17 @@ const BASE_ICON_SIZE = 60;
 // konfetisiz bir bilgi kutusu (kullanıcı isteği: "rozetin ne olduğunu...
 // kısa yaratıcı kelimeler"). Seviye burada da boyut+renk+glow ile ayırt
 // ediliyor (bkz. badges.ts badgeIconSize/badgeGlowStyle).
-export default function BadgeInfoModal({ badge, onClose }: { badge: Badge; onClose: () => void }) {
+export default function BadgeInfoModal({
+  badge,
+  onClose,
+  clubTiers,
+}: {
+  badge: Badge;
+  onClose: () => void;
+  clubTiers?: Partial<Record<AutoBadgeType, TierThresholds>>;
+}) {
   const catalog = BADGE_CATALOG[badge.badge_type];
-  const level = badgeVisualTier(badge);
+  const level = badgeVisualTier(badge, clubTiers);
   const tierColor = BADGE_TIER_COLOR[level];
   const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
 
@@ -28,7 +36,7 @@ export default function BadgeInfoModal({ badge, onClose }: { badge: Badge; onClo
           >
             <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
           </View>
-          <Text style={[styles.title, { color: tierColor }]}>{catalog.title(badge.tier)}</Text>
+          <Text style={[styles.title, { color: tierColor }]}>{catalog.title(level)}</Text>
           <Text style={styles.desc}>{catalog.description(badge.tier)}</Text>
           <Text style={styles.date}>{new Date(badge.earned_at).toLocaleDateString("tr-TR")}</Text>
         </View>

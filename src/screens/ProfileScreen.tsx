@@ -226,6 +226,17 @@ export default function ProfileScreen({
               <Text style={styles.settingsSub}>Kazandığın ödüller</Text>
             </TouchableOpacity>
           )}
+          {/* Rozet eşik sayılarını (5-10-20 vb.) değiştirme — sadece admin/
+              branş koordinatörü. Diğer kutularla aynı satırda, küçük. */}
+          {(role === "club_admin" || isBranchCoordinator) && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("BadgeTierSettings")}>
+              <View style={[styles.settingsIconBadge, { backgroundColor: colors.violetSoft }]}>
+                <Text style={styles.settingsIcon}>🎖️</Text>
+              </View>
+              <Text style={styles.settingsTitle}>Rozet Ayarları</Text>
+              <Text style={styles.settingsSub}>Eşik sayılarını düzenle</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 

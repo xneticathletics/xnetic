@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Modal, Dimensions } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
+import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
 
 const CONFETTI_COLORS = [colors.yellow, colors.teal, colors.coral, colors.violet];
 const CONFETTI_COUNT = 60;
@@ -62,7 +62,15 @@ function ConfettiPiece({ index }: { index: number }) {
 // yayılıyor, kutu ekranın ÜST kısmında beliriyor (kullanıcı isteği).
 // Kapatınca (dokununca) HomeScreen bu rozeti "görüldü" işaretleyip
 // kulüp adının altındaki rozet rafına yerleştiriyor.
-export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; onDismiss: () => void }) {
+export default function BadgeEarnedModal({
+  badge,
+  onDismiss,
+  clubTiers,
+}: {
+  badge: Badge;
+  onDismiss: () => void;
+  clubTiers?: Partial<Record<AutoBadgeType, TierThresholds>>;
+}) {
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -71,7 +79,7 @@ export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; o
   }, [slide, badge.id]);
 
   const catalog = BADGE_CATALOG[badge.badge_type];
-  const level = badgeVisualTier(badge);
+  const level = badgeVisualTier(badge, clubTiers);
   const tierColor = BADGE_TIER_COLOR[level];
   const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] });
@@ -94,7 +102,7 @@ export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; o
               <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
             </View>
             <Text style={styles.eyebrow}>🎉 Yeni Rozet Kazandın!</Text>
-            <Text style={[styles.title, { color: tierColor }]}>{catalog.title(badge.tier)}</Text>
+            <Text style={[styles.title, { color: tierColor }]}>{catalog.title(level)}</Text>
             <Text style={styles.desc}>{catalog.description(badge.tier)}</Text>
             <TouchableOpacity style={[styles.dismissButton, { backgroundColor: tierColor }]} onPress={onDismiss} activeOpacity={0.85}>
               <Text style={styles.dismissButtonText}>Harika!</Text>

@@ -1,0 +1,166 @@
+import React, { useCallback, useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { colors, radius, spacing } from "../theme/tokens";
+import { DEFAULT_BADGE_TIERS, BADGE_CATALOG, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
+import {
+  AUTO_BADGE_TYPES, BADGE_TYPE_LABELS, BADGE_TYPE_UNITS,
+  listBadgeTierSettings, saveBadgeTierSetting, resetBadgeTierSetting,
+} from "../lib/api/badgeTierSettings";
+
+// Kullanıcı isteği: özel rozet şablonları yerine, MEVCUT 7 otomatik rozet
+// kategorisinin eşik sayılarını (5-10-20 gibi) burada değiştirebilelim —
+// kazanım mantığı (check_my_badges) hâlâ tamamen otomatik, sadece sayılar
+// kulübe özel olabiliyor.
+export default function BadgeTierSettingsScreen() {
+  const [tiers, setTiers] = useState<Record<AutoBadgeType, TierThresholds> | null>(null);
+  const [draft, setDraft] = useState<Record<AutoBadgeType, [string, string, string]> | null>(null);
+  const [savingType, setSavingType] = useState<AutoBadgeType | null>(null);
+
+  const load = useCallback(() => {
+    listBadgeTierSettings().then((rows) => {
+      setTiers(rows);
+      setDraft(
+        Object.fromEntries(
+          AUTO_BADGE_TYPES.map((t) => [t, rows[t].map(String) as [string, string, string]])
+        ) as Record<AutoBadgeType, [string, string, string]>
+      );
+    }).catch(() => {});
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  if (!tiers || !draft) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  const handleChangeField = (type: AutoBadgeType, index: 0 | 1 | 2, value: string) => {
+    const cleaned = value.replace(/[^0-9]/g, "");
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const next = [...prev[type]] as [string, string, string];
+      next[index] = cleaned;
+      return { ...prev, [type]: next };
+    });
+  };
+
+  const handleSave = async (type: AutoBadgeType) => {
+    const [a, b, c] = draft[type];
+    const nums = [Number(a), Number(b), Number(c)] as TierThresholds;
+    if (nums.some((n) => !Number.isFinite(n) || n <= 0) || nums[0] >= nums[1] || nums[1] >= nums[2]) {
+      Alert.alert("Geçersiz değerler", "Üç sayı da pozitif olmalı ve küçükten büyüğe artmalı (ör. 5, 10, 20).", [{ text: "Tamam" }]);
+      return;
+    }
+    setSavingType(type);
+    try {
+      await saveBadgeTierSetting(type, nums);
+      setTiers((prev) => (prev ? { ...prev, [type]: nums } : prev));
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "Kaydedilemedi", [{ text: "Tamam" }]);
+    } finally {
+      setSavingType(null);
+    }
+  };
+
+  const handleReset = async (type: AutoBadgeType) => {
+    setSavingType(type);
+    try {
+      await resetBadgeTierSetting(type);
+      const def = DEFAULT_BADGE_TIERS[type];
+      setTiers((prev) => (prev ? { ...prev, [type]: def } : prev));
+      setDraft((prev) => (prev ? { ...prev, [type]: def.map(String) as [string, string, string] } : prev));
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "Sıfırlanamadı", [{ text: "Tamam" }]);
+    } finally {
+      setSavingType(null);
+    }
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.infoBox}>
+        Sporcuların hangi sayıya ulaşınca rozet kazanacağını buradan değiştirebilirsin.
+        Kazanım hâlâ tamamen otomatik — sadece eşik sayıları kulübüne özel.
+      </Text>
+
+      {AUTO_BADGE_TYPES.map((type) => {
+        const isDefault = tiers[type].every((v, i) => v === DEFAULT_BADGE_TIERS[type][i]);
+        const saving = savingType === type;
+        return (
+          <View key={type} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>{BADGE_CATALOG[type].icon}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle}>{BADGE_TYPE_LABELS[type]}</Text>
+                <Text style={styles.cardSub}>{BADGE_TYPE_UNITS[type]}</Text>
+              </View>
+            </View>
+            <View style={styles.inputRow}>
+              {(["Bronz", "Gümüş", "Altın"] as const).map((label, i) => (
+                <View key={label} style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>{label}</Text>
+                  <TextInput
+                    style={styles.input}
+                    keyboardType="number-pad"
+                    value={draft[type][i]}
+                    onChangeText={(v) => handleChangeField(type, i as 0 | 1 | 2, v)}
+                    maxLength={4}
+                  />
+                </View>
+              ))}
+            </View>
+            <View style={styles.actionRow}>
+              {!isDefault && (
+                <TouchableOpacity onPress={() => handleReset(type)} disabled={saving} style={styles.resetButton}>
+                  <Text style={styles.resetButtonText}>Varsayılana Dön</Text>
+                </TouchableOpacity>
+              )}
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity onPress={() => handleSave(type)} disabled={saving} style={styles.saveButton}>
+                {saving ? <ActivityIndicator color={colors.bg} size="small" /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  loadingContainer: { flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" },
+  infoBox: {
+    color: colors.muted, fontSize: 12, lineHeight: 18, backgroundColor: colors.surface,
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg,
+  },
+  card: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm,
+  },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm },
+  cardIcon: { fontSize: 24 },
+  cardTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
+  cardSub: { color: colors.muted, fontSize: 11, marginTop: 1 },
+  inputRow: { flexDirection: "row", gap: spacing.sm },
+  inputGroup: { flex: 1 },
+  inputLabel: { color: colors.muted, fontSize: 11, fontWeight: "600", marginBottom: 4 },
+  input: {
+    borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    paddingVertical: 8, paddingHorizontal: 10, color: colors.ink, fontSize: 15, fontWeight: "700",
+    backgroundColor: colors.bg, textAlign: "center",
+  },
+  actionRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm },
+  resetButton: { paddingVertical: 6, paddingHorizontal: 4 },
+  resetButtonText: { color: colors.muted, fontSize: 12, fontWeight: "600", textDecorationLine: "underline" },
+  saveButton: {
+    backgroundColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 8, paddingHorizontal: spacing.lg, minWidth: 80, alignItems: "center",
+  },
+  saveButtonText: { color: colors.bg, fontWeight: "800", fontSize: 13 },
+});
