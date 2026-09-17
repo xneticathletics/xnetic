@@ -92,6 +92,14 @@ const TEMPLATE_GEN_THROTTLE_MS = 6 * 60 * 60 * 1000;
 
 // Ay ızgarasını (Pazartesi başlangıçlı, 7 sütunlu) hücre dizisi olarak
 // üretir — boş hücreler null'dır.
+// Ekranın kendisi (native-stack'ten geri gidilip tekrar açıldığında) her
+// seferinde YENİDEN mount ediliyor — useState'in başlangıç değeri bu
+// yüzden component-içi state olarak tutulsaydı her girişte "month"a
+// sıfırlanırdı. Modül seviyesinde tutmak, uygulama açık kaldığı sürece
+// (tam kapatılıp yeniden açılana kadar) kullanıcının en son seçtiği
+// haftalık/aylık görünümün ekrandan çıkıp geri dönünce de korunmasını sağlar.
+let lastCalendarView: "month" | "week" = "month";
+
 function buildMonthGrid(year: number, month0: number): (number | null)[] {
   const firstWeekday = (new Date(year, month0, 1).getDay() + 6) % 7; // Pzt=0
   const daysInMonth = new Date(year, month0 + 1, 0).getDate();
@@ -144,8 +152,16 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
   const [typeFilter, setTypeFilter] = useState<"all" | "training" | "match">("all");
   const [addSheetVisible, setAddSheetVisible] = useState(false);
   // Aylık ızgara (varsayılan) yerine tek satırlık haftalık görünüm —
-  // kullanıcı seçtiği görünümde kalır, ekran her odaklandığında sıfırlanmaz.
-  const [calendarView, setCalendarView] = useState<"month" | "week">("month");
+  // kullanıcı seçtiği görünümde kalır, ekran her odaklandığında sıfırlanmaz
+  // (başlangıç değeri lastCalendarView'dan gelir — bkz. yukarısı).
+  const [calendarView, setCalendarViewState] = useState<"month" | "week">(lastCalendarView);
+  const setCalendarView = (next: "month" | "week" | ((prev: "month" | "week") => "month" | "week")) => {
+    setCalendarViewState((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      lastCalendarView = resolved;
+      return resolved;
+    });
+  };
 
   const selectBranch = (name: string | null) => {
     setBranchFilter(name);
