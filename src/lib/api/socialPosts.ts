@@ -21,6 +21,30 @@ async function resizeSocialPhoto(localUri: string): Promise<string> {
   return result.uri;
 }
 
+// Izgara önizlemesi (~110px) 1600px'lik tam görseli indirmeye devam
+// ediyordu — "ızgara yavaş yükleniyor" şikayetinin asıl nedeni buydu.
+// Ayrıca gerçekten küçük (320px, düşük kalite) bir önizleme üretip AYRI
+// bir dosya olarak yüklüyoruz; zaten küçültülmüş 1600px sürümden tekrar
+// küçültmek, orijinal (3000-4000px) dosyayı ikinci kez decode etmekten
+// daha hızlı.
+const SOCIAL_THUMB_MAX_WIDTH = 320;
+
+async function resizeSocialThumbnail(resizedPhotoUri: string): Promise<string> {
+  const context = ImageManipulator.manipulate(resizedPhotoUri);
+  const rendered = await context.resize({ width: SOCIAL_THUMB_MAX_WIDTH, height: null }).renderAsync();
+  const result = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.5 });
+  return result.uri;
+}
+
+// Thumb dosyasının yolu, ana dosyanın yolundan DETERMİNİSTİK olarak
+// türetiliyor (ör. ".../123.jpg" -> ".../123_thumb.jpg") — ayrı bir sütunda
+// izlemeye gerek kalmadan silme (deleteSocialPost, cleanup-old-social-posts)
+// sırasında da aynı şekilde yeniden hesaplanabiliyor.
+function thumbPathFor(path: string): string {
+  const dot = path.lastIndexOf(".");
+  return dot === -1 ? `${path}_thumb` : `${path.slice(0, dot)}_thumb${path.slice(dot)}`;
+}
+
 // "social-posts" bucket'ında da bu değerle senkron (bkz. migration
 // 20260909050000_social_posts.sql'deki bucket file_size_limit).
 export const MAX_SOCIAL_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;
@@ -33,6 +57,9 @@ export type SocialPost = {
   author_name?: string;
   media_type: "photo" | "video";
   media_url: string;
+  // Sadece fotoğraflarda dolu (bkz. resizeSocialThumbnail) — videolarda
+  // null, ızgara ekranı bu durumda VideoGridThumbnail ile kendi karesini üretir.
+  thumb_url: string | null;
   storage_path: string;
   caption: string | null;
   status: "pending" | "approved";
@@ -180,6 +207,27 @@ export async function createSocialPost(params: {
   const { data: signedData, error: signError } = await supabase.storage.from("social-posts").createSignedUrl(path, 315360000);
   if (signError || !signedData) throw signError ?? new Error("İmzalı URL oluşturulamadı");
 
+  // Sadece fotoğraflarda: ızgara için AYRICA gerçekten küçük bir önizleme
+  // yükle — thumb yüklemesi başarısız olsa bile ana paylaşım engellenmesin
+  // diye hata yutuluyor, ekran bu durumda media_url'e geri döner.
+  let thumbUrl: string | null = null;
+  if (params.mediaType === "photo") {
+    try {
+      const thumbUri = await resizeSocialThumbnail(uploadUri);
+      const thumbBase64 = await FileSystem.readAsStringAsync(thumbUri, { encoding: FileSystem.EncodingType.Base64 });
+      const thumbPath = thumbPathFor(path);
+      const { error: thumbUploadError } = await supabase.storage
+        .from("social-posts")
+        .upload(thumbPath, decode(thumbBase64), { contentType: "image/jpeg" });
+      if (!thumbUploadError) {
+        const { data: thumbSigned } = await supabase.storage.from("social-posts").createSignedUrl(thumbPath, 315360000);
+        thumbUrl = thumbSigned?.signedUrl ?? null;
+      }
+    } catch {
+      thumbUrl = null;
+    }
+  }
+
   // author_id = kendi satırım olduğu için .select() zincirlemek güvenli —
   // sendNotification'daki alıcı≠gönderen RLS bug'ıyla karıştırılmasın.
   const { data, error } = await supabase
@@ -190,6 +238,7 @@ export async function createSocialPost(params: {
       author_id: userId,
       media_type: params.mediaType,
       media_url: signedData.signedUrl,
+      thumb_url: thumbUrl,
       storage_path: path,
       caption: params.caption ?? null,
     })
@@ -216,7 +265,12 @@ export async function approveSocialPost(postId: string): Promise<void> {
 }
 
 export async function deleteSocialPost(post: Pick<SocialPost, "id" | "storage_path">): Promise<void> {
-  const { error: storageError } = await supabase.storage.from("social-posts").remove([post.storage_path]);
+  // thumb dosyası video paylaşımlarda hiç var olmayabilir — nonexistent bir
+  // path'i remove etmek Storage'da hata vermiyor (idempotent), bu yüzden
+  // ayrıca bir "var mı" kontrolüne gerek yok.
+  const { error: storageError } = await supabase.storage
+    .from("social-posts")
+    .remove([post.storage_path, thumbPathFor(post.storage_path)]);
   if (storageError) throw storageError;
 
   const { error } = await supabase.from("social_posts").delete().eq("id", post.id);

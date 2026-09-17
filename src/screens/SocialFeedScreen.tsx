@@ -230,7 +230,10 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
                 return (
                   <TouchableOpacity key={item.id} style={[styles.thumbWrap, { width: thumbSize }]} onPress={() => setViewerIndex(globalIndex)}>
                     {item.media_type === "photo" ? (
-                      <Image source={{ uri: item.media_url }} style={[styles.thumb, { width: thumbSize }, isPending && styles.thumbPending]} />
+                      <Image
+                        source={{ uri: item.thumb_url ?? item.media_url }}
+                        style={[styles.thumb, { width: thumbSize }, isPending && styles.thumbPending]}
+                      />
                     ) : (
                       <View style={[styles.thumb, styles.videoThumb, { width: thumbSize }, isPending && styles.thumbPending]}>
                         <VideoGridThumbnail uri={item.media_url} />

@@ -27,7 +27,17 @@ Deno.serve(async (_req) => {
       .lt("created_at", cutoff);
     if (error) throw error;
 
-    const paths = (rows ?? []).map((r: { storage_path: string | null }) => r.storage_path).filter((p): p is string => !!p);
+    // Fotoğraflarda ana dosyanın yanında AYRICA küçük bir ızgara önizlemesi
+    // de var (bkz. src/lib/api/socialPosts.ts thumbPathFor) — ayrı bir
+    // sütunda izlenmiyor, ana yoldan deterministik türetiliyor. Video
+    // paylaşımlarda böyle bir dosya hiç yok, ama nonexistent bir path'i
+    // remove etmek hata vermiyor (idempotent), o yüzden ayrıca kontrol yok.
+    const thumbPathFor = (path: string): string => {
+      const dot = path.lastIndexOf(".");
+      return dot === -1 ? `${path}_thumb` : `${path.slice(0, dot)}_thumb${path.slice(dot)}`;
+    };
+    const mainPaths = (rows ?? []).map((r: { storage_path: string | null }) => r.storage_path).filter((p): p is string => !!p);
+    const paths = mainPaths.flatMap((p) => [p, thumbPathFor(p)]);
     if (paths.length > 0) {
       const { error: removeError } = await admin.storage.from("social-posts").remove(paths);
       if (removeError) throw removeError;
