@@ -1,16 +1,11 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Modal, Dimensions } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { BADGE_CATALOG, badgeVisualTier, type Badge } from "../lib/api/badges";
-
-const TIER_COLOR: Record<"bronze" | "silver" | "gold", string> = {
-  bronze: colors.coral,
-  silver: colors.teal,
-  gold: colors.yellow,
-};
+import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
 
 const CONFETTI_COLORS = [colors.yellow, colors.teal, colors.coral, colors.violet];
 const CONFETTI_COUNT = 60;
+const BASE_ICON_SIZE = 84;
 const { height: SCREEN_H } = Dimensions.get("window");
 
 // Yeni bir konfeti/animasyon kütüphanesi EKLENMEDİ — bu kod tabanında zaten
@@ -76,7 +71,9 @@ export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; o
   }, [slide, badge.id]);
 
   const catalog = BADGE_CATALOG[badge.badge_type];
-  const tierColor = TIER_COLOR[badgeVisualTier(badge)];
+  const level = badgeVisualTier(badge);
+  const tierColor = BADGE_TIER_COLOR[level];
+  const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] });
 
   return (
@@ -87,8 +84,14 @@ export default function BadgeEarnedModal({ badge, onDismiss }: { badge: Badge; o
         ))}
         <Animated.View style={[styles.cardWrap, { opacity: slide, transform: [{ translateY }] }]}>
           <View style={[styles.card, { borderColor: tierColor }]}>
-            <View style={[styles.iconBadge, { backgroundColor: `${tierColor}22`, borderColor: tierColor }]}>
-              <Text style={styles.icon}>{catalog.icon}</Text>
+            <View
+              style={[
+                styles.iconBadge,
+                { width: iconSize, height: iconSize, borderRadius: iconSize / 2, backgroundColor: `${tierColor}22`, borderColor: tierColor },
+                badgeGlowStyle(level),
+              ]}
+            >
+              <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
             </View>
             <Text style={styles.eyebrow}>🎉 Yeni Rozet Kazandın!</Text>
             <Text style={[styles.title, { color: tierColor }]}>{catalog.title(badge.tier)}</Text>
@@ -110,11 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 2, borderRadius: radius.lg,
     padding: spacing.xl, alignItems: "center",
   },
-  iconBadge: {
-    width: 84, height: 84, borderRadius: 42, borderWidth: 2.5, marginBottom: spacing.md,
-    alignItems: "center", justifyContent: "center",
-  },
-  icon: { fontSize: 42 },
+  iconBadge: { borderWidth: 2.5, marginBottom: spacing.md, alignItems: "center", justifyContent: "center" },
   eyebrow: { color: colors.muted, fontSize: 11, fontWeight: "700", marginBottom: 6, textTransform: "uppercase" },
   title: { fontSize: 24, fontWeight: "800", textAlign: "center" },
   desc: { color: colors.muted, fontSize: 13, marginTop: spacing.sm, textAlign: "center", lineHeight: 18 },

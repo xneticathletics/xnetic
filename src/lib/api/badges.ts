@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import { getCurrentAppUserId } from "./currentUser";
 import { getMyAthletes } from "./myAthletes";
+import { colors } from "../../theme/tokens";
 
 export type BadgeType =
   | "antrenman_serisi"
@@ -81,6 +82,32 @@ export function badgeVisualTier(badge: Pick<Badge, "badge_type" | "tier">): "bro
   if (badge.badge_type === "sosyal_paylasim") return badge.tier >= 50 ? "gold" : badge.tier >= 25 ? "silver" : "bronze";
   if (badge.badge_type === "mesajlasma") return badge.tier >= 30 ? "gold" : badge.tier >= 20 ? "silver" : "bronze";
   return badge.tier >= 20 ? "gold" : badge.tier >= 10 ? "silver" : "bronze";
+}
+
+// Rozet görsellerinde (raf, popup, liste) tekrarlanan renk/boyut/parlama
+// kuralları — TEK yerden yönetiliyor ki 4 farklı bileşende (BadgeShelf,
+// BadgeInfoModal, BadgeEarnedModal, BadgesScreen) birbirinden sapmasın.
+// Kullanıcı isteği: seviye sadece renkle değil, BOYUTLA da fark edilsin —
+// en üst seviye (gold) ayrıca hafif bir "glow" (renkli gölge) alır.
+export const BADGE_TIER_COLOR: Record<"bronze" | "silver" | "gold", string> = {
+  bronze: colors.coral,
+  silver: colors.teal,
+  gold: colors.yellow,
+};
+
+// base: o bileşenin normal (bronze) boyutu — silver/gold buna göre büyür.
+export function badgeIconSize(tierLevel: "bronze" | "silver" | "gold", base: number): number {
+  return tierLevel === "gold" ? Math.round(base * 1.35) : tierLevel === "silver" ? Math.round(base * 1.15) : base;
+}
+
+// Sadece gold seviyede uygulanan gölge/parlama — React Native'in yerleşik
+// shadow* (iOS) / elevation (Android) stilleriyle, yeni bir kütüphane yok.
+export function badgeGlowStyle(tierLevel: "bronze" | "silver" | "gold"): object {
+  if (tierLevel !== "gold") return {};
+  return {
+    shadowColor: colors.yellow, shadowOpacity: 0.7, shadowRadius: 10, shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
+  };
 }
 
 // Bana bağlı sporcular VE kendim için tüm rozet kategorilerini sunucuda

@@ -2,13 +2,9 @@ import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listMyBadges, BADGE_CATALOG, badgeVisualTier, type Badge } from "../lib/api/badges";
+import { listMyBadges, BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
 
-const TIER_COLOR: Record<"bronze" | "silver" | "gold", string> = {
-  bronze: colors.coral,
-  silver: colors.teal,
-  gold: colors.yellow,
-};
+const BASE_ICON_SIZE = 56;
 
 export default function BadgesScreen() {
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -44,11 +40,19 @@ export default function BadgesScreen() {
         <View style={styles.grid}>
           {badges.map((b) => {
             const catalog = BADGE_CATALOG[b.badge_type];
-            const tierColor = TIER_COLOR[badgeVisualTier(b)];
+            const level = badgeVisualTier(b);
+            const tierColor = BADGE_TIER_COLOR[level];
+            const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
             return (
               <View key={b.id} style={[styles.card, { borderColor: tierColor }]}>
-                <View style={[styles.iconBadge, { backgroundColor: `${tierColor}22`, borderColor: tierColor }]}>
-                  <Text style={styles.icon}>{catalog.icon}</Text>
+                <View
+                  style={[
+                    styles.iconBadge,
+                    { width: iconSize, height: iconSize, borderRadius: iconSize / 2, backgroundColor: `${tierColor}22`, borderColor: tierColor },
+                    badgeGlowStyle(level),
+                  ]}
+                >
+                  <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
                 </View>
                 <Text style={[styles.title, { color: tierColor }]} numberOfLines={2}>{catalog.title(b.tier)}</Text>
                 <Text style={styles.desc} numberOfLines={2}>{catalog.description(b.tier)}</Text>
@@ -71,11 +75,7 @@ const styles = StyleSheet.create({
     width: "47%", backgroundColor: colors.surface, borderWidth: 1.5, borderRadius: radius.lg,
     padding: spacing.md, alignItems: "center",
   },
-  iconBadge: {
-    width: 56, height: 56, borderRadius: 28, borderWidth: 2, marginBottom: spacing.sm,
-    alignItems: "center", justifyContent: "center",
-  },
-  icon: { fontSize: 28 },
+  iconBadge: { borderWidth: 2, marginBottom: spacing.sm, alignItems: "center", justifyContent: "center" },
   title: { fontSize: 13, fontWeight: "800", textAlign: "center" },
   desc: { color: colors.muted, fontSize: 11, textAlign: "center", marginTop: 4 },
   date: { color: colors.muted, fontSize: 10, marginTop: spacing.sm },
