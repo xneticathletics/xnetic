@@ -149,38 +149,3 @@ export async function awardChampionBadge(athleteId: string): Promise<Badge> {
   if (error) throw error;
   return data as Badge;
 }
-
-// Sabit (8 kategorilik) rozetler VE admin/koordinatörün oluşturduğu özel
-// şablon rozetleri, görüntüleme bileşenlerinde (raf/popup/liste) TEK bir
-// ortak şekle normalize ediliyor — böylece BadgeShelf/BadgeInfoModal/
-// BadgeEarnedModal/BadgesScreen ikisini de aynı şekilde çizebiliyor. Özel
-// rozetlerin normalizasyonu (fromCustomEarned) src/lib/api/badgeTemplates.ts'te
-// — burada döngüsel import olmasın diye sadece tip + sabit-rozet dönüştürücüsü var.
-export type AnyBadge = {
-  id: string;
-  // hangi kaynaktan geldiği — "görüldü" işaretlerken hangi RPC'nin
-  // (mark_badge_seen / mark_custom_badge_seen) çağrılacağını belirlemek için.
-  source: "built-in" | "custom";
-  earned_at: string;
-  seen_at: string | null;
-  icon: string; // emoji YA DA (iconIsImage true ise) bir görsel URL'i
-  iconIsImage: boolean;
-  title: string;
-  description: string;
-  visualTier: "bronze" | "silver" | "gold";
-};
-
-export function fromBuiltIn(b: Badge): AnyBadge {
-  const catalog = BADGE_CATALOG[b.badge_type];
-  return {
-    id: b.id,
-    source: "built-in",
-    earned_at: b.earned_at,
-    seen_at: b.seen_at,
-    icon: catalog.icon,
-    iconIsImage: false,
-    title: catalog.title(b.tier),
-    description: catalog.description(b.tier),
-    visualTier: badgeVisualTier(b),
-  };
-}

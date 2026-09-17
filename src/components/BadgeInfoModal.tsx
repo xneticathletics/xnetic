@@ -1,7 +1,7 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet, Modal } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { BADGE_TIER_COLOR, badgeIconSize, badgeGlowStyle, type AnyBadge } from "../lib/api/badges";
+import { BADGE_CATALOG, BADGE_TIER_COLOR, badgeVisualTier, badgeIconSize, badgeGlowStyle, type Badge } from "../lib/api/badges";
 
 const BASE_ICON_SIZE = 60;
 
@@ -9,9 +9,11 @@ const BASE_ICON_SIZE = 60;
 // konfetisiz bir bilgi kutusu (kullanıcı isteği: "rozetin ne olduğunu...
 // kısa yaratıcı kelimeler"). Seviye burada da boyut+renk+glow ile ayırt
 // ediliyor (bkz. badges.ts badgeIconSize/badgeGlowStyle).
-export default function BadgeInfoModal({ badge, onClose }: { badge: AnyBadge; onClose: () => void }) {
-  const tierColor = BADGE_TIER_COLOR[badge.visualTier];
-  const iconSize = badgeIconSize(badge.visualTier, BASE_ICON_SIZE);
+export default function BadgeInfoModal({ badge, onClose }: { badge: Badge; onClose: () => void }) {
+  const catalog = BADGE_CATALOG[badge.badge_type];
+  const level = badgeVisualTier(badge);
+  const tierColor = BADGE_TIER_COLOR[level];
+  const iconSize = badgeIconSize(level, BASE_ICON_SIZE);
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
@@ -21,17 +23,13 @@ export default function BadgeInfoModal({ badge, onClose }: { badge: AnyBadge; on
             style={[
               styles.iconBadge,
               { width: iconSize, height: iconSize, borderRadius: iconSize / 2, backgroundColor: `${tierColor}22`, borderColor: tierColor },
-              badgeGlowStyle(badge.visualTier),
+              badgeGlowStyle(level),
             ]}
           >
-            {badge.iconIsImage ? (
-              <Image source={{ uri: badge.icon }} style={{ width: iconSize - 12, height: iconSize - 12, borderRadius: (iconSize - 12) / 2 }} />
-            ) : (
-              <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{badge.icon}</Text>
-            )}
+            <Text style={{ fontSize: Math.round(iconSize * 0.5) }}>{catalog.icon}</Text>
           </View>
-          <Text style={[styles.title, { color: tierColor }]}>{badge.title}</Text>
-          <Text style={styles.desc}>{badge.description}</Text>
+          <Text style={[styles.title, { color: tierColor }]}>{catalog.title(badge.tier)}</Text>
+          <Text style={styles.desc}>{catalog.description(badge.tier)}</Text>
           <Text style={styles.date}>{new Date(badge.earned_at).toLocaleDateString("tr-TR")}</Text>
         </View>
       </TouchableOpacity>
