@@ -536,7 +536,13 @@ const styles = StyleSheet.create({
   heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.bg },
   heroLogoSmall: { width: 84, height: 84 },
   headerRight: { flex: 1, justifyContent: "space-between" },
-  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
+  // alignItems eskiden "center" idi — rozet rafı büyüdükçe (çok rozet)
+  // topRow'un yüksekliği artıyor, zil de o yüksekliğe göre yeniden
+  // ortalandığı için rozet sayısına göre farklı yerde duruyordu (kullanıcı
+  // isteği: zil sabit dursun, rozetsiz hâldeki konumunda kalsın).
+  // "flex-start" ile zil her zaman en üstte, "Hoş geldin" satırıyla aynı
+  // hizada sabit kalıyor.
+  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: spacing.md },
   clubNameText: { color: colors.muted, fontSize: 14, fontWeight: "600", marginTop: 2 },
   greeting: { color: colors.ink, fontSize: 23, fontWeight: "700", letterSpacing: 0.2 },
   greetingAccent: { color: colors.yellow },
