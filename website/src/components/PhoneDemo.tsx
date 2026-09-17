@@ -287,9 +287,6 @@ const HOME_TILES: { key: Screen; icon: string; label: string; sub: string }[] = 
   { key: { kind: "clubStructure" }, icon: "🏛️", label: "Kulüp Yapısı", sub: "Grup, branş, salon" },
   { key: { kind: "finans" }, icon: "💰", label: "Finans", sub: "Aidat ve giderler" },
   { key: { kind: "performansHub" }, icon: "📊", label: "Performans", sub: "Fitness, ölçüm ve beslenme" },
-  { key: { kind: "infoList", title: "Mağaza", backLabel: "Ana Ekran", items: MAGAZA_ITEMS }, icon: "🛍️", label: "Mağaza", sub: "Ürünler ve siparişler" },
-  { key: { kind: "infoList", title: "Etkinlik/Turnuva/Kamp", backLabel: "Ana Ekran", items: ETKINLIK_ITEMS }, icon: "🏆", label: "Etkinlik/Turnuva/Kamp", sub: "Oluştur ve yönet" },
-  { key: { kind: "sosyalAlan" }, icon: "📸", label: "Sosyal Alan", sub: "Fotoğraf ve videolar" },
 ];
 
 function Avatar({ letter, color }: { letter: string; color: string }) {
@@ -998,9 +995,13 @@ function eventsForDay(day: number, type: "antrenman" | "musabaka" | null): CalEv
 function CalendarScreen({ onBack }: { onBack: () => void }) {
   const [selected, setSelected] = useState(11);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"all" | "antrenman" | "musabaka">("all");
 
   const selectedType = CAL_WEEKS.flat().find((d) => d?.day === selected)?.type ?? null;
-  const events = eventsForDay(selected, selectedType).filter((e) => !branchFilter || e.branch === branchFilter);
+  const events =
+    typeFilter === "all" || selectedType === typeFilter
+      ? eventsForDay(selected, selectedType).filter((e) => !branchFilter || e.branch === branchFilter)
+      : [];
 
   return (
     <div>
@@ -1008,10 +1009,20 @@ function CalendarScreen({ onBack }: { onBack: () => void }) {
       <h3 className="mb-3 text-base font-extrabold text-ink">Takvim</h3>
 
       <div className="mb-3 grid grid-cols-2 gap-1.5">
-        <div className="rounded-full bg-yellow py-2 text-center text-[10px] font-bold text-bg">+ Antrenman</div>
-        <div className="rounded-full border border-coral py-2 text-center text-[10px] font-bold text-coral">+ Müsabaka</div>
-        <div className="rounded-full border border-violet py-2 text-center text-[10px] font-bold text-violet">Sonuçlar</div>
-        <div className="rounded-full bg-teal py-2 text-center text-[10px] font-bold text-bg">Takvimime Ekle</div>
+        <div className="rounded-full border border-violet py-2 text-center text-[10px] font-bold text-violet">🏆 Sonuçlar</div>
+        <div className="rounded-full bg-teal py-2 text-center text-[10px] font-bold text-bg">📱 Takvimime Ekle</div>
+      </div>
+
+      <div className="mb-3 grid grid-cols-3 gap-1.5">
+        {([["all", "Tümü"], ["antrenman", "Antrenman"], ["musabaka", "Müsabaka"]] as const).map(([val, label]) => (
+          <button
+            key={val}
+            onClick={() => setTypeFilter(val)}
+            className={`rounded-full border px-2 py-1.5 text-[10px] font-bold ${typeFilter === val ? "border-yellow bg-yellow text-bg" : "border-line text-muted"}`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
@@ -1049,14 +1060,15 @@ function CalendarScreen({ onBack }: { onBack: () => void }) {
           <div key={wi} className="grid grid-cols-7 gap-1">
             {week.map((d, di) =>
               d ? (
-                <button
-                  key={di}
-                  onClick={() => setSelected(d.day)}
-                  className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold ${
-                    d.type === "antrenman" ? "bg-yellow text-bg" : d.type === "musabaka" ? "bg-coral text-bg" : "text-ink"
-                  } ${d.today ? "ring-2 ring-teal ring-offset-2 ring-offset-bg" : ""} ${selected === d.day ? "outline outline-2 outline-yellow" : ""}`}
-                >
-                  {d.day}
+                <button key={di} onClick={() => setSelected(d.day)} className="mx-auto flex flex-col items-center gap-0.5">
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold ${
+                      d.today ? "bg-yellow text-bg" : "text-ink"
+                    } ${selected === d.day && !d.today ? "ring-2 ring-teal" : ""}`}
+                  >
+                    {d.day}
+                  </span>
+                  <span className={`h-1 w-1 rounded-full ${d.type === "antrenman" ? "bg-yellow" : d.type === "musabaka" ? "bg-coral" : ""}`} />
                 </button>
               ) : (
                 <span key={di} />
@@ -1089,10 +1101,11 @@ function CalendarScreen({ onBack }: { onBack: () => void }) {
             <p className="mb-0.5 text-[10px] text-muted">🏛️ {e.venue}</p>
             {e.note && <p className="mb-1.5 text-[10px] text-muted">📝 {e.note}</p>}
             <span className="mb-2 inline-block rounded-full bg-line px-2 py-0.5 text-[9px] font-bold text-muted">{e.status}</span>
-            <div className="mt-2 grid grid-cols-3 gap-1.5">
-              <div className="rounded-lg border border-teal py-1.5 text-center text-[9px] font-bold text-teal">👥 Sporcular</div>
-              <div className="rounded-lg border border-line py-1.5 text-center text-[9px] font-bold text-muted">Günün Programı</div>
-              <div className="rounded-lg border border-line py-1.5 text-center text-[9px] font-bold text-muted">✓ Tamamlandı</div>
+            <div className="mt-2 flex items-center gap-1.5">
+              <div className="flex-1 rounded-lg border border-teal py-1.5 text-center text-[9px] font-bold text-teal">👥 Sporcular</div>
+              <div className="flex-1 rounded-lg border border-teal py-1.5 text-center text-[9px] font-bold text-teal">Yoklama Al</div>
+              <div className="flex-1 rounded-lg border border-line py-1.5 text-center text-[9px] font-bold text-muted">✓ Tamamlandı</div>
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow text-sm font-bold text-bg">+</div>
             </div>
           </div>
         ))}
