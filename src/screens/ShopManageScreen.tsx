@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listAllProducts, updateProduct, deleteProduct, getPendingOrderCount, type ShopProductAdmin, type ShopGender } from "../lib/api/shop";
+import { listAllProducts, productThumbUrl, updateProduct, deleteProduct, getPendingOrderCount, type ShopProductAdmin, type ShopGender } from "../lib/api/shop";
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
 import type { ShopStackParamList } from "../navigation/ShopStack";
@@ -119,7 +119,7 @@ export default function ShopManageScreen({ navigation }: Props) {
             onLongPress={() => handleLongPress(item)}
           >
             {item.photo_urls[0] ? (
-              <Image source={{ uri: item.photo_urls[0] }} style={styles.thumb} resizeMode="cover" />
+              <Image source={{ uri: productThumbUrl(item) }} style={styles.thumb} resizeMode="cover" />
             ) : (
               <View style={[styles.thumb, styles.thumbPlaceholder]}>
                 <Text style={{ fontSize: 30 }}>🛍️</Text>

@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listAllProducts, listProductVariantsAdmin, updateVariantStock, type ShopProductAdmin, type ShopVariantAdmin } from "../lib/api/shop";
+import { listAllProducts, productThumbUrl, listProductVariantsAdmin, updateVariantStock, type ShopProductAdmin, type ShopVariantAdmin } from "../lib/api/shop";
 import type { ShopStackParamList } from "../navigation/ShopStack";
 
 type Props = NativeStackScreenProps<ShopStackParamList, "ShopStock">;
@@ -87,7 +87,7 @@ export default function ShopStockScreen({}: Props) {
             <View style={styles.card}>
               <TouchableOpacity style={styles.cardHeader} onPress={() => toggleExpand(item.id)}>
                 {item.photo_urls[0] ? (
-                  <Image source={{ uri: item.photo_urls[0] }} style={styles.thumb} />
+                  <Image source={{ uri: productThumbUrl(item) }} style={styles.thumb} />
                 ) : (
                   <View style={[styles.thumb, styles.thumbPlaceholder]}>
                     <Text style={{ fontSize: 16 }}>🛍️</Text>

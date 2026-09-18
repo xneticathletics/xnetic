@@ -180,16 +180,30 @@ export async function addProductPhoto(productId: string, file: File, existingUrl
   const { data: signedData, error: signError } = await supabase.storage.from("shop-photos").createSignedUrl(path, 315360000);
   if (signError || !signedData) throw signError ?? new Error("İmzalı URL oluşturulamadı");
 
+  // photo_thumb_urls, photo_urls ile aynı sırada paralel bir dizi (mobil
+  // uygulama ızgara için küçük önizleme yüklüyor). Web önizleme üretmiyor —
+  // "" ekleyip hizayı koruyor, mobil o fotoğrafta ana URL'ye geri düşüyor.
+  const { data: row } = await supabase.from("shop_products").select("photo_thumb_urls").eq("id", productId).maybeSingle();
+  const thumbs = existingUrls.map((_, i) => (row?.photo_thumb_urls as string[] | null)?.[i] ?? "");
   const newUrls = [...existingUrls, signedData.signedUrl];
-  const { error: updateError } = await supabase.from("shop_products").update({ photo_urls: newUrls }).eq("id", productId);
+  const { error: updateError } = await supabase
+    .from("shop_products")
+    .update({ photo_urls: newUrls, photo_thumb_urls: [...thumbs, ""] })
+    .eq("id", productId);
   if (updateError) throw updateError;
 
   return newUrls;
 }
 
 export async function removeProductPhoto(productId: string, url: string, existingUrls: string[]): Promise<string[]> {
+  const index = existingUrls.indexOf(url);
+  const { data: row } = await supabase.from("shop_products").select("photo_thumb_urls").eq("id", productId).maybeSingle();
+  const thumbs = existingUrls.map((_, i) => (row?.photo_thumb_urls as string[] | null)?.[i] ?? "");
   const newUrls = existingUrls.filter((u) => u !== url);
-  const { error } = await supabase.from("shop_products").update({ photo_urls: newUrls }).eq("id", productId);
+  const { error } = await supabase
+    .from("shop_products")
+    .update({ photo_urls: newUrls, photo_thumb_urls: thumbs.filter((_, i) => i !== index) })
+    .eq("id", productId);
   if (error) throw error;
   return newUrls;
 }

@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listActiveProducts, type ShopProduct, type ShopGender } from "../lib/api/shop";
+import { listActiveProducts, productThumbUrl, type ShopProduct, type ShopGender } from "../lib/api/shop";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 import type { ShopStackParamList } from "../navigation/ShopStack";
@@ -146,7 +146,7 @@ export default function ShopScreen({ navigation }: Props) {
             >
               <View style={styles.cardImageWrap}>
                 {item.photo_urls[0] ? (
-                  <Image source={{ uri: item.photo_urls[0] }} style={styles.cardImage} resizeMode="cover" />
+                  <Image source={{ uri: productThumbUrl(item) }} style={styles.cardImage} resizeMode="cover" />
                 ) : (
                   <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
                     <Text style={{ fontSize: 52 }}>🛍️</Text>
