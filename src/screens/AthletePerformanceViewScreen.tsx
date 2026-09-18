@@ -153,7 +153,7 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
               {trend && (
                 <View style={{ alignItems: "flex-end" }}>
                   <Text style={[styles.trendBig, { color: trend.improved ? colors.teal : colors.coral }]}>
-                    {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
+                    {trend.improved ? "▲" : "▼"} %{trend.pct}
                   </Text>
                   <Text style={styles.trendCaption}>önceki ölçüme göre</Text>
                 </View>
