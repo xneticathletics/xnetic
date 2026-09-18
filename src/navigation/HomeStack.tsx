@@ -320,7 +320,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="PerformanceTestForm" component={PerformanceTestFormScreen} options={{ title: "Test Ekle", gestureEnabled: false }} />
       <Stack.Screen name="TestGroupsList" component={TestGroupsListScreen} options={{ title: "Test Grupları" }} />
       <Stack.Screen name="TestGroupForm" component={TestGroupFormScreen} options={{ title: "Yeni Test Grubu", gestureEnabled: false }} />
-      <Stack.Screen name="TestGroupDetail" component={TestGroupDetailScreen} />
+      <Stack.Screen name="TestGroupDetail" component={TestGroupDetailScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="WellnessCheckin" component={WellnessCheckinScreen} options={{ title: "Günlük Check-in" }} />
       <Stack.Screen name="MembershipFreeze" component={MembershipFreezeScreen} options={{ title: "Kayıt Dondurma" }} />
       <Stack.Screen name="CoachWellness" component={CoachWellnessScreen} options={{ title: "Sporcu Check-in'leri" }} />
