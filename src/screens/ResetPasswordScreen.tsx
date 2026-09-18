@@ -1,8 +1,9 @@
 import React, { useRef, useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
+  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
+import PasswordInput from "../components/PasswordInput";
 import { colors, radius, spacing } from "../theme/tokens";
 import { completePasswordReset } from "../lib/api/passwordReset";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
@@ -55,26 +56,24 @@ export default function ResetPasswordScreen({ onDone }: { onDone: () => void }) 
         <Text style={styles.title}>Yeni Şifre Belirle</Text>
         <Text style={styles.subtitle}>Hesabın için yeni bir şifre gir.</Text>
 
-        <TextInput
-          onFocus={handleFocus}
-          style={styles.input}
-          placeholder="Yeni şifre (en az 6 karakter)"
-          placeholderTextColor={colors.muted}
-          accessibilityLabel="Yeni şifre"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          onFocus={handleFocus}
-          style={styles.input}
-          placeholder="Yeni şifre (tekrar)"
-          placeholderTextColor={colors.muted}
-          accessibilityLabel="Yeni şifre tekrar"
-          secureTextEntry
-          value={password2}
-          onChangeText={setPassword2}
-        />
+        <View style={{ marginBottom: spacing.md }}>
+          <PasswordInput
+            onFocus={handleFocus}
+            placeholder="Yeni şifre (en az 6 karakter)"
+            accessibilityLabel="Yeni şifre"
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+        <View style={{ marginBottom: spacing.md }}>
+          <PasswordInput
+            onFocus={handleFocus}
+            placeholder="Yeni şifre (tekrar)"
+            accessibilityLabel="Yeni şifre tekrar"
+            value={password2}
+            onChangeText={setPassword2}
+          />
+        </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
 

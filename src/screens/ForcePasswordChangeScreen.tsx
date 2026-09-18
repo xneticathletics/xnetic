@@ -1,8 +1,9 @@
 import React, { useRef, useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
+  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform,
 } from "react-native";
+import PasswordInput from "../components/PasswordInput";
 import { colors, radius, spacing } from "../theme/tokens";
 import { useAuth } from "../context/AuthContext";
 import { changeMyPasswordFirstLogin } from "../lib/api/currentUser";
@@ -58,26 +59,20 @@ export default function ForcePasswordChangeScreen({ onComplete }: { onComplete: 
 
         <View style={{ marginBottom: spacing.md }}>
           <Text style={styles.label}>Yeni Şifre</Text>
-          <TextInput
+          <PasswordInput
             onFocus={handleFocus}
-            style={styles.input}
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
             placeholder="En az 6 karakter"
-            placeholderTextColor={colors.muted}
           />
         </View>
 
         <View style={{ marginBottom: spacing.md }}>
           <Text style={styles.label}>Yeni Şifre (Tekrar)</Text>
-          <TextInput
+          <PasswordInput
             onFocus={handleFocus}
-            style={styles.input}
             value={password2}
             onChangeText={setPassword2}
-            secureTextEntry
-            placeholderTextColor={colors.muted}
           />
         </View>
 

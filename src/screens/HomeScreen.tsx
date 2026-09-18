@@ -164,8 +164,12 @@ function decorCircleStyle(color: string) {
 // bir çalışsın diye (aidattaki topUpAllActivePlans/haftalık program
 // tazeleme ile aynı throttle deseni) — modül seviyesinde, TrainingSessionsScreen'deki
 // lastCalendarView ile aynı fikir: uygulama açık kaldığı sürece hatırlanır.
+// Kullanıcı bazlı tutuluyor: tek bir sayaç olunca, çıkış yapıp başka bir
+// hesapla (ör. rozeti veren koordinatör -> sporcu) girildiğinde eski
+// hesabın kontrol zamanı yüzünden yeni hesapta kontrol atlanıyor, kazanılan
+// rozetin konfetili karşılaması bir sonraki girişe kalıyordu.
 const BADGE_CHECK_THROTTLE_MS = 3 * 60 * 1000;
-let lastBadgeCheckAt = 0;
+const lastBadgeCheckAtByUser = new Map<string, number>();
 
 export default function HomeScreen({
   role,
@@ -175,7 +179,8 @@ export default function HomeScreen({
   navigation: NativeStackNavigationProp<HomeStackParamList, "Home">;
 }) {
   const insets = useSafeAreaInsets();
-  const { clubId } = useAuth();
+  const { clubId, session } = useAuth();
+  const authUserId = session?.user?.id ?? null;
   const { selectedBranch, setSelectedBranch, isLocked } = useBranchSelect();
   const { settings } = useClubSettings();
   const isBranchCoordinator = role === "coach" && isLocked;
@@ -250,15 +255,19 @@ export default function HomeScreen({
   // işaretlenir hem de rafa (myBadges) eklenir.
   useFocusEffect(
     useCallback(() => {
-      if (!showBadges) return;
-      if (Date.now() - lastBadgeCheckAt < BADGE_CHECK_THROTTLE_MS) return;
-      lastBadgeCheckAt = Date.now();
-      let cancelled = false;
+      if (!showBadges || !authUserId) return;
+      const last = lastBadgeCheckAtByUser.get(authUserId) ?? 0;
+      if (Date.now() - last < BADGE_CHECK_THROTTLE_MS) return;
+      // Zaman damgası sadece BAŞARILI kontrolden sonra yazılıyor ve sonuç
+      // odaktan çıkılsa bile uygulanıyor — aksi halde istek dönmeden başka
+      // ekrana geçilirse kutlama 3 dakika boyunca kayboluyordu.
       checkMyBadges()
-        .then((rows) => { if (!cancelled && rows.length > 0) setPendingBadges(rows); })
+        .then((rows) => {
+          lastBadgeCheckAtByUser.set(authUserId, Date.now());
+          if (rows.length > 0) setPendingBadges(rows);
+        })
         .catch(() => {});
-      return () => { cancelled = true; };
-    }, [showBadges])
+    }, [showBadges, authUserId])
   );
 
   const handleDismissEarnedBadge = () => {

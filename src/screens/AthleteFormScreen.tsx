@@ -67,6 +67,7 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
   // ekleme akışı hiç etkilenmez.
   const [branchFees, setBranchFees] = useState<Record<string, number>>({});
   const [allGroups, setAllGroups] = useState<Group[]>([]);
+  const isMusabikGroup = allGroups.find((g) => g.id === form.group_id)?.athlete_type === "musabik";
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
   const [branchPickerVisible, setBranchPickerVisible] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | null>(null); // yeni seçilen, henüz yüklenmemiş fotoğraf
@@ -238,10 +239,13 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
     setError(null);
     try {
       let saved: { id: string };
+      // Spor Okulu grubunda forma numarası olmaz — grup sonradan değiştirilip
+      // eski bir numara kalmış olabilir, kaydederken temizle.
+      const payload = isMusabikGroup ? form : { ...form, jersey_number: null };
       if (isEdit && athleteId) {
-        saved = await updateAthlete(athleteId, form);
+        saved = await updateAthlete(athleteId, payload);
       } else {
-        saved = await createAthlete(form);
+        saved = await createAthlete(payload);
       }
       if (photoUri && saved?.id) {
         const url = await uploadAthletePhoto(saved.id, photoUri);
@@ -393,8 +397,11 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         />
       </Field>
 
+      {/* Forma numarası sadece Müsabık sporcu gruplarında anlamlı (kullanıcı
+          isteği) — Spor Okulu gruplarında hiç gösterilmiyor. Forma bedeni
+          (üniforma) ikisinde de var. */}
       <View style={styles.row}>
-        <Field label="Forma Bedeni" style={{ flex: 1, marginRight: spacing.sm }}>
+        <Field label="Forma Bedeni" style={{ flex: 1, marginRight: isMusabikGroup ? spacing.sm : 0 }}>
           <TextInput
             onFocus={handleFocus}
             style={styles.input}
@@ -404,17 +411,19 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
             placeholderTextColor={colors.muted}
           />
         </Field>
-        <Field label="Forma Numarası" style={{ flex: 1 }}>
-          <TextInput
-            onFocus={handleFocus}
-            style={styles.input}
-            value={form.jersey_number ?? ""}
-            onChangeText={(v) => set("jersey_number", v || null)}
-            keyboardType="numeric"
-            placeholder="Örn. 10"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
+        {isMusabikGroup && (
+          <Field label="Forma Numarası" style={{ flex: 1 }}>
+            <TextInput
+              onFocus={handleFocus}
+              style={styles.input}
+              value={form.jersey_number ?? ""}
+              onChangeText={(v) => set("jersey_number", v || null)}
+              keyboardType="numeric"
+              placeholder="Örn. 10"
+              placeholderTextColor={colors.muted}
+            />
+          </Field>
+        )}
       </View>
 
       <Field label="Durum">
