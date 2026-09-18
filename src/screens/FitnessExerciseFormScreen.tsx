@@ -63,7 +63,13 @@ export default function FitnessExerciseFormScreen({ route, navigation }: Props) 
       Alert.alert("İzin gerekli", "Video seçmek için galeri erişim izni vermelisin.", [{ text: "Tamam" }]);
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"] });
+    // iOS seçim anında videoyu 720p H.264'e sıkıştırıyor (önceden ham
+    // hâliyle, yüzlerce MB olabiliyordu) — yükleme hızlı, depolama/trafik
+    // (egress) maliyeti düşük. Üst sınır yine 50 MB (bkz. MAX_VIDEO_SIZE_BYTES).
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["videos"],
+      videoExportPreset: ImagePicker.VideoExportPreset.H264_1280x720,
+    });
     if (result.canceled || !result.assets?.[0]?.uri) return;
     setUploading(true);
     setError(null);

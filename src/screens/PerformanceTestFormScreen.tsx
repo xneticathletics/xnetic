@@ -71,7 +71,12 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
       Alert.alert("İzin gerekli", "Video seçmek için galeri erişim izni vermelisin.", [{ text: "Tamam" }]);
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"] });
+    // iOS seçim anında videoyu 720p H.264'e sıkıştırıyor — bkz.
+    // FitnessExerciseFormScreen'deki aynı gerekçe.
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["videos"],
+      videoExportPreset: ImagePicker.VideoExportPreset.H264_1280x720,
+    });
     if (result.canceled || !result.assets?.[0]?.uri) return;
     setUploading(true);
     setError(null);
