@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAllMeasurementsForAthlete, type PerformanceMeasurement } from "../lib/api/performanceMeasurements";
 import { getPerformanceCategory } from "../lib/performanceTests";
-import { getCustomTestsByIds, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
+import { getCustomTestsByIds, resolveLowerIsBetter, type CustomPerformanceTest } from "../lib/api/customPerformanceTests";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,19 +17,12 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
 }
 
-// Süre birimli testlerde (sürat vb.) DÜŞÜK değer iyidir — testin ayrı bir
-// "iyi yön" alanı yok, birimden çıkarıyoruz. Aksi halde 5.5 sn -> 4.5 sn
-// gibi bir İYİLEŞME kırmızı aşağı okla "kötüleşme" gibi görünüyordu.
-function isLowerBetter(unit: string): boolean {
-  const u = unit.trim().toLowerCase().replace(/\./g, "");
-  return ["sn", "s", "sec", "saniye", "dk", "dak", "dakika", "ms"].includes(u);
-}
-
 // En son iki ölçüm arasındaki artış/azalış oranı (son ölçüm, bir önceki
-// ölçüme göre). `improved` birime göre belirlenir; iyi yön bilinmiyorsa
-// (ör. cm, kg) artış iyi kabul edilir.
+// ölçüme göre). `improved`, testin kendi "iyi yön" alanına göre belirlenir
+// (lower_is_better — süre, düşme sayısı gibi testlerde düşüş iyileşmedir);
+// alan boşsa birimden tahmin edilir, o da bilinmiyorsa artış iyi kabul edilir.
 type Trend = { pct: number; dir: "up" | "down"; improved: boolean };
-function computeTrend(items: PerformanceMeasurement[], unit: string): Trend | null {
+function computeTrend(items: PerformanceMeasurement[], lowerIsBetter: boolean): Trend | null {
   if (items.length < 2) return null;
   const latest = items[0].value;
   const previous = items[1].value;
@@ -37,7 +30,7 @@ function computeTrend(items: PerformanceMeasurement[], unit: string): Trend | nu
   const pct = ((latest - previous) / Math.abs(previous)) * 100;
   if (pct === 0) return null;
   const dir = pct > 0 ? "up" : "down";
-  const improved = isLowerBetter(unit) ? dir === "down" : dir === "up";
+  const improved = lowerIsBetter ? dir === "down" : dir === "up";
   return { pct: Math.round(Math.abs(pct) * 10) / 10, dir, improved };
 }
 
@@ -46,6 +39,7 @@ type Group = {
   items: PerformanceMeasurement[];
   name: string;
   unit: string;
+  lowerIsBetter: boolean;
   categoryLabel: string;
   categoryIcon: string;
   categoryColor: string;
@@ -62,7 +56,7 @@ function resolveGroup(
   const category = getPerformanceCategory(test.category);
   if (!category) return null;
   return {
-    testKey, items, name: test.name, unit: test.unit,
+    testKey, items, name: test.name, unit: test.unit, lowerIsBetter: resolveLowerIsBetter(test),
     categoryLabel: category.label, categoryIcon: category.icon, categoryColor: category.color,
   };
 }
@@ -122,7 +116,7 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
       )}
 
       {groups.map((g) => {
-        const trend = computeTrend(g.items, g.unit);
+        const trend = computeTrend(g.items, g.lowerIsBetter);
         const recent = g.items.slice(0, 6);
         const maxValue = Math.max(...recent.map((m) => m.value), 0);
         return (

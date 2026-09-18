@@ -15,6 +15,9 @@ export type CustomPerformanceTest = {
   equipment: string | null;
   instructions: string;
   video_url: string | null;
+  // true: düşük değer iyi (süre, düşme sayısı...), false: yüksek değer iyi,
+  // null: belirsiz/nötr (boy, kilo...) — bkz. resolveLowerIsBetter().
+  lower_is_better: boolean | null;
   created_at: string;
   // Süper Admin, global olmayan (başka bir kulübe ait) satırlarda hangi
   // kulübün eklediğini görebilsin diye — sadece Süper Admin sorgularında
@@ -29,9 +32,21 @@ export type CustomPerformanceTestInput = {
   equipment: string | null;
   instructions: string;
   video_url: string | null;
+  lower_is_better: boolean | null;
 };
 
-const FIELDS = "id, club_id, category, name, unit, equipment, instructions, video_url, created_at";
+const FIELDS = "id, club_id, category, name, unit, equipment, instructions, video_url, lower_is_better, created_at";
+
+// Süre birimli testlerde düşük değer iyidir — testin lower_is_better'ı
+// belirtilmemişse (null) son çare olarak birimden tahmin edilir.
+export function isLowerBetterUnit(unit: string): boolean {
+  const u = unit.trim().toLowerCase().replace(/\./g, "");
+  return ["sn", "s", "sec", "saniye", "dk", "dak", "dakika", "ms"].includes(u);
+}
+
+export function resolveLowerIsBetter(test: Pick<CustomPerformanceTest, "lower_is_better" | "unit">): boolean {
+  return test.lower_is_better ?? isLowerBetterUnit(test.unit);
+}
 
 export async function listTestsByCategory(category: string): Promise<CustomPerformanceTest[]> {
   const { data, error } = await supabase

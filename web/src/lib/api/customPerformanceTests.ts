@@ -13,6 +13,7 @@ export type CustomPerformanceTest = {
   equipment: string | null;
   instructions: string;
   video_url: string | null;
+  lower_is_better: boolean | null;
   created_at: string;
 };
 
@@ -23,9 +24,10 @@ export type CustomPerformanceTestInput = {
   equipment: string | null;
   instructions: string;
   video_url: string | null;
+  lower_is_better?: boolean | null;
 };
 
-const FIELDS = "id, club_id, category, name, unit, equipment, instructions, video_url, created_at";
+const FIELDS = "id, club_id, category, name, unit, equipment, instructions, video_url, lower_is_better, created_at";
 
 export async function listTestsByCategory(category: string): Promise<CustomPerformanceTest[]> {
   const { data, error } = await supabase

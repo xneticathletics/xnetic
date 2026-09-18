@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { PERFORMANCE_CATEGORIES } from "../lib/performanceTests";
-import { createCustomTest, updateCustomTest, getCustomTest, uploadTestVideo } from "../lib/api/customPerformanceTests";
+import { createCustomTest, updateCustomTest, getCustomTest, uploadTestVideo, isLowerBetterUnit } from "../lib/api/customPerformanceTests";
 import { useAuth } from "../context/AuthContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
@@ -22,8 +22,13 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
   const [equipment, setEquipment] = useState("");
   const [instructions, setInstructions] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  // İyi yön: true = düşük değer iyi (süre, düşme sayısı...), false = yüksek
+  // değer iyi. Kullanıcı elle seçmediyse birimden (sn/dk → düşük) tahmin
+  // edilir; ölçüm ekranındaki artış/azalış renginin doğru olması için.
+  const [lowerIsBetter, setLowerIsBetter] = useState(false);
+  const directionTouchedRef = useRef(false);
   const initialSnapshotRef = useRef(
-    JSON.stringify({ category: null, name: "", unit: "", equipment: "", instructions: "", videoUrl: "" })
+    JSON.stringify({ category: null, name: "", unit: "", equipment: "", instructions: "", videoUrl: "", lowerIsBetter: false })
   );
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,9 +55,13 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
         setEquipment(loadedEquipment);
         setInstructions(t.instructions);
         setVideoUrl(loadedVideoUrl);
+        const loadedLower = t.lower_is_better ?? isLowerBetterUnit(t.unit);
+        directionTouchedRef.current = t.lower_is_better !== null;
+        setLowerIsBetter(loadedLower);
         initialSnapshotRef.current = JSON.stringify({
           category: t.category, name: t.name, unit: t.unit,
           equipment: loadedEquipment, instructions: t.instructions, videoUrl: loadedVideoUrl,
+          lowerIsBetter: loadedLower,
         });
       })
       .catch((e) => { if (!cancelled) setError(e.message ?? "Test yüklenemedi"); })
@@ -62,7 +71,16 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
 
   const hasUnsavedChanges =
     !loading &&
-    JSON.stringify({ category, name, unit, equipment, instructions, videoUrl }) !== initialSnapshotRef.current;
+    JSON.stringify({ category, name, unit, equipment, instructions, videoUrl, lowerIsBetter }) !== initialSnapshotRef.current;
+
+  const handleUnitChange = (text: string) => {
+    setUnit(text);
+    if (!directionTouchedRef.current) setLowerIsBetter(isLowerBetterUnit(text));
+  };
+  const chooseDirection = (lower: boolean) => {
+    directionTouchedRef.current = true;
+    setLowerIsBetter(lower);
+  };
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
   const handlePickVideo = async () => {
@@ -108,6 +126,7 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
         equipment: equipment.trim() || null,
         instructions: instructions.trim(),
         video_url: videoUrl.trim() || null,
+        lower_is_better: lowerIsBetter,
       };
       if (testId) {
         await updateCustomTest(testId, input);
@@ -172,7 +191,7 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
               onFocus={handleFocus}
               style={styles.input}
               value={unit}
-              onChangeText={setUnit}
+              onChangeText={handleUnitChange}
               placeholder="Örn. sn, cm, kg"
               placeholderTextColor={colors.muted}
             />
@@ -189,6 +208,29 @@ export default function PerformanceTestFormScreen({ route, navigation }: Props) 
             />
           </View>
         </View>
+
+        <Text style={[styles.label, { marginTop: spacing.lg }]}>Hangi Değer Daha İyi? *</Text>
+        <View style={styles.chipGrid}>
+          {([
+            { lower: false, label: "Yüksek değer iyi", hint: "mesafe, tekrar, kuvvet" },
+            { lower: true, label: "Düşük değer iyi", hint: "süre, düşme sayısı" },
+          ] as const).map((o) => {
+            const active = lowerIsBetter === o.lower;
+            return (
+              <TouchableOpacity
+                key={o.label}
+                style={[styles.chip, { borderColor: colors.violet }, active && { backgroundColor: colors.violet }]}
+                onPress={() => chooseDirection(o.lower)}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{o.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Text style={styles.directionHint}>
+          Ölçüm ekranındaki artış/azalış yüzdesinin yeşil (iyileşme) mi kırmızı (kötüleşme) mi görüneceğini belirler.
+          Ör. sürat ve düşme sayısında düşük değer iyidir.
+        </Text>
 
         <Text style={[styles.label, { marginTop: spacing.lg }]}>Nasıl Yapılır? *</Text>
         <TextInput
@@ -243,6 +285,7 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 10 },
   chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
   chipTextActive: { color: colors.bg, fontWeight: "800" },
+  directionHint: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: spacing.xs },
   row: { flexDirection: "row", gap: spacing.sm },
   rowItem: { flex: 1 },
   input: {

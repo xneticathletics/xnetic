@@ -44,7 +44,7 @@ export async function getTestGroup(id: string): Promise<{ group: TestGroup; athl
       .eq("test_group_id", id),
     supabase
       .from("performance_test_group_tests")
-      .select("performance_test_catalog(id, club_id, category, name, unit, equipment, instructions, video_url, created_at)")
+      .select("performance_test_catalog(id, club_id, category, name, unit, equipment, instructions, video_url, lower_is_better, created_at)")
       .eq("test_group_id", id),
   ]);
   if (groupResult.error) throw groupResult.error;

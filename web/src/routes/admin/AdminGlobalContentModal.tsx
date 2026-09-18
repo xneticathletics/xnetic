@@ -79,6 +79,10 @@ export default function AdminGlobalContentModal({
   const [testCategory, setTestCategory] = useState(test?.category ?? PERFORMANCE_CATEGORIES[0].key);
   const [testName, setTestName] = useState(test?.name ?? "");
   const [testUnit, setTestUnit] = useState(test?.unit ?? "");
+  // "" = belirtilmedi (mobil birimden tahmin eder), "lower" / "higher".
+  const [testDirection, setTestDirection] = useState<"" | "lower" | "higher">(
+    test?.lower_is_better == null ? "" : test.lower_is_better ? "lower" : "higher"
+  );
   const [testEquipment, setTestEquipment] = useState(test?.equipment ?? "");
   const [testInstructions, setTestInstructions] = useState(test?.instructions ?? "");
   const [testVideoUrl, setTestVideoUrl] = useState(test?.video_url ?? "");
@@ -137,6 +141,7 @@ export default function AdminGlobalContentModal({
         const input = {
           category: testCategory, name: testName.trim(), unit: testUnit.trim(),
           equipment: testEquipment.trim() || null, instructions: testInstructions.trim(), video_url: testVideoUrl.trim() || null,
+          lower_is_better: testDirection === "" ? null : testDirection === "lower",
         };
         setSaving(true);
         if (test) await updateCustomTest(test.id, input);
@@ -270,6 +275,13 @@ export default function AdminGlobalContentModal({
           </FormField>
           <FormField label="Birim *">
             <input className={inputClass} value={testUnit} onChange={(e) => setTestUnit(e.target.value)} placeholder="Örn. saniye, cm, tekrar" />
+          </FormField>
+          <FormField label="Hangi Değer Daha İyi?">
+            <select className={inputClass} value={testDirection} onChange={(e) => setTestDirection(e.target.value as "" | "lower" | "higher")}>
+              <option value="">Belirtilmedi (birime göre)</option>
+              <option value="higher">Yüksek değer iyi (mesafe, tekrar, kuvvet)</option>
+              <option value="lower">Düşük değer iyi (süre, düşme sayısı)</option>
+            </select>
           </FormField>
           <FormField label="Ekipman">
             <input className={inputClass} value={testEquipment} onChange={(e) => setTestEquipment(e.target.value)} placeholder="Örn. Kronometre" />
