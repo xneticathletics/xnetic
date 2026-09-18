@@ -21,5 +21,15 @@ export async function uploadClubLogo(file: File, clubId: string): Promise<string
     .from("club-logos")
     .upload(logoPath(clubId), file, { upsert: true, contentType: file.type || "image/png" });
   if (error) throw error;
+
+  // Mobil uygulama logoyu sabit bir URL ile gösteriyor ve yeni logo yüklenip
+  // yüklenmediğini clubs.logo_updated_at'ten anlıyor (bkz. mobildeki
+  // touch_club_logo) — web'den yüklenince bu güncellenmediği için mobilde
+  // eski logo, çıkış-giriş yapılana kadar görünmeye devam ediyordu. Hatası
+  // kritik değil, sessizce yutuluyor.
+  await supabase.rpc("touch_club_logo", { p_club_id: clubId }).then(
+    () => {},
+    () => {}
+  );
   return getClubLogoUrl(clubId);
 }
