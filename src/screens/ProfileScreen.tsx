@@ -196,8 +196,12 @@ export default function ProfileScreen({
           YOK — bkz. RoleTabs.tsx). Süper Admin'in kendi kulübü yok, duyuru
           kulüp-içi bir kavram, bu yüzden o hariç. Diğer ayar kutucuklarıyla
           aynı kutu stilinde — tek satır kart yerine iki de burada. */}
+      {/* TÜM kutucuklar tek bir sarmalayan ızgarada — satıra tam 2 kutu
+          (eskiden 3 kutu sıkışıp çok küçülüyordu), tek kalan kutu yarım
+          genişlikte kalıyor. */}
+      <View style={styles.settingsGrid}>
       {role !== "super_admin" && (
-        <View style={styles.settingsGrid}>
+        <>
           {role === "club_admin" && (
             <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ClubSettings")}>
               <View style={styles.settingsIconBadge}>
@@ -237,10 +241,9 @@ export default function ProfileScreen({
               <Text style={styles.settingsSub}>Eşik sayılarını düzenle</Text>
             </TouchableOpacity>
           )}
-        </View>
+        </>
       )}
 
-      <View style={styles.settingsGrid}>
         <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("PersonalInfo")}>
           <View style={styles.settingsIconBadge}>
             <Text style={styles.settingsIcon}>👤</Text>
@@ -339,9 +342,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 8,
   },
   coordinatorBadgeText: { color: colors.teal, fontWeight: "700", fontSize: 13 },
-  settingsGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
+  settingsGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.sm },
   settingsTile: {
-    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    flexBasis: "48%", flexGrow: 0, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
     borderRadius: radius.lg, padding: spacing.sm + 4,
   },
   settingsIconBadge: {
