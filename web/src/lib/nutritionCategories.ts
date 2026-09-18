@@ -15,11 +15,20 @@ export function getFoodCategory(key: string) {
   return FOOD_CATEGORIES.find((c) => c.key === key) ?? FOOD_CATEGORIES[0];
 }
 
-// Beslenme Rehberi'ndeki 3 sabit gün kategorisi.
+// Beslenme Rehberi kategorileri (3 gün + genç sporcu konu başlıkları).
 export const ARTICLE_CATEGORIES = [
   { key: "musabaka_gunu", label: "Müsabaka Günü Beslenmesi", icon: "🏆", color: "coral" },
   { key: "antrenman_gunu", label: "Antrenman Günü Beslenmesi", icon: "💪", color: "teal" },
   { key: "normal_gun", label: "Normal Gün Beslenmesi", icon: "🍽️", color: "yellow" },
+  // Çocuk ve genç sporcu beslenmesi konu başlıkları — mobildeki listeyle aynı key'ler.
+  { key: "genc_beslenme_temeli", label: "Genç Sporcunun Beslenme Temeli", icon: "🥗", color: "teal" },
+  { key: "protein", label: "Protein: Ne Kadar Yeterli?", icon: "🍗", color: "coral" },
+  { key: "su_sivi", label: "Su ve Sıvı Dengesi", icon: "💧", color: "violet" },
+  { key: "enerji_icecekleri", label: "Enerji ve Spor İçecekleri", icon: "🥤", color: "yellow" },
+  { key: "kahvalti", label: "Kahvaltı", icon: "🍳", color: "coral" },
+  { key: "kemik_sagligi", label: "Kemik Sağlığı: Kalsiyum, D Vitamini, Demir", icon: "🦴", color: "violet" },
+  { key: "yetersiz_enerji", label: "Yetersiz Enerji Alımı (RED-S)", icon: "⚠️", color: "teal" },
+  { key: "uyku_beslenme", label: "Uyku ve Beslenme", icon: "😴", color: "yellow" },
 ] as const;
 
 export type ArticleCategoryKey = (typeof ARTICLE_CATEGORIES)[number]["key"];

@@ -3,6 +3,8 @@ import type { ArticleCategoryKey } from "../nutritionCategories";
 
 export type NutritionArticle = {
   id: string;
+  // NULL = global (süper admin ekledi, tüm kulüpler görür, sadece süper admin düzenler).
+  club_id: string | null;
   category: ArticleCategoryKey;
   title: string;
   body: string | null;
@@ -19,7 +21,7 @@ export type NutritionArticleInput = {
   source: string | null;
 };
 
-const NUTRITION_ARTICLE_FIELDS = "id, category, title, body, pdf_url, source, created_at";
+const NUTRITION_ARTICLE_FIELDS = "id, club_id, category, title, body, pdf_url, source, created_at";
 
 export async function listNutritionArticlesByCategory(category: ArticleCategoryKey): Promise<NutritionArticle[]> {
   const { data, error } = await supabase

@@ -58,9 +58,11 @@ export default function NutritionArticlesPage() {
       className: "text-right",
       render: (a) => (
         <div className="flex justify-end gap-2">
-          <Link to={`/nutrition/articles/${a.id}`} className="text-xs font-bold text-teal hover:underline">
-            Düzenle
-          </Link>
+          {(a.club_id !== null || role === "super_admin") && (
+            <Link to={`/nutrition/articles/${a.id}`} className="text-xs font-bold text-teal hover:underline">
+              Düzenle
+            </Link>
+          )}
           {canDelete && (
             <button onClick={() => handleDelete(a)} className="text-xs font-bold text-coral hover:underline">
               Sil

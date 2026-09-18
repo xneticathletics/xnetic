@@ -38,6 +38,9 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
   // desen). Bu yüzden silme SADECE süper admine açık.
   const canDelete = role === "super_admin";
   const [article, setArticle] = useState<NutritionArticle | null>(null);
+  // Global (club_id NULL) yazıları sadece süper admin düzenleyebilir; kulübe
+  // özel yazıları admin/koordinatör (bkz. nutrition_articles RLS).
+  const canEditThis = !!article && (article.club_id === null ? role === "super_admin" : canEdit);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,9 +122,9 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
         </View>
       )}
 
-      {(canEdit || canDelete) && (
+      {(canEditThis || canDelete) && (
         <View style={styles.actionsRow}>
-          {canEdit && (
+          {canEditThis && (
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => navigation.navigate("NutritionArticleForm", { articleId: article.id, category: article.category })}
