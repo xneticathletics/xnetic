@@ -17,18 +17,28 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
 }
 
-// En son iki ölçüm arasındaki artış/azalış oranı — testin "iyi" yönü
-// (ör. süratte düşük süre mi iyi, sıçramada yüksek değer mi iyi) elimizde
-// olmadığı için burada bir yargı YOK, sadece ham değişim yüzdesi.
-type Trend = { pct: number; dir: "up" | "down" };
-function computeTrend(items: PerformanceMeasurement[]): Trend | null {
+// Süre birimli testlerde (sürat vb.) DÜŞÜK değer iyidir — testin ayrı bir
+// "iyi yön" alanı yok, birimden çıkarıyoruz. Aksi halde 5.5 sn -> 4.5 sn
+// gibi bir İYİLEŞME kırmızı aşağı okla "kötüleşme" gibi görünüyordu.
+function isLowerBetter(unit: string): boolean {
+  const u = unit.trim().toLowerCase().replace(/\./g, "");
+  return ["sn", "s", "sec", "saniye", "dk", "dak", "dakika", "ms"].includes(u);
+}
+
+// En son iki ölçüm arasındaki artış/azalış oranı (son ölçüm, bir önceki
+// ölçüme göre). `improved` birime göre belirlenir; iyi yön bilinmiyorsa
+// (ör. cm, kg) artış iyi kabul edilir.
+type Trend = { pct: number; dir: "up" | "down"; improved: boolean };
+function computeTrend(items: PerformanceMeasurement[], unit: string): Trend | null {
   if (items.length < 2) return null;
   const latest = items[0].value;
   const previous = items[1].value;
   if (previous === 0) return null;
   const pct = ((latest - previous) / Math.abs(previous)) * 100;
   if (pct === 0) return null;
-  return { pct: Math.round(Math.abs(pct) * 10) / 10, dir: pct > 0 ? "up" : "down" };
+  const dir = pct > 0 ? "up" : "down";
+  const improved = isLowerBetter(unit) ? dir === "down" : dir === "up";
+  return { pct: Math.round(Math.abs(pct) * 10) / 10, dir, improved };
 }
 
 type Group = {
@@ -112,7 +122,7 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
       )}
 
       {groups.map((g) => {
-        const trend = computeTrend(g.items);
+        const trend = computeTrend(g.items, g.unit);
         const recent = g.items.slice(0, 6);
         const maxValue = Math.max(...recent.map((m) => m.value), 0);
         return (
@@ -140,11 +150,14 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
                   {g.items[0].value} <Text style={styles.latestUnit}>{g.unit}</Text>
                 </Text>
                 {trend && (
-                  <View style={[styles.trendPill, { backgroundColor: trend.dir === "up" ? colors.tealSoft : colors.coralSoft }]}>
-                    <Text style={[styles.trendPillText, { color: trend.dir === "up" ? colors.teal : colors.coral }]}>
-                      {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
-                    </Text>
-                  </View>
+                  <>
+                    <View style={[styles.trendPill, { backgroundColor: trend.improved ? colors.tealSoft : colors.coralSoft }]}>
+                      <Text style={[styles.trendPillText, { color: trend.improved ? colors.teal : colors.coral }]}>
+                        {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
+                      </Text>
+                    </View>
+                    <Text style={styles.trendCaption}>önceki ölçüme göre</Text>
+                  </>
                 )}
               </View>
             </View>
@@ -193,6 +206,7 @@ const styles = StyleSheet.create({
   latestUnit: { fontSize: 12, fontWeight: "700" },
   trendPill: { borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4 },
   trendPillText: { fontSize: 11, fontWeight: "800" },
+  trendCaption: { color: colors.muted, fontSize: 10, marginTop: 2 },
   historyTable: { gap: 6 },
   historyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   historyDate: { color: colors.muted, fontSize: 11, width: 64 },
