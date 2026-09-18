@@ -162,20 +162,19 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
     }, [athleteId, isStaff])
   );
 
-  // Forma numarası sadece Müsabık sporcularda var (Spor Okulu'nda yok) —
-  // eksik bilgi sayımına ve gösterime de o kadar dahil.
-  const showJerseyNumber = athlete?.athlete_type === "musabik";
+  // Forma bedeni ve numarası sadece Müsabık sporcularda var (Spor Okulu'nda
+  // yok) — eksik bilgi sayımına ve gösterime de o kadar dahil.
+  const showJersey = athlete?.athlete_type === "musabik";
   const infoMissing = useMemo(() => {
     if (!athlete) return 0;
     return [
-      athlete.birth_date, athlete.height_cm, athlete.weight_kg,
-      athlete.school, athlete.jersey_size,
-      ...(athlete.athlete_type === "musabik" ? [athlete.jersey_number] : []),
+      athlete.birth_date, athlete.height_cm, athlete.weight_kg, athlete.school,
+      ...(athlete.athlete_type === "musabik" ? [athlete.jersey_size, athlete.jersey_number] : []),
     ].filter((v) => v === null || v === undefined || v === "").length;
   }, [athlete]);
   const parentMissing = athlete && !athlete.parent_phone ? 1 : 0;
 
-  const totalFields = showJerseyNumber ? 7 : 6;
+  const totalFields = showJersey ? 7 : 5;
   const totalMissing = infoMissing + parentMissing;
   const completionPct = Math.round(((totalFields - totalMissing) / totalFields) * 100);
 
@@ -329,7 +328,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
           <Text style={[styles.statValue, { color: colors.teal }]}>{attendancePct !== null ? `%${attendancePct}` : "—"}</Text>
           <Text style={styles.statLabel}>DEVAM</Text>
         </View>
-        {showJerseyNumber && (
+        {showJersey && (
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{athlete.jersey_number ?? "—"}</Text>
             <Text style={styles.statLabel}>FORMA NO</Text>
@@ -439,9 +438,11 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <InfoRow label="Boy (cm)" value={athlete.height_cm} onAdd={isStaff ? goToEditForm : undefined} />
             <InfoRow label="Kilo (kg)" value={athlete.weight_kg} onAdd={isStaff ? goToEditForm : undefined} />
             <InfoRow label="Okul" value={athlete.school} onAdd={isStaff ? goToEditForm : undefined} />
-            <InfoRow label="Forma bedeni" value={athlete.jersey_size} onAdd={isStaff ? goToEditForm : undefined} />
-            {showJerseyNumber && (
-              <InfoRow label="Forma numarası" value={athlete.jersey_number} onAdd={isStaff ? goToEditForm : undefined} />
+            {showJersey && (
+              <>
+                <InfoRow label="Forma bedeni" value={athlete.jersey_size} onAdd={isStaff ? goToEditForm : undefined} />
+                <InfoRow label="Forma numarası" value={athlete.jersey_number} onAdd={isStaff ? goToEditForm : undefined} />
+              </>
             )}
           </>
         )}

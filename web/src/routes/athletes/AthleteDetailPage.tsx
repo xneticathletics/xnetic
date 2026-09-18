@@ -251,7 +251,7 @@ export default function AthleteDetailPage() {
             <InfoRow label="Kilo (kg)" value={athlete.weight_kg} />
             <InfoRow label="Okul" value={athlete.school} />
             <InfoRow label="Lisans No" value={athlete.license_no} />
-            <InfoRow label="Forma Bedeni" value={athlete.jersey_size} />
+            {athlete.athlete_type === "musabik" && <InfoRow label="Forma Bedeni" value={athlete.jersey_size} />}
           </div>
 
           <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Veli</h2>

@@ -239,9 +239,9 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
     setError(null);
     try {
       let saved: { id: string };
-      // Spor Okulu grubunda forma numarası olmaz — grup sonradan değiştirilip
-      // eski bir numara kalmış olabilir, kaydederken temizle.
-      const payload = isMusabikGroup ? form : { ...form, jersey_number: null };
+      // Spor Okulu grubunda forma bedeni/numarası olmaz — grup sonradan
+      // değiştirilip eski değer kalmış olabilir, kaydederken temizle.
+      const payload = isMusabikGroup ? form : { ...form, jersey_size: null, jersey_number: null };
       if (isEdit && athleteId) {
         saved = await updateAthlete(athleteId, payload);
       } else {
@@ -397,21 +397,20 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
         />
       </Field>
 
-      {/* Forma numarası sadece Müsabık sporcu gruplarında anlamlı (kullanıcı
-          isteği) — Spor Okulu gruplarında hiç gösterilmiyor. Forma bedeni
-          (üniforma) ikisinde de var. */}
-      <View style={styles.row}>
-        <Field label="Forma Bedeni" style={{ flex: 1, marginRight: isMusabikGroup ? spacing.sm : 0 }}>
-          <TextInput
-            onFocus={handleFocus}
-            style={styles.input}
-            value={form.jersey_size ?? ""}
-            onChangeText={(v) => set("jersey_size", v || null)}
-            placeholder="Örn. S, M, L"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
-        {isMusabikGroup && (
+      {/* Forma bedeni ve numarası sadece Müsabık sporcu gruplarında (kullanıcı
+          isteği) — Spor Okulu gruplarında hiç gösterilmiyor. */}
+      {isMusabikGroup && (
+        <View style={styles.row}>
+          <Field label="Forma Bedeni" style={{ flex: 1, marginRight: spacing.sm }}>
+            <TextInput
+              onFocus={handleFocus}
+              style={styles.input}
+              value={form.jersey_size ?? ""}
+              onChangeText={(v) => set("jersey_size", v || null)}
+              placeholder="Örn. S, M, L"
+              placeholderTextColor={colors.muted}
+            />
+          </Field>
           <Field label="Forma Numarası" style={{ flex: 1 }}>
             <TextInput
               onFocus={handleFocus}
@@ -423,8 +422,8 @@ export default function AthleteFormScreen({ route, navigation }: Props) {
               placeholderTextColor={colors.muted}
             />
           </Field>
-        )}
-      </View>
+        </View>
+      )}
 
       <Field label="Durum">
         <View style={styles.row}>
