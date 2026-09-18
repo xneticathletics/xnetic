@@ -34,12 +34,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   title: { color: colors.ink, fontSize: 20, fontWeight: "700", marginBottom: spacing.xs },
   subtitle: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.lg },
-  stack: { gap: spacing.md },
+  stack: { gap: spacing.sm },
   tile: {
-    flexDirection: "row", alignItems: "center", gap: spacing.md,
-    borderWidth: 2, borderRadius: radius.lg, padding: spacing.lg,
+    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    borderWidth: 1.5, borderRadius: radius.md, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md,
   },
-  tileIcon: { fontSize: 32 },
-  tileLabel: { flex: 1, fontSize: 15, fontWeight: "800" },
+  tileIcon: { fontSize: 24 },
+  tileLabel: { flex: 1, fontSize: 14, fontWeight: "800" },
   tileArrow: { color: colors.muted, fontSize: 20, fontWeight: "700" },
 });

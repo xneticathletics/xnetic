@@ -91,9 +91,9 @@ export default function NutritionArticleCategoryScreen({ route, navigation }: Pr
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
-  heroCard: { borderWidth: 2, borderRadius: radius.lg, padding: spacing.lg, alignItems: "center", marginBottom: spacing.md },
-  heroIcon: { fontSize: 40, marginBottom: spacing.xs },
-  heroTitle: { fontSize: 17, fontWeight: "800", textAlign: "center" },
+  heroCard: { borderWidth: 1.5, borderRadius: radius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, alignItems: "center", marginBottom: spacing.md },
+  heroIcon: { fontSize: 28, marginBottom: 2 },
+  heroTitle: { fontSize: 15, fontWeight: "800", textAlign: "center" },
   addButton: { alignSelf: "flex-start", borderWidth: 1, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md },
   addButtonText: { fontSize: 12, fontWeight: "700" },
   error: { color: colors.coral, marginBottom: spacing.md },
