@@ -145,21 +145,19 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
                 <Text style={styles.cardTitle}>{g.name}</Text>
                 <Text style={styles.cardCategory}>{g.categoryLabel}</Text>
               </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={[styles.latestValue, { color: g.categoryColor }]}>
-                  {g.items[0].value} <Text style={styles.latestUnit}>{g.unit}</Text>
-                </Text>
-                {trend && (
-                  <>
-                    <View style={[styles.trendPill, { backgroundColor: trend.improved ? colors.tealSoft : colors.coralSoft }]}>
-                      <Text style={[styles.trendPillText, { color: trend.improved ? colors.teal : colors.coral }]}>
-                        {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
-                      </Text>
-                    </View>
-                    <Text style={styles.trendCaption}>önceki ölçüme göre</Text>
-                  </>
-                )}
-              </View>
+              {/* Eskiden burada son ölçüm değeri büyük yazıyordu (kullanıcı
+                  isteğiyle kaldırıldı — değer zaten aşağıdaki geçmiş
+                  satırında); yerine bir önceki ölçüme göre artış/azalış
+                  yüzdesi geldi. Tek ölçümlü testte karşılaştırma olmadığı
+                  için bu alan boş. */}
+              {trend && (
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[styles.trendBig, { color: trend.improved ? colors.teal : colors.coral }]}>
+                    {trend.dir === "up" ? "▲" : "▼"} %{trend.pct}
+                  </Text>
+                  <Text style={styles.trendCaption}>önceki ölçüme göre</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.historyTable}>
@@ -202,10 +200,7 @@ const styles = StyleSheet.create({
   cardIcon: { fontSize: 26 },
   cardTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   cardCategory: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  latestValue: { fontSize: 20, fontWeight: "800" },
-  latestUnit: { fontSize: 12, fontWeight: "700" },
-  trendPill: { borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4 },
-  trendPillText: { fontSize: 11, fontWeight: "800" },
+  trendBig: { fontSize: 20, fontWeight: "800" },
   trendCaption: { color: colors.muted, fontSize: 10, marginTop: 2 },
   historyTable: { gap: 6 },
   historyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
