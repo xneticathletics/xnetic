@@ -10,7 +10,7 @@ import { getMyCoachedGroupIds, getMyBranchGroupIds } from "../lib/api/myGroups";
 import { getMyAuthorizedVenueIds } from "../lib/api/venueCoaches";
 import {
   listTemplatesForGroups, createTemplate, deleteTemplate, setTemplateActive,
-  generateSessionsFromTemplates, type ScheduleTemplate,
+  generateSessionsFromTemplates, DEFAULT_SCHEDULE_WEEKS, MAX_SCHEDULE_WEEKS, type ScheduleTemplate,
 } from "../lib/api/trainingSchedule";
 import type { Venue } from "../lib/api/venues";
 import VenuePickerModal from "../components/VenuePickerModal";
@@ -49,6 +49,7 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [weeks, setWeeks] = useState(DEFAULT_SCHEDULE_WEEKS);
   const [addFormGroupId, setAddFormGroupId] = useState<string | null>(null);
   // Çok grup olunca liste karmaşıklaşmasın diye her grup başta kapalı —
   // sadece isim+branş görünür, dokununca gün/saat detayları açılır.
@@ -184,8 +185,8 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
     if (generating) return;
     setGenerating(true);
     try {
-      const result = await generateSessionsFromTemplates(manageableGroupIds);
-      const lines = [`${result.created} antrenman oluşturuldu.`];
+      const result = await generateSessionsFromTemplates(manageableGroupIds, { weeks });
+      const lines = [`${result.created} antrenman oluşturuldu (${weeks} haftalık).`];
       if (result.skippedConflict.length > 0) {
         lines.push(
           `${result.skippedConflict.length} kayıt salon çakışması nedeniyle atlandı:`,
@@ -214,7 +215,7 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
     <View style={styles.container}>
       <Text style={styles.hint}>
         Sadece "Sabit Haftalık Program" açık gruplar burada listelenir (Grup Ayarları'ndan admin tarafından açılır).
-        Gün/saat/salon ekleyip "Planı Gönder"e bastığında, önümüzdeki 4 haftanın antrenman kayıtları otomatik oluşturulur.
+        Gün/saat/salon ekleyip "Planı Gönder"e bastığında, seçtiğin hafta sayısı kadar (varsayılan 4, en fazla {MAX_SCHEDULE_WEEKS}) antrenman kaydı otomatik oluşturulur.
       </Text>
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -334,9 +335,33 @@ export default function WeeklyScheduleScreen({ navigation }: Props) {
       />
 
       {manageableGroups.length > 0 && (
-        <TouchableOpacity style={styles.sendButton} onPress={handleSendPlan} disabled={generating}>
-          {generating ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.sendButtonText}>📤 Planı Gönder</Text>}
-        </TouchableOpacity>
+        <>
+          <View style={styles.weeksRow}>
+            <Text style={styles.weeksLabel}>Kaç haftalık oluşturulsun?</Text>
+            <View style={styles.weeksStepper}>
+              <TouchableOpacity
+                style={styles.weeksButton}
+                onPress={() => setWeeks((w) => Math.max(1, w - 1))}
+                disabled={generating || weeks <= 1}
+                accessibilityLabel="Hafta sayısını azalt"
+              >
+                <Text style={styles.weeksButtonText}>−</Text>
+              </TouchableOpacity>
+              <Text style={styles.weeksValue}>{weeks}</Text>
+              <TouchableOpacity
+                style={styles.weeksButton}
+                onPress={() => setWeeks((w) => Math.min(MAX_SCHEDULE_WEEKS, w + 1))}
+                disabled={generating || weeks >= MAX_SCHEDULE_WEEKS}
+                accessibilityLabel="Hafta sayısını artır"
+              >
+                <Text style={styles.weeksButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.sendButton} onPress={handleSendPlan} disabled={generating}>
+            {generating ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.sendButtonText}>📤 Planı Gönder</Text>}
+          </TouchableOpacity>
+        </>
       )}
 
       <VenuePickerModal
@@ -400,6 +425,19 @@ const styles = StyleSheet.create({
   cancelButtonText: { color: colors.muted, fontWeight: "600", fontSize: 12 },
   saveRowButton: { backgroundColor: colors.yellow, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 8, minWidth: 60, alignItems: "center" },
   saveRowButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  weeksRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    paddingVertical: spacing.sm, paddingHorizontal: spacing.md, marginTop: spacing.sm,
+  },
+  weeksLabel: { color: colors.ink, fontSize: 14, fontWeight: "600" },
+  weeksStepper: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  weeksButton: {
+    width: 34, height: 34, borderRadius: radius.full, backgroundColor: colors.bg,
+    borderWidth: 1, borderColor: colors.line, alignItems: "center", justifyContent: "center",
+  },
+  weeksButtonText: { color: colors.yellow, fontSize: 20, fontWeight: "700", lineHeight: 22 },
+  weeksValue: { color: colors.ink, fontSize: 18, fontWeight: "800", minWidth: 28, textAlign: "center" },
   sendButton: {
     backgroundColor: colors.violet, borderRadius: radius.md, paddingVertical: 16,
     alignItems: "center", marginBottom: spacing.lg,

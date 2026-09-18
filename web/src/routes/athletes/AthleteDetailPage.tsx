@@ -193,7 +193,7 @@ export default function AthleteDetailPage() {
           </div>
           <p className="mt-0.5 text-sm text-muted">{athlete.groups?.name ?? "Grup atanmadı"}</p>
 
-          <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className={`mt-3 grid gap-2 ${athlete.athlete_type === "musabik" ? "grid-cols-3" : "grid-cols-2"}`}>
             <div className="rounded-lg border border-line bg-bg px-3 py-2 text-center">
               <p className="text-base font-extrabold text-ink">{age ?? "—"}</p>
               <p className="text-[10px] font-bold text-muted">YAŞ</p>
@@ -206,10 +206,12 @@ export default function AthleteDetailPage() {
               )}
               <p className="text-[10px] font-bold text-muted">DEVAM</p>
             </div>
-            <div className="rounded-lg border border-line bg-bg px-3 py-2 text-center">
-              <p className="text-base font-extrabold text-ink">{athlete.jersey_number ?? "—"}</p>
-              <p className="text-[10px] font-bold text-muted">FORMA NO</p>
-            </div>
+            {athlete.athlete_type === "musabik" && (
+              <div className="rounded-lg border border-line bg-bg px-3 py-2 text-center">
+                <p className="text-base font-extrabold text-ink">{athlete.jersey_number ?? "—"}</p>
+                <p className="text-[10px] font-bold text-muted">FORMA NO</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

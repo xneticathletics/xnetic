@@ -26,6 +26,9 @@ const TEMPLATE_FIELDS = "id, group_id, day_of_week, start_time, end_time, venue_
 // Kaç hafta ilerisi için antrenman kaydı hazır bulunsun (aidattaki
 // MONTHS_AHEAD'in haftalık karşılığı).
 const WEEKS_AHEAD = 4;
+// "Planı Gönder"de kullanıcı bunu 1-20 arası seçebiliyor (varsayılan 4).
+export const DEFAULT_SCHEDULE_WEEKS = WEEKS_AHEAD;
+export const MAX_SCHEDULE_WEEKS = 20;
 
 export async function listTemplatesForGroups(groupIds: string[]): Promise<ScheduleTemplate[]> {
   if (groupIds.length === 0) return [];
@@ -97,8 +100,9 @@ export type GenerateScheduleResult = {
 // (çakışma, atla + raporla) olduğunu ayırt eder.
 export async function generateSessionsFromTemplates(
   groupIds?: string[],
-  options?: { notify?: boolean }
+  options?: { notify?: boolean; weeks?: number }
 ): Promise<GenerateScheduleResult> {
+  const weeks = Math.min(Math.max(Math.round(options?.weeks ?? WEEKS_AHEAD), 1), MAX_SCHEDULE_WEEKS);
   let query = supabase.from("training_schedule_templates").select(TEMPLATE_FIELDS).eq("active", true);
   if (groupIds && groupIds.length > 0) query = query.in("group_id", groupIds);
   const { data: templatesData, error: templatesError } = await query;
@@ -112,7 +116,7 @@ export async function generateSessionsFromTemplates(
   };
   const candidates: Candidate[] = [];
   for (const t of templates) {
-    for (const date of generateDatesForDayOfWeek(t.day_of_week, WEEKS_AHEAD)) {
+    for (const date of generateDatesForDayOfWeek(t.day_of_week, weeks)) {
       candidates.push({
         group_id: t.group_id, venue_id: t.venue_id, session_date: date,
         start_time: t.start_time, end_time: t.end_time,
@@ -161,6 +165,22 @@ export async function generateSessionsFromTemplates(
   // normal bir çakışma gibi ele alıyoruz.
   const affectedGroupIds = new Set<string>();
   let createdCount = 0;
+
+  // 20 haftaya kadar plan üretilebildiği için (yüzlerce satır olabilir)
+  // önce TEK toplu insert deniyoruz; yarış durumundan bir çakışma (23505)
+  // çıkarsa tümü geri alınır ve aşağıdaki satır satır yola düşülür.
+  const bulkRows = toInsert.map((c) => ({
+    group_id: c.group_id, venue_id: c.venue_id, session_date: c.session_date,
+    start_time: c.start_time, end_time: c.end_time,
+  }));
+  const { error: bulkError } = await supabase.from("training_sessions").insert(bulkRows);
+  if (!bulkError) {
+    toInsert.forEach((c) => affectedGroupIds.add(c.group_id));
+    if (options?.notify !== false) await notifyScheduleUpdated(Array.from(affectedGroupIds));
+    return { created: toInsert.length, skippedConflict };
+  }
+  if ((bulkError as { code?: string }).code !== "23505") throw bulkError;
+
   for (const c of toInsert) {
     const { error: insertError } = await supabase.from("training_sessions").insert({
       group_id: c.group_id, venue_id: c.venue_id, session_date: c.session_date,

@@ -290,14 +290,17 @@ export default function AthleteEditModal({
                   placeholder="Örn. S, M, L"
                 />
               </FormField>
-              <FormField label="Forma Numarası">
-                <input
-                  className={inputClass}
-                  value={form.jersey_number ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, jersey_number: e.target.value || null }))}
-                  placeholder="Örn. 10"
-                />
-              </FormField>
+              {/* Forma numarası sadece Müsabık gruplarda (Spor Okulu'nda yok). */}
+              {groups.find((g) => g.id === form.group_id)?.athlete_type === "musabik" && (
+                <FormField label="Forma Numarası">
+                  <input
+                    className={inputClass}
+                    value={form.jersey_number ?? ""}
+                    onChange={(e) => setForm((f) => ({ ...f, jersey_number: e.target.value || null }))}
+                    placeholder="Örn. 10"
+                  />
+                </FormField>
+              )}
             </div>
 
             <FormField label="Okul">
