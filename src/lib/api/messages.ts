@@ -146,20 +146,6 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
       if (coordError) throw coordError;
       (coordData as any[] ?? []).forEach((b) => { if (b.coordinator) contacts.set(b.coordinator.id, b.coordinator); });
     }
-
-    // Sporcu, kendi grubundaki diğer sporculara da yazabilir (sadece
-    // athlete->athlete — veli->veli ya da veli->başka sporcu kapsam dışı,
-    // bkz. can_message_recipient() DB fonksiyonundaki aynı kısıtlama).
-    if (role === "athlete") {
-      const { data: groupmates, error: groupmatesError } = await supabase
-        .from("athletes")
-        .select("athlete_account:athlete_user_id(id, name, photo_url, role)")
-        .in("group_id", groupIds)
-        .eq("status", "active")
-        .neq("athlete_user_id", myUserId);
-      if (groupmatesError) throw groupmatesError;
-      (groupmates as any[] ?? []).forEach((r) => { if (r.athlete_account) contacts.set(r.athlete_account.id, r.athlete_account); });
-    }
   }
   return Array.from(contacts.values()).sort((a, b) => a.name.localeCompare(b.name, "tr"));
 }
