@@ -1,4 +1,5 @@
 import { SERVICES, type ServiceDetail } from "../lib/services";
+import MockScreen from "./MockScreens";
 
 function FeatureVisual({ feature }: { feature: ServiceDetail }) {
   if (feature.video) {
@@ -11,6 +12,7 @@ function FeatureVisual({ feature }: { feature: ServiceDetail }) {
       />
     );
   }
+  if (feature.mock) return <MockScreen kind={feature.mock} />;
   if (feature.image) {
     // Ekran görüntüleri dikey (telefon) olduğu için 4:3 kadraja kırpmak yerine
     // ortalanmış, yüksekliği sınırlı bir telefon çerçevesi olarak gösteriliyor.

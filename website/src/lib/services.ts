@@ -10,6 +10,10 @@ export type ServiceDetail = {
   seoTitle: string;
   seoDescription: string;
   image?: string;
+  // Sadece detay sayfasında ana görselin yanında gösterilen ek ekranlar.
+  extraImages?: string[];
+  // Ekran görüntüsü yerine çizim (bkz. MockScreens.tsx).
+  mock?: "magaza" | "mesajlasma" | "guvenlik";
   video?: string;
 };
 
@@ -102,6 +106,7 @@ export const SERVICES: ServiceDetail[] = [
   {
     slug: "beslenme-takibi",
     image: "/app/beslenme.webp",
+    extraImages: ["/app/tarifler.webp"],
     icon: "🥗",
     eyebrow: "Beslenme",
     title: "Besin, tarif ve rehber içerikleri tek yerde",
@@ -120,6 +125,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "aidat-takip",
+    image: "/app/finans.webp",
     icon: "💰",
     eyebrow: "Finans & Aidat",
     title: "Aidat takibi artık unutulmuyor",
@@ -139,6 +145,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "kulup-magazasi",
+    mock: "magaza",
     icon: "🛍️",
     eyebrow: "Kulüp Mağazası",
     title: "Forma ve ekipman satışını da uygulama içinden yönet",
@@ -157,6 +164,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "duyuru-mesajlasma",
+    mock: "mesajlasma",
     icon: "📣",
     eyebrow: "Duyuru, Mesaj & Bildirim",
     title: "Doğru bilgi, doğru kişiye, anında",
@@ -176,6 +184,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "kulup-yapisi-antrenorler",
+    image: "/app/antrenorler.webp",
     icon: "🏛️",
     eyebrow: "Kulüp Yapısı & Antrenörler",
     title: "Branş, grup, salon — kulübünün gerçek yapısı",
@@ -195,6 +204,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "veri-guvenligi",
+    mock: "guvenlik",
     icon: "🔐",
     eyebrow: "Güvenlik & Gizlilik",
     title: "Herkes sadece kendisini ilgilendireni görür",

@@ -1,3 +1,4 @@
+import MockScreen from "./MockScreens";
 import { useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -56,14 +57,18 @@ function FeatureVisual({ service }: { service: ServiceDetail }) {
       />
     );
   }
+  if (service.mock) return <MockScreen kind={service.mock} />;
   if (service.image) {
     return (
-      <div className="flex justify-center">
-        <img
-          src={service.image}
-          alt={service.title}
-          className="max-h-[560px] w-auto max-w-full rounded-3xl border border-line bg-surface shadow-2xl shadow-black/40"
-        />
+      <div className="flex justify-center gap-4">
+        {[service.image, ...(service.extraImages ?? [])].map((src) => (
+          <img
+            key={src}
+            src={src}
+            alt={service.title}
+            className="max-h-[560px] min-w-0 rounded-3xl border border-line bg-surface object-contain shadow-2xl shadow-black/40"
+          />
+        ))}
       </div>
     );
   }
