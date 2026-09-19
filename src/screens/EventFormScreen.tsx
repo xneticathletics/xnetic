@@ -52,6 +52,7 @@ export default function EventFormScreen({ route, navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const savingRef = useRef(false);
+  const createdEventIdRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -133,8 +134,20 @@ export default function EventFormScreen({ route, navigation }: Props) {
     setError(null);
     try {
       if (isNew) {
-        const created = await createEvent(payload);
-        if (localBanner) await addEventBanner(created.id, localBanner);
+        // Etkinlik oluşturulduktan SONRA banner yüklemesi hata verirse
+        // (ör. dosya çok büyük) kullanıcı tekrar Kaydet'e basıyordu ve her
+        // basışta yeni bir etkinlik oluşuyordu. İlk oluşan etkinliğin id'si
+        // tutuluyor; tekrar denemede yenisini yaratmak yerine onu güncelleyip
+        // sadece banner'ı yeniden deniyoruz.
+        let id = createdEventIdRef.current;
+        if (id) {
+          await updateEvent(id, payload);
+        } else {
+          const created = await createEvent(payload);
+          id = created.id;
+          createdEventIdRef.current = id;
+        }
+        if (localBanner) await addEventBanner(id, localBanner);
       } else {
         await updateEvent(eventId!, payload);
       }

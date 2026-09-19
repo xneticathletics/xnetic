@@ -2,6 +2,17 @@ import * as FileSystem from "expo-file-system/legacy";
 import { decode } from "base64-arraybuffer";
 import { supabase } from "../supabase";
 import { sendNotification } from "./notifications";
+import { resizeImageToMaxWidth } from "../imageResize";
+
+// Etkinlik, bitiş tarihi (yoksa başlangıç tarihi) bugünden önceyse sona
+// ermiştir — bu durumda kayıt yapılamaz (DB'deki create_event_registration
+// aynı kuralı zorunlu kılıyor). Yerel tarihle karşılaştırılır.
+export function isEventOver(event: { start_date: string; end_date: string | null }): boolean {
+  const d = new Date();
+  const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
+  const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return (event.end_date ?? event.start_date) < today;
+}
 
 export type EventType = "etkinlik" | "turnuva" | "kamp";
 export type EventStatus = "draft" | "published" | "cancelled";
@@ -126,11 +137,13 @@ export async function deleteEvent(id: string): Promise<void> {
 // deseni (Base64 -> ArrayBuffer -> upload), ama bucket PUBLIC olduğu için
 // imzalı URL yerine düz getPublicUrl() kullanılıyor.
 export async function addEventBanner(eventId: string, localUri: string): Promise<string> {
-  const fileExt = localUri.split(".").pop()?.split("?")[0] || "jpg";
-  const path = `${eventId}/${Date.now()}.${fileExt}`;
-  const contentType = fileExt === "jpg" ? "image/jpeg" : `image/${fileExt}`;
+  // Bucket sınırı 2 MB — büyük fotoğraflar "object exceeded the maximum
+  // allowed size" ile reddediliyordu; yüklemeden önce küçültüyoruz.
+  const resizedUri = await resizeImageToMaxWidth(localUri, 1280, 0.75);
+  const path = `${eventId}/${Date.now()}.jpg`;
+  const contentType = "image/jpeg";
 
-  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+  const base64 = await FileSystem.readAsStringAsync(resizedUri, { encoding: FileSystem.EncodingType.Base64 });
   const arrayBuffer = decode(base64);
 
   const { error: uploadError } = await supabase.storage.from("event-banners").upload(path, arrayBuffer, { contentType });
@@ -207,11 +220,12 @@ export async function registerForEvent(
 // "Ödedim" beyanında isteğe bağlı dekont fotoğrafı — uploadPaymentReceipt
 // ile birebir aynı desen (private bucket, ~10 yıllık imzalı URL).
 export async function addRegistrationReceipt(registrationId: string, localUri: string): Promise<void> {
-  const fileExt = localUri.split(".").pop()?.split("?")[0] || "jpg";
-  const path = `${registrationId}/${Date.now()}.${fileExt}`;
-  const contentType = fileExt === "jpg" ? "image/jpeg" : `image/${fileExt}`;
+  // Bucket sınırı 5 MB — dekont fotoğrafı da yüklemeden önce küçültülüyor.
+  const resizedUri = await resizeImageToMaxWidth(localUri, 1600, 0.75);
+  const path = `${registrationId}/${Date.now()}.jpg`;
+  const contentType = "image/jpeg";
 
-  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+  const base64 = await FileSystem.readAsStringAsync(resizedUri, { encoding: FileSystem.EncodingType.Base64 });
   const arrayBuffer = decode(base64);
 
   const { error: uploadError } = await supabase.storage.from("event-receipts").upload(path, arrayBuffer, { contentType });

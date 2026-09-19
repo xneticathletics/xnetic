@@ -8,6 +8,7 @@ import {
   type EventRegistrationRow, type EventRegistrationStatus,
 } from "../lib/api/events";
 import type { EventsStackParamList } from "../navigation/EventsStack";
+import { useAuth } from "../context/AuthContext";
 
 type Props = NativeStackScreenProps<EventsStackParamList, "MyEventRegistrations">;
 
@@ -16,6 +17,8 @@ const STATUS_COLOR: Record<EventRegistrationStatus, string> = {
 };
 
 export default function MyEventRegistrationsScreen({ navigation }: Props) {
+  // Sporcu kayıtları sadece görür; iptal/kayıt işlemi velinin (bkz. create_event_registration).
+  const { role } = useAuth();
   const [registrations, setRegistrations] = useState<EventRegistrationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,7 +91,7 @@ export default function MyEventRegistrationsScreen({ navigation }: Props) {
                 {REGISTRATION_STATUS_LABEL[item.status]}
               </Text>
             </View>
-            {item.status === "pending" && (
+            {item.status === "pending" && role === "parent" && (
               <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancel(item)}>
                 <Text style={styles.cancelButtonText}>İptal</Text>
               </TouchableOpacity>

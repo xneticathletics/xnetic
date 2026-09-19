@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  getEvent, publishEvent, cancelEvent, deleteEvent, listMyRegistrations,
+  getEvent, publishEvent, cancelEvent, deleteEvent, listMyRegistrations, isEventOver,
   EVENT_TYPE_LABEL, REGISTRATION_STATUS_LABEL, type EventRow, type EventRegistrationRow,
 } from "../lib/api/events";
 import { useAuth } from "../context/AuthContext";
@@ -31,14 +31,18 @@ export default function EventDetailScreen({ route, navigation }: Props) {
 
   const isAdmin = role === "club_admin";
   const canManage = isAdmin || (isLocked && !!event?.branch && event.branch === selectedBranch);
-  const canRegister = role === "parent" || role === "athlete";
+  // Sadece VELİ kayıt yapar (mağaza gibi); sporcu etkinliği ve varsa kayıt
+  // durumunu görür ama kayıt olamaz (bkz. create_event_registration).
+  const isParent = role === "parent";
+  const canRegister = isParent;
+  const canView = role === "parent" || role === "athlete";
 
   const load = useCallback(async () => {
     try {
       setError(null);
       const [e, myRegs] = await Promise.all([
         getEvent(eventId),
-        canRegister ? listMyRegistrations() : Promise.resolve([]),
+        canView ? listMyRegistrations() : Promise.resolve([]),
       ]);
       setEvent(e);
       setMyRegistration(myRegs.find((r) => r.event_id === eventId && r.status !== "cancelled") ?? null);
@@ -47,7 +51,7 @@ export default function EventDetailScreen({ route, navigation }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId, canRegister]);
+  }, [eventId, canView]);
 
   useFocusEffect(
     useCallback(() => {
@@ -124,6 +128,14 @@ export default function EventDetailScreen({ route, navigation }: Props) {
       </View>
     );
   }
+
+  const eventOver = isEventOver(event);
+  const registrationClosed = (() => {
+    if (!event.registration_deadline) return false;
+    const d = new Date();
+    const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
+    return event.registration_deadline < `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  })();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -212,16 +224,28 @@ export default function EventDetailScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      {!canManage && canRegister && event.status === "published" && (
+      {!canManage && canView && event.status === "published" && (
         <View style={styles.footer}>
           {myRegistration ? (
             <View style={styles.statusCard}>
-              <Text style={styles.statusCardText}>Kayıt Durumun: {REGISTRATION_STATUS_LABEL[myRegistration.status]}</Text>
+              <Text style={styles.statusCardText}>Kayıt Durumu: {REGISTRATION_STATUS_LABEL[myRegistration.status]}</Text>
             </View>
-          ) : (
+          ) : eventOver ? (
+            <View style={styles.statusCard}>
+              <Text style={styles.statusCardText}>Bu etkinlik sona erdi — kayıt kapalı.</Text>
+            </View>
+          ) : registrationClosed ? (
+            <View style={styles.statusCard}>
+              <Text style={styles.statusCardText}>Son kayıt tarihi geçti — kayıt kapalı.</Text>
+            </View>
+          ) : canRegister ? (
             <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("EventRegister", { eventId: event.id })}>
               <Text style={styles.primaryButtonText}>Katıl</Text>
             </TouchableOpacity>
+          ) : (
+            <View style={styles.statusCard}>
+              <Text style={styles.statusCardText}>Etkinliğe kayıt velin tarafından yapılır.</Text>
+            </View>
           )}
         </View>
       )}
