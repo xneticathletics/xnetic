@@ -28,10 +28,18 @@ Deno.serve(async (req) => {
 
     const { data: notif, error: notifError } = await admin
       .from("notifications")
-      .select("recipient_user_id, title, body, event_type, payload")
+      .select("recipient_user_id, title, body, event_type, payload, created_at")
       .eq("id", notification_id)
       .single();
     if (notifError || !notif) throw new Error("Bildirim bulunamadı.");
+
+    // verify_jwt=false olduğu için (cron da anon key ile çağırıyor) bu uç nokta
+    // herkese açık: eski bir bildirimin push'unu yeniden tetiklemek (spam/
+    // tekrar gönderim) mümkündü. Push, bildirim oluşturulduktan hemen sonra
+    // (istemci/cron) çağrıldığı için sadece son 15 dakikadaki bildirimler
+    // kabul ediliyor.
+    const ageMs = Date.now() - new Date(notif.created_at).getTime();
+    if (!(ageMs > -60 * 1000 && ageMs < 15 * 60 * 1000)) throw new Error("Bildirim çok eski, push tekrar gönderilemez.");
 
     const { data: tokens, error: tokensError } = await admin
       .from("push_tokens")
