@@ -41,6 +41,13 @@ const CATEGORIES: {
     sub: "Görünürlük süreleri",
     accent: colors.violet,
   },
+  {
+    key: "MembershipFreezeSettings",
+    icon: "🧊",
+    title: "Kayıt Dondurma",
+    sub: "Kulüpte kullanılsın mı? Aç / kapat",
+    accent: colors.teal,
+  },
 ];
 
 export default function AdvancedSettingsScreen({ navigation }: Props) {

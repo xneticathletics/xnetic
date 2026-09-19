@@ -95,6 +95,10 @@ export default function ClubSettingsPage() {
     if (!form) return;
     setForm({ ...form, [key]: value });
   };
+  const setFreezeEnabled = (enabled: boolean) => {
+    if (!form) return;
+    setForm({ ...form, membership_freeze_enabled: enabled });
+  };
 
   const toggleTile = (key: string, enabled: boolean) => {
     if (!form) return;
@@ -330,6 +334,22 @@ export default function ClubSettingsPage() {
           value={form.announcement_visibility_days}
           onChange={(v) => set("announcement_visibility_days", v)}
         />
+      </SettingsCard>
+
+      <SettingsCard title="Kayıt Dondurma">
+        <label className="flex cursor-pointer items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-ink">Kulüpte Kayıt Dondurma kullanılsın</span>
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-yellow"
+            checked={form.membership_freeze_enabled}
+            onChange={(e) => setFreezeEnabled(e.target.checked)}
+          />
+        </label>
+        <p className="text-[11px] text-muted">
+          Kapalıyken sporcu düzenleme ekranında ve mobil uygulamada Kayıt Dondurma görünmez, yeni dondurma başlatılamaz;
+          halihazırda oluşturulmuş dondurmalar geçerliliğini korur.
+        </p>
       </SettingsCard>
 
       {error && <p className="mb-4 text-sm font-semibold text-coral">{error}</p>}

@@ -17,6 +17,7 @@ import AttendanceSettingsScreen from "../screens/AttendanceSettingsScreen";
 import CoachSettingsScreen from "../screens/CoachSettingsScreen";
 import FinanceSettingsScreen from "../screens/FinanceSettingsScreen";
 import AnnouncementSettingsScreen from "../screens/AnnouncementSettingsScreen";
+import MembershipFreezeSettingsScreen from "../screens/MembershipFreezeSettingsScreen";
 
 export type ClubSettingsStackParamList = {
   ClubSettingsHome: undefined;
@@ -35,6 +36,7 @@ export type ClubSettingsStackParamList = {
   CoachSettings: undefined;
   FinanceSettings: undefined;
   AnnouncementSettings: undefined;
+  MembershipFreezeSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<ClubSettingsStackParamList>();
@@ -68,6 +70,7 @@ export default function ClubSettingsStack() {
       <Stack.Screen name="CoachSettings" component={CoachSettingsScreen} options={{ title: "Antrenör Yönetimi" }} />
       <Stack.Screen name="FinanceSettings" component={FinanceSettingsScreen} options={{ title: "Aidat & Finans" }} />
       <Stack.Screen name="AnnouncementSettings" component={AnnouncementSettingsScreen} options={{ title: "Duyurular" }} />
+      <Stack.Screen name="MembershipFreezeSettings" component={MembershipFreezeSettingsScreen} options={{ title: "Kayıt Dondurma" }} />
     </Stack.Navigator>
   );
 }

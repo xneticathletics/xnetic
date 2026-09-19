@@ -21,6 +21,7 @@ import {
 import { listGroups, type Group } from "../../lib/api/groups";
 import { listBranches, type Branch } from "../../lib/api/branches";
 import MembershipFreezeSection from "./MembershipFreezeSection";
+import { useClubSettings } from "../../context/ClubSettingsContext";
 import LinkedAccountField from "../../components/LinkedAccountField";
 
 const emptyForm: AthleteInput = {
@@ -53,6 +54,8 @@ export default function AthleteEditModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { settings: clubSettings } = useClubSettings();
+  const freezeEnabled = clubSettings.membership_freeze_enabled;
   const [groups, setGroups] = useState<Group[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
@@ -392,7 +395,7 @@ export default function AthleteEditModal({
               </div>
             )}
 
-            {athleteId !== "new" && <MembershipFreezeSection athleteId={athleteId} />}
+            {athleteId !== "new" && freezeEnabled && <MembershipFreezeSection athleteId={athleteId} />}
           </div>
 
           <button

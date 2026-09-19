@@ -15,6 +15,8 @@ export type ClubSettings = {
   // (tile) key listesi — bkz. HomeScreen.tsx TILES_BY_ROLE. Listede
   // olmayan bir tile her zaman görünürdür (varsayılan: hepsi aktif).
   disabled_home_tiles: string[];
+  // Kulüp Kayıt Dondurma özelliğini kullanıyor mu (Gelişmiş Ayarlar → Kayıt Dondurma).
+  membership_freeze_enabled: boolean;
 };
 
 // Kulüp henüz hiç ayar kaydetmediyse (yeni kulüp, ya da migration'dan
@@ -32,6 +34,7 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
   payment_overdue_grace_days: 0,
   finance_period_start_day: 1,
   disabled_home_tiles: [],
+  membership_freeze_enabled: true,
 };
 
 // club_id EXPLICIT olarak filtrelenir — RLS'e (".limit(1)") güvenmek Süper
@@ -55,6 +58,7 @@ export async function getClubSettings(clubId: string): Promise<ClubSettings> {
     payment_overdue_grace_days: data.payment_overdue_grace_days,
     finance_period_start_day: data.finance_period_start_day,
     disabled_home_tiles: data.disabled_home_tiles ?? [],
+    membership_freeze_enabled: data.membership_freeze_enabled ?? true,
   };
 }
 

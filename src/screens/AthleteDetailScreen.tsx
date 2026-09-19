@@ -16,6 +16,7 @@ import GroupMultiPickerModal from "../components/GroupMultiPickerModal";
 import { listGroups, type Group } from "../lib/api/groups";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
+import { useClubSettings } from "../context/ClubSettingsContext";
 import Avatar from "../components/Avatar";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "AthleteDetail">;
@@ -106,6 +107,9 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const { role } = useAuth();
   const { isLocked } = useBranchSelect();
+  // Kulüp Kayıt Dondurma'yı kapattıysa (Gelişmiş Ayarlar) tüm giriş noktaları gizlenir.
+  const { settings: clubSettings } = useClubSettings();
+  const freezeEnabled = clubSettings.membership_freeze_enabled;
   // Veli/sporcu bu ekrana kendi "Sporcum" profilini görüntülemek için
   // gelir — salt okunur: düzenleme/not/sakatlık/dondurma/silme yok, çünkü
   // athlete_notes ve injuries tablolarının RLS'i zaten sadece admin/koç
@@ -343,7 +347,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <Text style={styles.trackingSubtitle}>Gelişimini takip et</Text>
           </View>
           <View style={styles.trackingGrid}>
-            {TRACKING_TILES.filter((t) => (!t.athleteOnly || role === "athlete") && (!t.parentOnly || role === "parent")).map((t) => (
+            {TRACKING_TILES.filter((t) => (!t.athleteOnly || role === "athlete") && (!t.parentOnly || role === "parent") && (t.key !== "MembershipFreeze" || freezeEnabled)).map((t) => (
               <TouchableOpacity
                 key={t.key}
                 style={styles.trackingTile}
@@ -520,12 +524,14 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
             <Text style={styles.notesNavButtonText}>Koç Notları</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.freezeButton}
-            onPress={() => navigation.navigate("MembershipFreeze", { athleteId: athlete.id, athleteName: athlete.full_name })}
-          >
-            <Text style={styles.freezeButtonText}>Kaydı Dondur</Text>
-          </TouchableOpacity>
+          {freezeEnabled && (
+            <TouchableOpacity
+              style={styles.freezeButton}
+              onPress={() => navigation.navigate("MembershipFreeze", { athleteId: athlete.id, athleteName: athlete.full_name })}
+            >
+              <Text style={styles.freezeButtonText}>Kaydı Dondur</Text>
+            </TouchableOpacity>
+          )}
 
           <GroupMultiPickerModal
             visible={extraGroupModalVisible}

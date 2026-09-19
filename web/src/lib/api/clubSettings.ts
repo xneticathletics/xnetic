@@ -16,6 +16,8 @@ export type ClubSettings = {
   // her zaman görünürdür (varsayılan: hepsi aktif). Mobildeki
   // disabled_home_tiles ile AYNI kulüp ayarı satırını paylaşır.
   disabled_home_tiles: string[];
+  // Kulüp Kayıt Dondurma özelliğini kullanıyor mu (Gelişmiş Ayarlar → Kayıt Dondurma).
+  membership_freeze_enabled: boolean;
 };
 
 export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
@@ -30,6 +32,7 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
   payment_overdue_grace_days: 0,
   finance_period_start_day: 1,
   disabled_home_tiles: [],
+  membership_freeze_enabled: true,
 };
 
 // club_id EXPLICIT olarak filtrelenir — RLS'e (".limit(1)") güvenmek Süper
@@ -53,6 +56,7 @@ export async function getClubSettings(clubId: string): Promise<ClubSettings> {
     payment_overdue_grace_days: data.payment_overdue_grace_days,
     finance_period_start_day: data.finance_period_start_day,
     disabled_home_tiles: data.disabled_home_tiles ?? [],
+    membership_freeze_enabled: data.membership_freeze_enabled ?? true,
   };
 }
 
