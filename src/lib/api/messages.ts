@@ -137,6 +137,15 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
     (headResult.data as any[] ?? []).forEach((g) => { if (g.head) contacts.set(g.head.id, g.head); });
     (assistantResult.data as any[] ?? []).forEach((r) => { if (r.coach) contacts.set(r.coach.id, r.coach); });
 
+    // Sporcu, kendi grubundaki diğer sporculara da yazabilir (sadece
+    // athlete->athlete). Karşı tarafın users satırı gizli; sadece ad soyad
+    // list_groupmate_athlete_contacts() fonksiyonundan geliyor.
+    if (role === "athlete") {
+      const { data: groupmates, error: groupmatesError } = await supabase.rpc("list_groupmate_athlete_contacts");
+      if (groupmatesError) throw groupmatesError;
+      (groupmates as Contact[] ?? []).forEach((c) => contacts.set(c.id, c));
+    }
+
     const branchNames = Array.from(new Set((groupsResult.data ?? []).map((g) => g.branch).filter(Boolean)));
     if (branchNames.length > 0) {
       const { data: coordData, error: coordError } = await supabase
@@ -185,6 +194,11 @@ export async function listConversations(): Promise<Conversation[]> {
     .in("id", Array.from(otherIds));
   if (usersError) throw usersError;
   const userById = new Map((users ?? []).map((u) => [u.id, u as Contact]));
+  // Grup arkadaşı sporcuların users satırı RLS ile gizli; adları fonksiyondan.
+  if (otherIds.size > userById.size) {
+    const { data: groupmates } = await supabase.rpc("list_groupmate_athlete_contacts");
+    (groupmates as Contact[] ?? []).forEach((c) => { if (!userById.has(c.id)) userById.set(c.id, c); });
+  }
 
   return Array.from(lastByContact.entries())
     .map(([otherId, lastMessage]) => ({
