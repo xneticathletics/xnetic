@@ -21,6 +21,7 @@ export type ServiceDetail = {
 export const SERVICES: ServiceDetail[] = [
   {
     slug: "sporcu-yonetimi",
+    image: "/app/sporcu-detay.webp",
     icon: "👥",
     eyebrow: "Sporcu & Veli Yönetimi",
     title: "Her sporcunun tek, canlı bir profili",
@@ -40,6 +41,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "antrenman-yoklama",
+    image: "/app/takvim.webp",
     icon: "📅",
     eyebrow: "Takvim & Yoklama",
     title: "Antrenman ve müsabakalar tek takvimde",
@@ -59,6 +61,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "performans-takibi",
+    image: "/app/performans.webp",
     icon: "⏱️",
     eyebrow: "Performans Ölçümleri",
     title: "Gelişimi sayılarla, zaman içinde göster",
@@ -78,6 +81,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "fitness-programlari",
+    image: "/app/fitness.webp",
     icon: "💪",
     eyebrow: "Fitness",
     title: "Video destekli egzersiz kütüphanesi ve programlar",
@@ -97,6 +101,7 @@ export const SERVICES: ServiceDetail[] = [
   },
   {
     slug: "beslenme-takibi",
+    image: "/app/beslenme.webp",
     icon: "🥗",
     eyebrow: "Beslenme",
     title: "Besin, tarif ve rehber içerikleri tek yerde",

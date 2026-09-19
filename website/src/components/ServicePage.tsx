@@ -58,11 +58,13 @@ function FeatureVisual({ service }: { service: ServiceDetail }) {
   }
   if (service.image) {
     return (
-      <img
-        src={service.image}
-        alt={service.title}
-        className="aspect-[4/3] w-full rounded-2xl border border-line bg-surface object-cover"
-      />
+      <div className="flex justify-center">
+        <img
+          src={service.image}
+          alt={service.title}
+          className="max-h-[560px] w-auto max-w-full rounded-3xl border border-line bg-surface shadow-2xl shadow-black/40"
+        />
+      </div>
     );
   }
   return (

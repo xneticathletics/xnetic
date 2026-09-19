@@ -12,13 +12,17 @@ function FeatureVisual({ feature }: { feature: ServiceDetail }) {
     );
   }
   if (feature.image) {
+    // Ekran görüntüleri dikey (telefon) olduğu için 4:3 kadraja kırpmak yerine
+    // ortalanmış, yüksekliği sınırlı bir telefon çerçevesi olarak gösteriliyor.
     return (
-      <img
-        src={feature.image}
-        alt={feature.title}
-        className="aspect-[4/3] w-full rounded-2xl border border-line bg-surface object-cover"
-        loading="lazy"
-      />
+      <div className="flex justify-center">
+        <img
+          src={feature.image}
+          alt={feature.title}
+          className="max-h-[560px] w-auto max-w-full rounded-3xl border border-line bg-surface shadow-2xl shadow-black/40"
+          loading="lazy"
+        />
+      </div>
     );
   }
   // Görsel henüz eklenmediyse ikon temelli bir yer tutucu — sayfa boş
