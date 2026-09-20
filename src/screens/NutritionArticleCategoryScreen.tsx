@@ -5,19 +5,12 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listNutritionArticlesByCategory, type NutritionArticle } from "../lib/api/nutritionArticles";
 import { getArticleCategory } from "../lib/nutritionCategories";
-import { useAuth } from "../context/AuthContext";
-import { useBranchSelect } from "../context/BranchSelectContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "NutritionArticleCategory">;
 
 export default function NutritionArticleCategoryScreen({ route, navigation }: Props) {
   const { category } = route.params;
-  const { role } = useAuth();
-  // Branş Koordinatörü, Beslenme/Performans/Fitness sayfalarında Kulüp
-  // Admini gibi yetkili — bkz. BranchSelectContext.tsx.
-  const { isLocked } = useBranchSelect();
-  const isCoordinator = role === "coach" && isLocked;
   const meta = getArticleCategory(category);
 
   const [articles, setArticles] = useState<NutritionArticle[]>([]);
@@ -58,15 +51,6 @@ export default function NutritionArticleCategoryScreen({ route, navigation }: Pr
         <Text style={[styles.heroTitle, { color: meta.color }]}>{meta.label}</Text>
       </View>
 
-      {(role === "club_admin" || isCoordinator) && (
-        <TouchableOpacity
-          style={[styles.addButton, { borderColor: meta.color }]}
-          onPress={() => navigation.navigate("NutritionArticleForm", { articleId: undefined, category })}
-        >
-          <Text style={[styles.addButtonText, { color: meta.color }]}>+ Yazı Ekle</Text>
-        </TouchableOpacity>
-      )}
-
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -94,8 +78,6 @@ const styles = StyleSheet.create({
   heroCard: { borderWidth: 1.5, borderRadius: radius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, alignItems: "center", marginBottom: spacing.md },
   heroIcon: { fontSize: 28, marginBottom: 2 },
   heroTitle: { fontSize: 15, fontWeight: "800", textAlign: "center" },
-  addButton: { alignSelf: "flex-start", borderWidth: 1, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8, marginBottom: spacing.md },
-  addButtonText: { fontSize: 12, fontWeight: "700" },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   card: {

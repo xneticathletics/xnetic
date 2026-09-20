@@ -29,7 +29,27 @@ export const ARTICLE_CATEGORIES = [
   { key: "kemik_sagligi", label: "Kemik Sağlığı: Kalsiyum, D Vitamini, Demir", icon: "🦴", color: colors.violet, soft: colors.violetSoft },
   { key: "yetersiz_enerji", label: "Yetersiz Enerji Alımı (RED-S)", icon: "⚠️", color: colors.teal, soft: colors.tealSoft },
   { key: "uyku_beslenme", label: "Uyku ve Beslenme", icon: "😴", color: colors.yellow, soft: colors.yellowSoft },
+  // Beslenme Rehberi sayfasından eklenen serbest yazılar — bir konu başlığının
+  // altında değil, sayfanın en üstünde (en yeni en üstte) listelenir. Konu
+  // kutucukları listesinde GÖSTERİLMEZ (bkz. NutritionArticlesScreen).
+  { key: "genel", label: "Yeni Yazı", icon: "📝", color: colors.yellow, soft: colors.yellowSoft },
 ] as const;
+
+// Serbest yazıların kutucuk rengi: dört marka renginden biri, yazının
+// kimliğinden türetilir — "rastgele" görünür ama her açılışta aynı kalır
+// (her ekran yenilendiğinde renk değişmesin diye Math.random kullanılmaz).
+const FREE_ARTICLE_PALETTE = [
+  { color: colors.yellow, soft: colors.yellowSoft },
+  { color: colors.teal, soft: colors.tealSoft },
+  { color: colors.coral, soft: colors.coralSoft },
+  { color: colors.violet, soft: colors.violetSoft },
+] as const;
+
+export function freeArticleColors(articleId: string) {
+  let h = 0;
+  for (let i = 0; i < articleId.length; i++) h = (h * 31 + articleId.charCodeAt(i)) >>> 0;
+  return FREE_ARTICLE_PALETTE[h % FREE_ARTICLE_PALETTE.length];
+}
 
 export type ArticleCategoryKey = (typeof ARTICLE_CATEGORIES)[number]["key"];
 

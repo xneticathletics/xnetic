@@ -25,6 +25,11 @@ export type NutritionArticleInput = {
 
 const NUTRITION_ARTICLE_FIELDS = "id, club_id, category, title, body, pdf_url, source, created_at";
 
+// Beslenme Rehberi sayfasından eklenen serbest yazılar — en yeni en üstte.
+export async function listFreeNutritionArticles(): Promise<NutritionArticle[]> {
+  return listNutritionArticlesByCategory("genel");
+}
+
 export async function listNutritionArticlesByCategory(category: ArticleCategoryKey): Promise<NutritionArticle[]> {
   const { data, error } = await supabase
     .from("nutrition_articles")
