@@ -39,6 +39,24 @@ export async function listAnnouncements(): Promise<Announcement[]> {
 // src/lib/api/announcements.ts ile birebir aynı sınır).
 export const MAX_ATTACHMENT_SIZE_BYTES = 1 * 1024 * 1024;
 
+// Bucket'taki MIME izin listesiyle (20260920100000_storage_mime_hardening.sql)
+// uyumlu; listede olmayan her tip application/octet-stream'e düşer. Böylece
+// text/html ve image/svg+xml PUBLIC bucket'ta çalışan sayfaya dönüşemez
+// (depolanmış XSS), yükleme de "mime desteklenmiyor" hatasıyla kırılmaz.
+// Mobildeki src/lib/api/announcements.ts ile birebir aynı liste.
+const SAFE_ATTACHMENT_MIME = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif",
+  "application/pdf", "text/plain", "application/zip",
+  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+]);
+
+function safeAttachmentContentType(mimeType: string | null): string {
+  const normalized = (mimeType ?? "").split(";")[0].trim().toLowerCase();
+  return SAFE_ATTACHMENT_MIME.has(normalized) ? normalized : "application/octet-stream";
+}
+
 export async function uploadAnnouncementAttachment(file: File, clubId: string): Promise<string> {
   if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
     throw new Error(`Dosya en fazla ${MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
@@ -47,7 +65,7 @@ export async function uploadAnnouncementAttachment(file: File, clubId: string): 
   const path = `${clubId}/${Date.now()}.${ext}`;
   const { error } = await supabase.storage
     .from("announcement-attachments")
-    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+    .upload(path, file, { contentType: safeAttachmentContentType(file.type) });
   if (error) throw error;
   const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
   return data.publicUrl;

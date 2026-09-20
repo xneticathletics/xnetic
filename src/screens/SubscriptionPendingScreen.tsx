@@ -19,16 +19,24 @@ function toWhatsappDigits(phone: string): string {
   return digits;
 }
 
+// NOT — App Store Review Guideline 3.1.1 / Google Play Payments:
+// Uygulama İÇİNDE dijital bir aboneliğin fiyatını göstermek ya da
+// uygulama dışı bir satın alma yoluna yönlendiren bir çağrı ("ödeme yap",
+// IBAN, tutar vb.) koymak, mağaza içi satın alma (IAP/Play Billing)
+// kullanılmadığı sürece REDDEDİLME sebebidir. Abonelik kulüp (kurum)
+// tarafından web üzerinden ayrıca satın alınıyor; bu ekran bu yüzden
+// bilinçli olarak NÖTR: tutar, IBAN ve "öde" çağrısı YOK, sadece durum
+// bilgisi ve destek iletişimi var. Buraya fiyat/ödeme bağlantısı eklemeyin.
 const COPY: Record<string, { icon: string; title: string; text: string }> = {
   pending_review: {
     icon: "⏳",
-    title: "Ödeme Onayı Bekleniyor",
-    text: "Havale/EFT bildirimini aldık. X-NETIC ekibi hesabına parayı kontrol edip onayladığında hesabın hemen aktif olacak — genelde birkaç saat içinde.",
+    title: "Hesabın İnceleniyor",
+    text: "Kulübünün kaydını aldık. X-NETIC ekibi kontrolünü tamamladığında hesabın otomatik olarak aktif olacak — genelde birkaç saat içinde.",
   },
   past_due: {
     icon: "⚠️",
-    title: "Aboneliğinin Süresi Doldu",
-    text: "Kulübünün abonelik dönemi sona erdi. Devam edebilmek için aşağıdaki hesaba ödemeni yapıp destek ile iletişime geç.",
+    title: "Kulübünün Aboneliği Aktif Değil",
+    text: "Kulübünün abonelik dönemi sona ermiş görünüyor. Hesabın yeniden aktifleşmesi için kulüp yöneticinle ya da X-NETIC destek ekibiyle iletişime geçebilirsin.",
   },
   cancelled: {
     icon: "🚫",
@@ -75,9 +83,7 @@ export default function SubscriptionPendingScreen({ status, billingPeriod, amoun
 
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Plan</Text>
-        <Text style={styles.cardValue}>
-          {billingPeriod === "yearly" ? "Yıllık" : "Aylık"} — {amountTry.toLocaleString("tr-TR")} ₺
-        </Text>
+        <Text style={styles.cardValue}>{billingPeriod === "yearly" ? "Yıllık" : "Aylık"}</Text>
       </View>
 
       {settings === null ? (
@@ -88,12 +94,12 @@ export default function SubscriptionPendingScreen({ status, billingPeriod, amoun
           onPress={() =>
             Linking.openURL(
               `https://wa.me/${toWhatsappDigits(settings.supportPhone!)}?text=${encodeURIComponent(
-                `Merhaba, X-NETIC'te aboneliğimi ödemek/yenilemek istiyorum.`
+                `Merhaba, kulübümün X-NETIC hesabının durumu hakkında bilgi almak istiyorum.`
               )}`
             )
           }
         >
-          <Text style={styles.whatsappButtonText}>💬 WhatsApp'tan İletişime Geç</Text>
+          <Text style={styles.whatsappButtonText}>💬 Destek ile İletişime Geç</Text>
         </TouchableOpacity>
       ) : (
         <Text style={styles.noPhoneText}>
@@ -106,7 +112,7 @@ export default function SubscriptionPendingScreen({ status, billingPeriod, amoun
           {notifying ? (
             <ActivityIndicator color={colors.bg} size="small" />
           ) : (
-            <Text style={styles.paidButtonText}>{notified ? "✓ Bildirildi" : "Ödedim, Bildir"}</Text>
+            <Text style={styles.paidButtonText}>{notified ? "✓ Bildirildi" : "Destek Ekibine Bildir"}</Text>
           )}
         </TouchableOpacity>
       )}

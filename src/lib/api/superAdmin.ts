@@ -2,7 +2,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { decode } from "base64-arraybuffer";
 import { supabase } from "../supabase";
 import { sendNotification } from "./notifications";
-import { MAX_ATTACHMENT_SIZE_BYTES } from "./announcements";
+import { MAX_ATTACHMENT_SIZE_BYTES, safeAttachmentContentType } from "./announcements";
 
 export type ClubSummary = {
   id: string;
@@ -203,7 +203,7 @@ export async function uploadBroadcastAttachment(localUri: string, fileName: stri
 
   const { error } = await supabase.storage
     .from("announcement-attachments")
-    .upload(path, arrayBuffer, { contentType: mimeType ?? "application/octet-stream" });
+    .upload(path, arrayBuffer, { contentType: safeAttachmentContentType(mimeType) });
   if (error) throw error;
 
   const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);

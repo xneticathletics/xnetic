@@ -33,15 +33,15 @@
         "expo-image-picker",
         {
           "photosPermission": "Sporcu, profil ve ürün fotoğrafı yükleyebilmen için galerine erişim gerekiyor.",
-          "cameraPermission": "X-NETIC kamerana erişmiyor.",
-          "microphonePermission": "X-NETIC mikrofonuna erişmiyor."
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ],
       [
         "expo-calendar",
         {
           "calendarPermission": "Antrenman ve müsabaka programını telefonunun takvimine ekleyebilmen için takvimine erişim gerekiyor.",
-          "remindersPermission": "X-NETIC hatırlatıcılarına erişmiyor."
+          "remindersPermission": false
         }
       ],
       [

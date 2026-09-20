@@ -60,6 +60,26 @@ export async function getAnnouncement(id: string): Promise<Announcement> {
 // senkron tutulmalı). Kulübe özel bir yolda tutulur ("<clubId>/<dosya>").
 export const MAX_ATTACHMENT_SIZE_BYTES = 1 * 1024 * 1024;
 
+// Bucket'ta artık bir MIME izin listesi var (bkz. 20260920100000_storage_mime
+// _hardening.sql): text/html ve image/svg+xml YASAK — aksi halde public
+// bucket'a yüklenen bir dosya supabase.co alan adı altında ÇALIŞAN bir sayfa
+// olurdu (depolanmış XSS / oltalama). Dosya seçici "*/*" olduğu için burada
+// gelen tip listede yoksa application/octet-stream'e düşülür: tarayıcı böyle
+// bir dosyayı çalıştırmaz, indirir — yükleme de asla "mime desteklenmiyor"
+// hatasıyla kırılmaz.
+const SAFE_ATTACHMENT_MIME = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif",
+  "application/pdf", "text/plain", "application/zip",
+  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+]);
+
+export function safeAttachmentContentType(mimeType: string | null): string {
+  const normalized = (mimeType ?? "").split(";")[0].trim().toLowerCase();
+  return SAFE_ATTACHMENT_MIME.has(normalized) ? normalized : "application/octet-stream";
+}
+
 export async function uploadAnnouncementAttachment(
   localUri: string,
   clubId: string,
@@ -78,7 +98,7 @@ export async function uploadAnnouncementAttachment(
 
   const { error } = await supabase.storage
     .from("announcement-attachments")
-    .upload(path, arrayBuffer, { contentType: mimeType ?? "application/octet-stream" });
+    .upload(path, arrayBuffer, { contentType: safeAttachmentContentType(mimeType) });
   if (error) throw error;
 
   const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);

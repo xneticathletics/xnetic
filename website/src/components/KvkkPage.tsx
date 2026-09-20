@@ -74,7 +74,64 @@ export default function KvkkPage({ settings }: { settings: PlatformSettings | nu
           </section>
 
           <section>
-            <h2 className="mb-2 text-base font-bold text-ink">5. KVKK Madde 11 Kapsamındaki Haklarınız</h2>
+            <h2 className="mb-2 text-base font-bold text-ink">5. Çocukların Kişisel Verileri</h2>
+            <p>
+              X-NETIC'i kullanan kulüplerin sporcularının önemli bir bölümü 18 yaşın altındadır. 18 yaşından küçük bir
+              sporcunun kişisel verileri, yalnızca velisi/vasisi tarafından verilen açık rızaya dayanılarak işlenir;
+              uygulamadaki aydınlatma ve açık rıza metinleri veli/vasi hesabına gösterilir ve onay veli/vasi tarafından
+              verilir. Çocuğa ait bir sporcu giriş hesabı, yalnızca kulüp yöneticisi veya velinin talebiyle oluşturulur
+              ve bu hesap üzerinden reklam, profilleme veya pazarlama amaçlı hiçbir veri işlenmez. Velisi olduğunuz
+              sporcunun verilerinin silinmesini her zaman talep edebilirsiniz.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-base font-bold text-ink">6. Verilerin Saklandığı Yer ve Yurt Dışına Aktarım</h2>
+            <p>
+              X-NETIC'in veritabanı ve dosya depolama altyapısı, hizmet sağlayıcımız Supabase üzerinden Almanya
+              (Frankfurt) bölgesindeki sunucularda barındırılmaktadır. Bu nedenle kişisel verileriniz, KVKK anlamında
+              yurt dışında (Avrupa Birliği/Almanya) işlenmekte ve saklanmaktadır. Ayrıca mobil bildirimlerin
+              iletilmesi için Expo, hata kayıtları için Sentry, e-posta gönderimi için Resend ve bot koruması için
+              Cloudflare Turnstile hizmetlerinden yararlanılmaktadır. Bu aktarımlar yalnızca hizmetin sunulabilmesi
+              amacıyla ve KVKK'nın öngördüğü şartlara uygun olarak yapılır; verileriniz ticari amaçla üçüncü
+              taraflara satılmaz veya devredilmez.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-base font-bold text-ink">7. Saklama Süresi</h2>
+            <p>
+              Kişisel veriler, kulüp üyeliğiniz devam ettiği sürece ve ilgili mevzuatın öngördüğü zamanaşımı/saklama
+              süreleri boyunca saklanır. Üyelik sona erdiğinde veya silme talebiniz işleme alındığında veriler, yasal
+              saklama yükümlülüğü bulunmayan kısımlar bakımından silinir ya da anonim hale getirilir.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-base font-bold text-ink">8. Hesap ve Veri Silme Talebi</h2>
+            <p>
+              Hesabınızın ve kişisel verilerinizin silinmesini iki şekilde talep edebilirsiniz:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>
+                Mobil uygulamada <strong>Profil → Hesabımı Sil</strong> adımını kullanarak. Talep, kulübünüzün
+                yöneticisine (kulüp yöneticisiyseniz X-NETIC ekibine) iletilir ve hesabınız erişime kapatılır.
+              </li>
+              <li>
+                Aşağıdaki iletişim adresine, hesabınıza kayıtlı ad-soyad ve telefon/e-posta bilgisiyle bir silme talebi
+                göndererek.
+              </li>
+            </ul>
+            <p className="mt-2">
+              Talebiniz en geç 30 gün içinde sonuçlandırılır. Silme sonrasında; aidat/ödeme kayıtları gibi yasal
+              saklama yükümlülüğüne tabi veriler, mevzuatta öngörülen süre boyunca yalnızca bu amaçla saklanmaya
+              devam edebilir. Kulübe kayıtlı bir sporcu/veli iseniz veri sorumlusu kulübünüz olduğundan, talebinizin
+              kulüp kayıtlarına da yansıtılması için öncelikle kulüp yönetimiyle iletişime geçmeniz önerilir.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-base font-bold text-ink">9. KVKK Madde 11 Kapsamındaki Haklarınız</h2>
             <p>
               KVKK'nın 11. maddesi uyarınca kişisel verinizin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin
               bilgi talep etme, düzeltilmesini veya silinmesini isteme ve kanuna aykırı işleme nedeniyle uğradığınız
@@ -85,7 +142,7 @@ export default function KvkkPage({ settings }: { settings: PlatformSettings | nu
           </section>
 
           <section>
-            <h2 className="mb-2 text-base font-bold text-ink">6. İletişim</h2>
+            <h2 className="mb-2 text-base font-bold text-ink">10. İletişim</h2>
             <p>
               {settings?.supportEmail || settings?.supportPhone ? (
                 <>

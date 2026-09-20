@@ -55,6 +55,61 @@ const NON_CASCADING_CLUB_TABLES = [
   "club_subscription_history",
 ];
 
+// Storage'daki dosyalar clubs'a FK ile bağlı DEĞİL — kulüp satırı silinince
+// fotoğraflar (sporcu/kullanıcı fotoğrafı, sosyal paylaşım, dekont, logo…)
+// depoda kalmaya devam ediyordu; public bucket'lardakiler ise URL'i bilen
+// herkese açık kalıyordu. KVKK/GDPR "silinme hakkı" için bu dosyalar da
+// temizlenmeli. Yol şemaları bucket'a göre farklı (bazıları <clubId>/…,
+// çoğu <entityId>/…) olduğundan ilgili id'ler silme işleminden ÖNCE
+// toplanır.
+type PurgePlan = { bucket: string; prefixes: string[] };
+
+async function collectStoragePrefixes(admin: any, clubId: string): Promise<PurgePlan[]> {
+  const ids = async (table: string, col = "id") => {
+    const { data } = await admin.from(table).select(col).eq("club_id", clubId);
+    return (data ?? []).map((r: Record<string, string>) => r[col]).filter(Boolean);
+  };
+
+  const [athletes, users, events, sessions, products, announcements] = await Promise.all([
+    ids("athletes"), ids("users"), ids("events"), ids("training_sessions"), ids("shop_products"), ids("announcements"),
+  ]);
+  const { data: regs } = await admin.from("event_registrations").select("id").eq("club_id", clubId);
+  const { data: pays } = await admin.from("payments").select("id").eq("club_id", clubId);
+
+  return [
+    { bucket: "club-logos", prefixes: [clubId] },
+    { bucket: "social-posts", prefixes: [clubId] },
+    { bucket: "athlete-photos", prefixes: athletes },
+    { bucket: "user-photos", prefixes: users },
+    { bucket: "event-banners", prefixes: events },
+    { bucket: "event-receipts", prefixes: (regs ?? []).map((r: { id: string }) => r.id) },
+    { bucket: "payment-receipts", prefixes: (pays ?? []).map((r: { id: string }) => r.id) },
+    { bucket: "session-media", prefixes: sessions },
+    { bucket: "shop-photos", prefixes: products },
+    { bucket: "announcement-attachments", prefixes: announcements },
+  ];
+}
+
+// Bir klasörün altındaki tüm dosyaları (bir alt seviye dahil) siler.
+async function purgePrefix(admin: any, bucket: string, prefix: string): Promise<number> {
+  const { data: entries } = await admin.storage.from(bucket).list(prefix, { limit: 1000 });
+  if (!entries || entries.length === 0) return 0;
+
+  const files: string[] = [];
+  for (const e of entries) {
+    // id === null => klasör (ör. social-posts/<clubId>/<postId>/)
+    if (e.id === null) {
+      const { data: sub } = await admin.storage.from(bucket).list(`${prefix}/${e.name}`, { limit: 1000 });
+      for (const s of sub ?? []) files.push(`${prefix}/${e.name}/${s.name}`);
+    } else {
+      files.push(`${prefix}/${e.name}`);
+    }
+  }
+  if (files.length === 0) return 0;
+  await admin.storage.from(bucket).remove(files);
+  return files.length;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
 
@@ -108,6 +163,10 @@ Deno.serve(async (req) => {
       ip_address: getRequestIp(req),
     });
 
+    // 0. Storage yollarını, satırlar hâlâ dururken topla (silindikten sonra
+    // hangi dosyanın kime ait olduğunu anlamak imkânsız).
+    const purgePlan = await collectStoragePrefixes(admin, clubId).catch(() => [] as PurgePlan[]);
+
     // 1. Bu kulübün kullanıcılarının auth hesaplarını sil (public.users
     // hâlâ dururken alt sorgu geçerli veriyi okur).
     const { data: clubUsers } = await admin.from("users").select("auth_user_id").eq("club_id", clubId);
@@ -129,7 +188,21 @@ Deno.serve(async (req) => {
     const { error: deleteClubError } = await admin.from("clubs").delete().eq("id", clubId);
     if (deleteClubError) throw deleteClubError;
 
-    return new Response(JSON.stringify({ success: true }), {
+    // 4. Dosyaları temizle. Veri silme BAŞARIYLA bittikten sonra yapılır ve
+    // hatası yutulur — storage tarafındaki bir sorun, tamamlanmış bir kulüp
+    // silme işlemini asla geri alamaz/bloke edemez.
+    let deletedFiles = 0;
+    try {
+      for (const { bucket, prefixes } of purgePlan) {
+        for (const prefix of prefixes) {
+          deletedFiles += await purgePrefix(admin, bucket, prefix).catch(() => 0);
+        }
+      }
+    } catch {
+      // yoksay — aşağıdaki yanıt yine de success döner
+    }
+
+    return new Response(JSON.stringify({ success: true, deletedFiles }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       status: 200,
     });
