@@ -11,6 +11,7 @@ import ScaleSelector from "../components/ScaleSelector";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
+import { useClubSettings } from "../context/ClubSettingsContext";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "WellnessCheckin">;
 
@@ -24,16 +25,22 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("tr-TR");
 }
 
-// Check-in girişi sadece sabah 06:00-12:00 arası açık — bu saat aralığının
-// dışında form pasif olur, sadece geçmiş görüntülenebilir.
-function isWithinCheckinWindow(): boolean {
+// Check-in girişi kulübün belirlediği saat aralığında açık (Gelişmiş
+// Ayarlar → Günlük Takip; varsayılan 06:00-12:00) — aralığın dışında form
+// pasif olur, sadece geçmiş görüntülenebilir.
+function isWithinCheckinWindow(startHour: number, endHour: number): boolean {
   const hour = new Date().getHours();
-  return hour >= 6 && hour < 12;
+  return hour >= startHour && hour < endHour;
+}
+
+function formatHour(h: number) {
+  return `${h < 10 ? "0" : ""}${h}:00`;
 }
 
 export default function WellnessCheckinScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const { scrollRef, handleFocus } = useKeyboardScroll();
+  const { settings } = useClubSettings();
 
   const [athleteId, setAthleteId] = useState<string | null>(null);
   const [athleteName, setAthleteName] = useState<string | null>(null);
@@ -146,6 +153,19 @@ export default function WellnessCheckinScreen({ navigation }: Props) {
     );
   }
 
+  // Kulüp Günlük Check-in'i kullanmıyorsa (Gelişmiş Ayarlar → Günlük Takip)
+  // ekran hiç açılmasın. Ana Sayfa kutucuğu da gizli ama bildirim/derin
+  // bağlantı yoluyla buraya gelinebildiği için burada da kontrol ediliyor.
+  if (!settings.wellness_enabled) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.placeholderIcon}>🌡️</Text>
+        <Text style={styles.placeholderTitle}>Günlük Check-in Kapalı</Text>
+        <Text style={styles.errorText}>Kulübün bu özelliği şu an kullanmıyor.</Text>
+      </View>
+    );
+  }
+
   if (athleteType !== "musabik") {
     return (
       <View style={styles.loadingContainer}>
@@ -158,7 +178,7 @@ export default function WellnessCheckinScreen({ navigation }: Props) {
     );
   }
 
-  const withinWindow = isWithinCheckinWindow();
+  const withinWindow = isWithinCheckinWindow(settings.wellness_start_hour, settings.wellness_end_hour);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -167,7 +187,8 @@ export default function WellnessCheckinScreen({ navigation }: Props) {
 
         {!withinWindow ? (
           <Text style={styles.inactiveBox}>
-            ⏰ Check-in girişi sadece sabah 06:00-12:00 arası açıktır. Şu an
+            ⏰ Check-in girişi sadece {formatHour(settings.wellness_start_hour)}-
+            {formatHour(settings.wellness_end_hour)} arası açıktır. Şu an
             pasif — geçmiş kayıtlarını aşağıdan görebilirsin.
           </Text>
         ) : (

@@ -9,6 +9,7 @@ import {
 import { topUpAllActiveCoachPlans } from "../lib/api/coachPaymentPlans";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import FilterChipRow from "../components/FilterChipRow";
+import CoachPickerModal from "../components/CoachPickerModal";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "CoachPayments">;
 
@@ -26,6 +27,10 @@ function formatDate(iso: string | null) {
 export default function CoachPaymentsScreen({ navigation }: Props) {
   const [payments, setPayments] = useState<CoachPayment[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  // Antrenör seçimi: null = tüm antrenörler. Seçilince hem liste hem
+  // yukarıdaki Bekleyen/Ödenen toplamları sadece o antrenörü gösterir.
+  const [coachFilter, setCoachFilter] = useState<string | null>(null);
+  const [coachPickerOpen, setCoachPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,19 +60,39 @@ export default function CoachPaymentsScreen({ navigation }: Props) {
     }, [load])
   );
 
+  // Açılır listedeki antrenörler, yüklenmiş ödeme kayıtlarından türetiliyor
+  // — ayrı bir sorgu gerekmiyor ve listede yalnızca gerçekten ödeme kaydı
+  // olan antrenörler çıkıyor.
+  const coaches = useMemo(() => {
+    const byId = new Map<string, { id: string; name: string }>();
+    payments.forEach((p) => {
+      if (!byId.has(p.coach_id)) byId.set(p.coach_id, { id: p.coach_id, name: p.users?.name ?? "Antrenör" });
+    });
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }, [payments]);
+
+  const selectedCoachName = coachFilter ? coaches.find((c) => c.id === coachFilter)?.name ?? null : null;
+
+  // Antrenör seçimi önce uygulanır; durum filtresi ve toplamlar hep bu
+  // daraltılmış küme üzerinden hesaplanır.
+  const coachScoped = useMemo(
+    () => (coachFilter ? payments.filter((p) => p.coach_id === coachFilter) : payments),
+    [payments, coachFilter]
+  );
+
   const totals = useMemo(() => {
     let pending = 0;
     let paid = 0;
-    payments.forEach((p) => {
+    coachScoped.forEach((p) => {
       if (p.status === "paid") paid += Number(p.amount);
       else pending += Number(p.amount);
     });
     return { pending, paid };
-  }, [payments]);
+  }, [coachScoped]);
 
   const filtered = useMemo(
-    () => (statusFilter === "all" ? payments : payments.filter((p) => p.status === statusFilter)),
-    [payments, statusFilter]
+    () => (statusFilter === "all" ? coachScoped : coachScoped.filter((p) => p.status === statusFilter)),
+    [coachScoped, statusFilter]
   );
 
   const handleTogglePaid = (item: CoachPayment) => {
@@ -145,6 +170,19 @@ export default function CoachPaymentsScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity
+        style={styles.coachSelect}
+        activeOpacity={0.8}
+        onPress={() => setCoachPickerOpen(true)}
+        disabled={coaches.length === 0}
+      >
+        <Text style={styles.coachSelectLabel}>Antrenör</Text>
+        <Text style={styles.coachSelectValue} numberOfLines={1}>
+          {selectedCoachName ?? "Tüm Antrenörler"}
+        </Text>
+        <Text style={styles.coachSelectChevron}>⌄</Text>
+      </TouchableOpacity>
+
       <View style={styles.summaryCard}>
         <View>
           <Text style={styles.summarySubLabel}>Bekleyen</Text>
@@ -207,6 +245,15 @@ export default function CoachPaymentsScreen({ navigation }: Props) {
           </View>
         )}
       />
+
+      <CoachPickerModal
+        visible={coachPickerOpen}
+        title="Antrenör Seç"
+        coaches={coaches}
+        clearLabel="Tüm Antrenörler"
+        onSelect={setCoachFilter}
+        onClose={() => setCoachPickerOpen(false)}
+      />
     </View>
   );
 }
@@ -229,6 +276,15 @@ const styles = StyleSheet.create({
   summarySubLabel: { color: colors.muted, fontSize: 11, fontWeight: "600" },
   summaryValue: { fontSize: 16, fontWeight: "800", marginTop: 2 },
   filterRow: { marginBottom: spacing.md },
+  coachSelect: {
+    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.violet,
+    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 12,
+    marginBottom: spacing.md,
+  },
+  coachSelectLabel: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+  coachSelectValue: { color: colors.ink, fontSize: 14, fontWeight: "700", flex: 1, textAlign: "right" },
+  coachSelectChevron: { color: colors.violet, fontSize: 16, fontWeight: "700", marginTop: -4 },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {

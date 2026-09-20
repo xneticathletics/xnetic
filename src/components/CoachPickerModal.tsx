@@ -1,22 +1,31 @@
 import React from "react";
 import { Modal, View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import type { Coach } from "../lib/api/coaches";
+
+// Sadece id + name yeterli: hem Coach tipini (coaches.ts) hem de ödeme
+// listesinden türetilen hafif antrenör listelerini kabul edebilsin diye
+// prop tipi kasıtlı olarak dar tutuldu.
+type PickableCoach = { id: string; name: string };
 
 export default function CoachPickerModal({
   visible,
   title,
   coaches,
   excludeIds,
+  clearLabel,
   onSelect,
   onClose,
 }: {
   visible: boolean;
   title: string;
-  coaches: Coach[];
+  coaches: PickableCoach[];
   // Bu grupta zaten başka bir slotta (ör. Baş Antrenör iken Yardımcı
   // listesinde tekrar) görünmesin diye hariç tutulacak antrenörler.
   excludeIds?: string[];
+  // Listenin en üstündeki "seçimi kaldır" satırının metni. Atama
+  // ekranlarında boşaltma (kırmızı), filtre olarak kullanıldığında ise
+  // "Tümü" anlamında (normal renk) gösterilir.
+  clearLabel?: string;
   onSelect: (coachId: string | null) => void;
   onClose: () => void;
 }) {
@@ -33,7 +42,7 @@ export default function CoachPickerModal({
             keyExtractor={(c) => c.id}
             ListHeaderComponent={
               <TouchableOpacity style={styles.row} onPress={() => { onSelect(null); onClose(); }}>
-                <Text style={styles.rowTextMuted}>Yok (Boşalt)</Text>
+                <Text style={clearLabel ? styles.rowText : styles.rowTextMuted}>{clearLabel ?? "Yok (Boşalt)"}</Text>
               </TouchableOpacity>
             }
             ListEmptyComponent={<Text style={styles.empty}>Uygun antrenör yok.</Text>}

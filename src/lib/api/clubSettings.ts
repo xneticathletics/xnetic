@@ -17,6 +17,15 @@ export type ClubSettings = {
   disabled_home_tiles: string[];
   // Kulüp Kayıt Dondurma özelliğini kullanıyor mu (Gelişmiş Ayarlar → Kayıt Dondurma).
   membership_freeze_enabled: boolean;
+  // Günlük Check-in (wellness): kulüp kullanıyor mu ve gün içinde hangi
+  // saatler arasında doldurulabilir (Gelişmiş Ayarlar → Günlük Takip).
+  wellness_enabled: boolean;
+  wellness_start_hour: number;
+  wellness_end_hour: number;
+  // Algılanan Zorluk Derecesi (RPE): kulüp kullanıyor mu ve antrenman
+  // bitişinden sonra kaç dakika boyunca doldurulabilir.
+  rpe_enabled: boolean;
+  rpe_window_minutes: number;
 };
 
 // Kulüp henüz hiç ayar kaydetmediyse (yeni kulüp, ya da migration'dan
@@ -35,6 +44,11 @@ export const DEFAULT_CLUB_SETTINGS: ClubSettings = {
   finance_period_start_day: 1,
   disabled_home_tiles: [],
   membership_freeze_enabled: true,
+  wellness_enabled: true,
+  wellness_start_hour: 6,
+  wellness_end_hour: 12,
+  rpe_enabled: true,
+  rpe_window_minutes: 60,
 };
 
 // club_id EXPLICIT olarak filtrelenir — RLS'e (".limit(1)") güvenmek Süper
@@ -59,6 +73,11 @@ export async function getClubSettings(clubId: string): Promise<ClubSettings> {
     finance_period_start_day: data.finance_period_start_day,
     disabled_home_tiles: data.disabled_home_tiles ?? [],
     membership_freeze_enabled: data.membership_freeze_enabled ?? true,
+    wellness_enabled: data.wellness_enabled ?? true,
+    wellness_start_hour: data.wellness_start_hour ?? 6,
+    wellness_end_hour: data.wellness_end_hour ?? 12,
+    rpe_enabled: data.rpe_enabled ?? true,
+    rpe_window_minutes: data.rpe_window_minutes ?? 60,
   };
 }
 

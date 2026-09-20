@@ -59,6 +59,20 @@ export function getNotificationTarget(
       }
       return { tab: "Ana Menü", screen: isPlanner ? "TrainingSessions" : "MySchedule" };
     }
+    case "session_rpe": {
+      // Antrenman bitişinde giden "zorluk derecesini değerlendir"
+      // bildirimi — doğrudan o antrenmanın sporcu detayına gidiyor, çünkü
+      // değerlendirme penceresi kısa (varsayılan 60 dk).
+      const sessionId = payload?.sessionId as string | undefined;
+      const athleteId = payload?.athleteId as string | undefined;
+      const athleteName = payload?.athleteName as string | undefined;
+      if (sessionId && athleteId) {
+        return { tab: "Ana Menü", screen: "MySessionDetail", params: { sessionId, athleteId, athleteName: athleteName ?? "" } };
+      }
+      return { tab: "Ana Menü", screen: "MySchedule" };
+    }
+    case "wellness_reminder":
+      return { tab: "Ana Menü", screen: "WellnessCheckin" };
     case "fitness_program": {
       // "Fitness" ekranı sadece antrenör/admin'in Ana Sayfa'sında var (bkz.
       // HomeScreen.tsx TILES_BY_ROLE) — veli/sporcu buraya gönderilirse

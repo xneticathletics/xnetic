@@ -188,9 +188,12 @@ export default function HomeScreen({
     const base = isBranchCoordinator ? COORDINATOR_TILES : TILES_BY_ROLE[role] ?? [];
     // Kulüp Ayarları > Ana Sayfa Özellikleri'nden pasifleştirilen
     // başlıklar Ana Sayfa'da hiç gösterilmez.
-    if (settings.disabled_home_tiles.length === 0) return base;
-    return base.filter((tile) => !settings.disabled_home_tiles.includes(tile.key));
-  }, [role, isBranchCoordinator, settings.disabled_home_tiles]);
+    // Günlük Check-in kulüp ayarlarından kapatıldıysa kutucuk hiç görünmez
+    // (bkz. Gelişmiş Ayarlar → Günlük Takip).
+    const withFeatureFlags = settings.wellness_enabled ? base : base.filter((tile) => tile.key !== "wellness");
+    if (settings.disabled_home_tiles.length === 0) return withFeatureFlags;
+    return withFeatureFlags.filter((tile) => !settings.disabled_home_tiles.includes(tile.key));
+  }, [role, isBranchCoordinator, settings.disabled_home_tiles, settings.wellness_enabled]);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);

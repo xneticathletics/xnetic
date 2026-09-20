@@ -29,6 +29,13 @@ export function useClubSettingsForm() {
     setForm({ ...form, [key]: Number.isFinite(num) ? num : 0 });
   };
 
+  // Aç/kapa ayarları için — setField sayıya çevirdiği için boolean alanlarda
+  // kullanılamıyor.
+  const setBool = (key: keyof ClubSettings, value: boolean) => {
+    if (!form) return;
+    setForm({ ...form, [key]: value });
+  };
+
   const handleSave = async () => {
     if (!form || !clubId) return;
     setSaving(true);
@@ -44,5 +51,5 @@ export function useClubSettingsForm() {
     }
   };
 
-  return { form, setField, handleSave, loading, saving, error };
+  return { form, setField, setBool, handleSave, loading, saving, error };
 }

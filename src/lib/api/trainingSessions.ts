@@ -208,20 +208,15 @@ export function isSessionPast(session: SessionTiming): boolean {
   return new Date() > end;
 }
 
-// "Algılanan Zorluk Derecesi" anketi, antrenman başladıktan (varsayılan) 30
-// dakika sonra açılır (sporcu antrenmanı gerçekten yaşamadan doldurmasın
-// diye) ve bitişinden (varsayılan) 2 saat sonrasına kadar açık kalır.
-export function isRpeWindowOpen(
-  session: SessionTiming,
-  afterStartMinutes: number = 30,
-  afterEndMinutes: number = 120
-): boolean {
-  const start = toDateTime(session.session_date, session.start_time);
+// "Algılanan Zorluk Derecesi" anketi, antrenman BİTTİĞİ anda açılır —
+// sporcuya tam o anda bildirim gider (bkz. send_session_rpe_reminders
+// cron'u) — ve kulübün belirlediği süre kadar (varsayılan 60 dk) açık
+// kalır, sonra kapanır. Süre: Gelişmiş Ayarlar → Günlük Takip.
+export function isRpeWindowOpen(session: SessionTiming, windowMinutes: number = 60): boolean {
   const end = toEndDateTime(session);
-  const windowStart = new Date(start.getTime() + afterStartMinutes * 60 * 1000);
-  const windowEnd = new Date(end.getTime() + afterEndMinutes * 60 * 1000);
+  const windowEnd = new Date(end.getTime() + windowMinutes * 60 * 1000);
   const now = new Date();
-  return now >= windowStart && now <= windowEnd;
+  return now >= end && now <= windowEnd;
 }
 
 // Antrenman bitişinden belirli bir süre (varsayılan 15 dk) geçtiyse ve

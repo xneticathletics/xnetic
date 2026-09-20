@@ -48,6 +48,13 @@ const CATEGORIES: {
     sub: "Kulüpte kullanılsın mı? Aç / kapat",
     accent: colors.teal,
   },
+  {
+    key: "DailyTrackingSettings",
+    icon: "🌡️",
+    title: "Günlük Takip",
+    sub: "Check-in ve zorluk derecesi: aç/kapat, süreler",
+    accent: colors.yellow,
+  },
 ];
 
 export default function AdvancedSettingsScreen({ navigation }: Props) {

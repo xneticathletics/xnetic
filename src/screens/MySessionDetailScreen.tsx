@@ -9,6 +9,7 @@ import { getAttendanceStatus, type AttendanceStatus } from "../lib/api/attendanc
 import { getMyExcuse, submitExcuse, cancelExcuse, type SessionExcuse } from "../lib/api/sessionExcuses";
 import RpeDropdown from "../components/RpeDropdown";
 import { useAuth } from "../context/AuthContext";
+import { useClubSettings } from "../context/ClubSettingsContext";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "MySessionDetail">;
@@ -31,7 +32,10 @@ export default function MySessionDetailScreen({ route, navigation }: Props) {
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus | null>(null);
   // Antrenmana "gelmedi" olarak işaretlenmiş bir sporcuya anketi hiç
   // gösterme — katılmadığı bir antrenmanı neden değerlendirsin.
-  const canSubmitRpe = role === "athlete" && attendanceStatus !== "gelmedi";
+  // Kulüp zorluk derecesini kullanmıyorsa (Gelişmiş Ayarlar → Günlük Takip)
+  // kutu hiç gösterilmez.
+  const { settings } = useClubSettings();
+  const canSubmitRpe = settings.rpe_enabled && role === "athlete" && attendanceStatus !== "gelmedi";
 
   const [session, setSession] = useState<TrainingSession | null>(null);
   const [rpe, setRpe] = useState<number | null>(null);
@@ -132,13 +136,13 @@ export default function MySessionDetailScreen({ route, navigation }: Props) {
     }
   };
 
-  const rpeWindowOpen = session ? isRpeWindowOpen(session) : false;
+  const rpeWindowOpen = session ? isRpeWindowOpen(session, settings.rpe_window_minutes) : false;
 
   const handleRpePress = () => {
     if (!rpeWindowOpen) {
       Alert.alert(
-        "Henüz zamanı değil",
-        "Algılanan Zorluk Derecesi, antrenman başladıktan 30 dakika sonra açılır ve bitişinden 2 saat sonrasına kadar açık kalır.",
+        "Şu an doldurulamaz",
+        `Algılanan Zorluk Derecesi antrenman bittiği anda açılır ve ${settings.rpe_window_minutes} dakika boyunca açık kalır. Bu süre dolduysa artık giriş yapılamaz.`,
         [{ text: "Tamam" }]
       );
       return;
@@ -234,7 +238,7 @@ export default function MySessionDetailScreen({ route, navigation }: Props) {
         <Text style={styles.rpeSubtitle}>
           {rpeWindowOpen
             ? "Bu antrenman sana ne kadar zor geldi?"
-            : "Antrenman başladıktan 30 dk sonra açılır, bitişinden 2 saat sonra kapanır."}
+            : `Antrenman bittiğinde açılır, ${settings.rpe_window_minutes} dakika sonra kapanır.`}
         </Text>
 
         <TouchableOpacity
