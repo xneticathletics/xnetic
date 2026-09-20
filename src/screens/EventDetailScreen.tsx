@@ -155,6 +155,7 @@ export default function EventDetailScreen({ route, navigation }: Props) {
             <Text style={styles.typeBadge}>{EVENT_TYPE_LABEL[event.type]}</Text>
             {event.status === "draft" && <Text style={[styles.typeBadge, styles.draftBadge]}>Taslak</Text>}
             {event.status === "cancelled" && <Text style={[styles.typeBadge, styles.cancelledBadge]}>İptal Edildi</Text>}
+            {event.status === "published" && eventOver && <Text style={[styles.typeBadge, styles.draftBadge]}>Sona erdi</Text>}
             {event.branch && <Text style={styles.branchBadge}>{event.branch}</Text>}
           </View>
 

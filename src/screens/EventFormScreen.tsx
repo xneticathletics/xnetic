@@ -8,7 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
-  getEvent, createEvent, updateEvent, addEventBanner, type EventInput, type EventType,
+  getEvent, createEvent, updateEvent, addEventBanner, isEventOver, type EventInput, type EventType,
 } from "../lib/api/events";
 import BranchPickerModal from "../components/BranchPickerModal";
 import DatePickerModal from "../components/DatePickerModal";
@@ -119,6 +119,11 @@ export default function EventFormScreen({ route, navigation }: Props) {
     const trimmedTitle = form.title.trim();
     if (!trimmedTitle) return Alert.alert("Eksik bilgi", "Başlık zorunludur.", [{ text: "Tamam" }]);
     if (!form.start_date) return Alert.alert("Eksik bilgi", "Başlangıç tarihi seçmelisiniz.", [{ text: "Tamam" }]);
+
+    // Bitiş tarihi (yoksa başlangıç) geçmişte kalan yeni etkinlik oluşturulamaz.
+    if (isNew && isEventOver({ start_date: form.start_date, end_date: form.end_date })) {
+      return Alert.alert("Geçmiş tarih", "Bitiş tarihi bugünden önce olan bir etkinlik oluşturulamaz.", [{ text: "Tamam" }]);
+    }
 
     const parsedFee = parseFloat(feeText.replace(",", ".")) || 0;
     if (parsedFee < 0) return Alert.alert("Geçersiz ücret", "Ücret negatif olamaz.", [{ text: "Tamam" }]);

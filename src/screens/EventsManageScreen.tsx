@@ -6,7 +6,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import {
   listManageableEvents, getPendingRegistrationCountsByEvent,
-  EVENT_TYPE_LABEL, type EventRow, type EventStatus,
+  EVENT_TYPE_LABEL, isEventOver, type EventRow, type EventStatus,
 } from "../lib/api/events";
 import type { EventsStackParamList } from "../navigation/EventsStack";
 
@@ -90,9 +90,16 @@ export default function EventsManageScreen({ navigation }: Props) {
                   <Text style={styles.rowSub}>
                     {EVENT_TYPE_LABEL[item.type]} · {new Date(item.start_date).toLocaleDateString("tr-TR")}
                   </Text>
-                  <Text style={[styles.badge, { color: STATUS_COLOR[item.status], borderColor: STATUS_COLOR[item.status] }]}>
-                    {STATUS_LABEL[item.status]}
-                  </Text>
+                  {(() => {
+                    // Yayında ama tarihi geçmiş etkinlik "Yayında" görünmesin.
+                    const ended = item.status === "published" && isEventOver(item);
+                    const color = ended ? colors.muted : STATUS_COLOR[item.status];
+                    return (
+                      <Text style={[styles.badge, { color, borderColor: color }]}>
+                        {ended ? "Sona erdi" : STATUS_LABEL[item.status]}
+                      </Text>
+                    );
+                  })()}
                 </View>
                 <Text style={styles.chevron}>›</Text>
               </View>
