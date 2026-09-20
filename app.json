@@ -41,7 +41,7 @@
         "expo-calendar",
         {
           "calendarPermission": "Antrenman ve müsabaka programını telefonunun takvimine ekleyebilmen için takvimine erişim gerekiyor.",
-          "remindersPermission": false
+          "remindersPermission": "Takvim erişimi verildiğinde iOS hatırlatıcı durumunu da sorar; X-NETIC hatırlatıcılarını okumaz veya değiştirmez."
         }
       ],
       [
