@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { ClubSettingsStackParamList } from "../navigation/ClubSettingsStack";
@@ -66,7 +66,7 @@ const CATEGORIES: {
 
 export default function AdvancedSettingsScreen({ navigation }: Props) {
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl * 2 }}>
       <Text style={styles.infoBox}>
         Bu sayılar daha önce kodun içine gömülüydü, her değişiklik için bize gelmen gerekiyordu. Bir konu seç,
         istediğin değerleri doğrudan buradan değiştir.
@@ -88,12 +88,12 @@ export default function AdvancedSettingsScreen({ navigation }: Props) {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+  container: { flex: 1, backgroundColor: colors.bg },
   infoBox: {
     color: colors.muted, fontSize: 12, lineHeight: 18, backgroundColor: colors.surface,
     borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg,

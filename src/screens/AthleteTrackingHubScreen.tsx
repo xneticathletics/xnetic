@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -33,7 +33,7 @@ export default function AthleteTrackingHubScreen({ route, navigation }: Props) {
   }, [athleteName, navigation]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl * 2 }}>
       <Text style={styles.subtitle}>Gelişimini takip et — sadece görüntüleme.</Text>
 
       <View style={styles.grid}>
@@ -55,7 +55,7 @@ export default function AthleteTrackingHubScreen({ route, navigation }: Props) {
           );
         })}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
