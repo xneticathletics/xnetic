@@ -155,10 +155,18 @@ export default function CreateClubPage() {
       if (signInError) throw new Error(signInError);
 
       if (logoFile) {
-        await uploadClubLogo(logoFile, clubId).catch(() => {
-          // Logo yüklenemese bile hesap zaten kuruldu — sessizce geç, admin
-          // daha sonra Kulüp Ayarları'ndan tekrar deneyebilir.
-        });
+        // Hesap zaten kurulduğu için logo hatası akışı DURDURMAMALI, ama
+        // sessizce yutulmamalı da: bir kez bu yüzden "logo seçtim ama
+        // gelmedi" durumu yaşandı (yeni kulüp onay beklerken storage
+        // politikası reddediyordu) ve hiçbir iz kalmamıştı.
+        const logoError = await uploadClubLogo(logoFile, clubId).then(
+          () => null,
+          (e: unknown) => (e instanceof Error ? e.message : "bilinmeyen hata")
+        );
+        if (logoError) {
+          console.warn("Kulüp logosu yüklenemedi:", logoError);
+          alert("Hesabın oluşturuldu, ancak kulüp logosu yüklenemedi. Kulüp Ayarları → Kulüp Logosu'ndan tekrar deneyebilirsin.");
+        }
       }
       navigate("/", { replace: true });
     } catch (e: any) {

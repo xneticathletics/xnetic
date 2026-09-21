@@ -575,7 +575,11 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "stretch", gap: spacing.md, marginBottom: spacing.lg },
   heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.bg },
   heroLogoSmall: { width: 84, height: 84 },
-  headerRight: { flex: 1, justifyContent: "space-between" },
+  // paddingTop: yazının üst boşluğu (font leading) yüzünden "Hoş geldin"
+  // logonun üst kenarından biraz yukarıda duruyor gibi görünüyordu;
+  // kullanıcı isteğiyle logonun üst hizasına indirildi. Kutular
+  // space-between ile yine logonun ALT hizasında kalır.
+  headerRight: { flex: 1, justifyContent: "space-between", paddingTop: 8 },
   // alignItems eskiden "center" idi — rozet rafı büyüdükçe (çok rozet)
   // topRow'un yüksekliği artıyor, zil de o yüksekliğe göre yeniden
   // ortalandığı için rozet sayısına göre farklı yerde duruyordu (kullanıcı
