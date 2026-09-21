@@ -11,11 +11,12 @@ const clubs=[
 ["Çukurova Gelecek Spor Kulübü","cukurova","Ercan Polat"],["Kapadokya Spor Akademisi","kapadokya","Barış Güneş"],["Toros Spor Kulübü","toros","Orhan Yıldırım"],
 ["Fırat Genç Sporcular Kulübü","firat","Metin Kaplan"],["Kızılırmak Spor Kulübü","kizilirmak","Cengiz Aydın"],["Salda Gençlik Spor Kulübü","salda","Fikret Doğan"],
 ["Munzur Spor Kulübü","munzur","Hasan Kurt"],["Meram Yıldızlar Spor Kulübü","meram","Nihat Tekin"],["Nemrut Spor Akademisi","nemrut","Recep Bulut"],
-["Pamukkale Atletik Spor Kulübü","pamukkale","Zafer Uçar"],["Kaçkar Spor Kulübü","kackar","İsmail Çakır"]];
+["Pamukkale Atletik Spor Kulübü","pamukkale","Zafer Uçar"],["Kaçkar Spor Kulübü","kackar","İsmail Çakır"],
+["X-NETIC Demo Kulübü","demo","Demo Yönetici"]];
 const master=["Futbol","Basketbol","Voleybol","Yüzme","Cimnastik","Atletizm","Tenis","Judo","Karate","Masa Tenisi"];
 const idx=parseInt(process.argv[2],10);
 const [name,slug,admin]=clubs[idx-1];
-const nb=1+(idx%5), start=(idx*3)%10;
+const nb=idx===21?2:1+(idx%5), start=idx===21?0:(idx*3)%10;
 const br=[];for(let k=0;k<nb;k++)br.push(master[(start+k)%10]);
 const alpha="abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
 let pw="";const buf=crypto.randomBytes(10);for(const b of buf)pw+=alpha[b%alpha.length];
@@ -25,6 +26,6 @@ pw=creds[idx].pw;
 fs.writeFileSync(cfgFile,JSON.stringify(creds,null,1));
 let t=fs.readFileSync(D+"seed_club.tpl.sql","utf8");
 t=t.replace("__IDX__",idx).replace("__NAME__",name).replace("__SLUG__",slug).replace("__ADMINPW__",pw).replace("__ADMINNAME__",admin)
- .replace("__DAYS__",92-(idx-1)*4).replace("__NATH__",100+(idx*23)%90).replace("__BRANCHES__",br.map(b=>"'"+b+"'").join(","));
+ .replace("__DAYS__",idx===21?75:92-(idx-1)*4).replace("__NATH__",idx===21?60:100+(idx*23)%90).replace("__BRANCHES__",br.map(b=>"'"+b+"'").join(","));
 fs.writeFileSync(D+"out_seed_"+idx+".sql",t);
 console.log(name,slug,br.join("/"),100+(idx*23)%90,"gün:",92-(idx-1)*4);
