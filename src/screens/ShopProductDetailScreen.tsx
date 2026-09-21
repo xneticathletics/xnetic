@@ -119,7 +119,8 @@ const styles = StyleSheet.create({
   price: { color: colors.yellow, fontSize: 22, fontWeight: "800", marginTop: spacing.xs },
   description: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: spacing.md },
   footer: {
-    padding: spacing.lg, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg,
+    padding: spacing.lg, paddingBottom: spacing.lg + 20,
+    borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg,
   },
   buyButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center" },
   buyButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

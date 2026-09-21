@@ -376,8 +376,8 @@ const styles = StyleSheet.create({
   nextButtonText: { color: colors.yellow, fontWeight: "700", fontSize: 13 },
   lastHint: { color: colors.muted, fontSize: 11 },
   saveBar: {
-    padding: spacing.lg, paddingTop: spacing.sm, backgroundColor: colors.bg,
-    borderTopWidth: 1, borderTopColor: colors.line,
+    padding: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.lg + 20,
+    backgroundColor: colors.bg, borderTopWidth: 1, borderTopColor: colors.line,
   },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center" },
   saveButtonDisabled: { opacity: 0.4 },

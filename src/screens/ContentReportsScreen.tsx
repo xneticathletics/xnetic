@@ -82,5 +82,7 @@ const styles = StyleSheet.create({
   btn: { marginTop: spacing.sm, backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: spacing.sm, alignItems: "center" },
   btnText: { color: colors.bg, fontWeight: "800" },
   done: { color: colors.teal, marginTop: spacing.sm, fontWeight: "700" },
-  hint: { color: colors.muted, fontSize: 12, textAlign: "center", padding: spacing.md },
+  // Alt menünün ortasındaki taşan logonun altında kalmasın diye ekstra
+  // alt boşluk (bkz. ChatScreen'deki inputRow ile aynı gerekçe).
+  hint: { color: colors.muted, fontSize: 12, textAlign: "center", padding: spacing.md, paddingBottom: spacing.md + 30 },
 });

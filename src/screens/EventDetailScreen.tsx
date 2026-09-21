@@ -294,7 +294,8 @@ const styles = StyleSheet.create({
   infoLabel: { color: colors.ink, fontSize: 14, fontWeight: "600", flex: 1 },
   description: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   footer: {
-    padding: spacing.lg, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg, gap: spacing.sm,
+    padding: spacing.lg, paddingBottom: spacing.lg + 20,
+    borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg, gap: spacing.sm,
   },
   primaryButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center" },
   primaryButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

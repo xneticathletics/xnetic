@@ -643,7 +643,10 @@ const styles = StyleSheet.create({
   sectionHint: { color: colors.muted, fontSize: 11, marginTop: 2 },
   error: { color: colors.coral, marginBottom: spacing.md },
   footer: {
-    paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.sm,
+    // Alt menünün ortasındaki taşan logo (sekme çubuğunun ~33pt üstüne
+    // çıkıyor) düğmenin altını kapatmasın diye fazladan boşluk.
+    paddingBottom: spacing.lg + 20,
     backgroundColor: colors.bg, borderTopWidth: 1, borderTopColor: colors.line,
   },
   saveButton: {

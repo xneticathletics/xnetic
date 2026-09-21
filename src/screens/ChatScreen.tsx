@@ -162,7 +162,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         />
 
         {(blockedByMe || blockedMe) ? (
-          <Text style={styles.empty}>
+          <Text style={styles.blockedNotice}>
             {blockedByMe ? "Bu kişiyi engelledin. Mesaj göndermek için sağ üstten engeli kaldır." : "Bu kişiye mesaj gönderemezsin."}
           </Text>
         ) : (
@@ -191,6 +191,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   error: { color: colors.coral, textAlign: "center", marginTop: spacing.sm },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
+  // Yazı alanının yerine geçtiği için aynı alt boşluğa ihtiyacı var —
+  // aksi halde alt menünün ortasındaki taşan logonun altında kalıp
+  // okunamıyor (inputRow'daki marginBottom ile aynı gerekçe).
+  blockedNotice: {
+    color: colors.muted, textAlign: "center", fontSize: 13,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md, marginBottom: 30,
+    borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.bg,
+  },
   bubbleRow: { flexDirection: "row", marginBottom: spacing.sm },
   bubbleRowMine: { justifyContent: "flex-end" },
   bubbleRowTheirs: { justifyContent: "flex-start" },
