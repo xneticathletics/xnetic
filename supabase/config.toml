@@ -78,4 +78,4 @@ entrypoint = "./functions/seed-standing-test-club/index.ts"
 
 [functions.purge-storage-queue]
 enabled = true
-verify_jwt = false
+verify_jwt = true
