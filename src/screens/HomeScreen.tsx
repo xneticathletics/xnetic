@@ -556,7 +556,13 @@ const styles = StyleSheet.create({
   // (kullanıcı isteği: "ana ekran oynak olmasın"). "flex-start" ile logo
   // her zaman üstte sabit kalıyor, altındaki içerik ne kadar büyürse
   // büyüsün logonun konumunu etkilemiyor.
-  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md, marginBottom: spacing.lg },
+  // alignItems "stretch": sağdaki sütun logonun yüksekliğine kadar uzasın —
+  // böylece justifyContent:"space-between" sayı kutularını HER ZAMAN logonun
+  // alt hizasına indirir. Eskiden "flex-start" idi ve sağ sütun yalnızca
+  // kendi içeriği kadar yükseliyordu: "Hoş geldin, Demo" tek satıra sığınca
+  // kutular yukarıda kalıyor, "Hoş geldin, Admin" iki satıra sarınca aşağı
+  // iniyordu. Yani hizalama kullanıcı adının uzunluğuna göre değişiyordu.
+  headerRow: { flexDirection: "row", alignItems: "stretch", gap: spacing.md, marginBottom: spacing.lg },
   heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.bg },
   heroLogoSmall: { width: 84, height: 84 },
   headerRight: { flex: 1, justifyContent: "space-between" },
@@ -567,7 +573,7 @@ const styles = StyleSheet.create({
   // "flex-start" ile zil her zaman en üstte, "Hoş geldin" satırıyla aynı
   // hizada sabit kalıyor.
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: spacing.md },
-  clubNameText: { color: colors.muted, fontSize: 14, fontWeight: "600", marginTop: 2 },
+  clubNameText: { color: colors.muted, fontSize: 16, fontWeight: "600", marginTop: 3 },
   greeting: { color: colors.ink, fontSize: 23, fontWeight: "700", letterSpacing: 0.2 },
   greetingAccent: { color: colors.yellow },
   sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
