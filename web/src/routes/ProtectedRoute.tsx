@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth, WEB_ALLOWED_ROLES } from "../context/AuthContext";
-import { getMySubscriptionStatus, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
+import { getMySubscriptionStatus, refreshSubscriptionClaimIfStale, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
 import SubscriptionPendingPage from "./SubscriptionPendingPage";
 
 export default function ProtectedRoute() {
@@ -20,7 +20,14 @@ export default function ProtectedRoute() {
     let cancelled = false;
     setSubscriptionChecked(false);
     getMySubscriptionStatus()
-      .then((s) => { if (!cancelled) setSubscription(s); })
+      .then(async (s) => {
+        if (cancelled) return;
+        // Onaydan sonra token bayatsa tazele, durumu tekrar oku (bkz.
+        // refreshSubscriptionClaimIfStale) — yoksa panel boş görünür.
+        const refreshed = await refreshSubscriptionClaimIfStale(s).catch(() => false);
+        if (cancelled) return;
+        setSubscription(refreshed ? await getMySubscriptionStatus().catch(() => s) : s);
+      })
       .finally(() => { if (!cancelled) setSubscriptionChecked(true); });
     return () => { cancelled = true; };
   }, [role]);

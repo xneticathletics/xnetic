@@ -43,3 +43,34 @@ export async function notifyRenewalPaymentClaim(clubName: string): Promise<void>
   const body = `${clubName} kulübü abonelik yenileme ödemesini yaptığını bildirdi. Abonelikler ekranından kontrol edip onaylayabilirsin.`;
   await Promise.all((admins ?? []).map((a) => sendNotification(a.id, title, body, "subscription_alert").catch(() => {})));
 }
+
+// Mobildeki src/lib/api/subscriptionStatus.ts ile aynı mantık: abonelik
+// kapısı JWT claim'inde tutulduğu için (bkz. custom_access_token_hook),
+// süper admin onayladıktan sonra token yenilenene kadar eski "engelli"
+// bilgisi taşınır. Durum serbestken token hâlâ engelli diyorsa oturumu
+// bir kez tazeliyoruz — aksi halde kapı açılır ama RLS kapalı kaldığı
+// için panel boş görünürdü. Tarayıcıda atob mevcut.
+function tokenSaysBlocked(accessToken: string): boolean | null {
+  try {
+    const payload = accessToken.split(".")[1];
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json)?.sub_blocked === true;
+  } catch {
+    return null;
+  }
+}
+
+export async function refreshSubscriptionClaimIfStale(status: ClubSubscriptionStatus | null): Promise<boolean> {
+  if (status && BLOCKED_SUBSCRIPTION_STATUSES.includes(status.status)) return false;
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token || tokenSaysBlocked(token) !== true) return false;
+  try {
+    const { error } = await supabase.auth.refreshSession();
+    // Hata olursa oturum ASLA kapatılmıyor.
+    return !error;
+  } catch {
+    return false;
+  }
+}

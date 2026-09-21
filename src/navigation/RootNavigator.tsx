@@ -19,7 +19,7 @@ import { getMyOnboardingStatus, getMyMustChangePassword } from "../lib/api/curre
 import { hasAllRequiredConsents } from "../lib/api/consents";
 import { parseRecoveryUrl, startRecoverySession } from "../lib/api/passwordReset";
 import { getPlatformSettings } from "../lib/api/platformSettings";
-import { getMySubscriptionStatus, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
+import { getMySubscriptionStatus, refreshSubscriptionClaimIfStale, BLOCKED_SUBSCRIPTION_STATUSES, type ClubSubscriptionStatus } from "../lib/api/subscriptionStatus";
 import RoleTabs from "../navigation/RoleTabs";
 
 const Stack = createNativeStackNavigator();
@@ -146,7 +146,16 @@ export default function RootNavigator() {
     let cancelled = false;
     const checkSubscription = () => {
       getMySubscriptionStatus()
-        .then((s) => { if (!cancelled) setSubscription(s); })
+        .then(async (s) => {
+          if (cancelled) return;
+          // Abonelik onaylandıysa ama elimizdeki token hâlâ "engelli"
+          // diyorsa (claim ~1 saatte bir yenileniyor), oturumu tazeleyip
+          // durumu bir kez daha okuyoruz — yoksa kapı açılır ama RLS
+          // kapalı kaldığı için uygulama BOŞ görünürdü.
+          const refreshed = await refreshSubscriptionClaimIfStale(s).catch(() => false);
+          if (cancelled) return;
+          setSubscription(refreshed ? await getMySubscriptionStatus().catch(() => s) : s);
+        })
         .catch(() => {})
         .finally(() => { if (!cancelled) setSubscriptionChecked(true); });
     };
