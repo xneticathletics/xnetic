@@ -231,7 +231,7 @@ export default function CreateClubPage() {
             <p className="mb-4 rounded-lg border border-line bg-bg p-3 text-xs leading-relaxed text-muted">
               Ödemeni tamamlamak için bizimle iletişime geç — plan ve tutarı birlikte netleştirelim.
               Ödemeni yaptıktan sonra devam edip kulüp bilgilerini gir; X-NETIC ekibi ödemeni kontrol
-              edip onaylayınca hesabın hemen aktif olacak (genelde birkaç saat içinde).
+              edip onaylayınca hesabın hemen aktif olacak.
             </p>
 
             {platformSettings?.supportPhone ? (
