@@ -11,7 +11,7 @@ import { getMonthlyFinanceSummary, type MonthlyFinanceSummary } from "../lib/api
 import { getPendingOrderCount } from "../lib/api/shop";
 import { listPendingPasswordResetRequests } from "../lib/api/notifications";
 import { getClubName } from "../lib/api/clubSettings";
-import { getClubLogoUrl } from "../lib/api/clubLogo";
+import { getClubLogoUrl, getClubLogoVersion } from "../lib/api/clubLogo";
 import { todayKey } from "../lib/date";
 
 // Ana Sayfa'daki duyuru önizlemesi bilerek kulübün "Duyurular Listesi"
@@ -40,6 +40,18 @@ export default function DashboardPage() {
   const { clubId } = useAuth();
   const [clubName, setClubName] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [logoVersion, setLogoVersion] = useState<string | null>(null);
+  // Logo adresi değişince "yüklenemedi" işaretini SIFIRLA — aksi halde
+  // kulübün henüz logosu yokken oluşan hata kalıcı oluyor ve sonradan
+  // gerçekten logo yüklense bile sayfa yenilenene kadar hiç gösterilmiyordu
+  // (mobilde de aynı hata vardı, bkz. HomeScreen).
+  useEffect(() => {
+    if (!clubId) return;
+    getClubLogoVersion(clubId).then(setLogoVersion).catch(() => {});
+  }, [clubId]);
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [clubId, logoVersion]);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -119,7 +131,7 @@ export default function DashboardPage() {
       <div className="mb-8 flex items-center gap-5">
         {clubId && !logoFailed && (
           <img
-            src={getClubLogoUrl(clubId)}
+            src={getClubLogoUrl(clubId, logoVersion)}
             alt="Kulüp logosu"
             onError={() => setLogoFailed(true)}
             className="h-24 w-24 rounded-2xl border border-line object-contain"

@@ -9,11 +9,22 @@ function logoPath(clubId: string): string {
   return `${clubId}/logo.png`;
 }
 
-export function getClubLogoUrl(clubId: string): string {
+// ÖNEMLİ: her çağrıda FARKLI bir adres (?t=Date.now()) ÜRETMİYOR. Eskiden
+// öyleydi; bu, render başına yeni bir URL demek olduğu için tarayıcı
+// önbelleğini tamamen devre dışı bırakıyor ve logoyu her çizimde yeniden
+// indirtiyordu (mobilde aynı hata tespit edilip düzeltilmişti — bkz.
+// src/lib/api/clubLogo.ts'deki aynı uyarı). Bunun yerine logonun GERÇEKTEN
+// yüklendiği an (clubs.logo_updated_at) verilirse ekleniyor: adres yalnızca
+// yeni logo yüklenince değişir.
+export function getClubLogoUrl(clubId: string, version?: string | null): string {
   const { data } = supabase.storage.from("club-logos").getPublicUrl(logoPath(clubId));
-  // Supabase'in CDN önbelleği eski logoyu göstermeye devam etmesin diye
-  // her çağrıda bir "cache buster" ekliyoruz.
-  return `${data.publicUrl}?t=${Date.now()}`;
+  return version ? `${data.publicUrl}?v=${encodeURIComponent(version)}` : data.publicUrl;
+}
+
+export async function getClubLogoVersion(clubId: string): Promise<string | null> {
+  const { data, error } = await supabase.from("clubs").select("logo_updated_at").eq("id", clubId).maybeSingle();
+  if (error) throw error;
+  return data?.logo_updated_at ?? null;
 }
 
 export async function uploadClubLogo(file: File, clubId: string): Promise<string> {
@@ -31,5 +42,7 @@ export async function uploadClubLogo(file: File, clubId: string): Promise<string
     () => {},
     () => {}
   );
-  return getClubLogoUrl(clubId);
+  // Tek seferlik cache buster: yüklemeden hemen sonra çağıranın ekranında
+  // yeni logo kesin görünsün diye (sadece bu dönüş değerinde).
+  return `${getClubLogoUrl(clubId)}?t=${Date.now()}`;
 }
