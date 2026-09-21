@@ -175,7 +175,12 @@ export async function listConversations(): Promise<Conversation[]> {
     .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
     .order("sent_at", { ascending: false });
   if (error) throw error;
-  const all = (data as Message[]) ?? [];
+  const clears = await listMyConversationClears();
+  const all = ((data as Message[]) ?? []).filter((m) => {
+    const otherId = m.sender_id === myUserId ? m.receiver_id : m.sender_id;
+    const clearedAt = clears.get(otherId);
+    return !clearedAt || m.sent_at > clearedAt;
+  });
   if (all.length === 0) return [];
 
   const otherIds = new Set<string>();
@@ -214,9 +219,22 @@ export async function listConversations(): Promise<Conversation[]> {
     .sort((a, b) => b.lastMessage.sent_at.localeCompare(a.lastMessage.sent_at));
 }
 
+// "Sohbeti Sil" yalnızca SİLEN kişinin tarafını temizler — karşı tarafta
+// hiçbir şey değişmez (bkz. 20260921240000_conversation_clears.sql).
+// Burada tutulan zaman damgasından önceki mesajlar gizleniyor.
+export async function listMyConversationClears(): Promise<Map<string, string>> {
+  const { data } = await supabase.rpc("list_my_conversation_clears");
+  return new Map(((data as { other_user_id: string; cleared_at: string }[] | null) ?? []).map((r) => [r.other_user_id, r.cleared_at]));
+}
+
+export async function clearConversation(otherUserId: string): Promise<void> {
+  const { error } = await supabase.rpc("clear_conversation", { p_other: otherUserId });
+  if (error) throw error;
+}
+
 // Belirli bir kişiyle olan tüm mesajlaşma geçmişini (eskiden yeniye) döner.
 export async function listMessagesWithUser(otherUserId: string): Promise<Message[]> {
-  const myUserId = await getCurrentAppUserId();
+  const [myUserId, clears] = await Promise.all([getCurrentAppUserId(), listMyConversationClears()]);
   if (!myUserId) return [];
 
   const { data, error } = await supabase
@@ -227,7 +245,9 @@ export async function listMessagesWithUser(otherUserId: string): Promise<Message
     )
     .order("sent_at", { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  const clearedAt = clears.get(otherUserId);
+  const rows = (data ?? []) as Message[];
+  return clearedAt ? rows.filter((m) => m.sent_at > clearedAt) : rows;
 }
 
 // Alt menüdeki "Mesajlar" sekmesinin rozetinde gösterilecek toplam

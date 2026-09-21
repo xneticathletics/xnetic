@@ -7,7 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listMessagesWithUser, sendMessage, markMessagesRead, type Message } from "../lib/api/messages";
+import { listMessagesWithUser, sendMessage, markMessagesRead, clearConversation, type Message } from "../lib/api/messages";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
 import { listBlockedIds, blockUser, unblockUser } from "../lib/api/moderation";
 import ReportModal from "../components/ReportModal";
@@ -56,6 +56,33 @@ export default function ChatScreen({ route, navigation }: Props) {
     ]);
   }, [blockedByMe, userId, userName, refreshBlocks]);
 
+  // "Sohbeti Sil" yalnızca BENİM tarafımı temizler — karşı tarafta hiçbir
+  // şey değişmez (bkz. clear_conversation RPC'si). Bu bilinçli: gerçek
+  // silme olsaydı taciz eden biri kanıtı karşı taraftan da yok edebilirdi.
+  const handleClearConversation = useCallback(() => {
+    Alert.alert(
+      "Sohbeti sil",
+      "Bu sohbet senin tarafından silinecek. Karşı taraftaki mesajlar silinmez. Yeni gelen mesajlar yine görünür.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await clearConversation(userId);
+              setMessages([]);
+              refreshUnreadMessagesCount();
+              navigation.goBack();
+            } catch (e: any) {
+              Alert.alert("Hata", e?.message ?? "Sohbet silinemedi");
+            }
+          },
+        },
+      ]
+    );
+  }, [userId, navigation]);
+
   useEffect(() => {
     navigation.setOptions({
       title: userName,
@@ -66,6 +93,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             Alert.alert(userName, undefined, [
               { text: "Şikayet Et", onPress: () => setReportTarget({ type: "user", userId, userName }) },
               { text: blockedByMe ? "Engeli Kaldır" : "Engelle", style: blockedByMe ? "default" : "destructive", onPress: toggleBlock },
+              { text: "Sohbeti Sil", style: "destructive", onPress: handleClearConversation },
               { text: "Vazgeç", style: "cancel" },
             ])
           }
@@ -74,7 +102,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       ),
     });
-  }, [userName, userId, navigation, blockedByMe, toggleBlock]);
+  }, [userName, userId, navigation, blockedByMe, toggleBlock, handleClearConversation]);
 
   const load = useCallback(async () => {
     try {
