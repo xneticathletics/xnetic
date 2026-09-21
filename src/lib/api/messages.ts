@@ -42,6 +42,9 @@ const MESSAGE_FIELDS = "id, sender_id, receiver_id, body, sent_at, read_at";
 // can_message_recipient() fonksiyonu aynı kuralları veritabanı seviyesinde
 // de zorunlu kılar (bkz. messages_insert_own politikası).
 export async function listMyContacts(role: UserRole): Promise<Contact[]> {
+  // Engel listesi kişi sorgularından bağımsız — hemen başlatılıp sonunda
+  // bekleniyor, sona bırakılıp ek bir tur beklemeye yol açmasın diye.
+  const hiddenPromise = listHiddenUserIds();
   const myUserId = await getCurrentAppUserId();
   if (!myUserId) return [];
 
@@ -70,7 +73,8 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
     (clubResult.data ?? []).forEach((u) => contacts.set(u.id, u as Contact));
     (superAdminResult.data ?? []).forEach((u) => contacts.set(u.id, u as Contact));
     // Engellediğim / beni engelleyen kişiler yeni mesaj listesinde çıkmaz.
-  const hidden = await listHiddenUserIds();
+  // hiddenPromise en başta başlatıldı, burada yalnızca sonucu bekleniyor.
+  const hidden = await hiddenPromise;
   return Array.from(contacts.values()).filter((c) => !hidden.has(c.id)).sort((a, b) => a.name.localeCompare(b.name, "tr"));
   }
 
@@ -169,13 +173,17 @@ export async function listConversations(): Promise<Conversation[]> {
   const myUserId = await getCurrentAppUserId();
   if (!myUserId) return [];
 
-  const { data, error } = await supabase
-    .from("messages")
-    .select(MESSAGE_FIELDS)
-    .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
-    .order("sent_at", { ascending: false });
+  // Üçü de birbirinden bağımsız — sırayla beklemek yerine tek turda.
+  const [{ data, error }, clears, hidden] = await Promise.all([
+    supabase
+      .from("messages")
+      .select(MESSAGE_FIELDS)
+      .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
+      .order("sent_at", { ascending: false }),
+    listMyConversationClears(),
+    listHiddenUserIds(),
+  ]);
   if (error) throw error;
-  const clears = await listMyConversationClears();
   const all = ((data as Message[]) ?? []).filter((m) => {
     const otherId = m.sender_id === myUserId ? m.receiver_id : m.sender_id;
     const clearedAt = clears.get(otherId);
@@ -208,7 +216,6 @@ export async function listConversations(): Promise<Conversation[]> {
     (groupmates as Contact[] ?? []).forEach((c) => { if (!userById.has(c.id)) userById.set(c.id, c); });
   }
 
-  const hidden = await listHiddenUserIds();
   return Array.from(lastByContact.entries())
     .filter(([otherId]) => !hidden.has(otherId))
     .map(([otherId, lastMessage]) => ({

@@ -26,9 +26,12 @@ export async function listBlockedIds(): Promise<{ byMe: Set<string>; me: Set<str
 }
 
 // Benim engellediklerim + beni engelleyenler — içerik gizlemek için tek küme.
+// TEK RPC (list_hidden_user_ids): eskiden iki ayrı çağrı yapılıyordu, bu da
+// her mesaj/kişi/akış yüklemesine fazladan bir ağ gidiş-dönüşü ekliyordu.
 export async function listHiddenUserIds(): Promise<Set<string>> {
-  const { byMe, me } = await listBlockedIds();
-  return new Set([...byMe, ...me]);
+  const { data, error } = await supabase.rpc("list_hidden_user_ids");
+  if (error) return new Set();
+  return new Set(((data as string[] | null) ?? []));
 }
 
 export async function blockUser(userId: string): Promise<void> {
