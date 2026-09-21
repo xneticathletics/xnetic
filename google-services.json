@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "637132036431",
+    "project_id": "x-netic",
+    "storage_bucket": "x-netic.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637132036431:android:c29aeed351749e8d104d3a",
+        "android_client_info": {
+          "package_name": "club.xnetic.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0cnJIWwOx00NZPDPVBGkd9oUExdMnyCM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
