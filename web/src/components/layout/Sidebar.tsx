@@ -23,6 +23,7 @@ const NAV_ITEMS: { to: string; label: string; icon: string; end?: boolean; tileK
   { to: "/nutrition", label: "Beslenme", icon: "🥗", tileKey: "beslenme" },
   { to: "/shop/products", label: "Mağaza", icon: "🛍️", tileKey: "magaza" },
   { to: "/users", label: "Kullanıcılar", icon: "👥" },
+  { to: "/reports", label: "Şikayetler", icon: "🚩" },
   { to: "/settings", label: "Kulüp Ayarları", icon: "⚙️" },
   { to: "/account", label: "Hesabım", icon: "👤" },
 ];

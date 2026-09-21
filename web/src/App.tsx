@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ClubSettingsProvider } from "./context/ClubSettingsContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import ContentReportsPage from "./routes/reports/ContentReportsPage";
 import LoginPage from "./routes/LoginPage";
 import CreateClubPage from "./routes/CreateClubPage";
 import AppLayout from "./components/layout/AppLayout";
@@ -136,6 +137,7 @@ export default function App() {
               <Route path="/fitness/individual/:athleteId/:programId" element={<IndividualFitnessProgramDetailPage />} />
               <Route path="/announcements" element={<AnnouncementsListPage />} />
               <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/reports" element={<ContentReportsPage />} />
               <Route path="/settings" element={<ClubSettingsPage />} />
               <Route path="/account" element={<AccountPage />} />
               <Route path="/audit-log" element={<AuditLogPage />} />
