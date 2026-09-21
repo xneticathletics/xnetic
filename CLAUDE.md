@@ -59,6 +59,10 @@ After session restore, screens are gated in a fixed order before reaching the re
 
 One file per domain, thin wrappers around `supabase-js` calls (no separate service/repository layer). When a screen or API function needs multiple independent pieces of data, they must be fetched in one `Promise.all` — several real perf bugs in this codebase were exactly this: a function awaiting query A, then only *after* it resolved starting query B/C that never actually depended on A's result (a hidden sequential "waterfall" hiding inside code that looked parallel at the call site). When merging, don't destructure-and-throw across combined `{data, error}` results — check each `.error` individually. Conversely, don't collapse a genuine dependency (e.g. `getCurrentAppUserId()` then a query filtered by that id) — only merge calls that are truly independent.
 
+### Asistan = uygulamanın kullanma kılavuzu (tek kaynaktan üretilir)
+
+Asistan sekmesi (`src/screens/AIScreen.tsx`) gerçek bir LLM değil; kılavuz girişleri üzerinde çalışan bir arama motoru (`src/lib/assistantSearch.ts`). **Kaynak `scripts/manual/*.js`'tir** — `src/lib/assistantManualData.ts` ve `docs/kilavuz/*.md` (rol bazlı kullanma kılavuzları) `node scripts/build-manual.js` ile ÜRETİLİR, elle düzenlenmez. Yeni bir özellik ya da ekran eklendiğinde/değiştiğinde ilgili girişi `scripts/manual/`'a ekle/güncelle ve betiği çalıştır; betik arama motorunu 3000+ soruyla test eder ve bir örnek soru kendi girişini bulamazsa hata verir. Rol harfleri: A=yönetici, K=koordinatör, C=antrenör, P=veli, S=sporcu, X=süper admin (bir girişin `roles` alanı kimlerin görebileceğini belirler; gerçek yetkileri kodla teyit et, tahmin etme). `samples.js` her rol için TAM 20 örnek soru içerir; `holdout.js` motorun görmediği cümlelerle dürüst bir genelleme ölçümü verir (şu an ilk cevap ≈%61, ilk 3 öneri ≈%86).
+
 ### Everything is in Turkish
 
 UI strings, code comments, commit messages, and the user's own communication are all Turkish — match that when adding comments or commit messages in this repo.

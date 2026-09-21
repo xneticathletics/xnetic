@@ -51,9 +51,16 @@ const CATEGORIES: {
   {
     key: "DailyTrackingSettings",
     icon: "🌡️",
-    title: "Günlük Takip",
-    sub: "Check-in ve zorluk derecesi: aç/kapat, süreler",
+    title: "Günlük Check-in",
+    sub: "Aç / kapat, açılış ve kapanış saati",
     accent: colors.yellow,
+  },
+  {
+    key: "RpeSettings",
+    icon: "💪",
+    title: "Antrenman Zorluk Derecesi",
+    sub: "Aç / kapat, açık kalma süresi",
+    accent: colors.coral,
   },
 ];
 

@@ -8,11 +8,10 @@ import { Field } from "../components/SettingsField";
 import { useClubSettingsForm } from "../hooks/useClubSettingsForm";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
-// Gelişmiş Ayarlar → Günlük Check-in. VARSAYILAN OLARAK AÇIK; kullanmak
-// istemeyen kulüp buradan kapatır. Kapatıldığında sadece arayüz gizlenmiyor,
-// hatırlatma bildirimi de gönderilmiyor (bkz. send_wellness_reminders).
-// Antrenman zorluk derecesi AYRI bir ekran: RpeSettingsScreen.
-export default function DailyTrackingSettingsScreen() {
+// Gelişmiş Ayarlar → Antrenman Zorluk Derecesi. VARSAYILAN OLARAK AÇIK;
+// kapatılırsa sporculara bildirim gitmez ve antrenman detayındaki değerlendirme
+// kutusu görünmez (bkz. send_session_rpe_reminders).
+export default function RpeSettingsScreen() {
   const { scrollRef, handleFocus } = useKeyboardScroll();
   const { form, setField, setBool, handleSave, loading, saving, error } = useClubSettingsForm();
 
@@ -27,52 +26,44 @@ export default function DailyTrackingSettingsScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-        {/* ---- Günlük Check-in ---- */}
+        {/* ---- Zorluk Derecesi (RPE) ---- */}
         <View style={styles.card}>
           <View style={styles.row}>
-            <View style={[styles.iconBadge, { backgroundColor: colors.tealSoft }]}>
-              <Text style={styles.iconText}>🌡️</Text>
+            <View style={[styles.iconBadge, { backgroundColor: colors.yellowSoft }]}>
+              <Text style={styles.iconText}>💪</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>Günlük Check-in</Text>
-              <Text style={styles.cardStatus}>{form.wellness_enabled ? "Açık" : "Kapalı"}</Text>
+              <Text style={styles.cardTitle}>Antrenman Zorluk Derecesi</Text>
+              <Text style={styles.cardStatus}>{form.rpe_enabled ? "Açık" : "Kapalı"}</Text>
             </View>
             <Switch
-              value={form.wellness_enabled}
-              onValueChange={(v) => setBool("wellness_enabled", v)}
-              trackColor={{ false: colors.line, true: colors.tealSoft }}
-              thumbColor={form.wellness_enabled ? colors.teal : colors.muted}
+              value={form.rpe_enabled}
+              onValueChange={(v) => setBool("rpe_enabled", v)}
+              trackColor={{ false: colors.line, true: colors.yellowSoft }}
+              thumbColor={form.rpe_enabled ? colors.yellow : colors.muted}
             />
           </View>
         </View>
 
-        {form.wellness_enabled && (
-          <>
-            <Field label="Check-in Kaç Saatte Açılsın (0-23)" hint="Sporcular bu saatten itibaren doldurabilir.">
-              <TextInput
-                onFocus={handleFocus}
-                style={styles.input}
-                value={String(form.wellness_start_hour)}
-                onChangeText={(v) => setField("wellness_start_hour", v)}
-                keyboardType="numeric"
-              />
-            </Field>
-
-            <Field label="Check-in Kaç Saatte Kapansın (1-24)" hint="Bu saatten sonra günün check-in'i doldurulamaz.">
-              <TextInput
-                onFocus={handleFocus}
-                style={styles.input}
-                value={String(form.wellness_end_hour)}
-                onChangeText={(v) => setField("wellness_end_hour", v)}
-                keyboardType="numeric"
-              />
-            </Field>
-          </>
+        {form.rpe_enabled && (
+          <Field
+            label="Antrenman Bitiminden Sonra Kaç Dakika Açık Kalsın"
+            hint="Antrenman bittiği anda sporcuya bildirim gider; bu süre dolunca değerlendirme kapanır. (5-720 dk)"
+          >
+            <TextInput
+              onFocus={handleFocus}
+              style={styles.input}
+              value={String(form.rpe_window_minutes)}
+              onChangeText={(v) => setField("rpe_window_minutes", v)}
+              keyboardType="numeric"
+            />
+          </Field>
         )}
 
         <Text style={styles.infoBox}>
-          Günlük Check-in; sporcunun uyku, enerji, kas ağrısı ve ruh hâlini her gün kısaca kaydetmesidir.
-          Kapatırsan Ana Sayfa'daki kutucuk kaybolur ve günlük hatırlatma bildirimi gönderilmez.
+          Zorluk derecesi, sporcunun antrenmanı ne kadar zorlayıcı bulduğunu 1-10 arası puanlamasıdır; antrenörün
+          yüklenmeyi takip etmesini sağlar. Kapatırsan sporculara bildirim gitmez ve antrenman detayındaki
+          değerlendirme kutusu görünmez.
         </Text>
 
         {error && <Text style={styles.error}>{error}</Text>}

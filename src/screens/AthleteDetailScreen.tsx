@@ -189,7 +189,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
   }, [attendance]);
 
   const age = athlete ? calcAge(athlete.birth_date) : null;
-  const recentSessions = attendance.slice(0, 2);
+  const recentSessions = attendance.slice(0, 5);
 
   const handleTypeToggle = async () => {
     if (!athlete || athlete.group_id) return;
@@ -458,7 +458,7 @@ export default function AthleteDetailScreen({ route, navigation }: Props) {
         )}
       </View>
 
-      <SectionHeader title="Son Antrenman" />
+      <SectionHeader title="Son 5 Antrenman" />
       {recentSessions.length === 0 ? (
         <View style={styles.card}>
           <Text style={styles.emptyText}>Henüz yoklama kaydı yok.</Text>
