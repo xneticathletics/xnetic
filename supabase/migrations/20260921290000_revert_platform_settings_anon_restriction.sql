@@ -1,0 +1,13 @@
+-- GERİ ALMA — kulüp kayıt (Kulüp Oluştur) akışını bozdu.
+--
+-- 20260921220000'de platform_settings'in banka alanlarını anon'dan
+-- kısıtlamıştık (sütun bazlı grant). Ancak "Kulüp Oluştur" sayfası GİRİŞ
+-- YAPMADAN çalışıyor ve getPlatformSettings() sorgusu bank_iban/
+-- bank_account_name sütunlarını da istiyor — sonuç: "permission denied for
+-- table platform_settings" ve yeni kulüp kaydı tamamen durdu. Canlıda
+-- kullanıcı tarafından yakalandı.
+--
+-- IBAN zaten kayıt olan her kulübe gösterilen bir işletme bilgisi; açıkta
+-- olması düşük önemdeydi. Çalışan bir kayıt akışı bundan çok daha önemli,
+-- bu yüzden tablo geneli SELECT anon'a geri veriliyor (bugünden önceki hâl).
+grant select on public.platform_settings to anon;
