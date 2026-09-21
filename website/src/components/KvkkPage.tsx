@@ -107,7 +107,7 @@ export default function KvkkPage({ settings }: { settings: PlatformSettings | nu
             </p>
           </section>
 
-          <section>
+          <section id="hesap-silme">
             <h2 className="mb-2 text-base font-bold text-ink">8. Hesap ve Veri Silme Talebi</h2>
             <p>
               Hesabınızın ve kişisel verilerinizin silinmesini iki şekilde talep edebilirsiniz:
