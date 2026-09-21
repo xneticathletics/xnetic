@@ -126,6 +126,8 @@ export function getNotificationTarget(
     }
     case "social_post_submitted":
       return isPlanner ? { tab: "Sosyal", screen: "SocialFeed", params: { initialTab: "pending" } } : null;
+    case "content_report":
+      return isPlanner ? { tab: "Profil", screen: "ContentReports" } : null;
     case "social_post_approved":
       return { tab: "Sosyal", screen: "SocialFeed" };
     case "shop_order":

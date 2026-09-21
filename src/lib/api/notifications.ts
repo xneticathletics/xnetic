@@ -52,7 +52,9 @@ export type NotificationEventType =
   // Doğum günü kutlama bildirimi — bkz. send_birthday_notifications()
   // migration'ı (pg_cron, her sabah). Yönlendirmesi yok (tıklanınca hiçbir
   // yere gitmez), getNotificationTarget default: null'a düşer.
-  | "birthday";
+  | "birthday"
+  // Şikayet edilen içerik (Apple 1.2) — kulüp yöneticisine; bkz. moderation.ts.
+  | "content_report";
 
 // Basit UUIDv4 üretici — bilerek Math.random() tabanlı, kriptografik güç
 // gerekmiyor (sadece bir bildirim satırının birincil anahtarı). crypto.

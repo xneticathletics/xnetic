@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { listHiddenUserIds } from "./moderation";
 import * as FileSystem from "expo-file-system/legacy";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { decode } from "base64-arraybuffer";
@@ -83,7 +84,7 @@ async function attachAuthorNames(posts: SocialPost[]): Promise<SocialPost[]> {
 // — o sadece "Onay Bekleyenler" sekmesinde kalıyor (author_id filtresiyle
 // sadece kendiminkini çekiyoruz).
 export async function listSocialFeed(): Promise<SocialPost[]> {
-  const myUserId = await getCurrentAppUserId();
+  const [myUserId, hiddenIds] = await Promise.all([getCurrentAppUserId(), listHiddenUserIds()]);
   const [approvedResult, ownPendingResult] = await Promise.all([
     // Fotoğraflar zaten 2 hafta sonra siliniyor ama çok aktif bir kulüpte
     // yine de çok satır/görsel birikebiliyor — akışı ilk açılışta hızlı
@@ -95,7 +96,8 @@ export async function listSocialFeed(): Promise<SocialPost[]> {
   ]);
   if (approvedResult.error) throw approvedResult.error;
   if (ownPendingResult.error) throw ownPendingResult.error;
-  const merged = [...(ownPendingResult.data ?? []), ...(approvedResult.data ?? [])] as SocialPost[];
+  // Engellediğim / beni engelleyen kişilerin paylaşımları akışta görünmez.
+  const merged = ([...(ownPendingResult.data ?? []), ...(approvedResult.data ?? [])] as SocialPost[]).filter((p) => !hiddenIds.has(p.author_id));
   merged.sort((a, b) => b.created_at.localeCompare(a.created_at));
   return attachAuthorNames(merged);
 }

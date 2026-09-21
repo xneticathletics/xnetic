@@ -25,7 +25,7 @@ Kulübünün tamamını yöneten kişi olarak kullandığın bölümler.
 19. [💬 Mesajlar](#mesajlar) (3)
 20. [📣 Duyurular](#duyurular) (4)
 21. [🎖️ Rozetler](#rozetler) (2)
-22. [🆘 Sık Sorulan Sorular ve Sorun Giderme](#sık-sorulan-sorular-ve-sorun-giderme) (9)
+22. [🆘 Sık Sorulan Sorular ve Sorun Giderme](#sık-sorulan-sorular-ve-sorun-giderme) (11)
 
 ## 🚀 Başlarken ve Hesap
 
@@ -805,6 +805,17 @@ Bir özelliği göremiyorsan üç olası sebep vardır: 1) Rolünde o özellik y
 1. Kullanıcı adı/telefon/e-postayı ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).
 2. Hâlâ giremiyorsan giriş ekranında "Şifremi Unuttum"u kullan.
 3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç.
+
+### Bir mesajı ya da paylaşımı şikayet etme / kullanıcıyı engelleme
+
+- Mesaj: Sohbet ekranında karşı tarafın mesajına uzun bas → "Şikayet Et". Kişinin kendisini şikayet etmek ya da engellemek için sağ üstteki ⋯ düğmesine dokun.
+- Sosyal paylaşım: Paylaşımı aç, alttaki "🚩 Şikayet" ya da "⛔ Engelle" düğmesini kullan.
+- Şikayet kulüp yöneticisine bildirim olarak gider; yönetici Profil → Şikayetler'den inceler ve gerekirse içeriği siler ya da hesabı devre dışı bırakır.
+- Engellediğin kişinin paylaşımlarını ve konuşmasını görmezsin, birbirinize mesaj gönderemezsiniz. Engeli kaldırmak için o kişiyle olan sohbeti açıp ⋯ → "Engeli Kaldır" de.
+
+### Gelen şikayetleri inceleme
+
+Bir kullanıcı içerik şikayet ettiğinde yöneticiye "Yeni Şikayet" bildirimi gelir. Profil → Şikayetler ekranında şikayet eden, edilen, sebep ve (mesajsa) mesaj metni görünür. İncelemeni bitirince "İncelendi olarak işaretle" de. İçeriği kaldırmak için Sosyal sekmesinden paylaşımı silebilir, gerekirse kullanıcıyı devre dışı bırakabilirsin.
 
 ---
 

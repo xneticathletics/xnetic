@@ -19,7 +19,7 @@ Sporcu hesabıyla kullandığın bölümler.
 13. [💬 Mesajlar](#mesajlar) (3)
 14. [📣 Duyurular](#duyurular) (1)
 15. [🎖️ Rozetler](#rozetler) (1)
-16. [🆘 Sık Sorulan Sorular ve Sorun Giderme](#sık-sorulan-sorular-ve-sorun-giderme) (8)
+16. [🆘 Sık Sorulan Sorular ve Sorun Giderme](#sık-sorulan-sorular-ve-sorun-giderme) (9)
 
 ## 🚀 Başlarken ve Hesap
 
@@ -372,6 +372,13 @@ Bir özelliği göremiyorsan üç olası sebep vardır: 1) Rolünde o özellik y
 1. Kullanıcı adı/telefon/e-postayı ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).
 2. Hâlâ giremiyorsan giriş ekranında "Şifremi Unuttum"u kullan.
 3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç.
+
+### Bir mesajı ya da paylaşımı şikayet etme / kullanıcıyı engelleme
+
+- Mesaj: Sohbet ekranında karşı tarafın mesajına uzun bas → "Şikayet Et". Kişinin kendisini şikayet etmek ya da engellemek için sağ üstteki ⋯ düğmesine dokun.
+- Sosyal paylaşım: Paylaşımı aç, alttaki "🚩 Şikayet" ya da "⛔ Engelle" düğmesini kullan.
+- Şikayet kulüp yöneticisine bildirim olarak gider; yönetici Profil → Şikayetler'den inceler ve gerekirse içeriği siler ya da hesabı devre dışı bırakır.
+- Engellediğin kişinin paylaşımlarını ve konuşmasını görmezsin, birbirinize mesaj gönderemezsiniz. Engeli kaldırmak için o kişiyle olan sohbeti açıp ⋯ → "Engeli Kaldır" de.
 
 ---
 

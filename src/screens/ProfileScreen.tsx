@@ -241,6 +241,15 @@ export default function ProfileScreen({
               <Text style={styles.settingsSub}>Eşik sayılarını düzenle</Text>
             </TouchableOpacity>
           )}
+          {(role === "club_admin" || isBranchCoordinator) && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ContentReports")}>
+              <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
+                <Text style={styles.settingsIcon}>🚩</Text>
+              </View>
+              <Text style={styles.settingsTitle}>Şikayetler</Text>
+              <Text style={styles.settingsSub}>Bildirilen içerikleri incele</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
 

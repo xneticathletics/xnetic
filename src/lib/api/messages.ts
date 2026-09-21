@@ -2,6 +2,7 @@ import { supabase } from "../supabase";
 import { getCurrentAppUserId } from "./currentUser";
 import { getMyCoachedGroupIds } from "./myGroups";
 import { getMyAthletes } from "./myAthletes";
+import { listHiddenUserIds } from "./moderation";
 import type { UserRole } from "../../context/AuthContext";
 
 export type Message = {
@@ -68,7 +69,9 @@ export async function listMyContacts(role: UserRole): Promise<Contact[]> {
     if (superAdminResult.error) throw superAdminResult.error;
     (clubResult.data ?? []).forEach((u) => contacts.set(u.id, u as Contact));
     (superAdminResult.data ?? []).forEach((u) => contacts.set(u.id, u as Contact));
-    return Array.from(contacts.values()).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+    // Engellediğim / beni engelleyen kişiler yeni mesaj listesinde çıkmaz.
+  const hidden = await listHiddenUserIds();
+  return Array.from(contacts.values()).filter((c) => !hidden.has(c.id)).sort((a, b) => a.name.localeCompare(b.name, "tr"));
   }
 
   // Süper Admin'in hiçbir kulübün veli/sporcu/antrenör verisine erişimi
@@ -200,7 +203,9 @@ export async function listConversations(): Promise<Conversation[]> {
     (groupmates as Contact[] ?? []).forEach((c) => { if (!userById.has(c.id)) userById.set(c.id, c); });
   }
 
+  const hidden = await listHiddenUserIds();
   return Array.from(lastByContact.entries())
+    .filter(([otherId]) => !hidden.has(otherId))
     .map(([otherId, lastMessage]) => ({
       contact: userById.get(otherId) ?? { id: otherId, name: "Bilinmeyen Kullanıcı", photo_url: null, role: "parent" as UserRole },
       lastMessage,

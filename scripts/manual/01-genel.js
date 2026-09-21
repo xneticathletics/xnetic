@@ -233,7 +233,7 @@ e("mesaj-gonder", "mesaj", "ACPSK", "Mesaj gönderme / yeni sohbet",
 Mevcut sohbetlerin Mesajlar ekranında son mesaj ve okunmamış sayısıyla listelenir.`);
 
 e("mesaj-kimle", "mesaj", "ACPSK", "Kimlerle mesajlaşabilirim",
-  ["kime mesaj atabilirim", "mesaj kısıtlaması", "veli veliye mesaj", "neden bu kişiye yazamıyorum", "mesajlaşabileceğim kimse yok", "mesaj kuralları"],
+  ["kime mesaj atabilirim", "mesaj kısıtlaması", "veli veliye mesaj", "neden bu kişiye yazamıyorum", "mesajlaşabileceğim kimse yok", "mesaj kuralları", "arkadaşıma mesaj atmak istiyorum"],
   `Mesajlaşma kuralları gizlilik için sınırlıdır:
 • Kulüp yöneticisi: kulübündeki herkesle ve süper adminle.
 • Antrenör/koordinatör: kulüp yöneticisi, aynı branştaki diğer antrenörler ve kendi gruplarındaki veli/sporcular.

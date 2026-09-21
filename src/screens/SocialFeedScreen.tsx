@@ -13,6 +13,8 @@ import {
   type SocialPost,
 } from "../lib/api/socialPosts";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
+import { blockUser } from "../lib/api/moderation";
+import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns } from "../hooks/useResponsiveColumns";
 import type { SocialStackParamList } from "../navigation/SocialStack";
@@ -97,6 +99,7 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [approving, setApproving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: "social_post"; contentId: string; userId: string; userName: string; snapshot?: string } | null>(null);
 
   const hasLoadedOnceRef = useRef(false);
 
@@ -139,6 +142,28 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
       })
       .catch((e: any) => Alert.alert("Hata", e.message ?? "Onaylanamadı", [{ text: "Tamam" }]))
       .finally(() => setApproving(false));
+  };
+
+  const handleBlockAuthor = (post: SocialPost) => {
+    Alert.alert(
+      "Kullanıcıyı engelle",
+      `${post.author_name ?? "Bu kullanıcı"} engellensin mi? Paylaşımlarını görmeyeceksin ve sana mesaj gönderemeyecek.`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Engelle", style: "destructive",
+          onPress: async () => {
+            try {
+              await blockUser(post.author_id);
+              setViewerIndex(null);
+              await load();
+            } catch (e: any) {
+              Alert.alert("Hata", e?.message ?? "Engellenemedi");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleDelete = (post: SocialPost) => {
@@ -324,6 +349,24 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
                     {approving ? <ActivityIndicator color={colors.ink} /> : <Text style={styles.viewerButtonText}>✓ Onayla</Text>}
                   </TouchableOpacity>
                 )}
+                {activePost.author_id !== myUserId && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.viewerButton}
+                      onPress={() =>
+                        setReportTarget({
+                          type: "social_post", contentId: activePost.id, userId: activePost.author_id,
+                          userName: activePost.author_name ?? "Kullanıcı", snapshot: activePost.caption ?? undefined,
+                        })
+                      }
+                    >
+                      <Text style={styles.viewerButtonText}>🚩 Şikayet</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.viewerButton} onPress={() => handleBlockAuthor(activePost)}>
+                      <Text style={styles.viewerButtonText}>⛔ Engelle</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
                 {canDeleteActivePost && (
                   <TouchableOpacity
                     style={[styles.viewerButton, styles.viewerDeleteButton]}
@@ -338,6 +381,12 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
           </View>
         </View>
       </Modal>
+      <ReportModal
+        visible={!!reportTarget}
+        target={reportTarget}
+        onClose={() => setReportTarget(null)}
+        onBlocked={() => { setViewerIndex(null); load(); }}
+      />
     </View>
   );
 }

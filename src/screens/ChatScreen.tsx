@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Alert,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -9,6 +9,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listMessagesWithUser, sendMessage, markMessagesRead, type Message } from "../lib/api/messages";
 import { getCurrentAppUserId } from "../lib/api/currentUser";
+import { listBlockedIds, blockUser, unblockUser } from "../lib/api/moderation";
+import ReportModal from "../components/ReportModal";
 import { refreshUnreadMessagesCount } from "../lib/unreadMessagesStore";
 import type { MessagesStackParamList } from "../navigation/MessagesStack";
 
@@ -28,10 +30,51 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<FlatList>(null);
   const headerHeight = useHeaderHeight();
+  const [blockedByMe, setBlockedByMe] = useState(false);
+  const [blockedMe, setBlockedMe] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: "message" | "user"; contentId?: string; userId: string; userName: string; snapshot?: string } | null>(null);
+
+  const refreshBlocks = useCallback(async () => {
+    try {
+      const { byMe, me } = await listBlockedIds();
+      setBlockedByMe(byMe.has(userId));
+      setBlockedMe(me.has(userId));
+    } catch {}
+  }, [userId]);
+
+  const toggleBlock = useCallback(() => {
+    if (blockedByMe) {
+      unblockUser(userId).then(refreshBlocks).catch((e: any) => Alert.alert("Hata", e?.message ?? "İşlem yapılamadı"));
+      return;
+    }
+    Alert.alert("Kullanıcıyı engelle", `${userName} engellensin mi? Birbirinize mesaj gönderemezsiniz.`, [
+      { text: "Vazgeç", style: "cancel" },
+      {
+        text: "Engelle", style: "destructive",
+        onPress: () => blockUser(userId).then(refreshBlocks).catch((e: any) => Alert.alert("Hata", e?.message ?? "Engellenemedi")),
+      },
+    ]);
+  }, [blockedByMe, userId, userName, refreshBlocks]);
 
   useEffect(() => {
-    navigation.setOptions({ title: userName });
-  }, [userName, navigation]);
+    navigation.setOptions({
+      title: userName,
+      headerRight: () => (
+        <TouchableOpacity
+          accessibilityLabel="Seçenekler"
+          onPress={() =>
+            Alert.alert(userName, undefined, [
+              { text: "Şikayet Et", onPress: () => setReportTarget({ type: "user", userId, userName }) },
+              { text: blockedByMe ? "Engeli Kaldır" : "Engelle", style: blockedByMe ? "default" : "destructive", onPress: toggleBlock },
+              { text: "Vazgeç", style: "cancel" },
+            ])
+          }
+        >
+          <Text style={{ color: colors.ink, fontSize: 22, paddingHorizontal: 8 }}>⋯</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [userName, userId, navigation, blockedByMe, toggleBlock]);
 
   const load = useCallback(async () => {
     try {
@@ -44,13 +87,14 @@ export default function ChatScreen({ route, navigation }: Props) {
       ]);
       setMyUserId(me);
       setMessages(msgs);
+      refreshBlocks();
       refreshUnreadMessagesCount();
     } catch (e: any) {
       setError(e.message ?? "Mesajlar yüklenemedi");
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, refreshBlocks]);
 
   useFocusEffect(
     useCallback(() => {
@@ -95,7 +139,16 @@ export default function ChatScreen({ route, navigation }: Props) {
           renderItem={({ item }) => {
             const isMine = item.sender_id === myUserId;
             return (
-              <View
+              <TouchableOpacity
+                activeOpacity={0.8}
+                delayLongPress={400}
+                onLongPress={() => {
+                  if (isMine) return;
+                  Alert.alert("Mesaj", undefined, [
+                    { text: "Şikayet Et", onPress: () => setReportTarget({ type: "message", contentId: item.id, userId, userName, snapshot: item.body }) },
+                    { text: "Vazgeç", style: "cancel" },
+                  ]);
+                }}
                 style={[styles.bubbleRow, isMine ? styles.bubbleRowMine : styles.bubbleRowTheirs]}
                 accessibilityLabel={`${isMine ? "Sen" : "Karşı taraf"}, saat ${formatTime(item.sent_at)}: ${item.body}`}
               >
@@ -103,11 +156,16 @@ export default function ChatScreen({ route, navigation }: Props) {
                   <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{item.body}</Text>
                   <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>{formatTime(item.sent_at)}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           }}
         />
 
+        {(blockedByMe || blockedMe) ? (
+          <Text style={styles.empty}>
+            {blockedByMe ? "Bu kişiyi engelledin. Mesaj göndermek için sağ üstten engeli kaldır." : "Bu kişiye mesaj gönderemezsin."}
+          </Text>
+        ) : (
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
@@ -122,6 +180,8 @@ export default function ChatScreen({ route, navigation }: Props) {
             {sending ? <ActivityIndicator size="small" color={colors.bg} /> : <Text style={styles.sendButtonText}>Gönder</Text>}
           </TouchableOpacity>
         </View>
+        )}
+        <ReportModal visible={!!reportTarget} target={reportTarget} onClose={() => setReportTarget(null)} onBlocked={refreshBlocks} />
       </View>
     </KeyboardAvoidingView>
   );

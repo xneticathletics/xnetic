@@ -659,6 +659,7 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "neden bu kişiye yazamıyorum",
       "mesajlaşabileceğim kimse yok",
       "mesaj kuralları",
+      "arkadaşıma mesaj atmak istiyorum",
       "Kimlerle mesajlaşabilirim?"
     ],
     "answer": "Mesajlaşma kuralları gizlilik için sınırlıdır:\n• Kulüp yöneticisi: kulübündeki herkesle ve süper adminle.\n• Antrenör/koordinatör: kulüp yöneticisi, aynı branştaki diğer antrenörler ve kendi gruplarındaki veli/sporcular.\n• Veli ve sporcu: çocuğunun/kendi grubunun antrenörleri ve branş koordinatörüyle. Sporcular ayrıca kendi gruplarındaki diğer sporcularla mesajlaşabilir (sadece ad soyad ve fotoğraf görünür).\n• Veliler birbirine yazamaz.\n\"Mesajlaşabileceğin kimse yok\" yazıyorsa henüz bir gruba atanmamışsın demektir."
@@ -2470,6 +2471,37 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "şifre yanlış diyor"
     ],
     "answer": "1. Kullanıcı adı/telefon/e-postayı ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).\n2. Hâlâ giremiyorsan giriş ekranında \"Şifremi Unuttum\"u kullan.\n3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç."
+  },
+  {
+    "id": "sikayet-engelle",
+    "module": "sss",
+    "roles": "ACPS",
+    "title": "Bir mesajı ya da paylaşımı şikayet etme / kullanıcıyı engelleme",
+    "questions": [
+      "şikayet et",
+      "kişiyi engelle",
+      "engelle",
+      "uygunsuz paylaşım",
+      "birini şikayet etmek",
+      "engeli kaldır",
+      "engellediğim kişiler"
+    ],
+    "answer": "• Mesaj: Sohbet ekranında karşı tarafın mesajına uzun bas → \"Şikayet Et\". Kişinin kendisini şikayet etmek ya da engellemek için sağ üstteki ⋯ düğmesine dokun.\n• Sosyal paylaşım: Paylaşımı aç, alttaki \"🚩 Şikayet\" ya da \"⛔ Engelle\" düğmesini kullan.\n• Şikayet kulüp yöneticisine bildirim olarak gider; yönetici Profil → Şikayetler'den inceler ve gerekirse içeriği siler ya da hesabı devre dışı bırakır.\n• Engellediğin kişinin paylaşımlarını ve konuşmasını görmezsin, birbirinize mesaj gönderemezsiniz. Engeli kaldırmak için o kişiyle olan sohbeti açıp ⋯ → \"Engeli Kaldır\" de."
+  },
+  {
+    "id": "sikayetleri-incele",
+    "module": "sss",
+    "roles": "AK",
+    "title": "Gelen şikayetleri inceleme",
+    "questions": [
+      "şikayetler",
+      "şikayetleri incele",
+      "bildirilen içerik",
+      "şikayet geldi",
+      "uygunsuz içerik bildirimi",
+      "şikayeti kapat"
+    ],
+    "answer": "Bir kullanıcı içerik şikayet ettiğinde yöneticiye \"Yeni Şikayet\" bildirimi gelir. Profil → Şikayetler ekranında şikayet eden, edilen, sebep ve (mesajsa) mesaj metni görünür. İncelemeni bitirince \"İncelendi olarak işaretle\" de. İçeriği kaldırmak için Sosyal sekmesinden paylaşımı silebilir, gerekirse kullanıcıyı devre dışı bırakabilirsin."
   }
 ];
 
