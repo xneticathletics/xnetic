@@ -22,6 +22,28 @@ const CORS_HEADERS = {
 
 const RESEND_FROM = "X-NETIC <destek@xnetic.net>";
 
+// GÜVENLİK: redirectTo, giriş yapmamış birinin gönderdiği istek gövdesinden
+// geliyor ve üretilen sıfırlama linkinin kullanıcıyı götüreceği yeri belirler.
+// Doğrulanmazsa saldırgan, kurbanın e-postasıyla bu uç noktayı çağırıp
+// redirectTo'ya kendi adresini yazabilir; kurban GERÇEK X-NETIC e-postasındaki
+// linke dokunduğunda oturum token'ı saldırganın adresine gider (hesap ele
+// geçirme). Bu yüzden yalnızca uygulamanın kendi şeması ve kendi alan
+// adlarımız kabul ediliyor; başka her şeyde redirectTo yok sayılır
+// (Supabase varsayılan Site URL'ine düşer).
+const ALLOWED_REDIRECT_PREFIXES = [
+  "xneticclub://",
+  "https://xnetic.net/",
+  "https://www.xnetic.net/",
+  "https://xnetic-yonetim.vercel.app/",
+];
+
+function safeRedirect(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const url = value.trim();
+  if (url.length > 300) return undefined;
+  return ALLOWED_REDIRECT_PREFIXES.some((p) => url.startsWith(p)) ? url : undefined;
+}
+
 // create-club/index.ts ve request-password-reset-notice/index.ts'teki
 // checkRateLimit ile birebir aynı kasıtlı kopya (ayrı Deno ortamları).
 async function checkRateLimit(
@@ -112,7 +134,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const email = String(body?.email ?? "").trim().toLowerCase();
-    const redirectTo = typeof body?.redirectTo === "string" ? body.redirectTo : undefined;
+    const redirectTo = safeRedirect(body?.redirectTo);
     if (!email || !email.includes("@")) return genericOk();
 
     const { data: matchedUser } = await admin
