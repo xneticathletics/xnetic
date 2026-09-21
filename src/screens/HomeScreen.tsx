@@ -213,6 +213,16 @@ export default function HomeScreen({
     () => (clubId ? { uri: getClubLogoUrl(clubId, clubLogoVersion) } : null),
     [clubId, clubLogoVersion]
   );
+  // Logo kaynağı değişince "yüklenemedi" işaretini SIFIRLA. Aksi halde:
+  // kulübün henüz logosu yokken ilk deneme 404 ile başarısız oluyor,
+  // clubLogoFailed true'da KALIYOR ve sonradan gerçek bir logo yüklense
+  // (clubLogoVersion değişse) bile Ana Sayfa yedek X-NETIC amblemini
+  // göstermeye devam ediyordu — ekran yeniden kurulana kadar. Kullanıcı
+  // demo kulübe logo yükleyince bunu canlıda yaşadı.
+  useEffect(() => {
+    setClubLogoFailed(false);
+  }, [clubId, clubLogoVersion]);
+
   const [clubName, setClubName] = useState<string | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   // Henüz kutlanmamış (seen_at IS NULL) rozetler — tam ekran popup olarak
