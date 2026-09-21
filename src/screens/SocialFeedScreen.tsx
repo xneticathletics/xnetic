@@ -379,14 +379,20 @@ export default function SocialFeedScreen({ route, navigation }: Props) {
               </>
             )}
           </View>
+
+          {/* ÖNEMLİ: Şikayet penceresi, görüntüleyici Modal'ının İÇİNDE
+              render edilmeli. Kardeş olarak (Modal'ın dışında) durduğunda
+              iOS onu açık olan tam ekran Modal'ın ÜSTÜNE çizemiyor —
+              düğmeye basınca hiçbir şey görünmüyor, ancak görüntüleyici
+              kapatılınca ortaya çıkıyordu. İç içe Modal iOS'ta çalışıyor. */}
+          <ReportModal
+            visible={!!reportTarget}
+            target={reportTarget}
+            onClose={() => setReportTarget(null)}
+            onBlocked={() => { setViewerIndex(null); load(); }}
+          />
         </View>
       </Modal>
-      <ReportModal
-        visible={!!reportTarget}
-        target={reportTarget}
-        onClose={() => setReportTarget(null)}
-        onBlocked={() => { setViewerIndex(null); load(); }}
-      />
     </View>
   );
 }
@@ -525,15 +531,20 @@ const styles = StyleSheet.create({
   viewerDate: { color: colors.muted, fontSize: 11 },
   viewerBranch: { color: colors.teal, fontSize: 11, fontWeight: "600", marginTop: 2 },
   viewerCaption: { color: colors.ink, fontSize: 13, marginTop: spacing.xs, lineHeight: 18 },
+  // Dört düğme (Kapat / Şikayet / Engelle / Sil) tek satıra sığmayıp
+  // ekranın dışına taşıyordu — "Sil" yarısı kesik görünüyordu. Artık
+  // sığmazsa alt satıra kayıyor ve kenarlarda boşluk bırakılıyor.
   viewerFooter: {
-    flexDirection: "row", justifyContent: "center", gap: spacing.md,
+    flexDirection: "row", justifyContent: "center", flexWrap: "wrap",
+    columnGap: 6, rowGap: spacing.sm,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.md, paddingBottom: spacing.xl, backgroundColor: "rgba(0,0,0,0.6)",
   },
   viewerButton: {
     borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
-    paddingHorizontal: spacing.lg, paddingVertical: 12, backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm + 2, paddingVertical: 11, backgroundColor: colors.surface,
   },
-  viewerButtonText: { color: colors.ink, fontWeight: "700", fontSize: 13 },
+  viewerButtonText: { color: colors.ink, fontWeight: "700", fontSize: 12 },
   viewerDeleteButton: { borderColor: colors.coral },
-  viewerDeleteButtonText: { color: colors.coral, fontWeight: "700", fontSize: 13 },
+  viewerDeleteButtonText: { color: colors.coral, fontWeight: "700", fontSize: 12 },
 });
