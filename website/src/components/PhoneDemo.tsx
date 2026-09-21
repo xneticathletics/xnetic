@@ -8,6 +8,7 @@ import { useState } from "react";
 
 type Screen =
   | { kind: "home" }
+  | { kind: "asistan" }
   | { kind: "sporcuList" }
   | { kind: "sporcuDetail"; id: string }
   | { kind: "antrenorList" }
@@ -388,6 +389,7 @@ export default function PhoneDemo() {
           </div>
           <div className="h-[452px] overflow-y-auto px-4 pb-4 pt-2">
           {screen.kind === "home" && <HomeScreen onSelect={push} />}
+          {screen.kind === "asistan" && <AssistantScreen onBack={back} />}
           {screen.kind === "sporcuList" && <AthleteListScreen onBack={back} onSelect={(id) => push({ kind: "sporcuDetail", id })} />}
           {screen.kind === "sporcuDetail" && <AthleteDetailScreen id={screen.id} onBack={back} />}
           {screen.kind === "antrenorList" && (
@@ -421,12 +423,16 @@ export default function PhoneDemo() {
               active={screen.kind === "infoList" && screen.title === "Mağaza"}
               onClick={() => switchTab({ kind: "infoList", title: "Mağaza", backLabel: "Ana Ekran", items: MAGAZA_ITEMS })}
             />
-            <div className="-mt-3 flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => switchTab({ kind: "asistan" })}
+              className="-mt-3 flex flex-col items-center gap-0.5"
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow p-1.5 shadow-lg">
                 <img src="/xnetic-mark-blue.png" alt="X-NETIC" className="h-full w-full object-contain" />
               </div>
-              <span className="text-[8px] font-semibold text-muted">Asistan</span>
-            </div>
+              <span className={`text-[8px] font-semibold ${screen.kind === "asistan" ? "text-yellow" : "text-muted"}`}>Asistan</span>
+            </button>
             <TabIcon
               icon="🏆" label="Etkinlik"
               active={screen.kind === "infoList" && screen.title === "Etkinlik/Turnuva/Kamp"}
@@ -1327,6 +1333,87 @@ function BeslenmeScreen({ onBack, onSelect }: { onBack: () => void; onSelect: (s
       <div className="grid grid-cols-2 gap-2.5">
         {tiles.map((t) => (
           <GridTile key={t.label} icon={t.icon} label={t.label} sub={t.sub} border={t.border} onClick={() => onSelect(t.target)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Asistan = uygulamanın kullanma kılavuzu (gerçek uygulamadaki AIScreen ile aynı
+// mantık): örnek sorulardan birine dokununca kılavuzdaki cevap gösterilir.
+// Demo tamamen istemci tarafında, sahte/statik içerik — gerçek API çağrısı yok.
+const ASSISTANT_QA: { q: string; a: string[] }[] = [
+  {
+    q: "Yeni bir sporcu nasıl eklerim?",
+    a: [
+      "1. Ana Sayfa → Sporcu Yönetimi'ne gir ve \"+ Yeni Sporcu\"ya dokun.",
+      "2. Ad Soyad, Grup, Veli Adı Soyadı ve Veli Telefon alanlarını doldur.",
+      "3. İstersen veli/sporcu giriş hesabı aç ve aidat planını da başlat.",
+    ],
+  },
+  {
+    q: "Yoklama nasıl alınır?",
+    a: [
+      '1. Ana Sayfa → "Günün Programı"na dokun; bugün antrenmanı olan gruplar listelenir.',
+      "2. Grubu seç, her sporcu için Geldi / Gelmedi / İzinli durumunu işaretle.",
+      '3. "Yoklamayı Kaydet"e dokun. Yoklama, antrenmandan 15 dk önce açılır (süreyi yönetici ayarlar).',
+    ],
+  },
+  {
+    q: "Sporcuya aidat planı nasıl oluşturulur?",
+    a: [
+      '1. Finans → "+ Aidat Planı"na dokun.',
+      "2. Sporcuyu seç, aylık tutarı ve ilk ödeme tarihini gir, kaydet.",
+      "Plan her ay otomatik tekrarlanır; önümüzdeki aylar için ödeme kayıtları hazırlanır.",
+    ],
+  },
+  {
+    q: "Antrenörü gruba nasıl atarım?",
+    a: [
+      "Antrenörler ekranında tüm gruplar ve görevli antrenörleri listelenir; bir gruba dokunarak ata ya da değiştir.",
+      'Her grubun bir "Baş Antrenör"ü ve sınırlı sayıda "Yardımcı"sı olabilir.',
+    ],
+  },
+  {
+    q: "Bir mesajı ya da paylaşımı nasıl şikayet ederim?",
+    a: [
+      '• Mesaj: sohbette mesaja uzun bas → "Şikayet Et". Kişiyi engellemek için sağ üstteki ⋯ düğmesini kullan.',
+      '• Paylaşım: paylaşımı aç, "🚩 Şikayet" ya da "⛔ Engelle"ye dokun.',
+      "Şikayet kulüp yöneticisine iletilir.",
+    ],
+  },
+];
+
+function AssistantScreen({ onBack }: { onBack: () => void }) {
+  const [asked, setAsked] = useState<number | null>(null);
+  return (
+    <div>
+      <BackHeader label="Ana Ekran" onBack={onBack} />
+      <h3 className="mb-1 text-base font-extrabold text-ink">🤖 Asistan</h3>
+      <p className="mb-3 text-[10px] leading-relaxed text-muted">
+        Uygulamanın kullanma kılavuzu. Bir soruya dokun ya da kendi sorunu yaz.
+      </p>
+      {asked !== null && (
+        <div className="mb-3 space-y-2">
+          <div className="ml-6 rounded-lg bg-yellow px-3 py-2 text-[10px] font-semibold text-bg">{ASSISTANT_QA[asked].q}</div>
+          <div className="mr-4 rounded-lg border border-line bg-surface px-3 py-2">
+            {ASSISTANT_QA[asked].a.map((line) => (
+              <p key={line} className="mb-1 text-[10px] leading-relaxed text-ink last:mb-0">{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
+      <p className="mb-1.5 text-[10px] font-bold text-muted">💡 Örnek Sorular</p>
+      <div className="space-y-1.5">
+        {ASSISTANT_QA.map((item, i) => (
+          <button
+            key={item.q}
+            type="button"
+            onClick={() => setAsked(i)}
+            className={`block w-full rounded-lg border px-3 py-2 text-left text-[10px] font-semibold ${asked === i ? "border-yellow text-yellow" : "border-line bg-surface text-ink"}`}
+          >
+            {item.q}
+          </button>
         ))}
       </div>
     </div>
