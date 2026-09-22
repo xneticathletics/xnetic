@@ -32,11 +32,13 @@ export default function CoachesListScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [coachVenueIds, setCoachVenueIds] = useState<Record<string, string[]>>({});
   const [venueFilter, setVenueFilter] = useState<string | null>(null);
-  // Pasifleştirilmiş ("Kulüpten Çıkar") antrenörler varsayılan listede hiç
+  // Pasifleştirilmiş ("Kulüpten Çıkar") antrenörler eskiden listede hiç
   // görünmüyordu — bir daha bulunamıyor, ne aktifleştirilebiliyor ne kalıcı
   // silinebiliyordu (canlıda yaşandı: aynı telefonla tekrar oluşturulamadı,
-  // çünkü giriş kimliği hâlâ rezerveydi). Sadece club_admin görebiliyor.
-  const [showInactive, setShowInactive] = useState(false);
+  // çünkü giriş kimliği hâlâ rezerveydi). Kullanıcı isteğiyle ayrı bir
+  // düğme yerine club_admin için her zaman açık — pasifler "PASİF"
+  // etiketiyle soluk gösteriliyor.
+  const showInactive = role === "club_admin";
 
   // Salon filtresi sadece bir branş seçiliyken görünüyor — branş değişince
   // (veya "Tüm Branşlar"a dönülünce) eskisi ekranda görünmeden aktif
@@ -56,7 +58,7 @@ export default function CoachesListScreen({ navigation }: Props) {
     try {
       setError(null);
       const [c, cb, b, v, g, cv] = await Promise.all([
-        listCoachesWithGroups(role === "club_admin" ? { includeInactive: showInactive } : undefined),
+        listCoachesWithGroups(showInactive ? { includeInactive: true } : undefined),
         getAllCoachBranches(), listBranches(), listVenues(), listGroups(), getAllCoachVenueIds(),
       ]);
       setCoaches(c);
@@ -72,7 +74,7 @@ export default function CoachesListScreen({ navigation }: Props) {
       hasLoadedOnceRef.current = true;
       setRefreshing(false);
     }
-  }, [role, showInactive]);
+  }, [showInactive]);
 
   useFocusEffect(
     useCallback(() => {
@@ -152,18 +154,6 @@ export default function CoachesListScreen({ navigation }: Props) {
           style={styles.filterRow}
           showScrollHint
         />
-      )}
-
-      {role === "club_admin" && (
-        <TouchableOpacity
-          style={styles.inactiveToggle}
-          onPress={() => setShowInactive((v) => !v)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: showInactive }}
-        >
-          <View style={[styles.checkbox, showInactive && styles.checkboxOn]} />
-          <Text style={styles.inactiveToggleText}>Pasif antrenörleri de göster</Text>
-        </TouchableOpacity>
       )}
 
       <TextInput
@@ -319,10 +309,6 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 6,
   },
   fabIcon: { color: colors.bg, fontSize: 28, fontWeight: "700", lineHeight: 30 },
-  inactiveToggle: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm },
-  checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 2, borderColor: colors.line },
-  checkboxOn: { backgroundColor: colors.yellow, borderColor: colors.yellow },
-  inactiveToggleText: { color: colors.muted, fontSize: 13, fontWeight: "600" },
   cardInactive: { opacity: 0.55 },
   inactiveBadge: { backgroundColor: colors.line, borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 3 },
   inactiveBadgeText: { color: colors.muted, fontSize: 9, fontWeight: "800" },
