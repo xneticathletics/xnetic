@@ -7,7 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { getCoach, updateCoach, deactivateCoach, type Coach } from "../lib/api/coaches";
+import { getCoach, updateCoach, deactivateCoach, reactivateCoach, deleteCoachPermanently, type Coach } from "../lib/api/coaches";
 import { uploadPhotoForUser } from "../lib/api/currentUser";
 import BirthDateInput from "../components/BirthDateInput";
 import type { HomeStackParamList } from "../navigation/HomeStack";
@@ -47,6 +47,8 @@ export default function CoachFormScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+  const [deletingPermanently, setDeletingPermanently] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
   // güncellemesi ekrana yansıyana kadar bir sonraki dokunuşu engelleyemiyor
   // — hızlı çift dokunuşta handleSave iki kez çalışabiliyordu. Senkron bir
@@ -131,6 +133,52 @@ export default function CoachFormScreen({ route, navigation }: Props) {
       savingRef.current = false;
       setSaving(false);
     }
+  };
+
+  // Pasif bir antrenör aktifleştirilebilir (Kulüpten Çıkar geri alınır) ya
+  // da KALICI silinebilir (web'deki Aktifleştir/Komple Sil ile aynı ikili —
+  // eskiden mobilde ikinci seçenek hiç yoktu, pasifleşen bir antrenöre bir
+  // daha ulaşılamıyor, aynı telefon/kullanıcı adı yeniden kullanılamıyordu).
+  const handleReactivate = async () => {
+    if (!coach) return;
+    setReactivating(true);
+    try {
+      await reactivateCoach(coach.id);
+      markSaved();
+      navigation.navigate("CoachesList");
+    } catch (e: any) {
+      Alert.alert("Hata", e.message ?? "İşlem başarısız", [{ text: "Tamam" }]);
+    } finally {
+      setReactivating(false);
+    }
+  };
+
+  const handleDeletePermanently = () => {
+    if (!coach) return;
+    Alert.alert(
+      "Antrenörü kalıcı olarak sil",
+      `"${coach.name}" KALICI olarak silinecek — bu işlem geri alınamaz. Giriş bilgisi (telefon/kullanıcı adı) serbest kalır, aynı bilgiyle yeni bir hesap oluşturulabilir.`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Kalıcı Sil",
+          style: "destructive",
+          onPress: async () => {
+            setDeletingPermanently(true);
+            try {
+              const { warning } = await deleteCoachPermanently(coach.id);
+              markSaved();
+              if (warning) Alert.alert("Uyarı", warning, [{ text: "Tamam" }]);
+              navigation.navigate("CoachesList");
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Silinemedi — bu antrenöre bağlı geçmiş kayıtlar olabilir.", [{ text: "Tamam" }]);
+            } finally {
+              setDeletingPermanently(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleRemoveCoach = () => {
@@ -298,9 +346,21 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.removeButton} onPress={handleRemoveCoach} disabled={removing}>
-          {removing ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.removeButtonText}>Antrenörü Kulüpten Çıkar</Text>}
-        </TouchableOpacity>
+        {coach?.is_active === false ? (
+          <>
+            <Text style={styles.inactiveNotice}>Bu antrenör kulüpten çıkarılmış (pasif) durumda.</Text>
+            <TouchableOpacity style={styles.reactivateButton} onPress={handleReactivate} disabled={reactivating}>
+              {reactivating ? <ActivityIndicator color={colors.teal} /> : <Text style={styles.reactivateButtonText}>Aktifleştir</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.removeButton} onPress={handleDeletePermanently} disabled={deletingPermanently}>
+              {deletingPermanently ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.removeButtonText}>Kalıcı Olarak Sil</Text>}
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity style={styles.removeButton} onPress={handleRemoveCoach} disabled={removing}>
+            {removing ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.removeButtonText}>Antrenörü Kulüpten Çıkar</Text>}
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -344,4 +404,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14, alignItems: "center", marginTop: spacing.md, marginBottom: spacing.xl,
   },
   removeButtonText: { color: colors.coral, fontWeight: "700", fontSize: 14 },
+  inactiveNotice: { color: colors.muted, fontSize: 13, textAlign: "center", marginTop: spacing.md },
+  reactivateButton: {
+    borderWidth: 1, borderColor: colors.teal, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: "center", marginTop: spacing.sm,
+  },
+  reactivateButtonText: { color: colors.teal, fontWeight: "700", fontSize: 14 },
 });

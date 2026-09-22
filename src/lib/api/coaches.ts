@@ -18,18 +18,22 @@ export type Coach = {
   address: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
+  is_active: boolean;
 };
 
 const COACH_FIELDS =
-  "id, name, email, contact_email, phone, birth_date, education_level, gender, photo_url, address, emergency_contact_name, emergency_contact_phone";
+  "id, name, email, contact_email, phone, birth_date, education_level, gender, photo_url, address, emergency_contact_name, emergency_contact_phone, is_active";
 
-export async function listCoaches(): Promise<Coach[]> {
-  const { data, error } = await supabase
-    .from("users")
-    .select(COACH_FIELDS)
-    .eq("role", "coach")
-    .eq("is_active", true)
-    .order("name", { ascending: true });
+// includeInactive: "Kulüpten Çıkar" ile pasifleştirilmiş antrenörler
+// varsayılan listede hiç görünmüyordu — pasifleştirilen bir antrenöre bir
+// daha ulaşılamıyor, ne aktifleştirilebiliyor ne kalıcı silinebiliyordu
+// (canlıda "aynı telefonla tekrar oluşturamıyorum" şikayetinin asıl kökü
+// buydu — pasif hesabın giriş kimliği hâlâ rezerve duruyordu). Web
+// tarafındaki includeInactive ile aynı desen.
+export async function listCoaches(opts?: { includeInactive?: boolean }): Promise<Coach[]> {
+  let query = supabase.from("users").select(COACH_FIELDS).eq("role", "coach");
+  if (!opts?.includeInactive) query = query.eq("is_active", true);
+  const { data, error } = await query.order("name", { ascending: true });
 
   if (error) throw error;
   return data ?? [];
@@ -198,6 +202,35 @@ export async function deactivateCoach(userId: string) {
   assertRowAffected(data);
 }
 
+export async function reactivateCoach(userId: string) {
+  const { error } = await supabase.from("users").update({ is_active: true }).eq("id", userId);
+  if (error) throw error;
+}
+
+// KALICI silme — web/src/lib/api/coaches.ts'deki deleteCoachPermanently ile
+// birebir aynı: delete-club-user edge function'ından geçer, hem kulüp
+// kaydını hem GİRİŞ hesabını (auth.users) siler. İstemci auth kaydını
+// doğrudan silemez; eskiden bu adım eksikti ve pasifleştirilmiş bir
+// antrenörün telefon/kullanıcı adı sonsuza dek rezerve kalıyordu.
+export async function deleteCoachPermanently(userId: string): Promise<{ warning?: string }> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Oturum bulunamadı.");
+
+  const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-club-user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string,
+    },
+    body: JSON.stringify({ userId }),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(json?.error ?? "Silinemedi");
+  return { warning: json?.warning };
+}
+
 export type CoachWithGroups = Coach & { groupNames: string[]; groupIds: string[] };
 
 // Antrenör listesinde her antrenörün altında hangi grup(lar)da görevli
@@ -205,11 +238,11 @@ export type CoachWithGroups = Coach & { groupNames: string[]; groupIds: string[]
 // yardımcı antrenörlük (group_coaches) kayıtlarını birleştirir. Grup
 // id'lerini de taşır — bu sayede Antrenörler ekranında salona göre
 // filtreleme yapılabilir (groups.venue_id üzerinden).
-export async function listCoachesWithGroups(): Promise<CoachWithGroups[]> {
+export async function listCoachesWithGroups(opts?: { includeInactive?: boolean }): Promise<CoachWithGroups[]> {
   // Üç sorgu da birbirinden bağımsız (head/assistant sorguları coaches
   // listesine ihtiyaç duymuyor) — ardışık değil, tek dalgada paralel.
   const [coaches, headResult, assistantResult] = await Promise.all([
-    listCoaches(),
+    listCoaches(opts),
     supabase.from("groups").select("id, name, head_coach_id").not("head_coach_id", "is", null),
     supabase.from("group_coaches").select("coach_id, groups(id, name)"),
   ]);
