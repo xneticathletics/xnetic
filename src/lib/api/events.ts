@@ -266,15 +266,22 @@ export async function cancelMyRegistration(registrationId: string): Promise<void
 async function notifyEventPublished(event: EventRow): Promise<void> {
   const recipients = new Set<string>();
 
-  // branchGroups ve branchRow ikisi de sadece event.branch'e bağlı, birbirinden bağımsız.
-  const [branchGroupsResult, branchRowResult] = await Promise.all([
+  // branchGroups, branchRow ve admins üçü de birbirinden bağımsız, tek
+  // dalgada. Etkinliği bir branş koordinatörü oluşturduysa kulüp
+  // yöneticisi de haberdar olmalı — koordinatör kendi branşında yönetici
+  // gibi çalıştığı için admin'in bundan başka yoldan haberi olmuyordu.
+  // Etkinliği zaten admin oluşturduysa kendine bildirim gitmesin diye
+  // aşağıda ayrıca filtreleniyor.
+  const [branchGroupsResult, branchRowResult, adminsResult] = await Promise.all([
     event.branch
       ? supabase.from("groups").select("id").eq("branch", event.branch)
       : Promise.resolve({ data: null as { id: string }[] | null, error: null }),
     event.branch
       ? supabase.from("branches").select("coordinator_user_id").eq("name", event.branch).maybeSingle()
       : Promise.resolve({ data: null as { coordinator_user_id: string | null } | null, error: null }),
+    supabase.from("users").select("id").eq("role", "club_admin").eq("is_active", true),
   ]);
+  (adminsResult.data ?? []).forEach((a) => { if (a.id !== event.created_by) recipients.add(a.id); });
 
   let athleteQuery = supabase.from("athletes").select("parent_user_id, athlete_user_id, group_id").eq("status", "active");
   if (event.branch) {
