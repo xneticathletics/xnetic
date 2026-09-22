@@ -96,7 +96,7 @@ export default function CoachesListPage() {
         </span>
       ),
     },
-    { key: "email", label: "E-posta", render: (c) => c.email ?? "—" },
+    { key: "email", label: "E-posta", render: (c) => c.contact_email ?? "—" }, // c.email = GİRİŞ kimliği, hiç gösterilmez
     { key: "phone", label: "Telefon", render: (c) => c.phone ?? "—" },
     {
       key: "branches",

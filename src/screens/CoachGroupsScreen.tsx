@@ -114,7 +114,10 @@ export default function CoachGroupsScreen({ route }: Props) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{coachName}</Text>
                 {!!coach?.phone && <Text style={styles.infoLine}>📞 {coach.phone}</Text>}
-                {!!coach?.email && <Text style={styles.infoLine}>✉️ {coach.email}</Text>}
+                {/* coach.email GİRİŞ kimliği (tel.../usr...@xnetic.local
+                    olabilir) — kullanıcıya asla ham gösterilmez. Gerçek
+                    e-posta contact_email'de (canlıda ham hâliyle görüldü). */}
+                {!!coach?.contact_email && <Text style={styles.infoLine}>✉️ {coach.contact_email}</Text>}
               </View>
             </View>
 
