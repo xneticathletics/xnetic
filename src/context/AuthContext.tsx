@@ -164,13 +164,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e: any) {
         return { error: e.message ?? "Geçersiz giriş bilgisi." };
       }
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password,
         options: captchaToken ? { captchaToken } : undefined,
       });
-      if (!error) justSignedInRef.current = true;
-      return { error: error ? translateAuthError(error.message) : null };
+      if (error) return { error: translateAuthError(error.message) };
+
+      // Devre dışı bırakılmış (is_active=false) ya da kulüp kaydı silinmiş
+      // bir hesapta şifre DOĞRU olduğu için signIn BAŞARILI oluyor; ancak
+      // custom_access_token_hook böyle bir kullanıcıya app_role/club_id
+      // claim'lerini NULL yazıyor. RootNavigator da role yoksa Login
+      // ekranını gösterdiği için kullanıcı doğru şifreyi girip hiçbir uyarı
+      // almadan giriş ekranında kalıyordu (canlıda yaşandı: pasifleştirilen
+      // antrenör). Oturumu kapatıp net bir mesaj veriyoruz.
+      const signedInClaims = data.session?.access_token
+        ? decodeJwtPayload(data.session.access_token)
+        : {};
+      if (!signedInClaims.app_role) {
+        await supabase.auth.signOut();
+        return {
+          error:
+            "Bu hesap şu an kullanıma kapalı. Hesabın devre dışı bırakılmış ya da kulüp kaydın kaldırılmış olabilir — kulüp yöneticinle iletişime geç.",
+        };
+      }
+
+      justSignedInRef.current = true;
+      return { error: null };
     },
     signOut: async () => {
       await supabase.auth.signOut();

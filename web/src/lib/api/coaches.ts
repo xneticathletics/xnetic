@@ -141,12 +141,28 @@ export async function reactivateCoach(userId: string) {
 // silme işlemini engelleyebilir. Auth hesabı (giriş bilgisi) bu işlemle
 // silinmiyor — sadece kulüp kaydı kaldırılıyor, giriş bir daha bir kulübe
 // bağlı çalışmadığı için işlevsiz kalıyor.
-export async function deleteCoachPermanently(userId: string) {
-  await supabase.from("coach_branches").delete().eq("coach_id", userId);
-  await supabase.from("group_coaches").delete().eq("coach_id", userId);
-  await supabase.from("groups").update({ head_coach_id: null }).eq("head_coach_id", userId);
-  const { error } = await supabase.from("users").delete().eq("id", userId);
-  if (error) throw error;
+// Silme artık delete-club-user edge function'ından geçiyor: istemci auth
+// kaydını (giriş bilgisini) silemez, bu yüzden eskiden sadece kulüp kaydı
+// kaldırılıyor ve auth hesabı geride kalıyordu. Sonucu canlıda görüldü —
+// aynı telefon/kullanıcı adıyla kişi bir daha oluşturulamıyor, üstelik o
+// kişi eski şifresiyle giriş yapıp boş bir uygulamada kalıyordu.
+export async function deleteCoachPermanently(userId: string): Promise<{ warning?: string }> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Oturum bulunamadı.");
+
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-club-user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+    },
+    body: JSON.stringify({ userId }),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(json?.error ?? "Silinemedi");
+  return { warning: json?.warning };
 }
 
 export type GroupAssignment = "none" | "head" | "assistant";

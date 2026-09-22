@@ -72,12 +72,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clubId: (claims.club_id as string) ?? null,
     loading,
     signIn: async (email, password, captchaToken) => {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: captchaToken ? { captchaToken } : undefined,
       });
-      return { error: error?.message ?? null };
+      if (error) return { error: error.message };
+
+      // Mobildeki src/context/AuthContext.tsx ile aynı kontrol: devre dışı
+      // bırakılmış ya da kulüp kaydı silinmiş bir hesapta şifre doğru olduğu
+      // için giriş BAŞARILI oluyor, ama hook app_role claim'ini NULL yazıyor.
+      // Net bir mesaj vermezsek kullanıcı sebebini anlamıyor.
+      const signedInClaims = data.session?.access_token
+        ? decodeJwtPayload(data.session.access_token)
+        : {};
+      if (!signedInClaims.app_role) {
+        await supabase.auth.signOut();
+        return {
+          error:
+            "Bu hesap şu an kullanıma kapalı. Hesabın devre dışı bırakılmış ya da kulüp kaydın kaldırılmış olabilir — kulüp yöneticinle iletişime geç.",
+        };
+      }
+      return { error: null };
     },
     signOut: async () => {
       await supabase.auth.signOut();

@@ -185,7 +185,8 @@ export default function CoachDetailPage() {
     )
       return;
     try {
-      await deleteCoachPermanently(coach.id);
+      const { warning } = await deleteCoachPermanently(coach.id);
+      if (warning) alert(warning);
       navigate("/coaches");
     } catch (e: any) {
       alert(e.message ?? "Silinemedi — bu antrenöre bağlı kayıtlar (ör. geçmiş antrenmanlar) olabilir.");
