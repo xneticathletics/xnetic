@@ -1,0 +1,12 @@
+-- Antrenör/kullanıcı için GERÇEK e-posta adresi.
+--
+-- users.email aslında GİRİŞ KİMLİĞİ: telefon ya da kullanıcı adıyla davet
+-- edilenlerde "tel0532...@xnetic.local" / "usrahmetyilmaz@xnetic.local"
+-- gibi sentetik bir adres tutuyor (bkz. src/lib/loginIdentifier.ts). Bu
+-- adres kullanıcıya hiç gösterilmemeli; web panelinde antrenör detayında
+-- ham hâliyle görünüyordu (canlıda fark edildi).
+--
+-- Gerçek e-posta ayrı bir sütunda tutuluyor: girilmemişse boş kalır,
+-- girilmişse iletişim bilgisi olarak gösterilir. Giriş kimliği değildir —
+-- e-postayla giriş yapmak isteyen "Giriş ve Şifre İşlemleri"ni kullanır.
+alter table public.users add column if not exists contact_email text;

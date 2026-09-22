@@ -13,7 +13,7 @@ import {
 } from "../lib/api/currentUser";
 import { getMyAthletes } from "../lib/api/myAthletes";
 import { uploadAthletePhoto } from "../lib/api/athletes";
-import { getCoach, updateCoach } from "../lib/api/coaches";
+import { getCoach, updateCoach, getCoachBranches, updateMyCoachBranchDetails, type CoachBranchInfo } from "../lib/api/coaches";
 
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { formatPhoneNumber } from "../lib/phoneFormat";
@@ -53,6 +53,13 @@ export default function PersonalInfoScreen() {
   const [address, setAddress] = useState("");
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  // Branş bazlı belge no / deneyim yılı — antrenör kendi girdiği/güncellediği
+  // metni yerel state'te tutup Kaydet'e basınca tek tek gönderiyor (branş ve
+  // kademeye dokunmuyor, RLS de zaten bunu izin vermiyor — bkz.
+  // coach_branches_self_update migration'ı).
+  const [myBranches, setMyBranches] = useState<CoachBranchInfo[]>([]);
+  const [branchEdits, setBranchEdits] = useState<Record<string, { license_no: string; experience_years: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   // TouchableOpacity'nin disabled={saving} kontrolü, setSaving(true) state
@@ -91,13 +98,23 @@ export default function PersonalInfoScreen() {
           }
 
           if (role === "coach" && coachUserId) {
-            const c = await getCoach(coachUserId);
+            const [c, branches] = await Promise.all([getCoach(coachUserId), getCoachBranches(coachUserId)]);
             if (!cancelled) {
               setBirthDate(c.birth_date);
               setEducationLevel(c.education_level);
               setAddress(c.address ?? "");
               setEmergencyName(c.emergency_contact_name ?? "");
               setEmergencyPhone(c.emergency_contact_phone ?? "");
+              setContactEmail(c.contact_email ?? "");
+              setMyBranches(branches);
+              setBranchEdits(
+                Object.fromEntries(
+                  branches.map((b) => [
+                    b.branch_id,
+                    { license_no: b.license_no ?? "", experience_years: b.experience_years != null ? String(b.experience_years) : "" },
+                  ])
+                )
+              );
             }
           }
         } catch (e: any) {
@@ -157,7 +174,18 @@ export default function PersonalInfoScreen() {
             address: address.trim() || null,
             emergency_contact_name: emergencyName.trim() || null,
             emergency_contact_phone: emergencyPhone.trim() || null,
+            contact_email: contactEmail.trim() || null,
           });
+          await Promise.all(
+            myBranches.map((b) => {
+              const edit = branchEdits[b.branch_id];
+              if (!edit) return Promise.resolve();
+              return updateMyCoachBranchDetails(b.branch_id, {
+                license_no: edit.license_no.trim() || null,
+                experience_years: edit.experience_years.trim() ? Number(edit.experience_years.trim()) : null,
+              });
+            })
+          );
         }
       }
       Alert.alert("Kaydedildi", "Bilgilerin güncellendi.", [{ text: "Tamam" }]);
@@ -224,6 +252,19 @@ export default function PersonalInfoScreen() {
         <Field label="Ad Soyad">
           <TextInput
           onFocus={handleFocus} style={styles.input} value={name} onChangeText={setName} placeholderTextColor={colors.muted} />
+        </Field>
+
+        <Field label="E-posta (opsiyonel)">
+          <TextInput
+            onFocus={handleFocus}
+            style={styles.input}
+            value={contactEmail}
+            onChangeText={setContactEmail}
+            placeholder="ornek@eposta.com"
+            placeholderTextColor={colors.muted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
         </Field>
 
         <Field label="Telefon">
@@ -296,6 +337,45 @@ export default function PersonalInfoScreen() {
                 maxLength={14}
               />
             </Field>
+
+            {myBranches.length > 0 && (
+              <>
+                <SectionHeader title="Branş — Belge ve Deneyim" />
+                {myBranches.map((b) => (
+                  <View key={b.branch_id} style={styles.branchDetailBox}>
+                    <Text style={styles.branchDetailTitle}>{b.branch_name}</Text>
+                    <Field label="Belge / Lisans Numarası">
+                      <TextInput
+                        onFocus={handleFocus}
+                        style={styles.input}
+                        value={branchEdits[b.branch_id]?.license_no ?? ""}
+                        onChangeText={(v) =>
+                          setBranchEdits((prev) => ({ ...prev, [b.branch_id]: { ...prev[b.branch_id], license_no: v } }))
+                        }
+                        placeholder="Belge/lisans no"
+                        placeholderTextColor={colors.muted}
+                      />
+                    </Field>
+                    <Field label="Deneyim Yılı">
+                      <TextInput
+                        onFocus={handleFocus}
+                        style={styles.input}
+                        value={branchEdits[b.branch_id]?.experience_years ?? ""}
+                        onChangeText={(v) =>
+                          setBranchEdits((prev) => ({
+                            ...prev,
+                            [b.branch_id]: { ...prev[b.branch_id], experience_years: v.replace(/[^0-9]/g, "") },
+                          }))
+                        }
+                        keyboardType="number-pad"
+                        placeholder="Ör. 5"
+                        placeholderTextColor={colors.muted}
+                      />
+                    </Field>
+                  </View>
+                ))}
+              </>
+            )}
           </>
         )}
 
@@ -358,6 +438,11 @@ const styles = StyleSheet.create({
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
   inputMultiline: { minHeight: 72, textAlignVertical: "top" },
+  branchDetailBox: {
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line,
+    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md,
+  },
+  branchDetailTitle: { color: colors.ink, fontSize: 13, fontWeight: "700", marginBottom: spacing.sm },
   chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 8 },
   chipActive: { backgroundColor: colors.yellow, borderColor: colors.yellow },

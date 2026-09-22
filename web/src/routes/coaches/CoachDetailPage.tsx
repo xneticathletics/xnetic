@@ -239,7 +239,12 @@ export default function CoachDetailPage() {
             </button>
           </div>
           <div className="rounded-xl border border-line bg-surface p-4">
-            <InfoRow label="E-posta" value={coach.email} />
+            {/* coach.email GİRİŞ kimliği — telefon/kullanıcı adıyla davet
+                edilenlerde "usrahmetyilmaz@xnetic.local" gibi sentetik bir
+                adres tutuyor ve kullanıcıya hiç gösterilmemeli (canlıda
+                ham hâliyle göründüğü fark edildi). Gerçek e-posta girilmişse
+                contact_email'de, girilmemişse burada boş kalır. */}
+            <InfoRow label="E-posta" value={coach.contact_email} />
             <InfoRow label="Telefon" value={coach.phone} />
             <InfoRow label="Doğum Tarihi" value={coach.birth_date} />
             <InfoRow label="Öğrenim Durumu" value={coach.education_level ? EDUCATION_LABELS[coach.education_level] ?? coach.education_level : null} />

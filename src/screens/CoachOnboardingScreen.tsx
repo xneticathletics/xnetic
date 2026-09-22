@@ -22,7 +22,7 @@ const EDUCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "doktora", label: "Doktora" },
 ];
 
-type BranchSelection = { branch: Branch; level: number };
+type BranchSelection = { branch: Branch; level: number; licenseNo: string; experienceYears: string };
 
 // Yeni davet edilen bir antrenörün ilk girişte doldurması gereken ekran
 // — tamamlamadan Ana Sayfa'ya geçemez (geri/ana sayfa butonu yok).
@@ -55,12 +55,16 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
     setBranchSelections((prev) => {
       const exists = prev.find((s) => s.branch.id === branch.id);
       if (exists) return prev.filter((s) => s.branch.id !== branch.id);
-      return [...prev, { branch, level: 1 }];
+      return [...prev, { branch, level: 1, licenseNo: "", experienceYears: "" }];
     });
   };
 
   const setBranchLevel = (branchId: string, level: number) => {
     setBranchSelections((prev) => prev.map((s) => (s.branch.id === branchId ? { ...s, level } : s)));
+  };
+
+  const setBranchField = (branchId: string, field: "licenseNo" | "experienceYears", value: string) => {
+    setBranchSelections((prev) => prev.map((s) => (s.branch.id === branchId ? { ...s, [field]: value } : s)));
   };
 
   const pickPhoto = async () => {
@@ -99,7 +103,15 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
       // açık, tamamlandıktan sonra kapanıyor.
       const userId = await getCurrentAppUserId();
       if (userId) {
-        await setCoachBranches(userId, branchSelections.map((s) => ({ branch_id: s.branch.id, level: s.level })));
+        await setCoachBranches(
+          userId,
+          branchSelections.map((s) => ({
+            branch_id: s.branch.id,
+            level: s.level,
+            license_no: s.licenseNo.trim() || null,
+            experience_years: s.experienceYears.trim() ? Number(s.experienceYears.trim()) : null,
+          }))
+        );
       }
 
       await completeMyOnboarding({
@@ -219,6 +231,27 @@ export default function CoachOnboardingScreen({ onComplete }: { onComplete: () =
                 </TouchableOpacity>
               ))}
             </View>
+
+            <Text style={styles.branchDetailLabel}>Belge / Lisans Numarası (opsiyonel)</Text>
+            <TextInput
+              onFocus={handleFocus}
+              style={styles.branchDetailInput}
+              value={sel.licenseNo}
+              onChangeText={(v) => setBranchField(sel.branch.id, "licenseNo", v)}
+              placeholder="Belge/lisans no"
+              placeholderTextColor={colors.muted}
+            />
+
+            <Text style={styles.branchDetailLabel}>Deneyim Yılı (opsiyonel)</Text>
+            <TextInput
+              onFocus={handleFocus}
+              style={styles.branchDetailInput}
+              value={sel.experienceYears}
+              onChangeText={(v) => setBranchField(sel.branch.id, "experienceYears", v.replace(/[^0-9]/g, ""))}
+              keyboardType="number-pad"
+              placeholder="Ör. 5"
+              placeholderTextColor={colors.muted}
+            />
           </View>
         ))}
 
@@ -271,6 +304,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md,
   },
   branchLevelTitle: { color: colors.ink, fontSize: 13, fontWeight: "700", marginBottom: spacing.sm },
+  branchDetailLabel: { color: colors.muted, fontSize: 12, fontWeight: "600", marginTop: spacing.sm, marginBottom: 4 },
+  branchDetailInput: {
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md,
+    color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 10, fontSize: 13,
+  },
   error: { color: colors.coral, marginBottom: spacing.md },
   saveButton: { backgroundColor: colors.yellow, borderRadius: radius.md, paddingVertical: 16, alignItems: "center", marginTop: spacing.sm },
   saveButtonText: { color: colors.bg, fontWeight: "700", fontSize: 15 },

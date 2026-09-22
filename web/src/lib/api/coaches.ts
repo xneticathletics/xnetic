@@ -6,7 +6,10 @@ import { assertRowAffected } from "./assertAffected";
 export type Coach = {
   id: string;
   name: string;
+  // GİRİŞ kimliği (tel.../usr...@xnetic.local olabilir) — kullanıcıya
+  // gösterilmez. Gerçek e-posta contact_email'de (bkz. mobildeki aynı ayrım).
   email: string | null;
+  contact_email: string | null;
   phone: string | null;
   is_active: boolean;
   photo_url: string | null;
@@ -18,7 +21,7 @@ export type Coach = {
 };
 
 const COACH_FIELDS =
-  "id, name, email, phone, is_active, photo_url, birth_date, education_level, address, emergency_contact_name, emergency_contact_phone";
+  "id, name, email, contact_email, phone, is_active, photo_url, birth_date, education_level, address, emergency_contact_name, emergency_contact_phone";
 
 export async function listCoaches(opts?: { includeInactive?: boolean }): Promise<Coach[]> {
   let query = supabase.from("users").select(COACH_FIELDS).eq("role", "coach");

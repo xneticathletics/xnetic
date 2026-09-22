@@ -1,12 +1,15 @@
 import { supabase } from "../supabase";
 import { getClubSettings } from "./clubSettings";
-import { getCurrentClubId } from "./currentUser";
+import { getCurrentClubId, getCurrentAppUserId } from "./currentUser";
 import { assertRowAffected } from "./assertAffected";
 
 export type Coach = {
   id: string;
   name: string;
+  // GİRİŞ kimliği (tel.../usr...@xnetic.local gibi sentetik olabilir) —
+  // kullanıcıya asla ham gösterilmez. Gerçek e-posta contact_email'de.
   email: string | null;
+  contact_email: string | null;
   phone: string | null;
   birth_date: string | null;
   education_level: string | null;
@@ -18,7 +21,7 @@ export type Coach = {
 };
 
 const COACH_FIELDS =
-  "id, name, email, phone, birth_date, education_level, gender, photo_url, address, emergency_contact_name, emergency_contact_phone";
+  "id, name, email, contact_email, phone, birth_date, education_level, gender, photo_url, address, emergency_contact_name, emergency_contact_phone";
 
 export async function listCoaches(): Promise<Coach[]> {
   const { data, error } = await supabase
@@ -44,6 +47,7 @@ export async function getCoach(id: string): Promise<Coach> {
 
 export type CoachInput = {
   name: string;
+  contact_email: string | null;
   phone: string | null;
   birth_date: string | null;
   education_level: string | null;
@@ -109,6 +113,25 @@ export async function getCoachBranches(coachId: string): Promise<CoachBranchInfo
     branch_id: r.branch_id, level: r.level, branch_name: r.branches?.name ?? "?",
     license_no: r.license_no ?? null, experience_years: r.experience_years ?? null, hire_date: r.hire_date ?? null,
   }));
+}
+
+// Antrenörün KENDİ belge no / deneyim yılını güncellemesi için — branş ve
+// kademeyi DEĞİŞTİREMEZ, bunlar admin/koordinatör kontrolünde kalıyor
+// (bkz. coach_branches_self_update RLS politikası + kolon kilidi tetikleyicisi,
+// migration 20260922010000). setCoachBranches ise TÜM listeyi silip yeniden
+// yazdığı için onboarding sürecine özel — bu sonradan tekil güncelleme içindir.
+export async function updateMyCoachBranchDetails(
+  branchId: string,
+  details: { license_no?: string | null; experience_years?: number | null }
+) {
+  const myUserId = await getCurrentAppUserId();
+  if (!myUserId) throw new Error("Kullanıcı bulunamadı");
+  const { error } = await supabase
+    .from("coach_branches")
+    .update(details)
+    .eq("coach_id", myUserId)
+    .eq("branch_id", branchId);
+  if (error) throw error;
 }
 
 export type CoachBranchEntry = {

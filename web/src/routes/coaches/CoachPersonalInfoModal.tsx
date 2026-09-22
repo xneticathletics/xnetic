@@ -19,6 +19,7 @@ export default function CoachPersonalInfoModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [contactEmail, setContactEmail] = useState(coach.contact_email ?? "");
   const [phone, setPhone] = useState(coach.phone ?? "");
   const [birthDate, setBirthDate] = useState(coach.birth_date ?? "");
   const [educationLevel, setEducationLevel] = useState(coach.education_level ?? "");
@@ -34,6 +35,7 @@ export default function CoachPersonalInfoModal({
     setError(null);
     try {
       await updateCoach(coach.id, {
+        contact_email: contactEmail.trim() || null,
         phone: phone.trim() || null,
         birth_date: birthDate || null,
         education_level: educationLevel || null,
@@ -52,6 +54,15 @@ export default function CoachPersonalInfoModal({
 
   return (
     <Modal title={`${coach.name} — Kişisel Bilgiler`} onClose={onClose}>
+      <FormField label="E-posta (opsiyonel)">
+        <input
+          type="email"
+          className={inputClass}
+          value={contactEmail}
+          onChange={(e) => setContactEmail(e.target.value)}
+          placeholder="ornek@eposta.com"
+        />
+      </FormField>
       <FormField label="Telefon">
         <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0532-123-45-67" />
       </FormField>

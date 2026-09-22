@@ -36,6 +36,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
   const [coach, setCoach] = useState<Coach | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [birthDate, setBirthDate] = useState<string | null>(null);
   const [educationLevel, setEducationLevel] = useState<string | null>(null);
   const [gender, setGender] = useState<"erkek" | "kadin" | null>(null);
@@ -61,6 +62,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           setCoach(c);
           setName(c.name);
           setPhone(c.phone ?? "");
+          setContactEmail(c.contact_email ?? "");
           setBirthDate(c.birth_date);
           setEducationLevel(c.education_level);
           setGender(c.gender);
@@ -69,7 +71,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           setEmergencyPhone(c.emergency_contact_phone ?? "");
           initialSnapshotRef.current = JSON.stringify([
             c.name, c.phone ?? "", c.birth_date, c.education_level, c.gender,
-            c.address ?? "", c.emergency_contact_name ?? "", c.emergency_contact_phone ?? "",
+            c.address ?? "", c.emergency_contact_name ?? "", c.emergency_contact_phone ?? "", c.contact_email ?? "",
           ]);
         })
         .catch((e) => setError(e.message))
@@ -81,7 +83,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
     !loading &&
     initialSnapshotRef.current !== null &&
     initialSnapshotRef.current !==
-      JSON.stringify([name, phone, birthDate, educationLevel, gender, address, emergencyName, emergencyPhone]);
+      JSON.stringify([name, phone, birthDate, educationLevel, gender, address, emergencyName, emergencyPhone, contactEmail]);
   // photoUri (henüz yüklenmemiş yeni fotoğraf) ayrıca kontrol ediliyor —
   // snapshot'a dahil değil çünkü seçilir seçilmez zaten "değişti" demektir.
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges || !!photoUri);
@@ -111,6 +113,7 @@ export default function CoachFormScreen({ route, navigation }: Props) {
     try {
       await updateCoach(coachId, {
         name: name.trim(),
+        contact_email: contactEmail.trim() || null,
         phone: phone.trim() || null,
         birth_date: birthDate,
         education_level: educationLevel,
@@ -192,10 +195,20 @@ export default function CoachFormScreen({ route, navigation }: Props) {
           />
         </Field>
 
-        <Field label="E-posta">
-          <View style={[styles.input, styles.inputDisabled]}>
-            <Text style={{ color: colors.muted }}>{coach?.email ?? "—"}</Text>
-          </View>
+        {/* coach.email GİRİŞ kimliği (tel.../usr...@xnetic.local olabilir),
+            kullanıcıya hiç gösterilmemeli — burada gösterilen ve düzenlenen
+            contact_email, kişinin GERÇEK e-postası (opsiyonel). */}
+        <Field label="E-posta (opsiyonel)">
+          <TextInput
+            onFocus={handleFocus}
+            style={styles.input}
+            value={contactEmail}
+            onChangeText={setContactEmail}
+            placeholder="ornek@eposta.com"
+            placeholderTextColor={colors.muted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
         </Field>
 
         <Field label="Telefon">
