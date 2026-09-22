@@ -238,7 +238,11 @@ export default function CoachBranchScreen({ route }: Props) {
         )}
       </View>
 
-      {branches.length > 1 && (
+      {/* Eskiden "> 1" idi: tek branşlı kulüplerde bölüm hiç çizilmiyor ve
+          kullanıcı koordinatör atama yerini bulamıyordu (canlıda yaşandı —
+          web panelindeki aynı hatayla birlikte düzeltildi). Tek branşta da
+          koordinatörlük anlamlı: o branşın TÜM sporcularına erişim veriyor. */}
+      {branches.length > 0 && (
         <View style={styles.coordinatorBox}>
           <Text style={styles.levelTitle}>Branş Koordinatörlüğü</Text>
           <Text style={styles.hint}>
