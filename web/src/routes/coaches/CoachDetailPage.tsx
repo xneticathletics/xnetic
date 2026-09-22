@@ -353,7 +353,11 @@ export default function CoachDetailPage() {
             )}
           </div>
 
-          {allBranches.length > 1 && (
+          {/* Eskiden "> 1" idi: tek branşlı kulüplerde bölüm hiç çizilmiyor
+              ve kullanıcı koordinatör atama yerini bulamıyordu (canlıda
+              yaşandı). Tek branşta da koordinatörlük anlamlı — o branşın
+              TÜM sporcularına erişim veriyor, düz antrenörden farklı. */}
+          {allBranches.length > 0 && (
             <>
               <h2 className="mb-3 mt-6 text-sm font-bold text-ink">Branş Koordinatörlüğü</h2>
               <div className="rounded-xl border border-line bg-surface p-4">

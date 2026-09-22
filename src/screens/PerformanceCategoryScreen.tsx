@@ -87,9 +87,12 @@ export default function PerformanceCategoryScreen({ route, navigation }: Props) 
     equipment: t.equipment,
     testId: t.id,
     sourceLabel: role !== "super_admin" ? undefined : t.club_id === null ? "🌐 Global (Platform)" : `🏢 ${t.clubs?.name ?? "Bir kulüp"}`,
-    // Var olan (global) testleri her antrenör/kulüp admini düzenleyebilir —
-    // sadece YENİ global test eklemek Süper Admin'e özel.
-    canEdit: t.club_id === null ? role === "coach" || role === "club_admin" || role === "super_admin" : t.club_id === clubId,
+    // Düzenleme yetkisi silme ile AYNI — ve RLS ile birebir uyumlu
+    // (performance_test_catalog_update: kulüp testi için is_admin_tier()
+    // ya da is_branch_coordinator(), global test için süper admin).
+    // Eskiden düz antrenöre ve hatta her role düzenle düğmesi gösteriliyordu;
+    // basınca RLS reddediyor, kullanıcı sebebini anlamıyordu.
+    canEdit: t.club_id === null ? role === "super_admin" : t.club_id === clubId && (role === "club_admin" || isBranchCoordinator),
     // Silme, düzenlemeden daha kısıtlı: global testi SADECE Süper Admin
     // silebilir (RLS de bunu zaten şart koşuyor); kulübe özel testi admin
     // veya branş koordinatörü silebilir.
