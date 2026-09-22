@@ -219,7 +219,7 @@ async function notifyScheduleUpdated(groupIds: string[]): Promise<void> {
   try {
     if (groupIds.length === 0) return;
     const [groupsResult, assistantResult, athletesResult] = await Promise.all([
-      supabase.from("groups").select("head_coach_id").in("id", groupIds),
+      supabase.from("groups").select("head_coach_id, branch").in("id", groupIds),
       supabase.from("group_coaches").select("coach_id").in("group_id", groupIds),
       supabase.from("athletes").select("parent_user_id, athlete_user_id").in("group_id", groupIds).eq("status", "active"),
     ]);
@@ -230,6 +230,21 @@ async function notifyScheduleUpdated(groupIds: string[]): Promise<void> {
       if (a.parent_user_id) recipients.add(a.parent_user_id);
       if (a.athlete_user_id) recipients.add(a.athlete_user_id);
     });
+
+    // Etkilenen gruplar birden fazla branşa yayılabilir (toplu üretim tüm
+    // aktif şablonlar için tek seferde çalışır) — tek tek antrenman
+    // eklemedeki notifySessionCreated ile aynı şekilde HER branşın
+    // koordinatörü de eklensin diye. Eskiden bu toplu bildirimde koordinatör
+    // hiç yoktu, sadece tekil antrenmanda vardı.
+    const branches = Array.from(new Set((groupsResult.data ?? []).map((g) => g.branch).filter(Boolean)));
+    if (branches.length > 0) {
+      const { data: branchRows } = await supabase
+        .from("branches")
+        .select("coordinator_user_id")
+        .in("name", branches);
+      (branchRows ?? []).forEach((b) => { if (b.coordinator_user_id) recipients.add(b.coordinator_user_id); });
+    }
+
     if (recipients.size === 0) return;
 
     const title = "📅 Haftalık Program Güncellendi";
