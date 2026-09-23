@@ -11,6 +11,7 @@ import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import SupportScreen from "../screens/SupportScreen";
 import BadgesScreen from "../screens/BadgesScreen";
 import BadgeTierSettingsScreen from "../screens/BadgeTierSettingsScreen";
+import BadgeHoldersScreen from "../screens/BadgeHoldersScreen";
 import ContentReportsScreen from "../screens/ContentReportsScreen";
 import ClubSettingsStack from "./ClubSettingsStack";
 
@@ -24,6 +25,7 @@ export type ProfileStackParamList = {
   Support: undefined;
   Badges: undefined;
   BadgeTierSettings: undefined;
+  BadgeHolders: undefined;
   ContentReports: undefined;
   ClubSettings: undefined;
 };
@@ -50,6 +52,7 @@ export default function ProfileStack({ role }: { role: UserRole }) {
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Yardım / Destek" }} />
       <Stack.Screen name="Badges" component={BadgesScreen} options={{ title: "Rozetlerim" }} />
       <Stack.Screen name="BadgeTierSettings" component={BadgeTierSettingsScreen} options={{ title: "Rozet Ayarları" }} />
+      <Stack.Screen name="BadgeHolders" component={BadgeHoldersScreen} options={{ title: "Rozet Sahipleri" }} />
       <Stack.Screen name="ContentReports" component={ContentReportsScreen} options={{ title: "Şikayetler" }} />
       {role === "club_admin" && (
         <Stack.Screen name="ClubSettings" component={ClubSettingsStack} options={{ headerShown: false }} />

@@ -87,7 +87,11 @@ export function getNotificationTarget(
       const athleteId = payload?.athleteId as string | undefined;
       const athleteName = payload?.athleteName as string | undefined;
       if (programId && athleteId) {
-        return { tab: "Ana Menü", screen: "FitnessProgramDetail", params: { programId, athleteId, athleteName: athleteName ?? "" } };
+        // Bireysel program AYRI bir tabloda (individual_fitness_programs) ve
+        // ayrı bir detay ekranında — payload'daki individual bayrağı olmadan
+        // grup programı ekranına gidip boş/hatalı açılırdı.
+        const screen = payload?.individual === true ? "IndividualFitnessProgramDetail" : "FitnessProgramDetail";
+        return { tab: "Ana Menü", screen, params: { programId, athleteId, athleteName: athleteName ?? "" } };
       }
       return { tab: "Ana Menü", screen: "MyAthleteList" };
     }

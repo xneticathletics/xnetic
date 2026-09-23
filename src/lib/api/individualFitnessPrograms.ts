@@ -1,4 +1,6 @@
 import { supabase } from "../supabase";
+import { sendNotification } from "./notifications";
+import { getCurrentAppUserId } from "./currentUser";
 
 export type IndividualFitnessProgram = {
   id: string;
@@ -82,7 +84,46 @@ export async function createIndividualProgram(input: {
   const { error: itemsError } = await supabase.from("individual_fitness_program_items").insert(rows);
   if (itemsError) throw itemsError;
 
+  await notifyIndividualProgramCreated(input.athlete_id, program.id, input.name, input.items).catch(() => {});
   return program;
+}
+
+// Antrenör/yönetici bir sporcuya bireysel program yazdığında sporcunun
+// kendi hesabına ve velisine bildirim gider (grup programındaki
+// notifyProgramPublished ile aynı desen). Sporcu programı KENDİSİ
+// yazdıysa (Bireysel Programım ekranı) kendine bildirim gönderilmez.
+async function notifyIndividualProgramCreated(
+  athleteId: string,
+  programId: string,
+  programName: string,
+  items: IndividualFitnessProgramItemInput[]
+) {
+  const [{ data: athlete }, myUserId] = await Promise.all([
+    supabase.from("athletes").select("full_name, parent_user_id, athlete_user_id").eq("id", athleteId).maybeSingle(),
+    getCurrentAppUserId(),
+  ]);
+  if (!athlete) return;
+
+  const recipients = new Set<string>();
+  if (athlete.athlete_user_id) recipients.add(athlete.athlete_user_id);
+  if (athlete.parent_user_id) recipients.add(athlete.parent_user_id);
+  if (myUserId) recipients.delete(myUserId);
+  if (recipients.size === 0) return;
+
+  const summary = items.map((i) => `${i.exercise_name} (${i.sets}x${i.reps})`).join(", ");
+  const title = "Sana Özel Fitness Programı";
+  const body = `"${programName}" bireysel programın oluşturuldu: ${summary}`;
+
+  await Promise.all(
+    Array.from(recipients).map((id) =>
+      sendNotification(id, title, body, "fitness_program", {
+        programId,
+        athleteId,
+        athleteName: athlete.full_name,
+        individual: true,
+      }).catch(() => {})
+    )
+  );
 }
 
 export async function deleteIndividualProgram(id: string) {

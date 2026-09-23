@@ -241,6 +241,15 @@ export default function ProfileScreen({
               <Text style={styles.settingsSub}>Eşik sayılarını düzenle</Text>
             </TouchableOpacity>
           )}
+          {(role === "club_admin" || isBranchCoordinator || role === "coach") && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("BadgeHolders")}>
+              <View style={[styles.settingsIconBadge, { backgroundColor: colors.yellowSoft }]}>
+                <Text style={styles.settingsIcon}>🏅</Text>
+              </View>
+              <Text style={styles.settingsTitle}>Rozet Sahipleri</Text>
+              <Text style={styles.settingsSub}>Kim hangi rozeti kazandı</Text>
+            </TouchableOpacity>
+          )}
           {(role === "club_admin" || isBranchCoordinator) && (
             <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ContentReports")}>
               <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>

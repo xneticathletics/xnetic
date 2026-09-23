@@ -171,6 +171,58 @@ export async function listMyBadges(): Promise<Badge[]> {
   return (data as Badge[]) ?? [];
 }
 
+// "Rozet Sahipleri" ekranı için — görebildiğim TÜM kulüp rozetlerini
+// sahibiyle birlikte döner. Kimin neyi göreceğini RLS belirliyor
+// (badges_select): kulüp yöneticisi kulübün tamamını, koordinatör kendi
+// branşını, antrenör kendi gruplarını görür — burada ek bir filtre yok.
+export type BadgeHolder = {
+  key: string;            // athlete:<id> | user:<id>
+  name: string;
+  kind: "athlete" | "user";
+  photoUrl: string | null;
+  badges: Badge[];
+};
+
+export async function listClubBadgeHolders(): Promise<BadgeHolder[]> {
+  const { data, error } = await supabase
+    .from("badges")
+    // users bağı AÇIKÇA belirtilmeli: badges'tan users'a İKİ ayrı foreign
+    // key var (user_id ve awarded_by) — kısa "users(...)" yazımı PostgREST'te
+    // "more than one relationship found" hatası veriyor (bkz. daha önce
+    // fitness_exercises/clubs embed'inde yaşanan aynı belirsizlik).
+    .select("*, athletes(id, full_name, photo_url), users!badges_user_id_fkey(id, name, photo_url)")
+    .order("earned_at", { ascending: false });
+  if (error) throw error;
+
+  const byKey = new Map<string, BadgeHolder>();
+  ((data as any[]) ?? []).forEach((row) => {
+    const isAthlete = !!row.athlete_id;
+    const person = isAthlete ? row.athletes : row.users;
+    if (!person) return;
+    const key = `${isAthlete ? "athlete" : "user"}:${person.id}`;
+    let holder = byKey.get(key);
+    if (!holder) {
+      holder = {
+        key,
+        name: isAthlete ? person.full_name : person.name,
+        kind: isAthlete ? "athlete" : "user",
+        photoUrl: person.photo_url ?? null,
+        badges: [],
+      };
+      byKey.set(key, holder);
+    }
+    // Embed'leri satırın kendisinden ayıklıyoruz — Badge tipi sadece
+    // tablonun kendi alanlarını taşımalı.
+    const { athletes: _a, users: _u, ...badge } = row;
+    holder.badges.push(badge as Badge);
+  });
+
+  // En çok rozeti olan üstte; eşitlikte isme göre.
+  return Array.from(byKey.values()).sort(
+    (a, b) => b.badges.length - a.badges.length || a.name.localeCompare(b.name, "tr")
+  );
+}
+
 // Sadece branş koordinatörü, kendi branşındaki bir sporcuya çağırabilir
 // (bkz. award_champion_badge RLS/kontrolü) — RPC hata fırlatırsa (yetkisiz
 // çağrı) olduğu gibi yukarı iletiliyor.
