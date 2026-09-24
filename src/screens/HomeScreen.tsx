@@ -168,8 +168,19 @@ function decorCircleStyle(color: string) {
 // hesapla (ör. rozeti veren koordinatör -> sporcu) girildiğinde eski
 // hesabın kontrol zamanı yüzünden yeni hesapta kontrol atlanıyor, kazanılan
 // rozetin konfetili karşılaması bir sonraki girişe kalıyordu.
+//
+// authUserId yerine session.access_token'a göre anahtarlanıyor: aynı
+// HESAPLA art arda test edilirken de (ör. rozeti verecek admin, önce test
+// amaçlı veli hesabına bakıyor → çıkış → rozeti veriyor → 3 dakika içinde
+// AYNI veli hesabına tekrar giriyor) canlıda yaşandı — authUserId
+// değişmediği için throttle yeni girişte de devam ediyor, yeni verilen
+// rozet raf'ta görünüyor ama kutlama o girişte hiç çıkmıyordu. Her gerçek
+// giriş (signOut + signIn) supabase-js'te YENİ bir access_token üretir,
+// bu yüzden "ilk giriş"te throttle'dan bağımsız olarak her zaman bir
+// kontrol çalışır; aynı oturum içinde sekmeler arası gezinirken hâlâ
+// throttle'lanır.
 const BADGE_CHECK_THROTTLE_MS = 3 * 60 * 1000;
-const lastBadgeCheckAtByUser = new Map<string, number>();
+const lastBadgeCheckAtBySession = new Map<string, number>();
 
 export default function HomeScreen({
   role,
@@ -266,21 +277,22 @@ export default function HomeScreen({
   // aynı). Dönen (henüz kutlanmamış) rozetler tam ekran popup kuyruğuna
   // alınır; her biri "Harika!" ile kapatılınca hem sunucuda "görüldü"
   // işaretlenir hem de rafa (myBadges) eklenir.
+  const badgeSessionKey = session?.access_token ?? null;
   useFocusEffect(
     useCallback(() => {
-      if (!showBadges || !authUserId) return;
-      const last = lastBadgeCheckAtByUser.get(authUserId) ?? 0;
+      if (!showBadges || !authUserId || !badgeSessionKey) return;
+      const last = lastBadgeCheckAtBySession.get(badgeSessionKey) ?? 0;
       if (Date.now() - last < BADGE_CHECK_THROTTLE_MS) return;
       // Zaman damgası sadece BAŞARILI kontrolden sonra yazılıyor ve sonuç
       // odaktan çıkılsa bile uygulanıyor — aksi halde istek dönmeden başka
       // ekrana geçilirse kutlama 3 dakika boyunca kayboluyordu.
       checkMyBadges()
         .then((rows) => {
-          lastBadgeCheckAtByUser.set(authUserId, Date.now());
+          lastBadgeCheckAtBySession.set(badgeSessionKey, Date.now());
           if (rows.length > 0) setPendingBadges(rows);
         })
         .catch(() => {});
-    }, [showBadges, authUserId])
+    }, [showBadges, authUserId, badgeSessionKey])
   );
 
   const handleDismissEarnedBadge = () => {
