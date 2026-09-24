@@ -13,11 +13,18 @@ export type ClubUser = {
 // (aktif) hesapları listeler. RLS zaten club_admin'i kendi kulübüyle
 // sınırlıyor (listParentUsers/listUnlinkedAthleteUsers'da olduğu gibi),
 // bu yüzden burada manuel club_id filtresine gerek yok.
+//
+// SÜPER ADMİN HARİÇ: users RLS'i kulüp yöneticisinin süper admin satırını
+// GÖRMESİNE bilerek izin veriyor (mesajlaşma/destek için gerekli, bkz.
+// messages.ts), ama süper admin kulübün bir hesabı değil — bu listede
+// çıkınca yanına "Şifreyi Sıfırla" düğmesi de geliyor ve platform
+// sahibinin telefonu her kulüp yöneticisine görünüyordu (2026-09-24).
 export async function listClubUsers(): Promise<ClubUser[]> {
   const { data, error } = await supabase
     .from("users")
     .select("id, name, role, phone")
     .eq("is_active", true)
+    .neq("role", "super_admin")
     .order("role")
     .order("name");
   if (error) throw error;

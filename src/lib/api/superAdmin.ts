@@ -185,6 +185,23 @@ export async function notifyAllClubAdmins(title: string, body: string, attachmen
   return admins.length;
 }
 
+export type ClubAdmin = { id: string; name: string; phone: string | null };
+
+// Süper Admin → Kulüpler ekranında bir kulübün yöneticilerini listelemek
+// için (şifre sıfırlama talebi geldiğinde bunu mobilden de karşılayabilsin
+// diye — web panelindeki getClubAdmins ile birebir aynı).
+export async function getClubAdmins(clubId: string): Promise<ClubAdmin[]> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, phone")
+    .eq("club_id", clubId)
+    .eq("role", "club_admin")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data as ClubAdmin[]) ?? [];
+}
+
 // Süper Admin duyurusuna eklenen dosya — club_id'si olmadığı için kulüp-özel
 // announcement-attachments yoluna (<clubId>/...) yazamıyor, bu yüzden
 // "broadcast/" önekiyle ayrı bir yola yazıyor (bkz. migration

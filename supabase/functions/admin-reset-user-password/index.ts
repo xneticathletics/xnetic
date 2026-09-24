@@ -77,6 +77,16 @@ Deno.serve(async (req) => {
       throw new Error("Bu kullanıcı üzerinde yetkiniz yok.");
     }
 
+    // Kulüp yöneticisi HİÇBİR koşulda süper admin şifresi sıfırlayamaz.
+    // Bugüne kadar bunu engelleyen tek şey süper admin satırının
+    // club_id'sinin NULL olmasıydı (yukarıdaki kulüp karşılaştırması) —
+    // yani süper admin bir şekilde bir kulübe bağlı olsaydı, herhangi bir
+    // kulüp yöneticisi platformun tamamını ele geçirebilirdi. Kural artık
+    // tesadüfe değil, rolün kendisine bağlı (2026-09-24).
+    if (callerRow.role === "club_admin" && targetRow.role === "super_admin") {
+      throw new Error("Bu kullanıcı üzerinde yetkiniz yok.");
+    }
+
     // super_admin'in tek ulaşabildiği kişi kategorisi kulüp adminleridir —
     // gerçek bir kulübün veli/sporcu/antrenör hesabına asla erişimi olmamalı
     // (bkz. superAdmin.ts'deki aynı prensip). Bu kısıtlama olmadan super_admin

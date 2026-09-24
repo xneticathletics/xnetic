@@ -145,9 +145,10 @@ export function getNotificationTarget(
     case "password_reset_request":
       // Şifresini unutan kişinin talebi (bkz. request-password-reset-notice).
       // Yönetici, Kullanıcılar ekranında bekleyen talepleri üstte görüp
-      // "Şifreyi Sıfırla" ile geçici şifre üretiyor. Süper admin (kulüp
-      // yöneticisinin kendi talebi ona gider) bu işlemi web panelinden
-      // yapıyor — mobilde karşılığı olan bir ekran yok, o yüzden null.
+      // "Şifreyi Sıfırla" ile geçici şifre üretiyor. Kulüp yöneticisinin
+      // KENDİ talebi süper admine gidiyor; o da Kulüpler ekranından ilgili
+      // kulübü açıp yöneticinin şifresini sıfırlıyor.
+      if (role === "super_admin") return { tab: "Ana Menü", screen: "SuperAdminClubs" };
       return role === "club_admin"
         ? { tab: "Profil", screen: "ClubSettings", params: { screen: "UsersList" } }
         : null;
