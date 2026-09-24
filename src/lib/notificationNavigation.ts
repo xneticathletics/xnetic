@@ -135,8 +135,13 @@ export function getNotificationTarget(
     case "social_post_approved":
       return { tab: "Sosyal", screen: "SocialFeed" };
     case "shop_order":
-      // Sadece club_admin alıyor (bkz. src/lib/api/shop.ts notifyNewOrder).
-      return role === "club_admin" ? { tab: "Mağaza", screen: "ShopOrders" } : null;
+      // Artık sunucu tarafında (create_shop_order / update_shop_order_status
+      // RPC'leri) gönderiliyor: yeni sipariş yöneticiye + ilgili branş
+      // koordinatörüne, onay/teslim bilgisi siparişi veren veliye gider.
+      // Yönetici ve koordinatör (antrenör) sipariş yönetimine, veli kendi
+      // siparişlerine yönlenir.
+      if (role === "parent") return { tab: "Mağaza", screen: "MyShopOrders" };
+      return isPlanner ? { tab: "Mağaza", screen: "ShopOrders" } : null;
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;
       return announcementId
