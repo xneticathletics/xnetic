@@ -231,3 +231,25 @@ export async function awardChampionBadge(athleteId: string): Promise<Badge> {
   if (error) throw error;
   return data as Badge;
 }
+
+// Yanlış sporcuya verilen şampiyon rozetini geri alır — vermeyle BİREBİR
+// aynı yetki kuralları (kulüp yöneticisi kendi kulübünde, koordinatör
+// yalnızca kendi branşında). Yalnızca ŞAMPİYON rozetini siler; otomatik
+// kazanılan rozetler bu uçtan kaldırılamaz.
+export async function revokeChampionBadge(athleteId: string): Promise<void> {
+  const { error } = await supabase.rpc("revoke_champion_badge", { p_athlete_id: athleteId });
+  if (error) throw error;
+}
+
+// Seçilen sporcunun şu an şampiyon rozeti var mı — ekranın "Ver" mi yoksa
+// "Geri Al" mı göstereceğini belirlemek için.
+export async function getChampionBadge(athleteId: string): Promise<Badge | null> {
+  const { data, error } = await supabase
+    .from("badges")
+    .select("*")
+    .eq("athlete_id", athleteId)
+    .eq("badge_type", "sampiyon")
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Badge) ?? null;
+}

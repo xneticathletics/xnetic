@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { DEFAULT_BADGE_TIERS, BADGE_CATALOG, awardChampionBadge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
+import { DEFAULT_BADGE_TIERS, BADGE_CATALOG, awardChampionBadge, revokeChampionBadge, getChampionBadge, type AutoBadgeType, type TierThresholds } from "../lib/api/badges";
 import {
   AUTO_BADGE_TYPES, BADGE_TYPE_LABELS, BADGE_TYPE_UNITS,
   listBadgeTierSettings, saveBadgeTierSetting, resetBadgeTierSetting,
@@ -21,6 +21,18 @@ export default function BadgeTierSettingsScreen() {
   const [championAthlete, setChampionAthlete] = useState<Athlete | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [awardingChampion, setAwardingChampion] = useState(false);
+  // Seçilen sporcunun ŞU AN şampiyon rozeti var mı — ekran buna göre
+  // "Rozeti Ver" ya da "Rozeti Geri Al" gösteriyor. null = henüz bakılmadı.
+  const [hasChampion, setHasChampion] = useState<boolean | null>(null);
+
+  const selectChampionAthlete = (a: Athlete | null) => {
+    setChampionAthlete(a);
+    setHasChampion(null);
+    if (!a) return;
+    getChampionBadge(a.id)
+      .then((b) => setHasChampion(!!b))
+      .catch(() => setHasChampion(null));
+  };
 
   const load = useCallback(() => {
     listBadgeTierSettings().then((rows) => {
@@ -99,9 +111,36 @@ export default function BadgeTierSettingsScreen() {
             try {
               await awardChampionBadge(championAthlete.id);
               Alert.alert("Verildi", "Şampiyon rozeti verildi — bir sonraki girişinde kutlanacak.", [{ text: "Tamam" }]);
-              setChampionAthlete(null);
+              selectChampionAthlete(null);
             } catch (e: any) {
               Alert.alert("Hata", e.message ?? "Rozet verilemedi", [{ text: "Tamam" }]);
+            } finally {
+              setAwardingChampion(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRevokeChampion = () => {
+    if (!championAthlete) return;
+    Alert.alert(
+      "Şampiyon Rozetini Geri Al",
+      `${championAthlete.full_name} adlı sporcunun Şampiyon rozeti kaldırılacak. Emin misin?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Geri Al",
+          style: "destructive",
+          onPress: async () => {
+            setAwardingChampion(true);
+            try {
+              await revokeChampionBadge(championAthlete.id);
+              Alert.alert("Geri alındı", "Şampiyon rozeti kaldırıldı.", [{ text: "Tamam" }]);
+              selectChampionAthlete(null);
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Rozet geri alınamadı", [{ text: "Tamam" }]);
             } finally {
               setAwardingChampion(false);
             }
@@ -125,8 +164,8 @@ export default function BadgeTierSettingsScreen() {
         <View style={styles.cardHeader}>
           <Text style={styles.cardIcon}>{BADGE_CATALOG.sampiyon.icon}</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.cardTitle}>Şampiyon Rozeti Ver</Text>
-            <Text style={styles.cardSub}>Elle verilir, bir sporcu seç</Text>
+            <Text style={styles.cardTitle}>Şampiyon Rozeti</Text>
+            <Text style={styles.cardSub}>Elle verilir; yanlış verilirse geri alınabilir</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.athletePickButton} onPress={() => setPickerVisible(true)}>
@@ -135,16 +174,35 @@ export default function BadgeTierSettingsScreen() {
           </Text>
         </TouchableOpacity>
         {championAthlete && (
-          <View style={styles.actionRow}>
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity onPress={handleAwardChampion} disabled={awardingChampion} style={styles.saveButton}>
-              {awardingChampion ? (
-                <ActivityIndicator color={colors.bg} size="small" />
+          <>
+            {hasChampion !== null && (
+              <Text style={styles.championState}>
+                {hasChampion
+                  ? "Bu sporcunun şu an Şampiyon rozeti var."
+                  : "Bu sporcunun Şampiyon rozeti yok."}
+              </Text>
+            )}
+            <View style={styles.actionRow}>
+              <View style={{ flex: 1 }} />
+              {hasChampion ? (
+                <TouchableOpacity onPress={handleRevokeChampion} disabled={awardingChampion} style={styles.revokeButton}>
+                  {awardingChampion ? (
+                    <ActivityIndicator color={colors.coral} size="small" />
+                  ) : (
+                    <Text style={styles.revokeButtonText}>🗑 Rozeti Geri Al</Text>
+                  )}
+                </TouchableOpacity>
               ) : (
-                <Text style={styles.saveButtonText}>🏆 Rozeti Ver</Text>
+                <TouchableOpacity onPress={handleAwardChampion} disabled={awardingChampion} style={styles.saveButton}>
+                  {awardingChampion ? (
+                    <ActivityIndicator color={colors.bg} size="small" />
+                  ) : (
+                    <Text style={styles.saveButtonText}>🏆 Rozeti Ver</Text>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          </View>
+            </View>
+          </>
         )}
       </View>
 
@@ -192,7 +250,7 @@ export default function BadgeTierSettingsScreen() {
       <AthletePickerModal
         visible={pickerVisible}
         selectedId={championAthlete?.id ?? null}
-        onSelect={setChampionAthlete}
+        onSelect={selectChampionAthlete}
         onClose={() => setPickerVisible(false)}
       />
     </ScrollView>
@@ -236,4 +294,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: spacing.lg, minWidth: 80, alignItems: "center",
   },
   saveButtonText: { color: colors.bg, fontWeight: "800", fontSize: 13 },
+  revokeButton: {
+    borderWidth: 1, borderColor: colors.coral, borderRadius: radius.md,
+    paddingVertical: 8, paddingHorizontal: spacing.lg, minWidth: 80, alignItems: "center",
+  },
+  revokeButtonText: { color: colors.coral, fontWeight: "800", fontSize: 13 },
+  championState: { color: colors.muted, fontSize: 12, marginTop: spacing.sm },
 });
