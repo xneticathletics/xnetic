@@ -430,7 +430,10 @@ export default function HomeScreen({
         />
         <View style={styles.headerRight}>
           <View style={styles.topRow}>
-            <View style={{ flexShrink: 1 }}>
+            {/* flex: 1 — metin sütunu kalan genişliğin TAMAMINI alsın.
+                flexShrink ile sütun içeriği kadar daralıyor, artan yer
+                zil ile arasında boşluk olarak kalıyordu. */}
+            <View style={{ flex: 1 }}>
               <Text style={styles.greeting}>
                 Hoş geldin{userName ? <>, <Text style={styles.greetingAccent}>{userName}</Text></> : null}
               </Text>
@@ -585,7 +588,11 @@ const styles = StyleSheet.create({
   // kutular yukarıda kalıyor, "Hoş geldin, Admin" iki satıra sarınca aşağı
   // iniyordu. Yani hizalama kullanıcı adının uzunluğuna göre değişiyordu.
   headerRow: { flexDirection: "row", alignItems: "stretch", gap: spacing.md, marginBottom: spacing.lg },
-  heroLogo: { width: 128, height: 128, borderRadius: radius.md, backgroundColor: colors.bg },
+  // 128 idi: logo o kadar genişti ki sağdaki metin sütununa dar bir alan
+  // kalıyor, "Hoş geldin, <isim>" ve kulüp adı gereksiz yere ikişer satıra
+  // sarıyordu (kullanıcı cihazında görüldü, 2026-09-24). 100'e inince her
+  // ikisi de normal uzunluklarda tek satıra sığıyor; logo hâlâ belirgin.
+  heroLogo: { width: 100, height: 100, borderRadius: radius.md, backgroundColor: colors.bg },
   heroLogoSmall: { width: 84, height: 84 },
   // paddingTop: yazının üst boşluğu (font leading) yüzünden "Hoş geldin"
   // logonun üst kenarından biraz yukarıda duruyor gibi görünüyordu;
@@ -600,7 +607,10 @@ const styles = StyleSheet.create({
   // hizada sabit kalıyor.
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: spacing.md },
   clubNameText: { color: colors.muted, fontSize: 16, fontWeight: "600", marginTop: 3 },
-  greeting: { color: colors.ink, fontSize: 23, fontWeight: "700", letterSpacing: 0.2 },
+  // 23 idi — logo küçülünce kazanılan yerle birlikte 22'de "Hoş geldin,
+  // <isim>" uzun isimlerde de tek satırda kalıyor (kulüp adının 16'lık
+  // boyutuna dokunulmadı, kullanıcı onu büyütmüştü).
+  greeting: { color: colors.ink, fontSize: 22, fontWeight: "700", letterSpacing: 0.2 },
   greetingAccent: { color: colors.yellow },
   sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
   sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
