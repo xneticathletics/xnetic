@@ -2,9 +2,9 @@ const { e } = require("./helpers");
 
 // ===================== BAŞLARKEN VE HESAP =====================
 e("giris-yapma", "baslarken", "ACPSKX", "Uygulamaya giriş yapma",
-  ["nasıl giriş yaparım", "giriş yapamıyorum", "hesabıma nasıl girerim", "kullanıcı adı ile giriş", "telefon ile giriş", "e-posta ile giriş", "giriş ekranı"],
+  ["nasıl giriş yaparım", "giriş yapamıyorum", "hesabıma nasıl girerim", "kullanıcı adı ile giriş", "telefon ile giriş", "giriş ekranı"],
   `1. Uygulamayı aç; giriş ekranı gelir.
-2. "E-posta, telefon veya kullanıcı adı" alanına sana verilen bilgiyi yaz.
+2. "Telefon numarası veya kullanıcı adı" alanına sana verilen bilgiyi yaz.
 3. Şifreni gir ve "Giriş Yap"a dokun.
 
 Hesabı kulüp yöneticin açar; hesabın yoksa yöneticine başvur. Uygulamadan kendi kendine kayıt olunmaz. Yeni bir kulüp kaydı için xnetic.net adresini ziyaret et.`);
@@ -18,10 +18,10 @@ Yeni bir kulüp kurmak istiyorsan xnetic.net adresinden "Kulüp Oluştur" adım�
 e("sifremi-unuttum", "baslarken", "ACPSKX", "Şifremi unuttum",
   ["şifremi unuttum", "şifremi hatırlamıyorum", "şifre sıfırlama", "giriş şifremi kaybettim", "parolamı unuttum", "şifre yenileme"],
   `1. Giriş ekranında "Şifremi Unuttum"a dokun.
-2. Hesabına kayıtlı e-postanı, telefonunu ya da kullanıcı adını yaz ve gönder.
+2. Kullanıcı adını ya da telefon numaranı yaz ve gönder. İkisinden biri kayıtlı bilgilerinle eşleşmesi yeter — giriş yaparken hangisini kullandığının önemi yok (kullanıcı adıyla giriyorsan da telefonunu yazabilirsin).
+3. Talebin kulüp yöneticine bildirim olarak gider; yöneticin Kullanıcılar ekranından yeni bir geçici şifre üretip sana iletir.
 
-• E-posta yazdıysan: adresine bir sıfırlama linki gelir. Linke dokununca uygulama açılır ve yeni şifreni belirlersin.
-• Telefon ya da kullanıcı adı yazdıysan: kulüp yöneticine bildirim gider; yöneticin seninle iletişime geçip yeni bir geçici şifre verir.`);
+Geçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor.`);
 
 e("gecici-sifre", "baslarken", "ACPSKX", "Geçici şifreyle ilk giriş",
   ["geçici şifre", "ilk girişte şifre değiştir", "şifre belirle ve devam et", "yeni şifre belirlemem isteniyor", "hoş geldin şifre"],

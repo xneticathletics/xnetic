@@ -142,6 +142,15 @@ export function getNotificationTarget(
       // siparişlerine yönlenir.
       if (role === "parent") return { tab: "Mağaza", screen: "MyShopOrders" };
       return isPlanner ? { tab: "Mağaza", screen: "ShopOrders" } : null;
+    case "password_reset_request":
+      // Şifresini unutan kişinin talebi (bkz. request-password-reset-notice).
+      // Yönetici, Kullanıcılar ekranında bekleyen talepleri üstte görüp
+      // "Şifreyi Sıfırla" ile geçici şifre üretiyor. Süper admin (kulüp
+      // yöneticisinin kendi talebi ona gider) bu işlemi web panelinden
+      // yapıyor — mobilde karşılığı olan bir ekran yok, o yüzden null.
+      return role === "club_admin"
+        ? { tab: "Profil", screen: "ClubSettings", params: { screen: "UsersList" } }
+        : null;
     case "announcement": {
       const announcementId = payload?.announcementId as string | undefined;
       return announcementId

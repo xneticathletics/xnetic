@@ -1,11 +1,15 @@
 // supabase/functions/request-password-reset-notice/index.ts
 //
-// Telefon/kullanıcı adıyla açılmış hesapların (gerçek e-postası olmadığı
-// için Supabase'in kendi resetPasswordForEmail'i işe yaramayan) "Şifremi
-// Unuttum" akışı. Bu fonksiyon GİRİŞ YAPMAMIŞ biri tarafından çağrılır —
-// bu yüzden servis-rol ile RLS'yi bypass ediyoruz, ve hesap var mı yok mu
-// bilgisini asla dışarı sızdırmıyoruz: eşleşme bulunsa da bulunmasa da
-// HER ZAMAN aynı genel başarı yanıtını dönüyoruz.
+// "Şifremi Unuttum" ekranının TEK akışı: giriş yapmamış biri kullanıcı
+// adını ya da telefon numarasını yazar, kulüp yöneticisine (yönetici kendi
+// şifresini unuttuysa süper admine) bir "Şifre Sıfırlama Talebi" bildirimi
+// gider, yönetici Kullanıcılar ekranından geçici şifre üretip iletir.
+// E-posta linkiyle sıfırlama akışı uygulamadan kaldırıldı.
+//
+// Eşleştirme + bildirim gönderme mantığı public.request_password_reset_notice()
+// SQL fonksiyonunda (bkz. 20260924030000 migration dosyası); burada yalnızca
+// herkese açık uç noktanın hız sınırı ve hesap numaralandırmasına karşı
+// HER ZAMAN aynı genel başarı yanıtı var.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -13,34 +17,6 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Bu fonksiyonun birebir aynısı src/lib/loginIdentifier.ts ve
-// supabase/functions/invite-user/index.ts içinde de duruyor (ayrı Deno
-// ortamları, import edilemiyor) — kasıtlı kopya, biri değişirse hepsi değişmeli.
-const FAKE_LOGIN_DOMAIN = "xnetic.local";
-
-function extractPhoneDigits(input: string): string {
-  let digits = input.replace(/\D/g, "");
-  // "+90"/"90" ülke koduyla girilmiş numaraları yerel "0..." formatına
-  // çevir — src/lib/phoneFormat.ts'teki aynı düzeltmeyle birebir aynı.
-  if (digits.length === 12 && digits.startsWith("90")) {
-    digits = `0${digits.slice(2)}`;
-  } else if (digits.length > 0 && !digits.startsWith("0")) {
-    digits = `0${digits}`;
-  }
-  return digits.slice(0, 11);
-}
-
-// Push gönderimi best-effort: hatası ana akışı bozmamalı, bu yüzden
-// await edilmeden fire-and-forget çağrılıyor.
-function triggerPushNotification(supabaseUrl: string, notificationId: string) {
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${anonKey}`, apikey: anonKey },
-    body: JSON.stringify({ notification_id: notificationId }),
-  }).catch(() => {});
-}
 
 // Kimlik doğrulaması gerektirmeyen bu uç nokta herkese açık — bot/otomatik
 // tekrarlı çağrılarla kulüp admin(ler)ine sahte "şifre sıfırlama talebi"
@@ -64,21 +40,6 @@ async function checkRateLimit(
   if ((count ?? 0) >= maxAttempts) return false;
   await admin.from("edge_rate_limits").insert({ bucket, identifier });
   return true;
-}
-
-function resolveLoginEmail(identifier: string): string {
-  const trimmed = identifier.trim();
-  if (!trimmed) throw new Error("Giriş bilgisi boş olamaz.");
-  if (trimmed.includes("@")) return trimmed.toLowerCase();
-
-  const rawDigitCount = trimmed.replace(/\D/g, "").length;
-  if (rawDigitCount >= 9) {
-    return `tel${extractPhoneDigits(trimmed)}@${FAKE_LOGIN_DOMAIN}`;
-  }
-
-  const username = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (!username) throw new Error("Geçerli bir telefon numarası veya kullanıcı adı gir.");
-  return `usr${username}@${FAKE_LOGIN_DOMAIN}`;
 }
 
 Deno.serve(async (req) => {
@@ -113,40 +74,9 @@ Deno.serve(async (req) => {
     const identifier = String(body?.identifier ?? "").trim();
     if (!identifier) return genericOk();
 
-    let loginEmail: string;
-    try {
-      loginEmail = resolveLoginEmail(identifier);
-    } catch {
-      return genericOk();
-    }
-
-    const { data: matchedUser } = await admin
-      .from("users")
-      .select("id, name, club_id")
-      .eq("email", loginEmail)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (matchedUser?.club_id) {
-      const { data: admins } = await admin
-        .from("users")
-        .select("id")
-        .eq("club_id", matchedUser.club_id)
-        .eq("role", "club_admin")
-        .eq("is_active", true);
-
-      if (admins && admins.length > 0) {
-        const rows = admins.map((a: { id: string }) => ({
-          recipient_user_id: a.id,
-          title: "Şifre Sıfırlama Talebi",
-          body: `${matchedUser.name} (${identifier}) şifresini sıfırlamanı istiyor. Kullanıcılar ekranından yeni bir geçici şifre üretebilirsin.`,
-          event_type: "password_reset_request",
-          payload: { requesterId: matchedUser.id, requesterName: matchedUser.name, identifier },
-        }));
-        const { data: insertedRows } = await admin.from("notifications").insert(rows).select("id");
-        insertedRows?.forEach((row: { id: string }) => triggerPushNotification(SUPABASE_URL, row.id));
-      }
-    }
+    // Eşleştirme (kullanıcı adı VEYA telefon) ve bildirim gönderimi tek bir
+    // SECURITY DEFINER SQL fonksiyonunda; sonucu bilerek okumuyoruz.
+    await admin.rpc("request_password_reset_notice", { p_identifier: identifier });
 
     return genericOk();
   } catch {

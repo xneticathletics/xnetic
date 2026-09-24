@@ -146,11 +146,10 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "hesabıma nasıl girerim",
       "kullanıcı adı ile giriş",
       "telefon ile giriş",
-      "e-posta ile giriş",
       "giriş ekranı",
       "Uygulamaya nasıl giriş yaparım?"
     ],
-    "answer": "1. Uygulamayı aç; giriş ekranı gelir.\n2. \"E-posta, telefon veya kullanıcı adı\" alanına sana verilen bilgiyi yaz.\n3. Şifreni gir ve \"Giriş Yap\"a dokun.\n\nHesabı kulüp yöneticin açar; hesabın yoksa yöneticine başvur. Uygulamadan kendi kendine kayıt olunmaz. Yeni bir kulüp kaydı için xnetic.net adresini ziyaret et."
+    "answer": "1. Uygulamayı aç; giriş ekranı gelir.\n2. \"Telefon numarası veya kullanıcı adı\" alanına sana verilen bilgiyi yaz.\n3. Şifreni gir ve \"Giriş Yap\"a dokun.\n\nHesabı kulüp yöneticin açar; hesabın yoksa yöneticine başvur. Uygulamadan kendi kendine kayıt olunmaz. Yeni bir kulüp kaydı için xnetic.net adresini ziyaret et."
   },
   {
     "id": "hesap-nasil-acilir",
@@ -181,7 +180,7 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "şifre yenileme",
       "Şifremi unuttum ne yapmalıyım?"
     ],
-    "answer": "1. Giriş ekranında \"Şifremi Unuttum\"a dokun.\n2. Hesabına kayıtlı e-postanı, telefonunu ya da kullanıcı adını yaz ve gönder.\n\n• E-posta yazdıysan: adresine bir sıfırlama linki gelir. Linke dokununca uygulama açılır ve yeni şifreni belirlersin.\n• Telefon ya da kullanıcı adı yazdıysan: kulüp yöneticine bildirim gider; yöneticin seninle iletişime geçip yeni bir geçici şifre verir."
+    "answer": "1. Giriş ekranında \"Şifremi Unuttum\"a dokun.\n2. Kullanıcı adını ya da telefon numaranı yaz ve gönder. İkisinden biri kayıtlı bilgilerinle eşleşmesi yeter — giriş yaparken hangisini kullandığının önemi yok (kullanıcı adıyla giriyorsan da telefonunu yazabilirsin).\n3. Talebin kulüp yöneticine bildirim olarak gider; yöneticin Kullanıcılar ekranından yeni bir geçici şifre üretip sana iletir.\n\nGeçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor."
   },
   {
     "id": "gecici-sifre",
@@ -2471,7 +2470,7 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "giriş yapamıyorum şifrem yanlış diyor",
       "şifre yanlış diyor"
     ],
-    "answer": "1. Kullanıcı adı/telefon/e-postayı ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).\n2. Hâlâ giremiyorsan giriş ekranında \"Şifremi Unuttum\"u kullan.\n3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç."
+    "answer": "1. Kullanıcı adını/telefonunu ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).\n2. Hâlâ giremiyorsan giriş ekranında \"Şifremi Unuttum\"u kullan.\n3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç."
   },
   {
     "id": "sikayet-engelle",

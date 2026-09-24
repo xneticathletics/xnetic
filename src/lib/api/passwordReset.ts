@@ -1,30 +1,14 @@
-import * as Linking from "expo-linking";
 import { supabase } from "../supabase";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 
-// "Şifremi Unuttum" ekranından çağrılır. Eskiden doğrudan
-// supabase.auth.resetPasswordForEmail() kullanıyordu — Supabase'in
-// test-amaçlı, ağır hız sınırlı ve kulübün kendi alan adından gelmeyen
-// varsayılan e-posta gönderimine bağımlıydı. Artık kendi edge function'ımız
-// (send-password-reset-email) linki üretip Resend ile xnetic.net'ten,
-// Türkçe/markalı bir e-postayla gönderiyor. Link yine DOĞRUDAN bu
-// uygulamayı açar (bir web sayfası barındırmıyoruz).
-export async function requestPasswordReset(email: string) {
-  const redirectTo = Linking.createURL("reset-password");
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-password-reset-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      apikey: SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify({ email, redirectTo }),
-  });
-  const json = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(json?.error || "Gönderilemedi");
-}
+// NOT: "Şifremi Unuttum" ekranının e-postayla sıfırlama linki gönderen
+// akışı KALDIRILDI (kullanıcı isteği) — tek yol artık aşağıdaki
+// requestPasswordResetNotice: talep yöneticiye bildirim olarak gider,
+// yönetici geçici şifre üretip kişiye iletir. Aşağıdaki kurtarma-oturumu
+// yardımcıları duruyor: daha önce gönderilmiş ya da Supabase panelinden
+// üretilen bir kurtarma linki uygulamada hâlâ çalışsın diye.
 
 // Sıfırlama linkindeki "#access_token=...&refresh_token=...&type=recovery"
 // parçasını ayrıştırır. URLSearchParams'a güvenmiyoruz (bazı React Native
@@ -57,9 +41,11 @@ export async function completePasswordReset(newPassword: string) {
   if (error) throw error;
 }
 
-// Telefon/kullanıcı adıyla açılmış hesaplar için Şifremi Unuttum
-// ekranından çağrılır — bu kişinin GİRİŞ YAPMAMIŞ olduğu bir çağrı,
-// oturum token'ı yok. Anon key'i Authorization Bearer olarak gönderiyoruz
+// Şifremi Unuttum ekranının TEK akışı — bu kişinin GİRİŞ YAPMAMIŞ olduğu
+// bir çağrı, oturum token'ı yok. Girilen bilgi kullanıcı adı ya da telefon
+// olabilir; hangisiyle giriş yaptığının önemi yok, ikisinden biri kayıtlı
+// hesapla eşleşiyorsa talep yöneticiye iletilir (bkz. SQL fonksiyonu
+// public.request_password_reset_notice). Anon key'i Authorization Bearer olarak gönderiyoruz
 // (Supabase Edge Functions'ın varsayılan JWT doğrulaması anon key'i de
 // geçerli bir token olarak kabul eder). Eşleşme bulunsa da bulunmasa da
 // fonksiyon her zaman aynı genel başarı yanıtını dönüyor — hesap

@@ -60,7 +60,7 @@ e("veli-hesap-cikis", "sss", "P", "Birden fazla çocuğum var, hepsi tek hesapta
 
 e("hesap-kilitlendi", "sss", "ACPSKX", "Şifreyi çok yanlış girdim / hesabım açılmıyor",
   ["hesabım kilitlendi", "giriş yapamıyorum şifre yanlış", "hesap devre dışı", "giriş reddedildi", "şifre kabul etmiyor", "şifrem yanlış diyor", "giriş yapamıyorum şifrem yanlış diyor", "şifre yanlış diyor"],
-  `1. Kullanıcı adı/telefon/e-postayı ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).
+  `1. Kullanıcı adını/telefonunu ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).
 2. Hâlâ giremiyorsan giriş ekranında "Şifremi Unuttum"u kullan.
 3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç.`);
 

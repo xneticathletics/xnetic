@@ -59,9 +59,9 @@ export default function LoginScreen({
           <TextInput
             onFocus={handleFocus}
             style={[styles.input, styles.inputWithButton]}
-            placeholder="E-posta, telefon veya kullanıcı adı"
+            placeholder="Telefon numarası veya kullanıcı adı"
             placeholderTextColor={colors.muted}
-            accessibilityLabel="E-posta, telefon veya kullanıcı adı"
+            accessibilityLabel="Telefon numarası veya kullanıcı adı"
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}

@@ -26,7 +26,7 @@
 ### Uygulamaya giriş yapma
 
 1. Uygulamayı aç; giriş ekranı gelir.
-2. "E-posta, telefon veya kullanıcı adı" alanına sana verilen bilgiyi yaz.
+2. "Telefon numarası veya kullanıcı adı" alanına sana verilen bilgiyi yaz.
 3. Şifreni gir ve "Giriş Yap"a dokun.
 
 Hesabı kulüp yöneticin açar; hesabın yoksa yöneticine başvur. Uygulamadan kendi kendine kayıt olunmaz. Yeni bir kulüp kaydı için xnetic.net adresini ziyaret et.
@@ -40,10 +40,10 @@ Yeni bir kulüp kurmak istiyorsan xnetic.net adresinden "Kulüp Oluştur" adım�
 ### Şifremi unuttum
 
 1. Giriş ekranında "Şifremi Unuttum"a dokun.
-2. Hesabına kayıtlı e-postanı, telefonunu ya da kullanıcı adını yaz ve gönder.
+2. Kullanıcı adını ya da telefon numaranı yaz ve gönder. İkisinden biri kayıtlı bilgilerinle eşleşmesi yeter — giriş yaparken hangisini kullandığının önemi yok (kullanıcı adıyla giriyorsan da telefonunu yazabilirsin).
+3. Talebin kulüp yöneticine bildirim olarak gider; yöneticin Kullanıcılar ekranından yeni bir geçici şifre üretip sana iletir.
 
-- E-posta yazdıysan: adresine bir sıfırlama linki gelir. Linke dokununca uygulama açılır ve yeni şifreni belirlersin.
-- Telefon ya da kullanıcı adı yazdıysan: kulüp yöneticine bildirim gider; yöneticin seninle iletişime geçip yeni bir geçici şifre verir.
+Geçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor.
 
 ### Geçici şifreyle ilk giriş
 
@@ -368,7 +368,7 @@ Evet. Aynı veli hesabına birden fazla sporcu bağlanabilir. Ana Sayfa → "Spo
 
 ### Şifreyi çok yanlış girdim / hesabım açılmıyor
 
-1. Kullanıcı adı/telefon/e-postayı ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).
+1. Kullanıcı adını/telefonunu ve şifreyi doğru yazdığından emin ol (büyük-küçük harf önemli).
 2. Hâlâ giremiyorsan giriş ekranında "Şifremi Unuttum"u kullan.
 3. Hesabın devre dışı bırakılmış olabilir (ör. hesap silme talebinden sonra); kulüp yöneticinle iletişime geç.
 

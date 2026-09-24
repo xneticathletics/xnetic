@@ -4,39 +4,36 @@ import {
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
 import { colors, radius, spacing } from "../theme/tokens";
-import { requestPasswordReset, requestPasswordResetNotice } from "../lib/api/passwordReset";
+import { requestPasswordResetNotice } from "../lib/api/passwordReset";
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 
+// Tek akış: talep kulüp yöneticisine bildirim olarak gider, yönetici
+// Kullanıcılar ekranından geçici şifre üretip kişiye iletir. E-posta
+// linkiyle sıfırlama kaldırıldı (kullanıcı isteği) — zaten veli/sporcu/
+// antrenör hesaplarının çoğunda gerçek e-posta yok, link hiçbir yere
+// ulaşmıyordu.
+//
+// Girilen bilgi kullanıcı adı YA DA telefon olabilir; kişinin giriş
+// yaparken kullandığı bilgi olmak zorunda değil (eşleştirme:
+// public.request_password_reset_notice).
 export default function ForgotPasswordScreen({ onBack }: { onBack: () => void }) {
   const { scrollRef, handleFocus } = useKeyboardScroll();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  // Gerçek e-posta ile telefon/kullanıcı adı akışının başarı ekranındaki
-  // metni farklı — hangisinin gösterileceğini burada tutuyoruz.
-  const [sentViaEmail, setSentViaEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSend = async () => {
-    if (!email.trim()) {
-      Alert.alert("Eksik bilgi", "Telefon, kullanıcı adı ya da e-postanı gir.", [{ text: "Tamam" }]);
+    if (!identifier.trim()) {
+      Alert.alert("Eksik bilgi", "Kullanıcı adını ya da telefon numaranı gir.", [{ text: "Tamam" }]);
       return;
     }
     setSending(true);
     setError(null);
     try {
-      const identifier = email.trim();
-      if (identifier.includes("@")) {
-        await requestPasswordReset(identifier);
-        setSentViaEmail(true);
-      } else {
-        // Bu hesapların e-postası sentetik (gerçek e-posta yok) — normal
-        // sıfırlama linki hiçbir yere ulaşmaz. Bunun yerine kulüp
-        // adminine bildirim gönderiyoruz; hesap bulunsa da bulunmasa da
-        // (numaralandırmayı önlemek için) aynı başarı mesajını gösteriyoruz.
-        await requestPasswordResetNotice(identifier);
-        setSentViaEmail(false);
-      }
+      // Hesap bulunsa da bulunmasa da aynı mesajı gösteriyoruz — hangi
+      // kullanıcı adının/numaranın kayıtlı olduğu dışarı sızmasın diye.
+      await requestPasswordResetNotice(identifier.trim());
       setSent(true);
     } catch (e: any) {
       setError(e.message ?? "Gönderilemedi");
@@ -58,9 +55,8 @@ export default function ForgotPasswordScreen({ onBack }: { onBack: () => void })
         {sent ? (
           <>
             <Text style={styles.successText}>
-              {sentViaEmail
-                ? `${email} adresine bir şifre sıfırlama linki gönderdik. E-postandaki linke dokununca uygulama açılacak ve yeni şifreni belirleyebileceksin.`
-                : "Eğer bu bilgiyle bir hesap varsa, kulüp yöneticine bildirim gönderildi. Seninle iletişime geçip yeni bir geçici şifre iletecek."}
+              Eğer bu bilgiyle bir hesap varsa, kulüp yöneticine şifre sıfırlama talebin iletildi.
+              Yönetici yeni bir geçici şifre üretip sana iletecek.
             </Text>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
               <Text style={styles.backButtonText}>Girişe Dön</Text>
@@ -69,24 +65,25 @@ export default function ForgotPasswordScreen({ onBack }: { onBack: () => void })
         ) : (
           <>
             <Text style={styles.subtitle}>
-              Hesabına kayıtlı e-posta, telefon numarası ya da kullanıcı adını gir.
+              Kullanıcı adını veya telefon numaranı gir. Talebin kulüp yöneticine iletilecek;
+              yönetici yeni bir geçici şifre üretip sana iletecek.
             </Text>
 
             <TextInput
               onFocus={handleFocus}
               style={styles.input}
-              placeholder="E-posta, telefon veya kullanıcı adı"
+              placeholder="Kullanıcı adı veya telefon numarası"
               placeholderTextColor={colors.muted}
-              accessibilityLabel="E-posta, telefon veya kullanıcı adı"
+              accessibilityLabel="Kullanıcı adı veya telefon numarası"
               autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
+              value={identifier}
+              onChangeText={setIdentifier}
             />
 
             {error && <Text style={styles.error}>{error}</Text>}
 
             <TouchableOpacity style={styles.button} onPress={handleSend} disabled={sending}>
-              {sending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Sıfırlama Linki Gönder</Text>}
+              {sending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Sıfırlama Talebi Gönder</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.backLink} onPress={onBack}>
