@@ -178,8 +178,10 @@ e("sa-genel", "sa", "X", "Süper Admin Ana Sayfası",
   `Süper Admin Ana Sayfası'nda şu kutucuklar bulunur: Kulüpler, Abonelikler, Finans (X-NETIC'in kendi gelir/gideri), Ekranlar (rol önizlemeleri), Duyurular (kulüp yöneticilerine), Egzersiz Kütüphanesi ve Performans Testleri Kütüphanesi (tüm kulüplerde görünen ortak içerikler). Alt menüde Ana Menü, Mesajlar, Asistan, Sistem Ayarları ve Profil vardır. Süper Admin hiçbir kulübün veli, sporcu ya da antrenör verisine erişemez.`);
 
 e("sa-kulupler", "sa", "X", "Kulüpleri görme ve silme",
-  ["kulüpleri gör", "kulüp listesi", "kulüp sil", "kulüp kalıcı sil", "kulüp katılım tarihi", "toplam kulüp"],
-  `Ana Sayfa → "Kulüpler" platformdaki tüm kulüpleri (katılım tarihi ve abonelik durumuyla) listeler. Bir kulübü tamamen kaldırmak için "Kulübü Kalıcı Olarak Sil"i kullan; onay için kulüp adını tam yazman gerekir. DİKKAT: Kulübün tüm sporcu, antrenör, ödeme ve dosya verisi kalıcı olarak silinir, geri alınamaz.`);
+  ["kulüpleri gör", "kulüp listesi", "kulüp sil", "kulüp kalıcı sil", "kulüp katılım tarihi", "toplam kulüp", "kulüp yöneticisinin şifresini sıfırla"],
+  `Ana Sayfa → "Kulüpler" platformdaki tüm kulüpleri (katılım tarihi ve abonelik durumuyla) listeler. Bir kulübü tamamen kaldırmak için "Kulübü Kalıcı Olarak Sil"i kullan; onay için kulüp adını tam yazman gerekir. DİKKAT: Kulübün tüm sporcu, antrenör, ödeme ve dosya verisi kalıcı olarak silinir, geri alınamaz.
+
+Bir kulübün kartına dokununca o kulübün yöneticileri açılır ve "Şifreyi Sıfırla" ile yeni bir geçici şifre üretebilirsin. Kulüp yöneticisi "Şifremi Unuttum" dediğinde talep sana gelir (kendi kulübünde onu sıfırlayabilecek başka kimse yoktur); talep eden yönetici bu listede işaretli görünür. Üretilen geçici şifreyi yöneticiye ilet — bir daha görüntülenmez. Aynı işlemi web panelinden de yapabilirsin.`);
 
 e("sa-abonelik", "sa", "X", "Abonelikleri yönetme ve onaylama",
   ["abonelik onayla", "abonelik durumu değiştir", "havale onay", "abonelik planı", "ödeme onayı kulüp", "abonelik iptal"],

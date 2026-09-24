@@ -2192,9 +2192,10 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "kulüp kalıcı sil",
       "kulüp katılım tarihi",
       "toplam kulüp",
+      "kulüp yöneticisinin şifresini sıfırla",
       "Bir kulübü nasıl silerim?"
     ],
-    "answer": "Ana Sayfa → \"Kulüpler\" platformdaki tüm kulüpleri (katılım tarihi ve abonelik durumuyla) listeler. Bir kulübü tamamen kaldırmak için \"Kulübü Kalıcı Olarak Sil\"i kullan; onay için kulüp adını tam yazman gerekir. DİKKAT: Kulübün tüm sporcu, antrenör, ödeme ve dosya verisi kalıcı olarak silinir, geri alınamaz."
+    "answer": "Ana Sayfa → \"Kulüpler\" platformdaki tüm kulüpleri (katılım tarihi ve abonelik durumuyla) listeler. Bir kulübü tamamen kaldırmak için \"Kulübü Kalıcı Olarak Sil\"i kullan; onay için kulüp adını tam yazman gerekir. DİKKAT: Kulübün tüm sporcu, antrenör, ödeme ve dosya verisi kalıcı olarak silinir, geri alınamaz.\n\nBir kulübün kartına dokununca o kulübün yöneticileri açılır ve \"Şifreyi Sıfırla\" ile yeni bir geçici şifre üretebilirsin. Kulüp yöneticisi \"Şifremi Unuttum\" dediğinde talep sana gelir (kendi kulübünde onu sıfırlayabilecek başka kimse yoktur); talep eden yönetici bu listede işaretli görünür. Üretilen geçici şifreyi yöneticiye ilet — bir daha görüntülenmez. Aynı işlemi web panelinden de yapabilirsin."
   },
   {
     "id": "sa-abonelik",

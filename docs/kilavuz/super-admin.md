@@ -119,6 +119,8 @@ Süper Admin Ana Sayfası'nda şu kutucuklar bulunur: Kulüpler, Abonelikler, Fi
 
 Ana Sayfa → "Kulüpler" platformdaki tüm kulüpleri (katılım tarihi ve abonelik durumuyla) listeler. Bir kulübü tamamen kaldırmak için "Kulübü Kalıcı Olarak Sil"i kullan; onay için kulüp adını tam yazman gerekir. DİKKAT: Kulübün tüm sporcu, antrenör, ödeme ve dosya verisi kalıcı olarak silinir, geri alınamaz.
 
+Bir kulübün kartına dokununca o kulübün yöneticileri açılır ve "Şifreyi Sıfırla" ile yeni bir geçici şifre üretebilirsin. Kulüp yöneticisi "Şifremi Unuttum" dediğinde talep sana gelir (kendi kulübünde onu sıfırlayabilecek başka kimse yoktur); talep eden yönetici bu listede işaretli görünür. Üretilen geçici şifreyi yöneticiye ilet — bir daha görüntülenmez. Aynı işlemi web panelinden de yapabilirsin.
+
 ### Abonelikleri yönetme ve onaylama
 
 Ana Sayfa → "Abonelikler"de kulüp kartlarına dokun; Durum (Onay Bekliyor, Aktif, Test Ödemesi, Ödeme Gecikti, İptal Edildi), Plan (Aylık/Yıllık) ve Tutar'ı (₺) düzenleyip Kaydet'le. Yeni kaydolan kulüp "Onay Bekliyor" durumunda başlar; havaleyi kontrol edince "Aktif" yaparsın ve kulübün uygulaması kısıtsız açılır. Abonelik kaydı olmayan kulübe kart üzerinden yeni kayıt oluşturabilirsin.
