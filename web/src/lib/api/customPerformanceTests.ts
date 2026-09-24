@@ -69,3 +69,52 @@ export async function deleteCustomTest(id: string) {
   const { error } = await supabase.from("performance_test_catalog").delete().eq("id", id);
   if (error) throw error;
 }
+
+// Birim saniye/dakika gibiyse DÜŞÜK değer iyidir (mobildeki aynı liste).
+export function isLowerBetterUnit(unit: string): boolean {
+  const u = unit.trim().toLowerCase().replace(/\./g, "");
+  return ["sn", "s", "sec", "saniye", "dk", "dak", "dakika", "ms"].includes(u);
+}
+
+export function resolveLowerIsBetter(test: Pick<CustomPerformanceTest, "lower_is_better" | "unit">): boolean {
+  return test.lower_is_better ?? isLowerBetterUnit(test.unit);
+}
+
+// Test grubu oluştururken tüm testler arasından seçim yapılıyor.
+export async function listAllTests(): Promise<CustomPerformanceTest[]> {
+  const { data, error } = await supabase
+    .from("performance_test_catalog")
+    .select(FIELDS)
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Sporcunun ölçüm geçmişindeki test_key'lerden test tanımlarını çözmek için.
+export async function getCustomTestsByIds(ids: string[]): Promise<CustomPerformanceTest[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("performance_test_catalog").select(FIELDS).in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
+// "performance-test-videos" bucket'ındaki sınırla senkron (mobildeki ile aynı).
+export const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;
+
+// Test tanımına video ekleme — clubId null ise (Süper Admin, global test)
+// "global/" klasörüne yüklenir. Mobildeki uploadTestVideo ile aynı yol/bucket.
+export async function uploadTestVideo(file: File, clubId: string | null): Promise<string> {
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    throw new Error(`Video en fazla ${MAX_VIDEO_SIZE_BYTES / (1024 * 1024)} MB olabilir.`);
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
+  const folder = clubId ?? "global";
+  const path = `${folder}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("performance-test-videos")
+    .upload(path, file, { contentType: file.type || `video/${ext}` });
+  if (error) throw error;
+  const { data } = supabase.storage.from("performance-test-videos").getPublicUrl(path);
+  return data.publicUrl;
+}

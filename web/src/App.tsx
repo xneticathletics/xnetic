@@ -39,6 +39,11 @@ import UsersListPage from "./routes/users/UsersListPage";
 import PerformanceOverviewPage from "./routes/performance/PerformanceOverviewPage";
 import PerformanceCategoryPage from "./routes/performance/PerformanceCategoryPage";
 import PerformanceTestDetailPage from "./routes/performance/PerformanceTestDetailPage";
+import PerformanceTestFormPage from "./routes/performance/PerformanceTestFormPage";
+import TestGroupsListPage from "./routes/performance/TestGroupsListPage";
+import TestGroupFormPage from "./routes/performance/TestGroupFormPage";
+import TestGroupDetailPage from "./routes/performance/TestGroupDetailPage";
+import AthletePerformancePage from "./routes/performance/AthletePerformancePage";
 import NutritionHomePage from "./routes/nutrition/NutritionHomePage";
 import NutritionFoodsPage from "./routes/nutrition/NutritionFoodsPage";
 import NutritionRecipesPage from "./routes/nutrition/NutritionRecipesPage";
@@ -108,6 +113,14 @@ export default function App() {
               <Route path="/coaches/:id" element={<CoachDetailPage />} />
               <Route path="/users" element={<UsersListPage />} />
               <Route path="/performance" element={<PerformanceOverviewPage />} />
+              {/* Statik yollar :category'den ÖNCE gelmeli — aksi halde
+                  "tests"/"groups"/"athlete" birer kategori sanılır. */}
+              <Route path="/performance/tests/new" element={<PerformanceTestFormPage />} />
+              <Route path="/performance/tests/:testId/edit" element={<PerformanceTestFormPage />} />
+              <Route path="/performance/groups" element={<TestGroupsListPage />} />
+              <Route path="/performance/groups/new" element={<TestGroupFormPage />} />
+              <Route path="/performance/groups/:groupId" element={<TestGroupDetailPage />} />
+              <Route path="/performance/athlete/:athleteId" element={<AthletePerformancePage />} />
               <Route path="/performance/:category" element={<PerformanceCategoryPage />} />
               <Route path="/performance/:category/:testKey" element={<PerformanceTestDetailPage />} />
               <Route path="/nutrition" element={<NutritionHomePage />} />
