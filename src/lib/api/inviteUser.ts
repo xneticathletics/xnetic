@@ -1,6 +1,6 @@
 import { supabase } from "../supabase";
 
-export type InviteRole = "parent" | "athlete" | "coach";
+export type InviteRole = "parent" | "athlete" | "coach" | "club_admin";
 
 export type InviteUserInput = {
   identifier: string;

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import DataTable, { type Column } from "../../components/DataTable";
 import Modal from "../../components/Modal";
-import { listClubUsers, type ClubUser } from "../../lib/api/clubUsers";
+import { listClubUsers, deactivateUser, type ClubUser } from "../../lib/api/clubUsers";
+import { getCurrentAppUserId } from "../../lib/api/currentUser";
 import { resetUserPassword } from "../../lib/api/passwordReset";
 import { listPendingPasswordResetRequests, markNotificationRead } from "../../lib/api/notifications";
 import { getUserIdsForRoleBucket } from "../../lib/api/notificationRolePrefs";
@@ -20,6 +21,10 @@ const INVITE_ROLE_OPTIONS: { value: InviteRole; label: string }[] = [
   { value: "parent", label: "Veli" },
   { value: "athlete", label: "Sporcu" },
   { value: "coach", label: "Antrenör" },
+  // Kulüp yöneticisi, kulübün TÜM verisine erişir — bu yüzden ayrı bir
+  // rol olarak burada seçilebiliyor (yalnızca mevcut yönetici ekleyebilir;
+  // invite-user edge function'ı koordinatöre bu rolü vermiyor).
+  { value: "club_admin", label: "Kulüp Yöneticisi" },
 ];
 
 function InviteUserModal({ onClose, onInvited }: { onClose: () => void; onInvited: () => void }) {
@@ -119,6 +124,8 @@ function InviteUserModal({ onClose, onInvited }: { onClose: () => void; onInvite
 
 export default function UsersListPage() {
   const [users, setUsers] = useState<ClubUser[]>([]);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [removingAdminId, setRemovingAdminId] = useState<string | null>(null);
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, string[]>>({});
   const [coordinatorIds, setCoordinatorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -131,9 +138,15 @@ export default function UsersListPage() {
   const load = () => {
     setLoading(true);
     setError(null);
-    Promise.all([listClubUsers(), listPendingPasswordResetRequests(), getUserIdsForRoleBucket("coordinator")])
-      .then(([u, pending, coordinators]) => {
+    Promise.all([
+      listClubUsers(),
+      listPendingPasswordResetRequests(),
+      getUserIdsForRoleBucket("coordinator"),
+      getCurrentAppUserId(),
+    ])
+      .then(([u, pending, coordinators, meId]) => {
         setUsers(u);
+        setMyUserId(meId);
         const byUser: Record<string, string[]> = {};
         pending.forEach((p) => {
           (byUser[p.requesterId] ??= []).push(p.notificationId);
@@ -152,6 +165,25 @@ export default function UsersListPage() {
     if (!q) return users;
     return users.filter((u) => u.name.toLowerCase().includes(q) || (u.phone ?? "").toLowerCase().includes(q));
   }, [users, query]);
+
+  const activeAdminCount = users.filter((u) => u.role === "club_admin").length;
+
+  // "Yöneticilikten Çıkar" = hesabı pasifleştir. Kulüp yöneticisi hesabı tek
+  // role sahip olduğu için yöneticiliği almak hesabı kapatmak demek; rolü
+  // düşürmek artık mümkün değil. Kendi hesabını ve kulübün son yöneticisini
+  // çıkaramazsın (sunucuda da korunuyor).
+  const handleRemoveAdmin = async (user: ClubUser) => {
+    if (!confirm(`${user.name} hesabı kapatılacak ve bir daha giriş yapamayacak. Devam edilsin mi?`)) return;
+    setRemovingAdminId(user.id);
+    try {
+      await deactivateUser(user.id);
+      load();
+    } catch (e: any) {
+      alert(e.message ?? "Yönetici çıkarılamadı");
+    } finally {
+      setRemovingAdminId(null);
+    }
+  };
 
   const handleReset = async (u: ClubUser) => {
     if (!confirm(`"${u.name}" için yeni bir geçici şifre üretilecek, eski şifresi geçersiz olacak. Devam edilsin mi?`)) return;
@@ -207,13 +239,24 @@ export default function UsersListPage() {
       label: "",
       className: "text-right",
       render: (u) => (
-        <button
-          onClick={() => handleReset(u)}
-          disabled={resettingId === u.id}
-          className="rounded-lg border border-coral px-3 py-1.5 text-xs font-bold text-coral disabled:opacity-60"
-        >
-          {resettingId === u.id ? "Sıfırlanıyor…" : "Şifreyi Sıfırla"}
-        </button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {u.role === "club_admin" && u.id !== myUserId && activeAdminCount > 1 && (
+            <button
+              onClick={() => handleRemoveAdmin(u)}
+              disabled={removingAdminId === u.id}
+              className="rounded-lg border border-muted px-3 py-1.5 text-xs font-bold text-muted disabled:opacity-60"
+            >
+              {removingAdminId === u.id ? "Çıkarılıyor…" : "Yöneticilikten Çıkar"}
+            </button>
+          )}
+          <button
+            onClick={() => handleReset(u)}
+            disabled={resettingId === u.id}
+            className="rounded-lg border border-coral px-3 py-1.5 text-xs font-bold text-coral disabled:opacity-60"
+          >
+            {resettingId === u.id ? "Sıfırlanıyor…" : "Şifreyi Sıfırla"}
+          </button>
+        </div>
       ),
     },
   ];

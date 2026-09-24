@@ -9,6 +9,7 @@ import {
   listPendingPasswordResetRequests, listPendingAccountDeletionRequests, markNotificationRead,
 } from "../lib/api/notifications";
 import { useCopyToast } from "../hooks/useCopyToast";
+import { getCurrentAppUserId } from "../lib/api/currentUser";
 import type { ClubSettingsStackParamList } from "../navigation/ClubSettingsStack";
 import type { UserRole } from "../context/AuthContext";
 
@@ -24,7 +25,7 @@ const ROLE_LABEL: Record<UserRole, string> = {
 
 const ROLE_ORDER: UserRole[] = ["club_admin", "coach", "parent", "athlete"];
 
-export default function UsersListScreen({}: Props) {
+export default function UsersListScreen({ navigation }: Props) {
   const [users, setUsers] = useState<ClubUser[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,11 @@ export default function UsersListScreen({}: Props) {
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, string[]>>({});
   const [pendingDeletionByUserId, setPendingDeletionByUserId] = useState<Record<string, string[]>>({});
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  // Yöneticilikten çıkarma: kendi hesabını çıkaramazsın, kulübün son
+  // yöneticisi de çıkarılamaz (sunucuda da korunuyor, bkz.
+  // users_protect_last_club_admin tetikleyicisi).
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [removingAdminId, setRemovingAdminId] = useState<string | null>(null);
   const resettingRef = useRef(false);
   const deactivatingRef = useRef(false);
   const { copy, copiedKey } = useCopyToast();
@@ -47,10 +53,12 @@ export default function UsersListScreen({}: Props) {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [u, pending, pendingDeletion] = await Promise.all([
+      const [u, pending, pendingDeletion, meId] = await Promise.all([
         listClubUsers(), listPendingPasswordResetRequests(), listPendingAccountDeletionRequests(),
+        getCurrentAppUserId(),
       ]);
       setUsers(u);
+      setMyUserId(meId);
       const byUser: Record<string, string[]> = {};
       pending.forEach((p) => {
         (byUser[p.requesterId] ??= []).push(p.notificationId);
@@ -156,6 +164,38 @@ export default function UsersListScreen({}: Props) {
     );
   };
 
+  const activeAdminCount = useMemo(() => users.filter((u) => u.role === "club_admin").length, [users]);
+
+  // "Yöneticilikten Çıkar" = hesabı pasifleştir. Kulüp yöneticisi hesabı
+  // tek role sahip (kişinin ayrıca veli/antrenör hesabı varsa o ayrı bir
+  // hesap), bu yüzden yöneticiliği almak hesabı kapatmak demek. Rolü
+  // düşürmek artık mümkün değil (rol yalnızca hesap açılırken belirleniyor).
+  const handleRemoveAdmin = (user: ClubUser) => {
+    Alert.alert(
+      "Yöneticilikten çıkar",
+      `${user.name} hesabı kapatılacak ve bir daha giriş yapamayacak. Devam edilsin mi?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Çıkar",
+          style: "destructive",
+          onPress: async () => {
+            if (removingAdminId) return;
+            setRemovingAdminId(user.id);
+            try {
+              await deactivateUser(user.id);
+              await load();
+            } catch (e: any) {
+              Alert.alert("Hata", e.message ?? "Yönetici çıkarılamadı", [{ text: "Tamam" }]);
+            } finally {
+              setRemovingAdminId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleDeactivate = (user: ClubUser) => {
     Alert.alert(
       "Hesabı devre dışı bırak",
@@ -218,6 +258,20 @@ export default function UsersListScreen({}: Props) {
         </TouchableOpacity>
       </View>
 
+      {u.role === "club_admin" && u.id !== myUserId && activeAdminCount > 1 && (
+        <TouchableOpacity
+          style={styles.removeAdminButton}
+          onPress={() => handleRemoveAdmin(u)}
+          disabled={removingAdminId === u.id}
+        >
+          {removingAdminId === u.id ? (
+            <ActivityIndicator color={colors.coral} size="small" />
+          ) : (
+            <Text style={styles.removeAdminButtonText}>Yöneticilikten Çıkar</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
       {!!pendingDeletionByUserId[u.id]?.length && (
         <TouchableOpacity
           style={styles.deactivateButton}
@@ -269,6 +323,13 @@ export default function UsersListScreen({}: Props) {
         onChangeText={setQuery}
       />
 
+      <TouchableOpacity
+        style={styles.addAdminButton}
+        onPress={() => navigation.navigate("InviteUser", { presetRole: "club_admin" })}
+      >
+        <Text style={styles.addAdminButtonText}>+ Yönetici Ekle</Text>
+      </TouchableOpacity>
+
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
       {!loading && pendingUsers.length === 0 && sections.length === 0 && (
@@ -316,6 +377,16 @@ const styles = StyleSheet.create({
   cardPhone: { color: colors.muted, fontSize: 12, marginTop: 2 },
   resetButton: { backgroundColor: colors.coral, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 10 },
   resetButtonText: { color: colors.bg, fontWeight: "700", fontSize: 12 },
+  addAdminButton: {
+    borderWidth: 1, borderColor: colors.yellow, borderRadius: radius.md,
+    paddingVertical: 12, alignItems: "center", marginBottom: spacing.md,
+  },
+  addAdminButtonText: { color: colors.yellow, fontWeight: "700", fontSize: 13 },
+  removeAdminButton: {
+    borderWidth: 1, borderColor: colors.coral, borderRadius: radius.sm,
+    paddingVertical: 10, alignItems: "center", marginTop: spacing.sm,
+  },
+  removeAdminButtonText: { color: colors.coral, fontWeight: "700", fontSize: 12 },
   deactivateButton: {
     backgroundColor: colors.coral, borderRadius: radius.sm, paddingVertical: 10,
     alignItems: "center", marginTop: spacing.sm,

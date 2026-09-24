@@ -1587,7 +1587,7 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
     "id": "kullanicilar",
     "module": "ayar",
     "roles": "A",
-    "title": "Kullanıcıları yönetme (şifre sıfırlama, devre dışı bırakma)",
+    "title": "Kullanıcıları yönetme (yönetici ekleme, şifre sıfırlama, devre dışı bırakma)",
     "questions": [
       "kullanıcı listesi",
       "şifre sıfırla",
@@ -1597,9 +1597,13 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "şifre sıfırlama talebi",
       "geçici şifre üret",
       "kullanıcıyı engelle",
+      "yeni yönetici ekle",
+      "ikinci yönetici",
+      "yöneticilikten çıkar",
+      "kulüp yöneticisi ekleme",
       "Bir kullanıcının şifresini nasıl sıfırlarım?"
     ],
-    "answer": "Profil → Kulüp Ayarları → \"Kullanıcılar\"a gir; hesaplar role göre gruplanmış (Veli, Sporcu, Antrenör vb.), arama kutusuyla bulabilirsin.\n• Şifre sıfırlama: Kişinin yanındaki \"Şifreyi Sıfırla\"ya dokun ve onayla. Ekranda yeni geçici şifre çıkar; KOPYALAYIP kişiye ilet — bir daha görüntülenmez. Kişi ilk girişte şifresini değiştirmek zorundadır.\n• Hesabı devre dışı bırakma: \"Hesabı Devre Dışı Bırak\" girişi tamamen kapatır (kalıcı veri silme KVKK sürecine göre ayrıca yapılır).\n• \"Bekleyen Talepler\": Şifremi unuttum diyen (🔔) ya da hesap silme talep eden (🗑) kişiler burada en üstte görünür."
+    "answer": "Profil → Kulüp Ayarları → \"Kullanıcılar\"a gir; hesaplar role göre gruplanmış (Veli, Sporcu, Antrenör vb.), arama kutusuyla bulabilirsin.\n• Şifre sıfırlama: Kişinin yanındaki \"Şifreyi Sıfırla\"ya dokun ve onayla. Ekranda yeni geçici şifre çıkar; KOPYALAYIP kişiye ilet — bir daha görüntülenmez. Kişi ilk girişte şifresini değiştirmek zorundadır.\n• Hesabı devre dışı bırakma: \"Hesabı Devre Dışı Bırak\" girişi tamamen kapatır (kalıcı veri silme KVKK sürecine göre ayrıca yapılır).\n• \"Bekleyen Talepler\": Şifremi unuttum diyen (🔔) ya da hesap silme talep eden (🗑) kişiler burada en üstte görünür.\n• Yeni yönetici ekleme: Üstteki \"+ Yönetici Ekle\" ile kulübe ikinci (ya da üçüncü) bir kulüp yöneticisi hesabı açarsın; telefon/kullanıcı adı girersin, geçici şifre üretilir ve onu kişiye iletirsin. DİKKAT: Kulüp yöneticisi kulübün TÜM verisine (finans dahil) erişir.\n• Yöneticilikten çıkarma: Yönetici satırındaki \"Yöneticilikten Çıkar\" o hesabı kapatır. Kendi hesabını çıkaramazsın ve kulübün son yöneticisi çıkarılamaz — önce yerine yeni bir yönetici eklemen gerekir.\n• Bir hesabın ROLÜ sonradan değiştirilemez (ör. veli hesabı yöneticiye çevrilemez); rol yalnızca hesap açılırken belirlenir, gerekirse yeni hesap açarsın."
   },
   {
     "id": "disa-aktar",

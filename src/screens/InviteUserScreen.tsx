@@ -69,6 +69,8 @@ export default function InviteUserScreen({ route }: Props) {
         <Text style={styles.infoBox}>
           {presetRole === "coach"
             ? "Antrenörün telefon numarasını ya da kullanıcı adını gir — bir geçici şifre üretilir."
+            : presetRole === "club_admin"
+            ? "Yeni yöneticinin telefon numarasını ya da kullanıcı adını gir — bir geçici şifre üretilir. Kulüp yöneticisi, kulübün TÜM verisine (finans, sporcular, veliler) erişir."
             : "Telefon numarası, kullanıcı adı ya da e-posta ve rol girip hesap oluşturuyorsun — bir geçici şifre üretilir."}
           {" "}Bu şifreyi kişiye kendin (WhatsApp, SMS, telefonla vb.)
           iletmen gerekiyor. Kişi girdiğin bilgi ve geçici şifreyle

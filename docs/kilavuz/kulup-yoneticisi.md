@@ -431,12 +431,15 @@ Profil → Kulüp Ayarları → "Kulüp Adı ve Logosu"na gir; adı düzenle ve 
 
 Profil → Kulüp Ayarları → "Banka Bilgileri"ne gir; Hesap Sahibi ve IBAN'ı yaz ve kaydet. Bu bilgi velilere aidat, mağaza ve etkinlik ödemelerinde Havale/EFT seçeneğinde gösterilir. Girmezsen velilerde "Kulübün banka bilgisi henüz girilmemiş" uyarısı çıkar.
 
-### Kullanıcıları yönetme (şifre sıfırlama, devre dışı bırakma)
+### Kullanıcıları yönetme (yönetici ekleme, şifre sıfırlama, devre dışı bırakma)
 
 Profil → Kulüp Ayarları → "Kullanıcılar"a gir; hesaplar role göre gruplanmış (Veli, Sporcu, Antrenör vb.), arama kutusuyla bulabilirsin.
 - Şifre sıfırlama: Kişinin yanındaki "Şifreyi Sıfırla"ya dokun ve onayla. Ekranda yeni geçici şifre çıkar; KOPYALAYIP kişiye ilet — bir daha görüntülenmez. Kişi ilk girişte şifresini değiştirmek zorundadır.
 - Hesabı devre dışı bırakma: "Hesabı Devre Dışı Bırak" girişi tamamen kapatır (kalıcı veri silme KVKK sürecine göre ayrıca yapılır).
 - "Bekleyen Talepler": Şifremi unuttum diyen (🔔) ya da hesap silme talep eden (🗑) kişiler burada en üstte görünür.
+- Yeni yönetici ekleme: Üstteki "+ Yönetici Ekle" ile kulübe ikinci (ya da üçüncü) bir kulüp yöneticisi hesabı açarsın; telefon/kullanıcı adı girersin, geçici şifre üretilir ve onu kişiye iletirsin. DİKKAT: Kulüp yöneticisi kulübün TÜM verisine (finans dahil) erişir.
+- Yöneticilikten çıkarma: Yönetici satırındaki "Yöneticilikten Çıkar" o hesabı kapatır. Kendi hesabını çıkaramazsın ve kulübün son yöneticisi çıkarılamaz — önce yerine yeni bir yönetici eklemen gerekir.
+- Bir hesabın ROLÜ sonradan değiştirilemez (ör. veli hesabı yöneticiye çevrilemez); rol yalnızca hesap açılırken belirlenir, gerekirse yeni hesap açarsın.
 
 ### Kulüp verilerini Excel'e aktarma
 

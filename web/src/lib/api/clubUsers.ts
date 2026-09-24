@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { assertRowAffected } from "./assertAffected";
 import type { UserRole } from "../../context/AuthContext";
 
 export type ClubUser = {
@@ -28,4 +29,16 @@ export async function listClubUsers(): Promise<ClubUser[]> {
     .order("name");
   if (error) throw error;
   return (data as ClubUser[]) ?? [];
+}
+
+// "Yöneticilikten Çıkar" — hesabı pasifleştirir (kalıcı silme değil).
+// Kulüp yöneticisi hesabı tek role sahip olduğu için yöneticiliği almak
+// hesabı kapatmak demek; rol düşürmek artık mümkün değil (rol yalnızca
+// hesap açılırken belirleniyor, bkz. users_block_role_change). Kulübün
+// SON yöneticisi çıkarılamaz — sunucuda da korunuyor
+// (users_protect_last_club_admin).
+export async function deactivateUser(userId: string): Promise<void> {
+  const { data, error } = await supabase.from("users").update({ is_active: false }).eq("id", userId).select("id");
+  if (error) throw error;
+  assertRowAffected(data);
 }

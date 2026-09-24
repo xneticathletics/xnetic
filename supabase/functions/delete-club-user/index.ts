@@ -67,6 +67,23 @@ Deno.serve(async (req) => {
     // Süper admin hesabı bu uçtan asla silinemez.
     if (targetRow.role === "super_admin") throw new Error("Bu hesap silinemez.");
 
+    // Kulübün SON aktif yöneticisi silinemez — aksi halde kulüp yönetimsiz
+    // kalırdı. Bu fonksiyon servis rolüyle çalıştığı için istemci tarafındaki
+    // tetikleyiciye (users_protect_last_club_admin) takılmıyor, kontrol
+    // burada ayrıca yapılıyor. Kulübün tamamı kapatılacaksa delete-club var.
+    if (targetRow.role === "club_admin") {
+      const { count } = await admin
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("club_id", targetRow.club_id)
+        .eq("role", "club_admin")
+        .eq("is_active", true)
+        .neq("id", userId);
+      if ((count ?? 0) === 0) {
+        throw new Error("Kulübün tek yöneticisi silinemez. Önce başka bir yönetici ekle.");
+      }
+    }
+
     // Silmeyi engelleyecek bağlantıları önce temizle (FK kısıtlamaları).
     await admin.from("coach_branches").delete().eq("coach_id", userId);
     await admin.from("group_coaches").delete().eq("coach_id", userId);

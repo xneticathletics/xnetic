@@ -20,6 +20,7 @@ import AnnouncementSettingsScreen from "../screens/AnnouncementSettingsScreen";
 import MembershipFreezeSettingsScreen from "../screens/MembershipFreezeSettingsScreen";
 import DailyTrackingSettingsScreen from "../screens/DailyTrackingSettingsScreen";
 import RpeSettingsScreen from "../screens/RpeSettingsScreen";
+import InviteUserScreen from "../screens/InviteUserScreen";
 
 export type ClubSettingsStackParamList = {
   ClubSettingsHome: undefined;
@@ -31,6 +32,9 @@ export type ClubSettingsStackParamList = {
   ClubLogo: undefined;
   ClubBankInfo: undefined;
   UsersList: undefined;
+  // Kullanıcılar ekranındaki "+ Yönetici Ekle" — HomeStack'teki InviteUser
+  // ile AYNI ekran, sadece bu stack'ten de açılabilsin diye kayıtlı.
+  InviteUser: { presetRole?: "club_admin" } | undefined;
   ClubExport: undefined;
   HomeFeatures: undefined;
   AdvancedSettings: undefined;
@@ -67,6 +71,7 @@ export default function ClubSettingsStack() {
       <Stack.Screen name="ClubLogo" component={ClubLogoScreen} options={{ title: "Kulüp Logosu" }} />
       <Stack.Screen name="ClubBankInfo" component={ClubBankInfoScreen} options={{ title: "Banka Bilgileri" }} />
       <Stack.Screen name="UsersList" component={UsersListScreen} options={{ title: "Kullanıcılar" }} />
+      <Stack.Screen name="InviteUser" component={InviteUserScreen} options={{ title: "Yönetici Ekle" }} />
       <Stack.Screen name="ClubExport" component={ClubExportScreen} options={{ title: "Kulüp Bilgilerini Dışa Aktar" }} />
       <Stack.Screen name="HomeFeatures" component={HomeFeaturesScreen} options={{ title: "Ana Sayfa Özellikleri" }} />
       <Stack.Screen name="AdvancedSettings" component={AdvancedSettingsScreen} options={{ title: "Gelişmiş Ayarlar" }} />

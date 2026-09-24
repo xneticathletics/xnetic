@@ -100,12 +100,15 @@ e("banka-bilgisi", "ayar", "A", "Banka (IBAN) bilgisini girme",
   ["iban gir", "banka bilgisi", "havale eft bilgisi", "hesap sahibi", "kulüp iban", "velilere iban göster", "banka bilgisi girilmemiş"],
   `Profil → Kulüp Ayarları → "Banka Bilgileri"ne gir; Hesap Sahibi ve IBAN'ı yaz ve kaydet. Bu bilgi velilere aidat, mağaza ve etkinlik ödemelerinde Havale/EFT seçeneğinde gösterilir. Girmezsen velilerde "Kulübün banka bilgisi henüz girilmemiş" uyarısı çıkar.`);
 
-e("kullanicilar", "ayar", "A", "Kullanıcıları yönetme (şifre sıfırlama, devre dışı bırakma)",
-  ["kullanıcı listesi", "şifre sıfırla", "kullanıcının şifresini sıfırla", "hesabı devre dışı bırak", "hesap silme talebi", "şifre sıfırlama talebi", "geçici şifre üret", "kullanıcıyı engelle"],
+e("kullanicilar", "ayar", "A", "Kullanıcıları yönetme (yönetici ekleme, şifre sıfırlama, devre dışı bırakma)",
+  ["kullanıcı listesi", "şifre sıfırla", "kullanıcının şifresini sıfırla", "hesabı devre dışı bırak", "hesap silme talebi", "şifre sıfırlama talebi", "geçici şifre üret", "kullanıcıyı engelle", "yeni yönetici ekle", "ikinci yönetici", "yöneticilikten çıkar", "kulüp yöneticisi ekleme"],
   `Profil → Kulüp Ayarları → "Kullanıcılar"a gir; hesaplar role göre gruplanmış (Veli, Sporcu, Antrenör vb.), arama kutusuyla bulabilirsin.
 • Şifre sıfırlama: Kişinin yanındaki "Şifreyi Sıfırla"ya dokun ve onayla. Ekranda yeni geçici şifre çıkar; KOPYALAYIP kişiye ilet — bir daha görüntülenmez. Kişi ilk girişte şifresini değiştirmek zorundadır.
 • Hesabı devre dışı bırakma: "Hesabı Devre Dışı Bırak" girişi tamamen kapatır (kalıcı veri silme KVKK sürecine göre ayrıca yapılır).
-• "Bekleyen Talepler": Şifremi unuttum diyen (🔔) ya da hesap silme talep eden (🗑) kişiler burada en üstte görünür.`);
+• "Bekleyen Talepler": Şifremi unuttum diyen (🔔) ya da hesap silme talep eden (🗑) kişiler burada en üstte görünür.
+• Yeni yönetici ekleme: Üstteki "+ Yönetici Ekle" ile kulübe ikinci (ya da üçüncü) bir kulüp yöneticisi hesabı açarsın; telefon/kullanıcı adı girersin, geçici şifre üretilir ve onu kişiye iletirsin. DİKKAT: Kulüp yöneticisi kulübün TÜM verisine (finans dahil) erişir.
+• Yöneticilikten çıkarma: Yönetici satırındaki "Yöneticilikten Çıkar" o hesabı kapatır. Kendi hesabını çıkaramazsın ve kulübün son yöneticisi çıkarılamaz — önce yerine yeni bir yönetici eklemen gerekir.
+• Bir hesabın ROLÜ sonradan değiştirilemez (ör. veli hesabı yöneticiye çevrilemez); rol yalnızca hesap açılırken belirlenir, gerekirse yeni hesap açarsın.`);
 
 e("disa-aktar", "ayar", "A", "Kulüp verilerini Excel'e aktarma",
   ["excel'e aktar", "verileri dışa aktar", "sporcu listesi excel", "kulüp bilgilerini indir", "yedek al"],
