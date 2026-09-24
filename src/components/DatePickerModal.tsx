@@ -21,6 +21,16 @@ function todayKey() {
   return toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+// Takvim hücrelerini 7'şerlik HAFTA satırlarına böler — yüzde genişlikli
+// flexWrap yerine sabit 7 çocuklu satır + flex:1; aksi halde Yoga
+// yüzdeleri piksele yuvarlarken son sütun (Pazar) alt satıra kayabiliyor
+// (bkz. TrainingSessionsScreen'deki aynı not, 2026-09-24).
+function chunkWeeks<T>(cells: T[]): T[][] {
+  const weeks: T[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
 function buildMonthGrid(year: number, month0: number): (number | null)[] {
   const firstWeekday = (new Date(year, month0, 1).getDay() + 6) % 7; // Pzt=0
   const daysInMonth = new Date(year, month0 + 1, 0).getDate();
@@ -82,33 +92,38 @@ export default function DatePickerModal({
           </View>
 
           <View style={styles.grid}>
-            {grid.map((day, idx) => {
-              if (day === null) return <View key={idx} style={styles.dayCell} />;
-              const dateKey = toDateKey(viewYear, viewMonth, day);
-              const isSelected = dateKey === selectedDate;
-              const isToday = dateKey === todayKey();
+            {chunkWeeks(grid).map((week, weekIdx) => (
+              <View key={weekIdx} style={styles.weekRow}>
+                {week.map((day, cellIdx) => {
+                  const idx = weekIdx * 7 + cellIdx;
+                  if (day === null) return <View key={idx} style={styles.dayCell} />;
+                  const dateKey = toDateKey(viewYear, viewMonth, day);
+                  const isSelected = dateKey === selectedDate;
+                  const isToday = dateKey === todayKey();
 
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.dayCell}
-                  onPress={() => {
-                    onSelect(dateKey);
-                    onClose();
-                  }}
-                >
-                  <View
-                    style={[
-                      styles.dayCircle,
-                      isToday && !isSelected && styles.dayCircleToday,
-                      isSelected && styles.dayCircleSelected,
-                    ]}
-                  >
-                    <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                  return (
+                    <TouchableOpacity
+                      key={idx}
+                      style={styles.dayCell}
+                      onPress={() => {
+                        onSelect(dateKey);
+                        onClose();
+                      }}
+                    >
+                      <View
+                        style={[
+                          styles.dayCircle,
+                          isToday && !isSelected && styles.dayCircleToday,
+                          isSelected && styles.dayCircleSelected,
+                        ]}
+                      >
+                        <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ))}
           </View>
 
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -132,9 +147,10 @@ const styles = StyleSheet.create({
   monthNavIcon: { color: colors.yellow, fontSize: 22, fontWeight: "700" },
   monthLabel: { color: colors.ink, fontSize: 15, fontWeight: "700", minWidth: 140, textAlign: "center" },
   weekdayRow: { flexDirection: "row", marginBottom: 4 },
-  weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 11, fontWeight: "700" },
-  grid: { flexDirection: "row", flexWrap: "wrap", marginBottom: spacing.md },
-  dayCell: { width: `${100 / 7}%`, alignItems: "center", justifyContent: "center", paddingVertical: 3 },
+  weekdayLabel: { flex: 1, textAlign: "center", color: colors.muted, fontSize: 11, fontWeight: "700" },
+  grid: { marginBottom: spacing.md },
+  weekRow: { flexDirection: "row" },
+  dayCell: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 3 },
   dayCircle: {
     width: CELL_SIZE, height: CELL_SIZE, borderRadius: CELL_SIZE / 2,
     alignItems: "center", justifyContent: "center",

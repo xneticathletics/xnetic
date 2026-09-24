@@ -66,6 +66,16 @@ function buildWeekGrid(selectedDate: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
+// Takvim hücrelerini 7'şerlik HAFTA satırlarına böler — yüzde genişlikli
+// flexWrap yerine sabit 7 çocuklu satır + flex:1 kullanılıyor; aksi halde
+// Yoga yüzdeleri piksele yuvarlarken son sütun (Pazar) alt satıra kayıp
+// takvim 6 sütuna sarabiliyor (bkz. TrainingSessionsScreen'deki aynı not).
+function chunkWeeks<T>(cells: T[]): T[][] {
+  const weeks: T[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
 function buildMonthGrid(year: number, month0: number): (number | null)[] {
   const firstWeekday = (new Date(year, month0, 1).getDay() + 6) % 7; // Pzt=0
   const daysInMonth = new Date(year, month0 + 1, 0).getDate();
@@ -229,58 +239,63 @@ export default function MyScheduleScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.grid}>
-        {displayCells.map((cell, idx) => {
-          if (cell === null) return <View key={idx} style={styles.dayCell} />;
-          const { day, dateKey } = cell;
-          const daySessions = sessionsByDate[dateKey] ?? [];
-          const hasSessions = daySessions.length > 0;
-          const isSelected = dateKey === selectedDate;
-          const isToday = dateKey === todayKey();
+        {chunkWeeks(displayCells).map((week, weekIdx) => (
+          <View key={weekIdx} style={styles.weekRow}>
+            {week.map((cell, cellIdx) => {
+              const idx = weekIdx * 7 + cellIdx;
+              if (cell === null) return <View key={idx} style={styles.dayCell} />;
+              const { day, dateKey } = cell;
+              const daySessions = sessionsByDate[dateKey] ?? [];
+              const hasSessions = daySessions.length > 0;
+              const isSelected = dateKey === selectedDate;
+              const isToday = dateKey === todayKey();
 
-          // İlk dokunuş sadece seçer — ZATEN seçili olan bir güne tekrar
-          // dokununca (ikinci dokunuş), o günü tam ekran gösteren
-          // MyDayScheduleDetail'e geçilir (antrenör tarafındaki
-          // DayScheduleDetail ile aynı desen).
-          const handleDayPress = () => {
-            if (isSelected) {
-              if (!athleteId) return;
-              navigation.navigate("MyDayScheduleDetail", {
-                date: dateKey, sessions: daySessions, attendanceMap,
-                athleteId, athleteName: athleteName ?? "Sporcu",
-              });
-            } else {
-              setSelectedDate(dateKey);
-            }
-          };
+              // İlk dokunuş sadece seçer — ZATEN seçili olan bir güne tekrar
+              // dokununca (ikinci dokunuş), o günü tam ekran gösteren
+              // MyDayScheduleDetail'e geçilir (antrenör tarafındaki
+              // DayScheduleDetail ile aynı desen).
+              const handleDayPress = () => {
+                if (isSelected) {
+                  if (!athleteId) return;
+                  navigation.navigate("MyDayScheduleDetail", {
+                    date: dateKey, sessions: daySessions, attendanceMap,
+                    athleteId, athleteName: athleteName ?? "Sporcu",
+                  });
+                } else {
+                  setSelectedDate(dateKey);
+                }
+              };
 
-          const cellMonth0 = Number(dateKey.split("-")[1]) - 1;
-          const dayLabel = `${day} ${MONTH_LABELS[cellMonth0]}${isToday ? ", bugün" : ""}${hasSessions ? ", antrenman var" : ""}`;
+              const cellMonth0 = Number(dateKey.split("-")[1]) - 1;
+              const dayLabel = `${day} ${MONTH_LABELS[cellMonth0]}${isToday ? ", bugün" : ""}${hasSessions ? ", antrenman var" : ""}`;
 
-          return (
-            <TouchableOpacity
-              key={idx}
-              style={styles.dayCell}
-              onPress={handleDayPress}
-              accessibilityLabel={dayLabel}
-              accessibilityState={{ selected: isSelected }}
-            >
-              <View
-                style={[
-                  styles.dayBox,
-                  isSelected && styles.dayBoxSelected,
-                  !isSelected && isToday && styles.dayBoxToday,
-                ]}
-              >
-                <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
-                {hasSessions && (
-                  <View style={styles.dayDotsRow}>
-                    <View style={styles.dayDot} />
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.dayCell}
+                  onPress={handleDayPress}
+                  accessibilityLabel={dayLabel}
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  <View
+                    style={[
+                      styles.dayBox,
+                      isSelected && styles.dayBoxSelected,
+                      !isSelected && isToday && styles.dayBoxToday,
+                    ]}
+                  >
+                    <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
+                    {hasSessions && (
+                      <View style={styles.dayDotsRow}>
+                        <View style={styles.dayDot} />
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
       </View>
 
       <View style={styles.selectedDateHeader}>
@@ -351,10 +366,11 @@ const styles = StyleSheet.create({
   monthLabel: { color: colors.ink, fontSize: 16, fontWeight: "700", minWidth: 150, textAlign: "center" },
 
   weekdayRow: { flexDirection: "row", marginBottom: 4 },
-  weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 11, fontWeight: "700" },
+  weekdayLabel: { flex: 1, textAlign: "center", color: colors.muted, fontSize: 11, fontWeight: "700" },
 
-  grid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: `${100 / 7}%`, padding: 2 },
+  grid: {},
+  weekRow: { flexDirection: "row" },
+  dayCell: { flex: 1, padding: 2 },
   // Takvim (TrainingSessionsScreen) ile aynı çerçeveli/dolgulu kutu
   // görünümü — yalın bir daire yerine gerçek bir hücre hissi versin diye.
   dayBox: {

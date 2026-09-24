@@ -100,6 +100,19 @@ const TEMPLATE_GEN_THROTTLE_MS = 6 * 60 * 60 * 1000;
 // haftalık/aylık görünümün ekrandan çıkıp geri dönünce de korunmasını sağlar.
 let lastCalendarView: "month" | "week" = "month";
 
+// Takvim hücrelerini 7'şerlik HAFTA satırlarına böler. Eskiden tek bir
+// flexWrap'li kapsayıcıda her hücreye width: 100/7 % veriliyordu; Yoga bu
+// yüzdeleri piksele çevirirken yukarı yuvarladığında 7 hücrenin toplamı
+// kapsayıcıyı bir kıl payı aşıp SON sütun (Pazar) alt satıra kayıyordu —
+// bazı Android cihazlarda takvim 6 sütuna sarıyor, Pazar sütunu hiç
+// dolmuyordu (2026-09-24, kullanıcı cihazında görüldü). Sabit 7 çocuklu
+// satır + flex:1 ile yuvarlama sorunu tamamen ortadan kalkıyor.
+function chunkWeeks<T>(cells: T[]): T[][] {
+  const weeks: T[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
 function buildMonthGrid(year: number, month0: number): (number | null)[] {
   const firstWeekday = (new Date(year, month0, 1).getDay() + 6) % 7; // Pzt=0
   const daysInMonth = new Date(year, month0 + 1, 0).getDate();
@@ -550,82 +563,87 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.grid}>
-        {displayCells.map((cell, idx) => {
-          if (cell === null) return <View key={idx} style={styles.dayCell} />;
-          const { day, dateKey } = cell;
-          const daySessions = sessionsByDate[dateKey] ?? [];
-          const dayMatches = matchesByDate[dateKey] ?? [];
-          const hasSessions = daySessions.length > 0;
-          const hasMatches = dayMatches.length > 0;
-          const isSelected = dateKey === selectedDate;
-          const isToday = dateKey === todayKey();
+        {chunkWeeks(displayCells).map((week, weekIdx) => (
+          <View key={weekIdx} style={styles.weekRow}>
+            {week.map((cell, cellIdx) => {
+              const idx = weekIdx * 7 + cellIdx;
+              if (cell === null) return <View key={idx} style={styles.dayCell} />;
+              const { day, dateKey } = cell;
+              const daySessions = sessionsByDate[dateKey] ?? [];
+              const dayMatches = matchesByDate[dateKey] ?? [];
+              const hasSessions = daySessions.length > 0;
+              const hasMatches = dayMatches.length > 0;
+              const isSelected = dateKey === selectedDate;
+              const isToday = dateKey === todayKey();
 
-          const hasBoth = hasSessions && hasMatches;
+              const hasBoth = hasSessions && hasMatches;
 
-          // İlk dokunuş sadece seçer (alttaki liste yerinde güncellenir) —
-          // ZATEN seçili olan bir güne TEKRAR dokununca (ikinci dokunuş),
-          // o günü tam ekran gösteren DayScheduleDetail'e geçilir.
-          const handleDayPress = () => {
-            if (isSelected) {
-              navigation.navigate("DayScheduleDetail", {
-                date: dateKey,
-                sessions: daySessions,
-                matches: dayMatches,
-                staffing,
-                isAdminOrCoordinator: !isCoach,
-                isAdmin: role === "club_admin",
-                authorizedVenueIds,
-                individualBranchNames: Array.from(individualBranchNames),
-                branchByGroupId,
-                attendanceWindowBeforeMinutes: settings.attendance_window_before_minutes,
-                attendanceWindowAfterMinutes: settings.attendance_window_after_minutes,
-                completionWindowBeforeMinutes: settings.completion_window_before_minutes,
-              });
-            } else {
-              setSelectedDate(dateKey);
-            }
-          };
+              // İlk dokunuş sadece seçer (alttaki liste yerinde güncellenir) —
+              // ZATEN seçili olan bir güne TEKRAR dokununca (ikinci dokunuş),
+              // o günü tam ekran gösteren DayScheduleDetail'e geçilir.
+              const handleDayPress = () => {
+                if (isSelected) {
+                  navigation.navigate("DayScheduleDetail", {
+                    date: dateKey,
+                    sessions: daySessions,
+                    matches: dayMatches,
+                    staffing,
+                    isAdminOrCoordinator: !isCoach,
+                    isAdmin: role === "club_admin",
+                    authorizedVenueIds,
+                    individualBranchNames: Array.from(individualBranchNames),
+                    branchByGroupId,
+                    attendanceWindowBeforeMinutes: settings.attendance_window_before_minutes,
+                    attendanceWindowAfterMinutes: settings.attendance_window_after_minutes,
+                    completionWindowBeforeMinutes: settings.completion_window_before_minutes,
+                  });
+                } else {
+                  setSelectedDate(dateKey);
+                }
+              };
 
-          const cellMonth0 = Number(dateKey.split("-")[1]) - 1;
-          const dayLabel = `${day} ${MONTH_LABELS[cellMonth0]}${isToday ? ", bugün" : ""}${
-            hasBoth ? ", antrenman ve müsabaka var" : hasSessions ? ", antrenman var" : hasMatches ? ", müsabaka var" : ""
-          }`;
+              const cellMonth0 = Number(dateKey.split("-")[1]) - 1;
+              const dayLabel = `${day} ${MONTH_LABELS[cellMonth0]}${isToday ? ", bugün" : ""}${
+                hasBoth ? ", antrenman ve müsabaka var" : hasSessions ? ", antrenman var" : hasMatches ? ", müsabaka var" : ""
+              }`;
 
-          return (
-            <TouchableOpacity
-              key={idx}
-              style={styles.dayCell}
-              onPress={handleDayPress}
-              activeOpacity={0.7}
-              accessibilityLabel={dayLabel}
-              accessibilityState={{ selected: isSelected }}
-            >
-              {/* Her gün, çerçeveli bir kutu içinde gösteriliyor — dolgu
-                  rengi türe göre DEĞİŞMİYOR, tür bilgisi altındaki küçük
-                  noktalarla (sarı=antrenman, kırmızı=müsabaka, ikisi varsa
-                  ikisi birden) veriliyor. Seçili gün sarı dolgu, "bugün"
-                  (seçili değilken) kalın teal çerçeveyle belli olur. */}
-              <View
-                style={[
-                  styles.dayBox,
-                  isSelected && styles.dayBoxSelected,
-                  !isSelected && isToday && styles.dayBoxToday,
-                ]}
-              >
-                <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
-                <View style={styles.dayDotsRow}>
-                  {/* Kutu seçiliyken zemin zaten sarı doluyor (dayBoxSelected)
-                      — antrenman noktası da sarı olursa üstüne karışıp
-                      kayboluyordu (özellikle "bugün" varsayılan olarak hem
-                      seçili hem bugün oluyor). Seçiliyken koyu, değilken
-                      sarı gösteriyoruz. */}
-                  {hasSessions && <View style={[styles.dayDot, { backgroundColor: isSelected ? colors.bg : colors.yellow }]} />}
-                  {hasMatches && <View style={[styles.dayDot, { backgroundColor: colors.coral }]} />}
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.dayCell}
+                  onPress={handleDayPress}
+                  activeOpacity={0.7}
+                  accessibilityLabel={dayLabel}
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  {/* Her gün, çerçeveli bir kutu içinde gösteriliyor — dolgu
+                      rengi türe göre DEĞİŞMİYOR, tür bilgisi altındaki küçük
+                      noktalarla (sarı=antrenman, kırmızı=müsabaka, ikisi varsa
+                      ikisi birden) veriliyor. Seçili gün sarı dolgu, "bugün"
+                      (seçili değilken) kalın teal çerçeveyle belli olur. */}
+                  <View
+                    style={[
+                      styles.dayBox,
+                      isSelected && styles.dayBoxSelected,
+                      !isSelected && isToday && styles.dayBoxToday,
+                    ]}
+                  >
+                    <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>{day}</Text>
+                    <View style={styles.dayDotsRow}>
+                      {/* Kutu seçiliyken zemin zaten sarı doluyor (dayBoxSelected)
+                          — antrenman noktası da sarı olursa üstüne karışıp
+                          kayboluyordu (özellikle "bugün" varsayılan olarak hem
+                          seçili hem bugün oluyor). Seçiliyken koyu, değilken
+                          sarı gösteriyoruz. */}
+                      {hasSessions && <View style={[styles.dayDot, { backgroundColor: isSelected ? colors.bg : colors.yellow }]} />}
+                      {hasMatches && <View style={[styles.dayDot, { backgroundColor: colors.coral }]} />}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
       </View>
 
       <View style={styles.legendRow}>
@@ -746,10 +764,11 @@ const styles = StyleSheet.create({
   monthLabel: { color: colors.ink, fontSize: 14, fontWeight: "700", minWidth: 130, textAlign: "center" },
 
   weekdayRow: { flexDirection: "row", marginBottom: 2 },
-  weekdayLabel: { width: `${100 / 7}%`, textAlign: "center", color: colors.muted, fontSize: 10, fontWeight: "700" },
+  weekdayLabel: { flex: 1, textAlign: "center", color: colors.muted, fontSize: 10, fontWeight: "700" },
 
-  grid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: `${100 / 7}%`, padding: 2 },
+  grid: {},
+  weekRow: { flexDirection: "row" },
+  dayCell: { flex: 1, padding: 2 },
   // Her gün çerçeveli, dolgulu bir kutu — düz bir daire yerine gerçek bir
   // "hücre" görünümü versin diye. Dolgu rengi türe göre DEĞİŞMEZ, sadece
   // seçili/bugün durumunu gösterir.
