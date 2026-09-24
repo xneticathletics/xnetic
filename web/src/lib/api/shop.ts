@@ -21,6 +21,9 @@ export type ShopProduct = {
   created_at: string;
   category: string | null;
   gender: ShopGender | null;
+  // NULL = kulüp geneli (herkes görür); dolu = yalnızca o branştakiler görür
+  // ve o branşın koordinatörü de yönetebilir (mobil ile aynı, bkz. Etkinlikler).
+  branch: string | null;
 };
 
 export type ShopProductAdmin = ShopProduct & { totalStock: number };
@@ -45,7 +48,7 @@ export type ShopOrder = {
   users?: { name: string; phone: string | null } | null;
 };
 
-const PRODUCT_FIELDS = "id, title, description, price, photo_urls, is_active, created_at, category, gender";
+const PRODUCT_FIELDS = "id, title, description, price, photo_urls, is_active, created_at, category, gender, branch";
 const ORDER_FIELDS =
   "id, product_id, variant_id, parent_user_id, quantity, unit_price, total_price, payment_method, note, status, created_at";
 
@@ -147,6 +150,7 @@ export type ShopProductInput = {
   price: number;
   category: string | null;
   gender: ShopGender | null;
+  branch: string | null;
 };
 
 export async function createProduct(input: ShopProductInput): Promise<ShopProduct> {

@@ -14,6 +14,9 @@ import {
 import { useKeyboardScroll } from "../hooks/useKeyboardScroll";
 import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import type { ShopStackParamList } from "../navigation/ShopStack";
+import { useBranchSelect } from "../context/BranchSelectContext";
+import BranchPickerModal from "../components/BranchPickerModal";
+import type { Branch } from "../lib/api/branches";
 
 type Props = NativeStackScreenProps<ShopStackParamList, "ShopProductForm">;
 
@@ -49,6 +52,13 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [gender, setGender] = useState<ShopGender | null>(null);
+  // Yayınlanacağı yer — Etkinlik formuyla birebir aynı mantık:
+  // koordinatör (isLocked) yalnızca KENDİ branşına ürün ekleyebilir
+  // (RLS de genel ürünü reddeder); yönetici "Kulüp Geneli" (branch=null)
+  // ya da belirli bir branş seçer.
+  const { selectedBranch, isLocked } = useBranchSelect();
+  const [branch, setBranch] = useState<string | null>(isLocked ? selectedBranch : null);
+  const [branchPickerVisible, setBranchPickerVisible] = useState(false);
   // Ayakkabı kategorisinde "Beden" alanı anlamsız — "Numara" olarak
   // gösterip sayısal klavye açıyoruz, ayrı bir alan eklemeye gerek yok.
   const isShoeCategory = category === "Ayakkabı";
@@ -60,7 +70,7 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
   // yükleniyor) kasıtlı olarak dışarıda — combos'tan türeyen otomatik
   // senkron effect'iyle yarış durumu yaratmadan basit tutmak için.
   const initialSnapshotRef = useRef(
-    JSON.stringify({ title: "", description: "", price: "", category: null, gender: null, colorOptions: [] as string[], sizes: [] as string[] })
+    JSON.stringify({ title: "", description: "", price: "", category: null, gender: null, branch: isLocked ? selectedBranch : null, colorOptions: [] as string[], sizes: [] as string[] })
   );
   const [colorInput, setColorInput] = useState("");
   const [sizeInput, setSizeInput] = useState("");
@@ -89,13 +99,14 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
           setPrice(loadedPrice);
           setCategory(p.category);
           setGender(p.gender);
+          setBranch(p.branch);
           setPhotos(p.photo_urls);
           setColorOptions(loadedColors);
           setSizes(loadedSizes);
           setVariantStocks(Object.fromEntries(variants.map((v) => [comboKey(v.color, v.size), String(v.stock)])));
           initialSnapshotRef.current = JSON.stringify({
             title: p.title, description: loadedDescription, price: loadedPrice,
-            category: p.category, gender: p.gender, colorOptions: loadedColors, sizes: loadedSizes,
+            category: p.category, gender: p.gender, branch: p.branch, colorOptions: loadedColors, sizes: loadedSizes,
           });
         })
         .catch((e) => setError(e.message))
@@ -105,7 +116,7 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
 
   const hasUnsavedChanges =
     !loading &&
-    (JSON.stringify({ title, description, price, category, gender, colorOptions, sizes }) !== initialSnapshotRef.current ||
+    (JSON.stringify({ title, description, price, category, gender, branch, colorOptions, sizes }) !== initialSnapshotRef.current ||
       (isNew && localPhotos.length > 0));
   const { markSaved } = useUnsavedChangesGuard(navigation, hasUnsavedChanges);
 
@@ -201,7 +212,7 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
     try {
       if (isNew) {
         const product = await createProduct({
-          title: trimmedTitle, description: description.trim() || null, price: parsedPrice, category, gender,
+          title: trimmedTitle, description: description.trim() || null, price: parsedPrice, category, gender, branch,
         });
         let uploaded: string[] = [];
         for (const uri of localPhotos) {
@@ -210,7 +221,7 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
         await saveProductVariants(product.id, variantCombos);
       } else {
         await updateProduct(productId!, {
-          title: trimmedTitle, description: description.trim() || null, price: parsedPrice, category, gender,
+          title: trimmedTitle, description: description.trim() || null, price: parsedPrice, category, gender, branch,
         });
         await saveProductVariants(productId!, variantCombos);
       }
@@ -291,6 +302,29 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
             placeholderTextColor={colors.muted}
             keyboardType="decimal-pad"
           />
+        </Field>
+
+        <Field label="Yayınlanacağı Yer">
+          {isLocked ? (
+            <View style={[styles.input, styles.inputDisabled]}>
+              <Text style={{ color: colors.muted }}>{selectedBranch} (yalnızca bu branş görür)</Text>
+            </View>
+          ) : (
+            <View style={{ gap: spacing.sm }}>
+              <TouchableOpacity
+                style={[styles.selectChip, branch === null && styles.selectChipActive, { alignSelf: "flex-start" }]}
+                onPress={() => setBranch(null)}
+              >
+                <Text style={[styles.selectChipText, branch === null && styles.selectChipTextActive]}>Kulüp Geneli</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.input} onPress={() => setBranchPickerVisible(true)}>
+                <Text style={{ color: branch ? colors.ink : colors.muted }}>{branch ?? "Belirli bir branşa özel yap"}</Text>
+              </TouchableOpacity>
+              <Text style={styles.branchHint}>
+                {branch ? `Yalnızca ${branch} branşındaki veli ve sporcular görür.` : "Kulüpteki herkes görür."}
+              </Text>
+            </View>
+          )}
         </Field>
 
         <Field label="Kategori">
@@ -419,6 +453,13 @@ export default function ShopProductFormScreen({ route, navigation }: Props) {
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Kaydet</Text>}
         </TouchableOpacity>
       </ScrollView>
+
+      <BranchPickerModal
+        visible={branchPickerVisible}
+        selectedName={branch}
+        onSelect={(b: Branch) => setBranch(b.name)}
+        onClose={() => setBranchPickerVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -441,6 +482,8 @@ const styles = StyleSheet.create({
     color: colors.ink, paddingHorizontal: spacing.md, paddingVertical: 12,
   },
   inputMultiline: { minHeight: 84, textAlignVertical: "top" },
+  inputDisabled: { opacity: 0.7 },
+  branchHint: { color: colors.muted, fontSize: 12 },
   photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   photoSlot: {
     width: 80, height: 80, borderRadius: radius.md, backgroundColor: colors.surface,

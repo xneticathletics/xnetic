@@ -62,6 +62,7 @@ export default function ShopProductsListPage() {
     },
     { key: "title", label: "Ürün", render: (p) => <span className="font-semibold">{p.title}</span> },
     { key: "price", label: "Fiyat", render: (p) => `${Number(p.price).toLocaleString("tr-TR")} ₺` },
+    { key: "branch", label: "Yayın", render: (p) => p.branch ?? "Kulüp Geneli" },
     { key: "category", label: "Kategori", render: (p) => p.category ?? "—" },
     { key: "gender", label: "Cinsiyet", render: (p) => (p.gender ? GENDER_LABEL[p.gender] : "—") },
     {

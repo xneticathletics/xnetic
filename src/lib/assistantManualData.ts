@@ -2134,9 +2134,10 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "ürün fiyatı",
       "mağaza yönetimi",
       "ürün sil",
+      "ürünü sadece bir branşa göster",
       "Mağazaya ürün nasıl eklerim?"
     ],
-    "answer": "1. Mağaza sekmesinde \"+ Ürün Ekle\"ye dokun.\n2. En fazla 5 fotoğraf ekle; Başlık (zorunlu), Açıklama, Fiyat (₺, zorunlu), Kategori ve Cinsiyet (Kadın/Erkek/Unisex) gir.\n3. Renk ve beden seçeneklerini ekle ve her seçenek için stok adedini yaz (tüm seçenekler için geçerli bir stok gerekir).\n4. Kaydet.\n\"📊 Stok\" tüm ürünlerin toplam stokunu gösterir. Ürünü düzenlemek ya da silmek için mağaza yönetim listesinden ürüne dokun."
+    "answer": "1. Mağaza sekmesinde \"+ Ürün Ekle\"ye dokun.\n2. En fazla 5 fotoğraf ekle; Başlık (zorunlu), Açıklama, Fiyat (₺, zorunlu), Kategori ve Cinsiyet (Kadın/Erkek/Unisex) gir.\n   \"Yayınlanacağı Yer\"de ürünün kimlere görüneceğini seç: \"Kulüp Geneli\" (herkes) ya da belirli bir branş (yalnızca o branştaki veli ve sporcular). Branş koordinatörü yalnızca kendi branşına ürün ekleyebilir; genel ürünleri kulüp yöneticisi yönetir.\n3. Renk ve beden seçeneklerini ekle ve her seçenek için stok adedini yaz (tüm seçenekler için geçerli bir stok gerekir).\n4. Kaydet.\n\"📊 Stok\" tüm ürünlerin toplam stokunu gösterir. Ürünü düzenlemek ya da silmek için mağaza yönetim listesinden ürüne dokun. Koordinatör bu listede yalnızca kendi branşının ürünlerini görür."
   },
   {
     "id": "magaza-siparis-yonet",
@@ -2151,7 +2152,7 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "sipariş takibi",
       "stok düşüyor mu"
     ],
-    "answer": "Mağaza sekmesinde \"📦 Siparişler\"e gir; siparişleri duruma göre süz (Tümü, Bekliyor, Onaylandı, Teslim Edildi, İptal). Bir siparişte \"Onayla\", \"Teslim Edildi Olarak İşaretle\" ya da \"İptal Et\" seçenekleri bulunur. Sipariş verildiğinde ilgili seçeneğin stoku otomatik düşer. Teslim edilen siparişler gelir olarak Finans'a işlenir."
+    "answer": "Mağaza sekmesinde \"📦 Siparişler\"e gir; siparişleri duruma göre süz (Tümü, Bekliyor, Onaylandı, Teslim Edildi, İptal). Bir siparişte \"Onayla\", \"Teslim Edildi Olarak İşaretle\" ya da \"İptal Et\" seçenekleri bulunur. Sipariş verildiğinde ilgili seçeneğin stoku otomatik düşer; iptal edilirse geri eklenir. Onaylanan siparişler gelir olarak Finans'a işlenir. Yeni siparişte kulüp yöneticisine, ürün branşa özelse o branşın koordinatörüne de bildirim gider; koordinatör yalnızca kendi branş ürünlerinin siparişlerini görür. Sipariş onaylanınca ve teslim edilince veliye bildirim gider."
   },
   {
     "id": "magaza-sporcu",

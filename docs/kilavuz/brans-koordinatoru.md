@@ -543,13 +543,14 @@ Etkinliğin detayında "Kayıtlar"a dokun; kayıt olan sporcular, ödeme yöntem
 
 1. Mağaza sekmesinde "+ Ürün Ekle"ye dokun.
 2. En fazla 5 fotoğraf ekle; Başlık (zorunlu), Açıklama, Fiyat (₺, zorunlu), Kategori ve Cinsiyet (Kadın/Erkek/Unisex) gir.
+   "Yayınlanacağı Yer"de ürünün kimlere görüneceğini seç: "Kulüp Geneli" (herkes) ya da belirli bir branş (yalnızca o branştaki veli ve sporcular). Branş koordinatörü yalnızca kendi branşına ürün ekleyebilir; genel ürünleri kulüp yöneticisi yönetir.
 3. Renk ve beden seçeneklerini ekle ve her seçenek için stok adedini yaz (tüm seçenekler için geçerli bir stok gerekir).
 4. Kaydet.
-"📊 Stok" tüm ürünlerin toplam stokunu gösterir. Ürünü düzenlemek ya da silmek için mağaza yönetim listesinden ürüne dokun.
+"📊 Stok" tüm ürünlerin toplam stokunu gösterir. Ürünü düzenlemek ya da silmek için mağaza yönetim listesinden ürüne dokun. Koordinatör bu listede yalnızca kendi branşının ürünlerini görür.
 
 ### Mağaza siparişlerini yönetme
 
-Mağaza sekmesinde "📦 Siparişler"e gir; siparişleri duruma göre süz (Tümü, Bekliyor, Onaylandı, Teslim Edildi, İptal). Bir siparişte "Onayla", "Teslim Edildi Olarak İşaretle" ya da "İptal Et" seçenekleri bulunur. Sipariş verildiğinde ilgili seçeneğin stoku otomatik düşer. Teslim edilen siparişler gelir olarak Finans'a işlenir.
+Mağaza sekmesinde "📦 Siparişler"e gir; siparişleri duruma göre süz (Tümü, Bekliyor, Onaylandı, Teslim Edildi, İptal). Bir siparişte "Onayla", "Teslim Edildi Olarak İşaretle" ya da "İptal Et" seçenekleri bulunur. Sipariş verildiğinde ilgili seçeneğin stoku otomatik düşer; iptal edilirse geri eklenir. Onaylanan siparişler gelir olarak Finans'a işlenir. Yeni siparişte kulüp yöneticisine, ürün branşa özelse o branşın koordinatörüne de bildirim gider; koordinatör yalnızca kendi branş ürünlerinin siparişlerini görür. Sipariş onaylanınca ve teslim edilince veliye bildirim gider.
 
 ## 📸 Sosyal Alan
 

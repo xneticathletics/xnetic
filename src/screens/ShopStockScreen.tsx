@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { listAllProducts, productThumbUrl, listProductVariantsAdmin, updateVariantStock, type ShopProductAdmin, type ShopVariantAdmin } from "../lib/api/shop";
 import type { ShopStackParamList } from "../navigation/ShopStack";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<ShopStackParamList, "ShopStock">;
 
@@ -17,17 +18,22 @@ export default function ShopStockScreen({}: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Koordinatör yalnızca kendi branşının ürünlerinin stokunu yönetir
+  // (genel ürünleri görebiliyor ama stoklarını değiştiremez — RLS).
+  const { selectedBranch, isLocked } = useBranchSelect();
+
   const load = useCallback(async () => {
     try {
       setError(null);
-      setProducts(await listAllProducts());
+      const all = await listAllProducts();
+      setProducts(isLocked ? all.filter((p) => p.branch === selectedBranch) : all);
     } catch (e: any) {
       setError(e.message ?? "Ürünler yüklenemedi");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [isLocked, selectedBranch]);
 
   useFocusEffect(
     useCallback(() => {

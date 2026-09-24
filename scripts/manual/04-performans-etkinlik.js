@@ -156,16 +156,17 @@ e("magaza-siparis", "magaza", "P", "Mağazadan ürün sipariş etme (veli)",
 Siparişin kulüp yönetimine iletilir; ödeme kontrol edildikten sonra durumu güncellenir. Siparişlerini Mağaza ekranındaki "📦 Siparişlerim"den takip edersin (Bekliyor → Onaylandı → Teslim Edildi). Sporcu hesabı mağazayı yalnızca görüntüler, sipariş veremez; sipariş yalnızca veli hesabıyla verilir.`);
 
 e("magaza-urun-ekle", "magaza", "AK", "Mağazaya ürün ekleme / düzenleme",
-  ["ürün ekle", "mağazaya ürün koy", "stok gir", "ürün fotoğrafı", "beden renk seçenekleri", "ürün fiyatı", "mağaza yönetimi", "ürün sil"],
+  ["ürün ekle", "mağazaya ürün koy", "stok gir", "ürün fotoğrafı", "beden renk seçenekleri", "ürün fiyatı", "mağaza yönetimi", "ürün sil", "ürünü sadece bir branşa göster"],
   `1. Mağaza sekmesinde "+ Ürün Ekle"ye dokun.
 2. En fazla 5 fotoğraf ekle; Başlık (zorunlu), Açıklama, Fiyat (₺, zorunlu), Kategori ve Cinsiyet (Kadın/Erkek/Unisex) gir.
+   "Yayınlanacağı Yer"de ürünün kimlere görüneceğini seç: "Kulüp Geneli" (herkes) ya da belirli bir branş (yalnızca o branştaki veli ve sporcular). Branş koordinatörü yalnızca kendi branşına ürün ekleyebilir; genel ürünleri kulüp yöneticisi yönetir.
 3. Renk ve beden seçeneklerini ekle ve her seçenek için stok adedini yaz (tüm seçenekler için geçerli bir stok gerekir).
 4. Kaydet.
-"📊 Stok" tüm ürünlerin toplam stokunu gösterir. Ürünü düzenlemek ya da silmek için mağaza yönetim listesinden ürüne dokun.`);
+"📊 Stok" tüm ürünlerin toplam stokunu gösterir. Ürünü düzenlemek ya da silmek için mağaza yönetim listesinden ürüne dokun. Koordinatör bu listede yalnızca kendi branşının ürünlerini görür.`);
 
 e("magaza-siparis-yonet", "magaza", "AK", "Mağaza siparişlerini yönetme",
   ["siparişleri gör", "siparişi onayla", "teslim edildi işaretle", "siparişi iptal et", "sipariş takibi", "stok düşüyor mu"],
-  `Mağaza sekmesinde "📦 Siparişler"e gir; siparişleri duruma göre süz (Tümü, Bekliyor, Onaylandı, Teslim Edildi, İptal). Bir siparişte "Onayla", "Teslim Edildi Olarak İşaretle" ya da "İptal Et" seçenekleri bulunur. Sipariş verildiğinde ilgili seçeneğin stoku otomatik düşer. Teslim edilen siparişler gelir olarak Finans'a işlenir.`);
+  `Mağaza sekmesinde "📦 Siparişler"e gir; siparişleri duruma göre süz (Tümü, Bekliyor, Onaylandı, Teslim Edildi, İptal). Bir siparişte "Onayla", "Teslim Edildi Olarak İşaretle" ya da "İptal Et" seçenekleri bulunur. Sipariş verildiğinde ilgili seçeneğin stoku otomatik düşer; iptal edilirse geri eklenir. Onaylanan siparişler gelir olarak Finans'a işlenir. Yeni siparişte kulüp yöneticisine, ürün branşa özelse o branşın koordinatörüne de bildirim gider; koordinatör yalnızca kendi branş ürünlerinin siparişlerini görür. Sipariş onaylanınca ve teslim edilince veliye bildirim gider.`);
 
 e("magaza-sporcu", "magaza", "S", "Sporcu mağazayı kullanabilir mi",
   ["sporcu sipariş verebilir mi", "mağazayı görüyorum ama alamıyorum", "satın al butonu yok"],

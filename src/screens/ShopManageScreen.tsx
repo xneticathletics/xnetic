@@ -8,6 +8,7 @@ import { listAllProducts, productThumbUrl, updateProduct, deleteProduct, getPend
 
 const GENDER_LABEL: Record<ShopGender, string> = { kadin: "Kadın", erkek: "Erkek", unisex: "Unisex" };
 import type { ShopStackParamList } from "../navigation/ShopStack";
+import { useBranchSelect } from "../context/BranchSelectContext";
 
 type Props = NativeStackScreenProps<ShopStackParamList, "ShopManage">;
 
@@ -20,11 +21,16 @@ export default function ShopManageScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Koordinatör yalnızca KENDİ branşının ürünlerini yönetir. Genel ürünleri
+  // de (müşteri olarak) görebiliyor ama düzenleyemiyor — yönetim listesinde
+  // gösterilirse kaydederken RLS hatası alırdı, bu yüzden burada süzülüyor.
+  const { selectedBranch, isLocked } = useBranchSelect();
+
   const load = useCallback(async () => {
     try {
       setError(null);
       const [allProducts, pending] = await Promise.all([listAllProducts(), getPendingOrderCount()]);
-      setProducts(allProducts);
+      setProducts(isLocked ? allProducts.filter((p) => p.branch === selectedBranch) : allProducts);
       setPendingCount(pending);
     } catch (e: any) {
       setError(e.message ?? "Ürünler yüklenemedi");
@@ -32,7 +38,7 @@ export default function ShopManageScreen({ navigation }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [isLocked, selectedBranch]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,6 +146,9 @@ export default function ShopManageScreen({ navigation }: Props) {
                 <Text style={[styles.badge, item.totalStock > 0 ? styles.badgeStock : styles.badgeOutOfStock]}>
                   Stok: {item.totalStock}
                 </Text>
+                {!isLocked && (
+                  <Text style={[styles.badge, styles.badgeBranch]}>{item.branch ?? "Genel"}</Text>
+                )}
               </View>
             </View>
             <Text style={styles.chevron}>›</Text>
@@ -191,6 +200,7 @@ const styles = StyleSheet.create({
   badgeActive: { color: colors.bg, backgroundColor: colors.teal },
   badgeInactive: { color: colors.bg, backgroundColor: colors.muted },
   badgeStock: { color: colors.bg, backgroundColor: colors.violet },
+  badgeBranch: { color: colors.ink, backgroundColor: colors.line },
   badgeOutOfStock: { color: colors.bg, backgroundColor: colors.coral },
   chevron: { color: colors.muted, fontSize: 20, fontWeight: "700" },
 });

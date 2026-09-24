@@ -12,6 +12,7 @@ import {
   type ShopGender,
   type VariantCombo,
 } from "../../lib/api/shop";
+import { listBranches, type Branch } from "../../lib/api/branches";
 
 const CATEGORY_OPTIONS = ["Forma", "Şort", "Eşofman", "Ayakkabı", "Çanta", "Aksesuar", "Diğer"];
 const GENDER_OPTIONS: { value: ShopGender; label: string }[] = [
@@ -53,6 +54,9 @@ export default function ShopProductModal({
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [category, setCategory] = useState<string | null>(product?.category ?? null);
   const [gender, setGender] = useState<ShopGender | null>(product?.gender ?? null);
+  // Yayınlanacağı yer: null = kulüp geneli, dolu = yalnızca o branş.
+  const [branch, setBranch] = useState<string | null>(product?.branch ?? null);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const isShoeCategory = category === "Ayakkabı";
 
   const [photos, setPhotos] = useState<string[]>(product?.photo_urls ?? []);
@@ -68,6 +72,10 @@ export default function ShopProductModal({
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingRef = useRef(false);
+
+  useEffect(() => {
+    listBranches().then(setBranches).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isNew || !product) return;
@@ -169,6 +177,7 @@ export default function ShopProductModal({
           price: parsedPrice,
           category,
           gender,
+          branch,
         });
         let uploaded: string[] = [];
         for (const p of localPhotos) {
@@ -182,6 +191,7 @@ export default function ShopProductModal({
           price: parsedPrice,
           category,
           gender,
+          branch,
         });
         await saveProductVariants(product!.id, variantCombos);
       }
@@ -256,6 +266,28 @@ export default function ShopProductModal({
                 placeholder="0"
                 inputMode="decimal"
               />
+            </FormField>
+
+            <FormField label="Yayınlanacağı Yer">
+              <div className="flex flex-wrap gap-2">
+                {[null, ...branches.map((b) => b.name)].map((b) => (
+                  <button
+                    type="button"
+                    key={b ?? "__genel"}
+                    onClick={() => setBranch(b)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                      branch === b ? "border-yellow bg-yellow text-bg" : "border-line text-muted"
+                    }`}
+                  >
+                    {b ?? "Kulüp Geneli"}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-muted">
+                {branch
+                  ? `Yalnızca ${branch} branşındaki veli ve sporcular görür; ${branch} koordinatörü de yönetebilir.`
+                  : "Kulüpteki herkes görür; yalnızca kulüp yöneticisi yönetir."}
+              </p>
             </FormField>
 
             <FormField label="Kategori">
