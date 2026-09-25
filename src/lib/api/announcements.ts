@@ -19,6 +19,10 @@ export type Announcement = {
   created_at: string;
   attachment_url: string | null;
   storage_path: string | null;
+  // Kim yayınladı — trg_set_announcement_author ile otomatik dolduruluyor
+  // (bkz. migration). Yayınlayan, hedef kitlenin parçası olmasa bile kendi
+  // duyurusunu HER ZAMAN görsün diye (bkz. filterAnnouncementsForViewer).
+  author_id: string | null;
 };
 
 export type AnnouncementInput = {
@@ -34,7 +38,7 @@ export type AnnouncementInput = {
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url, storage_path")
+    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url, storage_path, author_id")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -48,7 +52,7 @@ export async function listAnnouncements(): Promise<Announcement[]> {
 export async function getAnnouncement(id: string): Promise<Announcement> {
   const { data, error } = await supabase
     .from("announcements")
-    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url, storage_path")
+    .select("id, target_types, target_ids, target_user_ids, title, body, created_at, attachment_url, storage_path, author_id")
     .eq("id", id)
     .single();
   if (error) throw error;
@@ -269,8 +273,14 @@ export function filterAnnouncementsForViewer(
 ): Announcement[] {
   if (role === "club_admin" || role === "super_admin") return items;
 
-  return items.filter((a) =>
-    a.target_types.some((t) => {
+  return items.filter((a) => {
+    // Yayınlayan, hedef kitlenin parçası olmasa bile kendi duyurusunu HER
+    // ZAMAN görür — branş koordinatörü bir gruba duyuru yayınladığında
+    // target_user_ids'te sadece o gruptaki sporcu/veli hesapları olur,
+    // koordinatörün kendisi hiç yer almaz; bu satır olmadan koordinatör
+    // kendi yayınladığı duyuruyu hiçbir yerde göremiyordu (2026-09-25).
+    if (myUserId && a.author_id === myUserId) return true;
+    return a.target_types.some((t) => {
       if (t === "club") return true;
       if (t === "parents") return role === "parent";
       if (t === "athletes") return role === "athlete";
@@ -290,8 +300,8 @@ export function filterAnnouncementsForViewer(
         return true;
       }
       return false;
-    })
-  );
+    });
+  });
 }
 
 // ---------------------------------------------------------------- OKUNDU TAKİBİ
