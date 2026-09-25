@@ -240,3 +240,35 @@ export async function listAthleteAttendance(athleteId: string): Promise<AthleteA
     topic: r.training_sessions?.topic ?? null,
   }));
 }
+
+export type SessionAttendanceSummary = {
+  taken: boolean;
+  geldi: number;
+  gelmedi: number;
+  gec_kaldi: number;
+  raporlu: number;
+  izinli: number;
+};
+
+// Geçmiş Antrenmanlar listesi için — birden çok oturumun yoklama
+// durumunu TEK sorguda döner ("hiç alınmamış" mı, alınmışsa kaç sporcu
+// hangi durumda). Antrenman satırında "Yoklama alınmadı" ya da
+// "18 geldi · 2 gelmedi" gibi bir özet göstermek için.
+export async function getAttendanceSummaryForSessions(
+  sessionIds: string[]
+): Promise<Record<string, SessionAttendanceSummary>> {
+  const map: Record<string, SessionAttendanceSummary> = {};
+  if (sessionIds.length === 0) return map;
+
+  const { data, error } = await supabase.from("attendance").select("session_id, status").in("session_id", sessionIds);
+  if (error) throw error;
+
+  (data ?? []).forEach((r) => {
+    const s = (map[r.session_id as string] ??= {
+      taken: true, geldi: 0, gelmedi: 0, gec_kaldi: 0, raporlu: 0, izinli: 0,
+    });
+    const status = r.status as AttendanceStatus;
+    if (status in s) (s as any)[status] += 1;
+  });
+  return map;
+}

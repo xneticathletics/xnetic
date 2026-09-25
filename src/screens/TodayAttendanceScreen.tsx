@@ -61,7 +61,12 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.subtitle}>Bugün antrenmanı olan gruplar</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.subtitle}>Bugün antrenmanı olan gruplar</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("AttendanceHistory")}>
+          <Text style={styles.historyLink}>📅 Geçmiş Antrenmanlar</Text>
+        </TouchableOpacity>
+      </View>
 
       {loading && <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -108,7 +113,9 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
   title: { color: colors.ink, fontSize: 20, fontWeight: "700" },
-  subtitle: { color: colors.muted, fontSize: 13, marginTop: 2, marginBottom: spacing.md },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md, gap: spacing.sm },
+  subtitle: { color: colors.muted, fontSize: 13, marginTop: 2, flex: 1 },
+  historyLink: { color: colors.yellow, fontSize: 12, fontWeight: "700" },
   error: { color: colors.coral, marginBottom: spacing.md },
   empty: { color: colors.muted, textAlign: "center", marginTop: spacing.xl },
   row: {

@@ -21,6 +21,7 @@ import TrainingSessionsScreen from "../screens/TrainingSessionsScreen";
 import DayScheduleDetailScreen from "../screens/DayScheduleDetailScreen";
 import WeeklyScheduleScreen from "../screens/WeeklyScheduleScreen";
 import TodayAttendanceScreen from "../screens/TodayAttendanceScreen";
+import AttendanceHistoryScreen from "../screens/AttendanceHistoryScreen";
 import TrainingSessionFormScreen from "../screens/TrainingSessionFormScreen";
 import AttendanceScreen from "../screens/AttendanceScreen";
 import SessionRosterScreen from "../screens/SessionRosterScreen";
@@ -144,6 +145,7 @@ export type HomeStackParamList = {
     completionWindowBeforeMinutes: number;
   };
   TodayAttendance: undefined;
+  AttendanceHistory: undefined;
   TrainingSessionForm: { sessionId: string | undefined };
   Attendance: { sessionId: string; groupId: string; groupName: string };
   SessionRoster: { sessionId: string; groupId: string; groupName: string };
@@ -281,6 +283,7 @@ export default function HomeStack({ role }: { role: UserRole }) {
       <Stack.Screen name="DayScheduleDetail" component={DayScheduleDetailScreen} options={{ title: "Gün Detayı" }} />
       <Stack.Screen name="WeeklySchedule" component={WeeklyScheduleScreen} options={{ title: "Haftalık Program" }} />
       <Stack.Screen name="TodayAttendance" component={TodayAttendanceScreen} options={{ title: "Günün Programı" }} />
+      <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} options={{ title: "Geçmiş Antrenmanlar" }} />
       <Stack.Screen name="TrainingSessionForm" component={TrainingSessionFormScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: "Günün Programı" }} />
       <Stack.Screen name="SessionRoster" component={SessionRosterScreen} options={{ title: "Sporcular" }} />

@@ -150,7 +150,9 @@ e("yoklama-alma", "takvim", "ACK", "Yoklama alma (Günün Programı)",
 3. Her sporcu için Geldi / Gelmedi / İzinli durumunu seç. Herkes geldiyse "✓ Hepsini Geldi İşaretle" işini hızlandırır.
 4. "Yoklamayı Kaydet"e dokun.
 5. Antrenman bitince "Antrenmanı Tamamlandı Olarak İşaretle"ye bas.
-Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar.`);
+Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar.
+
+Geçmiş bir antrenmanın yoklamasına bakmak için "Günün Programı" ekranındaki "📅 Geçmiş Antrenmanlar"a dokun; bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.`);
 
 e("yoklama-zaman-penceresi", "takvim", "ACK", "Yoklama neden açılmıyor / \"Henüz zamanı değil\"",
   ["yoklama açılmıyor", "henüz zamanı değil", "yoklama kapalı", "yoklama süresi", "yoklama penceresi", "yoklama zamanı geçti", "yoklama ekranı kilitli", "yoklama ekranı açılmıyor"],
