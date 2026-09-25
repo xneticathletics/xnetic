@@ -21,7 +21,9 @@ e("sifremi-unuttum", "baslarken", "ACPSKX", "Şifremi unuttum",
 2. Kullanıcı adını ya da telefon numaranı yaz ve gönder. İkisinden biri kayıtlı bilgilerinle eşleşmesi yeter — giriş yaparken hangisini kullandığının önemi yok (kullanıcı adıyla giriyorsan da telefonunu yazabilirsin).
 3. Talebin kulüp yöneticine bildirim olarak gider; yöneticin Kullanıcılar ekranından yeni bir geçici şifre üretip sana iletir.
 
-Geçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor.`);
+Geçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor.
+
+Aynı bilgi için günde en fazla 3 talep gönderebilirsin — art arda basmak spam sayılıp engellenir, ertesi gün tekrar deneyebilirsin.`);
 
 e("gecici-sifre", "baslarken", "ACPSKX", "Geçici şifreyle ilk giriş",
   ["geçici şifre", "ilk girişte şifre değiştir", "şifre belirle ve devam et", "yeni şifre belirlemem isteniyor", "hoş geldin şifre"],

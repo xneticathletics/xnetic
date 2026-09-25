@@ -180,7 +180,7 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "şifre yenileme",
       "Şifremi unuttum ne yapmalıyım?"
     ],
-    "answer": "1. Giriş ekranında \"Şifremi Unuttum\"a dokun.\n2. Kullanıcı adını ya da telefon numaranı yaz ve gönder. İkisinden biri kayıtlı bilgilerinle eşleşmesi yeter — giriş yaparken hangisini kullandığının önemi yok (kullanıcı adıyla giriyorsan da telefonunu yazabilirsin).\n3. Talebin kulüp yöneticine bildirim olarak gider; yöneticin Kullanıcılar ekranından yeni bir geçici şifre üretip sana iletir.\n\nGeçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor."
+    "answer": "1. Giriş ekranında \"Şifremi Unuttum\"a dokun.\n2. Kullanıcı adını ya da telefon numaranı yaz ve gönder. İkisinden biri kayıtlı bilgilerinle eşleşmesi yeter — giriş yaparken hangisini kullandığının önemi yok (kullanıcı adıyla giriyorsan da telefonunu yazabilirsin).\n3. Talebin kulüp yöneticine bildirim olarak gider; yöneticin Kullanıcılar ekranından yeni bir geçici şifre üretip sana iletir.\n\nGeçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor.\n\nAynı bilgi için günde en fazla 3 talep gönderebilirsin — art arda basmak spam sayılıp engellenir, ertesi gün tekrar deneyebilirsin."
   },
   {
     "id": "gecici-sifre",

@@ -18,6 +18,24 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// src/lib/loginIdentifier.ts / invite-user / request_password_reset_notice
+// SQL fonksiyonuyla aynı kural (kasıtlı kopya) — telefon farklı biçimlerde
+// (boşluk/tire/+90) yazılsa da AYNI hız sınırı kovasına düşsün diye, aksi
+// halde biri aynı numarayı her seferinde farklı biçimlendirip günlük
+// sınırı bedavaya atlatabilirdi.
+function normalizeIdentifierForRateLimit(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.includes("@")) return `mail:${trimmed.toLowerCase()}`;
+  const rawDigitCount = trimmed.replace(/\D/g, "").length;
+  if (rawDigitCount >= 9) {
+    let digits = trimmed.replace(/\D/g, "");
+    if (digits.length === 12 && digits.startsWith("90")) digits = `0${digits.slice(2)}`;
+    else if (digits.length > 0 && !digits.startsWith("0")) digits = `0${digits}`;
+    return `tel:${digits.slice(0, 11)}`;
+  }
+  return `usr:${trimmed.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+}
+
 // Kimlik doğrulaması gerektirmeyen bu uç nokta herkese açık — bot/otomatik
 // tekrarlı çağrılarla kulüp admin(ler)ine sahte "şifre sıfırlama talebi"
 // bildirim/push yağdırmayı engellemek için IP başına basit bir hız
@@ -73,6 +91,21 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const identifier = String(body?.identifier ?? "").trim();
     if (!identifier) return genericOk();
+
+    // Arka arkaya/bot ile AYNI kişi için tekrar tekrar talep gönderilip
+    // yöneticiye bildirim yağdırmayı engelle — IP'den bağımsız, bilginin
+    // KENDİSİNE göre (kullanıcı isteği: "arka arkaya şifre sıfırlama
+    // talebini kaldıralım, günlük 3 ile sınırlayalım"). Hesap var mı yok mu
+    // bilgisi sızmasın diye eşleştirmeden ÖNCE, IP sınırıyla aynı 429
+    // davranışında.
+    const identifierKey = normalizeIdentifierForRateLimit(identifier);
+    const withinIdentifierLimit = await checkRateLimit(admin, "password-reset-identifier", identifierKey, 3, 24 * 60);
+    if (!withinIdentifierLimit) {
+      return new Response(
+        JSON.stringify({ error: "Bu bilgi için bugün en fazla sayıda sıfırlama talebi gönderildi. Yarın tekrar dene ya da doğrudan yöneticinle iletişime geç." }),
+        { headers: { ...CORS_HEADERS, "Content-Type": "application/json" }, status: 429 }
+      );
+    }
 
     // Eşleştirme (kullanıcı adı VEYA telefon) ve bildirim gönderimi tek bir
     // SECURITY DEFINER SQL fonksiyonunda; sonucu bilerek okumuyoruz.

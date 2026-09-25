@@ -35,6 +35,8 @@ Yeni bir kulüp kurmak istiyorsan xnetic.net adresinden "Kulüp Oluştur" adım�
 
 Geçici şifreyle girdiğinde kendi şifreni belirlemen istenir. Şifre sıfırlama e-postası/linki gönderilmiyor.
 
+Aynı bilgi için günde en fazla 3 talep gönderebilirsin — art arda basmak spam sayılıp engellenir, ertesi gün tekrar deneyebilirsin.
+
 ### Geçici şifreyle ilk giriş
 
 Sana geçici bir şifre verildiyse ilk girişte "Hoş Geldin" ekranı çıkar ve kendi şifreni belirlemen zorunlu olur.

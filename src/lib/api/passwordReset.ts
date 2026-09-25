@@ -51,7 +51,7 @@ export async function completePasswordReset(newPassword: string) {
 // fonksiyon her zaman aynı genel başarı yanıtını dönüyor — hesap
 // numaralandırmasına karşı, burada da o davranışı koruyoruz.
 export async function requestPasswordResetNotice(identifier: string): Promise<void> {
-  await fetch(`${SUPABASE_URL}/functions/v1/request-password-reset-notice`, {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/request-password-reset-notice`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -59,7 +59,16 @@ export async function requestPasswordResetNotice(identifier: string): Promise<vo
       apikey: SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({ identifier }),
-  }).catch(() => {});
+  });
+  // 200 her zaman genel başarı yanıtı (hesap var/yok fark etmez — bkz.
+  // fonksiyonun kendi yorumu). 429 ise günlük hız sınırına takıldığını
+  // GERÇEKTEN bildirir — bu, hesap numaralandırması sızdırmaz (bilginin
+  // kendisine bağlı, eşleşme olup olmadığına değil), o yüzden eskisi gibi
+  // yutmuyoruz: yutulsaydı sınırlanmış biri de "gönderildi" sanırdı.
+  if (!response.ok) {
+    const json = await response.json().catch(() => null);
+    throw new Error(json?.error || "Gönderilemedi");
+  }
 }
 
 // Kulüp Ayarları → Kullanıcılar ekranındaki "Şifreyi Sıfırla" butonundan
