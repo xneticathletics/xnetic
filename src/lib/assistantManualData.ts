@@ -1187,9 +1187,13 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "sonuçlar",
       "skorlar",
       "geçmiş maçlar",
-      "maç sonucunu görme"
+      "maç sonucunu görme",
+      "sonuçları tarihe göre filtrele",
+      "maç sonucu sil",
+      "birden fazla maç sil",
+      "toplu maç silme"
     ],
-    "answer": "Takvim ekranındaki \"🏆 Sonuçlar\" düğmesi biten müsabakaları ve skorlarını listeler; branşa göre filtreleyebilirsin. Veli ve sporcular sonucu bildirimden ve takvimden görür."
+    "answer": "Takvim ekranındaki \"🏆 Sonuçlar\" düğmesi biten müsabakaları ve skorlarını listeler; branşa ve tarih aralığına (Başlangıç/Bitiş) göre filtreleyebilirsin.\n\nKulüp yöneticisi ve branş koordinatörü toplu silme yapabilir: bir sonuca uzun bas, üstte \"X seçili\" ve \"🗑 Sil\" çıkar; başka sonuçlara dokunarak seçimi genişlet, Sil'e basıp onayla. Veli ve sporcular sonucu bildirimden ve takvimden görür."
   },
   {
     "id": "musabaka-sil",

@@ -137,6 +137,13 @@ export async function deleteMatch(id: string) {
   if (error) throw error;
 }
 
+// Müsabaka Sonuçları ekranındaki uzun-bas → çoklu seç → toplu sil akışı için.
+export async function deleteMatches(ids: string[]) {
+  if (ids.length === 0) return;
+  const { error } = await supabase.from("matches").delete().in("id", ids);
+  if (error) throw error;
+}
+
 export type MatchRosterEntry = {
   athlete_id: string;
   full_name: string;

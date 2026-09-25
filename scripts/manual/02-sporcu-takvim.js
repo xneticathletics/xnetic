@@ -188,8 +188,10 @@ e("musabaka-sonuc", "musabaka", "ACK", "Müsabaka sonucu girme",
 Sonuç kaydedilince grubun velilerine, antrenörlerine, koordinatörüne ve sporcularına otomatik bildirim gider.`);
 
 e("musabaka-sonuclari", "musabaka", "ACKPS", "Biten müsabaka sonuçlarını görme",
-  ["maç sonuçları", "sonuçlar", "skorlar", "geçmiş maçlar", "maç sonucunu görme"],
-  `Takvim ekranındaki "🏆 Sonuçlar" düğmesi biten müsabakaları ve skorlarını listeler; branşa göre filtreleyebilirsin. Veli ve sporcular sonucu bildirimden ve takvimden görür.`);
+  ["maç sonuçları", "sonuçlar", "skorlar", "geçmiş maçlar", "maç sonucunu görme", "sonuçları tarihe göre filtrele", "maç sonucu sil", "birden fazla maç sil", "toplu maç silme"],
+  `Takvim ekranındaki "🏆 Sonuçlar" düğmesi biten müsabakaları ve skorlarını listeler; branşa ve tarih aralığına (Başlangıç/Bitiş) göre filtreleyebilirsin.
+
+Kulüp yöneticisi ve branş koordinatörü toplu silme yapabilir: bir sonuca uzun bas, üstte "X seçili" ve "🗑 Sil" çıkar; başka sonuçlara dokunarak seçimi genişlet, Sil'e basıp onayla. Veli ve sporcular sonucu bildirimden ve takvimden görür.`);
 
 e("musabaka-sil", "musabaka", "ACK", "Müsabakayı silme / düzenleme",
   ["maçı sil", "müsabakayı iptal et", "maç bilgisini değiştir", "maç saatini düzenle"],

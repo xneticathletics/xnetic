@@ -293,7 +293,9 @@ Sonuç kaydedilince grubun velilerine, antrenörlerine, koordinatörüne ve spor
 
 ### Biten müsabaka sonuçlarını görme
 
-Takvim ekranındaki "🏆 Sonuçlar" düğmesi biten müsabakaları ve skorlarını listeler; branşa göre filtreleyebilirsin. Veli ve sporcular sonucu bildirimden ve takvimden görür.
+Takvim ekranındaki "🏆 Sonuçlar" düğmesi biten müsabakaları ve skorlarını listeler; branşa ve tarih aralığına (Başlangıç/Bitiş) göre filtreleyebilirsin.
+
+Kulüp yöneticisi ve branş koordinatörü toplu silme yapabilir: bir sonuca uzun bas, üstte "X seçili" ve "🗑 Sil" çıkar; başka sonuçlara dokunarak seçimi genişlet, Sil'e basıp onayla. Veli ve sporcular sonucu bildirimden ve takvimden görür.
 
 ### Müsabakayı silme / düzenleme
 
