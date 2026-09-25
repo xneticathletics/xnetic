@@ -190,27 +190,37 @@ export default function ProfileScreen({
         )}
       </View>
 
-      {/* Kulüp Ayarları sadece Kulüp Admini'nde (alt menüde artık ayrı bir
-          "Ayarlar" sekmesi YOK, buradan girilir); Duyurular Süper Admin
-          hariç herkeste (alt menüde artık ayrı bir "Duyurular" sekmesi de
-          YOK — bkz. RoleTabs.tsx). Süper Admin'in kendi kulübü yok, duyuru
-          kulüp-içi bir kavram, bu yüzden o hariç. Diğer ayar kutucuklarıyla
-          aynı kutu stilinde — tek satır kart yerine iki de burada. */}
-      {/* TÜM kutucuklar tek bir sarmalayan ızgarada — satıra tam 2 kutu
-          (eskiden 3 kutu sıkışıp çok küçülüyordu), tek kalan kutu yarım
-          genişlikte kalıyor. */}
+      {/* Kutucukların sırası kasıtlı bir öncelik listesine göre (kullanıcı
+          isteği, 2026-09-25): Kişisel Bilgiler + Giriş/Şifre her zaman en
+          başta (kim olursan ol önce kendi bilgin), sonra Duyurular →
+          Kulüp Ayarları → Rozet Ayarları → Rozet Sahipleri/Rozetlerim →
+          Şikayetler, en sonda Destek. Işzgara satıra tam 2 kutu sığdırdığı
+          için (flexWrap) bu SIRALI listeden bir rolde olmayan kutu
+          atlanınca geri kalanlar kendiliğinden doğru ikili satırlara
+          kayıyor — her rol için ayrı bir düzen yazmaya gerek yok. Kulüp
+          Ayarları sadece Kulüp Admini'nde; Duyurular Süper Admin hariç
+          herkeste (alt menüde ayrı bir "Duyurular" sekmesi YOK — bkz.
+          RoleTabs.tsx); Süper Admin'in kendi kulübü yok, duyuru kulüp-içi
+          bir kavram, bu yüzden o hariç. */}
       <View style={styles.settingsGrid}>
+        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("PersonalInfo")}>
+          <View style={styles.settingsIconBadge}>
+            <Text style={styles.settingsIcon}>👤</Text>
+          </View>
+          <Text style={styles.settingsTitle}>Kişisel Bilgiler</Text>
+          <Text style={styles.settingsSub}>Ad, telefon, fotoğraf</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ChangePassword")}>
+          <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
+            <Text style={styles.settingsIcon}>🔒</Text>
+          </View>
+          <Text style={styles.settingsTitle}>Giriş ve Şifre İşlemleri</Text>
+          <Text style={styles.settingsSub}>Giriş bilgisi, şifre</Text>
+        </TouchableOpacity>
+
       {role !== "super_admin" && (
         <>
-          {role === "club_admin" && (
-            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ClubSettings")}>
-              <View style={styles.settingsIconBadge}>
-                <Text style={styles.settingsIcon}>⚙️</Text>
-              </View>
-              <Text style={styles.settingsTitle}>Kulüp Ayarları</Text>
-              <Text style={styles.settingsSub}>Grup, branş, kullanıcı ve diğer ayarlar</Text>
-            </TouchableOpacity>
-          )}
           <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Announcements")}>
             <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
               <Text style={styles.settingsIcon}>📣</Text>
@@ -218,16 +228,13 @@ export default function ProfileScreen({
             <Text style={styles.settingsTitle}>Duyurular</Text>
             <Text style={styles.settingsSub}>Tüm duyuruları görüntüle</Text>
           </TouchableOpacity>
-          {/* Rozetler sadece veli/sporcuda — admin ve antrenörün buna
-              ihtiyacı yok (kullanıcı isteği). Diğer kutularla aynı satırda,
-              küçük ve yan yana. */}
-          {(role === "parent" || role === "athlete") && (
-            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Badges")}>
-              <View style={[styles.settingsIconBadge, { backgroundColor: colors.yellowSoft }]}>
-                <Text style={styles.settingsIcon}>🏅</Text>
+          {role === "club_admin" && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ClubSettings")}>
+              <View style={styles.settingsIconBadge}>
+                <Text style={styles.settingsIcon}>⚙️</Text>
               </View>
-              <Text style={styles.settingsTitle}>Rozetlerim</Text>
-              <Text style={styles.settingsSub}>Kazandığın ödüller</Text>
+              <Text style={styles.settingsTitle}>Kulüp Ayarları</Text>
+              <Text style={styles.settingsSub}>Grup, branş, kullanıcı ve diğer ayarlar</Text>
             </TouchableOpacity>
           )}
           {/* Rozet eşik sayılarını (5-10-20 vb.) değiştirme — sadece admin/
@@ -250,6 +257,19 @@ export default function ProfileScreen({
               <Text style={styles.settingsSub}>Kim hangi rozeti kazandı</Text>
             </TouchableOpacity>
           )}
+          {/* Rozetler sadece veli/sporcuda — admin ve antrenörün buna
+              ihtiyacı yok (kullanıcı isteği). Rozet Ayarları/Sahipleri'nin
+              (yukarıdaki) veli/sporcudaki karşılığı olduğu için aynı
+              sıradaki yerini alıyor. */}
+          {(role === "parent" || role === "athlete") && (
+            <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Badges")}>
+              <View style={[styles.settingsIconBadge, { backgroundColor: colors.yellowSoft }]}>
+                <Text style={styles.settingsIcon}>🏅</Text>
+              </View>
+              <Text style={styles.settingsTitle}>Rozetlerim</Text>
+              <Text style={styles.settingsSub}>Kazandığın ödüller</Text>
+            </TouchableOpacity>
+          )}
           {(role === "club_admin" || isBranchCoordinator) && (
             <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ContentReports")}>
               <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
@@ -262,24 +282,9 @@ export default function ProfileScreen({
         </>
       )}
 
-        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("PersonalInfo")}>
-          <View style={styles.settingsIconBadge}>
-            <Text style={styles.settingsIcon}>👤</Text>
-          </View>
-          <Text style={styles.settingsTitle}>Kişisel Bilgiler</Text>
-          <Text style={styles.settingsSub}>Ad, telefon, fotoğraf</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("ChangePassword")}>
-          <View style={[styles.settingsIconBadge, { backgroundColor: colors.tealSoft }]}>
-            <Text style={styles.settingsIcon}>🔒</Text>
-          </View>
-          <Text style={styles.settingsTitle}>Giriş ve Şifre İşlemleri</Text>
-          <Text style={styles.settingsSub}>Giriş bilgisi, şifre</Text>
-        </TouchableOpacity>
-
         {/* Bildirim Tercihleri kaldırıldı (kullanıcı isteği, tüm roller) —
-            Destek tek başına kalmasın diye buraya taşındı. */}
+            Destek tek başına kalmasın diye buraya taşındı. Sıralamada her
+            zaman en sonda (kullanıcı isteği). */}
         <TouchableOpacity style={styles.settingsTile} onPress={() => navigation.navigate("Support")}>
           <View style={[styles.settingsIconBadge, { backgroundColor: colors.coralSoft }]}>
             <Text style={styles.settingsIcon}>💬</Text>
