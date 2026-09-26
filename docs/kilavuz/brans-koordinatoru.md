@@ -292,13 +292,13 @@ Takvimde o günü açıp antrenmana dokunarak formunu aç; saat, salon, konu ve 
 3. Her sporcu için Geldi / Gelmedi / İzinli durumunu seç. Herkes geldiyse "✓ Hepsini Geldi İşaretle" işini hızlandırır.
 4. "Yoklamayı Kaydet"e dokun.
 5. Antrenman bitince "Antrenmanı Tamamlandı Olarak İşaretle"ye bas.
-Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar.
+Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar. Pencere kapandıktan sonra o antrenmanın yoklaması KİMSE tarafından (yönetici dahil) değiştirilemez — sadece önizlenir, bu bir güvenlik kuralı olarak sunucuda da uygulanır.
 
-Geçmiş bir antrenmanın yoklamasına bakmak için "📅 Geçmiş Antrenmanlar"a dokun — bu, hem "Günün Programı" ekranında hem de Takvim ekranının üstünde "🏆 Sonuçlar"ın yanında "📋 Yoklama" adıyla bulunur. Kulüp yöneticisi birden çok branşı varsa önce bir branş seçer, sonra o branşın grupları çıkar; branş koordinatörü ve antrenör bu adımı hiç görmez, direkt kendi grupları listelenir. Bir grup seçilince o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.
+Geçmiş bir antrenmanın yoklamasına bakmak için "📅 Geçmiş Antrenmanlar"a dokun — bu, hem "Günün Programı" ekranında hem de Takvim ekranının üstünde "🏆 Sonuçlar"ın yanında "📋 Yoklama" adıyla bulunur. Kulüp yöneticisi birden çok branşı varsa önce bir branş seçer, sonra o branşın grupları çıkar; branş koordinatörü ve antrenör bu adımı hiç görmez, direkt kendi grupları listelenir. Bir grup seçilince o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — sadece görüntülenir, "🔒 Sadece Önizleme" yazar, hiçbir rol değişiklik yapamaz.
 
 ### Yoklama neden açılmıyor / "Henüz zamanı değil"
 
-Yoklama ekranı sadece belirli bir zaman aralığında açıktır: antrenman başlangıcından (varsayılan) 15 dakika ÖNCE açılır ve başlangıçtan 15 dakika SONRA kapanır. "Antrenmanı Tamamlandı" işaretleme ise bitişe 10 dakika kala açılır. Antrenman bitişinden 15 dakika sonra hâlâ işaretlenmemişse uygulama açıldığında otomatik "Tamamlandı" yapılır. Bu süreler kulübe göre değiştirilebilir: Profil → Kulüp Ayarları → Gelişmiş Ayarlar → Yoklama & Antrenman (yönetici).
+Yoklama ekranı sadece belirli bir zaman aralığında açıktır: antrenman başlangıcından (varsayılan) 15 dakika ÖNCE açılır ve başlangıçtan 15 dakika SONRA kapanır. "Antrenmanı Tamamlandı" işaretleme ise bitişe 10 dakika kala açılır. Antrenman bitişinden 15 dakika sonra hâlâ işaretlenmemişse uygulama açıldığında otomatik "Tamamlandı" yapılır. Bu süreler kulübe göre değiştirilebilir: Profil → Kulüp Ayarları → Gelişmiş Ayarlar → Yoklama & Antrenman (yönetici). Pencere kapandıktan SONRA o antrenmana hâlâ girebilirsin ama sadece görüntülemek için — yönetici dahil kimse artık değiştiremez.
 
 ### Yoklama durumları ve mazeretler
 
