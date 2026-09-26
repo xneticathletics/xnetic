@@ -226,3 +226,25 @@ export async function uploadBroadcastAttachment(localUri: string, fileName: stri
   const { data } = supabase.storage.from("announcement-attachments").getPublicUrl(path);
   return data.publicUrl;
 }
+
+// "Kulübü Kalıcı Olarak Sil" — delete-club edge function'ını çağırır (bkz.
+// supabase/functions/delete-club). Web panelindeki deleteClub ile birebir
+// aynı; confirmClubName tam eşleşmezse fonksiyon zaten reddediyor, burada
+// ayrıca bir kontrol yapmıyoruz.
+export async function deleteClub(clubId: string, confirmClubName: string): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yap.");
+
+  const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-club`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string,
+    },
+    body: JSON.stringify({ clubId, confirmClubName }),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(json?.error || `İstek başarısız oldu (kod: ${response.status}).`);
+}

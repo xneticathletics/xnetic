@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listAllClubs, getClubAdmins, type ClubSummary, type ClubAdmin } from "../lib/api/superAdmin";
+import { listAllClubs, getClubAdmins, deleteClub, type ClubSummary, type ClubAdmin } from "../lib/api/superAdmin";
 import { resetUserPassword } from "../lib/api/passwordReset";
 import { listPendingPasswordResetRequests, markNotificationRead } from "../lib/api/notifications";
 import { useCopyToast } from "../hooks/useCopyToast";
@@ -45,6 +45,14 @@ export default function SuperAdminClubsScreen({ navigation }: Props) {
   // Hangi yönetici şifre sıfırlama talebinde bulundu (bildirim id'leriyle) —
   // işlem bitince o bildirim(ler) okundu işaretleniyor.
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, string[]>>({});
+
+  // "Kulübü Kalıcı Olarak Sil" — web panelindeki AdminClubDetailPage'deki
+  // aynı "Tehlikeli Bölge" — onay için kulüp adının TAM yazılması gerekiyor
+  // (yanlışlıkla başka bir kulübü silmeyi engellemek için, edge function da
+  // aynı kontrolü tekrar yapıyor).
+  const [deleteConfirmByClub, setDeleteConfirmByClub] = useState<Record<string, string>>({});
+  const [deletingClubId, setDeletingClubId] = useState<string | null>(null);
+  const [deleteErrorByClub, setDeleteErrorByClub] = useState<Record<string, string>>({});
 
   useFocusEffect(
     useCallback(() => {
@@ -112,6 +120,37 @@ export default function SuperAdminClubsScreen({ navigation }: Props) {
               Alert.alert("Hata", e.message ?? "Şifre sıfırlanamadı", [{ text: "Tamam" }]);
             } finally {
               setResettingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteClub = (club: ClubSummary) => {
+    const typed = (deleteConfirmByClub[club.id] ?? "").trim();
+    if (typed !== club.name) return;
+    Alert.alert(
+      "Kulübü kalıcı olarak sil",
+      `"${club.name}" ve TÜM bağlı verisi (sporcular, antrenörler, veliler, ödemeler, fitness/beslenme kayıtları — her şey) kalıcı olarak silinecek. Bu işlem GERİ ALINAMAZ. Emin misin?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Kalıcı Olarak Sil",
+          style: "destructive",
+          onPress: async () => {
+            if (deletingClubId) return;
+            setDeletingClubId(club.id);
+            setDeleteErrorByClub((prev) => ({ ...prev, [club.id]: "" }));
+            try {
+              await deleteClub(club.id, typed);
+              setClubs((prev) => prev.filter((c) => c.id !== club.id));
+              setExpandedClubId(null);
+              Alert.alert("Silindi", `"${club.name}" kalıcı olarak silindi.`, [{ text: "Tamam" }]);
+            } catch (e: any) {
+              setDeleteErrorByClub((prev) => ({ ...prev, [club.id]: e.message ?? "Silinemedi" }));
+            } finally {
+              setDeletingClubId(null);
             }
           },
         },
@@ -228,6 +267,37 @@ export default function SuperAdminClubsScreen({ navigation }: Props) {
                   ) : (
                     admins.map(renderAdmin)
                   )}
+
+                  <View style={styles.dangerZone}>
+                    <Text style={styles.dangerTitle}>Tehlikeli Bölge</Text>
+                    <Text style={styles.dangerText}>
+                      Bu kulübü ve TÜM bağlı verisini kalıcı olarak siler. Bu işlem GERİ ALINAMAZ.
+                    </Text>
+                    <Text style={styles.dangerLabel}>Onaylamak için kulüp adını tam olarak yaz: "{item.name}"</Text>
+                    <TextInput
+                      style={styles.dangerInput}
+                      value={deleteConfirmByClub[item.id] ?? ""}
+                      onChangeText={(t) => setDeleteConfirmByClub((prev) => ({ ...prev, [item.id]: t }))}
+                      placeholder={item.name}
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                    />
+                    {!!deleteErrorByClub[item.id] && <Text style={styles.error}>{deleteErrorByClub[item.id]}</Text>}
+                    <TouchableOpacity
+                      style={[
+                        styles.dangerButton,
+                        (deleteConfirmByClub[item.id] ?? "").trim() !== item.name && styles.dangerButtonDisabled,
+                      ]}
+                      onPress={() => handleDeleteClub(item)}
+                      disabled={deletingClubId === item.id || (deleteConfirmByClub[item.id] ?? "").trim() !== item.name}
+                    >
+                      {deletingClubId === item.id ? (
+                        <ActivityIndicator color={colors.bg} size="small" />
+                      ) : (
+                        <Text style={styles.dangerButtonText}>Kulübü Kalıcı Olarak Sil</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </View>
@@ -284,4 +354,20 @@ const styles = StyleSheet.create({
   copyIcon: { fontSize: 18 },
   copiedText: { color: colors.teal, fontSize: 11, fontWeight: "700", marginBottom: spacing.xs },
   resultHint: { color: colors.muted, fontSize: 11 },
+
+  dangerZone: {
+    borderTopWidth: 1, borderTopColor: colors.line, marginTop: spacing.md, paddingTop: spacing.md,
+  },
+  dangerTitle: { color: colors.coral, fontSize: 13, fontWeight: "800", marginBottom: 4 },
+  dangerText: { color: colors.muted, fontSize: 11, lineHeight: 16, marginBottom: spacing.sm },
+  dangerLabel: { color: colors.muted, fontSize: 11, fontWeight: "600", marginBottom: 4 },
+  dangerInput: {
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm, paddingVertical: 8, color: colors.ink, fontSize: 13, marginBottom: spacing.sm,
+  },
+  dangerButton: {
+    backgroundColor: colors.coral, borderRadius: radius.sm, paddingVertical: 10, alignItems: "center",
+  },
+  dangerButtonDisabled: { opacity: 0.4 },
+  dangerButtonText: { color: colors.bg, fontWeight: "800", fontSize: 12 },
 });
