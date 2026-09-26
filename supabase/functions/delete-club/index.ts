@@ -34,13 +34,21 @@ function getRequestIp(req: Request): string | null {
 }
 
 // clubs'a cascade FK'sı OLMAYAN, club_id kolonu taşıyan tablolar — 2026-09-05
-// tarihli pg_constraint sorgusuyla doğrulanmış tam liste. Yeni böyle bir
-// tablo eklenirse burası da güncellenmeli (bkz. aynı isimde kontrol
-// sorgusu: "select ... from pg_attribute ... where not in (select
-// conrelid from pg_constraint where confrelid = clubs)").
+// tarihli pg_constraint sorgusuyla doğrulanmış liste, 2026-09-26'da BİR
+// KULÜP GERÇEKTEN SİLİNMEYE ÇALIŞILINCA "Bilinmeyen hata" ile başarısız
+// olması üzerine yeniden tarandı ve 4 eksik tablo bulundu (events/
+// event_registrations/training_schedule_templates/venue_coaches — hepsi
+// clubs'a "NO ACTION" (yani engelleyen) bir FK ile bağlı, cascade DEĞİL;
+// bu tablolarda satırı olan HER kulüp silme denemesi bu şekilde başarısız
+// oluyordu). Yeni böyle bir tablo eklenirse burası da güncellenmeli (bkz.
+// aynı isimde kontrol sorgusu: "select ... from pg_attribute ... where
+// delete_rule is distinct from 'CASCADE'" — SET NULL olanlar (ör.
+// audit_log) sorun değil, sadece NO ACTION/RESTRICT olanlar engelliyor).
 const NON_CASCADING_CLUB_TABLES = [
   "coach_payments", // coach_payment_plans'tan ÖNCE silinmeli (FK bağımlılığı)
   "coach_payment_plans",
+  "event_registrations", // events'ten ÖNCE silinmeli (FK bağımlılığı)
+  "events",
   "expenses",
   "extra_income",
   "fitness_program_completions",
@@ -49,6 +57,8 @@ const NON_CASCADING_CLUB_TABLES = [
   "fitness_groups", // fitness_group_members kendi ON DELETE CASCADE'i ile otomatik gider
   "fitness_measurements",
   "membership_freezes",
+  "training_schedule_templates",
+  "venue_coaches",
   "nutrition_articles",
   "performance_measurements",
   "wellness_checkins",
@@ -208,7 +218,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Bilinmeyen hata" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : typeof err === "object" && err !== null && "message" in err ? String((err as { message: unknown }).message) : "Bilinmeyen hata" }),
       { headers: { ...CORS_HEADERS, "Content-Type": "application/json" }, status: 400 }
     );
   }

@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Bilinmeyen hata" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : typeof err === "object" && err !== null && "message" in err ? String((err as { message: unknown }).message) : "Bilinmeyen hata" }),
       { headers: { ...CORS_HEADERS, "Content-Type": "application/json" }, status: 400 }
     );
   }

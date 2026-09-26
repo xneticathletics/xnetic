@@ -62,7 +62,7 @@ Deno.serve(async (_req) => {
       status: 200,
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Bilinmeyen hata" }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : typeof err === "object" && err !== null && "message" in err ? String((err as { message: unknown }).message) : "Bilinmeyen hata" }), {
       headers: { "Content-Type": "application/json" },
       status: 400,
     });
