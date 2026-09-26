@@ -6,6 +6,7 @@ import { colors, radius, spacing } from "../theme/tokens";
 import { listSessionsByGroup, type TrainingSession } from "../lib/api/trainingSessions";
 import { getAttendanceSummaryForSessions, type SessionAttendanceSummary } from "../lib/api/attendance";
 import { listGroups, type Group } from "../lib/api/groups";
+import { listBranches, type Branch } from "../lib/api/branches";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import { useAuth } from "../context/AuthContext";
 import { useBranchSelect } from "../context/BranchSelectContext";
@@ -40,6 +41,14 @@ export default function AttendanceHistoryScreen({ navigation }: Props) {
   const isCoordinator = role === "coach" && isLocked;
   const isAdmin = role === "club_admin";
 
+  // Sadece yönetici için: kaç branş varsa önce onlardan biri seçiliyor,
+  // grup çipleri seçilen branşa göre daralıyor (kullanıcı isteği: "önce
+  // branş, sonra gruplar"). Koordinatör/antrenör zaten kendi branşına/
+  // gruplarına kilitli — onlar için ayrı bir branş adımı YOK, gruplar
+  // direkt geliyor.
+  const [allBranches, setAllBranches] = useState<Branch[]>([]);
+  const [adminBranchFilter, setAdminBranchFilter] = useState<string | null>(null);
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
@@ -55,18 +64,30 @@ export default function AttendanceHistoryScreen({ navigation }: Props) {
       try {
         setError(null);
         const all = await listGroups();
-        let visible: Group[];
-        if (isAdmin || isCoordinator) {
-          visible = isCoordinator ? all.filter((g) => g.branch === selectedBranch) : all;
+        let scoped: Group[];
+        if (isAdmin) {
+          scoped = all;
+          const branchList = await listBranches();
+          setAllBranches(branchList);
+          // Tek branşlı kulüplerde ayrıca branş seçtirmeye gerek yok
+          // (AnnouncementFormScreen'deki aynı kural) — direkt o branşın
+          // grupları gösterilsin.
+          if (branchList.length === 1) setAdminBranchFilter(branchList[0].name);
+        } else if (isCoordinator) {
+          scoped = all.filter((g) => g.branch === selectedBranch);
         } else {
           // Düz antrenör: sadece kendi koçluk ettiği gruplar.
           const myIds = new Set(await getMyCoachedGroupIds());
-          visible = all.filter((g) => myIds.has(g.id));
+          scoped = all.filter((g) => myIds.has(g.id));
         }
         if (cancelled) return;
-        setGroups(visible);
-        // Tek grup varsa elle seçtirmeye gerek yok.
-        if (visible.length === 1) setSelectedGroupId(visible[0].id);
+        setAllGroups(scoped);
+        // Yönetici DIŞINDA (koordinatör/antrenör) branş adımı yok, gruplar
+        // direkt geliyor. Tek grup varsa elle seçtirmeye de gerek yok.
+        if (!isAdmin) {
+          setGroups(scoped);
+          if (scoped.length === 1) setSelectedGroupId(scoped[0].id);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e.message ?? "Gruplar yüklenemedi");
       } finally {
@@ -75,6 +96,18 @@ export default function AttendanceHistoryScreen({ navigation }: Props) {
     })();
     return () => { cancelled = true; };
   }, [isAdmin, isCoordinator, selectedBranch]);
+
+  // Yalnızca yönetici: önce branş seçilmeli, gruplar ANCAK ondan sonra
+  // çıkıyor (kullanıcı isteği — bir branş seçilmeden hiçbir grup
+  // gösterilmiyor, çok branşlı bir kulüpte tüm gruplar tek listede
+  // karışmasın diye). Branş değişince önceki seçili grup artık listede
+  // olmayabilir, temizleniyor.
+  useEffect(() => {
+    if (!isAdmin) return;
+    const visible = adminBranchFilter ? allGroups.filter((g) => g.branch === adminBranchFilter) : [];
+    setGroups(visible);
+    setSelectedGroupId((prev) => (prev && visible.some((g) => g.id === prev) ? prev : visible.length === 1 ? visible[0].id : null));
+  }, [isAdmin, adminBranchFilter, allGroups]);
 
   const load = useCallback(async () => {
     if (!selectedGroupId) return;
@@ -106,74 +139,101 @@ export default function AttendanceHistoryScreen({ navigation }: Props) {
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
 
+  // Yönetici birden çok branşa sahipse önce branş seçilmeli — grup çipleri
+  // ancak ondan sonra çıkıyor. Koordinatör/antrenör için bu adım hiç yok,
+  // kendi gruplarına direkt geliyor (isAdmin false ise allBranches boş kalır).
+  const showBranchStep = isAdmin && allBranches.length > 1;
+
   return (
     <View style={styles.container}>
       {loadingGroups ? (
         <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />
-      ) : groups.length === 0 ? (
+      ) : isAdmin && allGroups.length === 0 ? (
+        <Text style={styles.empty}>Kulüpte henüz grup yok.</Text>
+      ) : !isAdmin && groups.length === 0 ? (
         <Text style={styles.empty}>Yönettiğin bir grup bulunamadı.</Text>
       ) : (
         <>
-          {groups.length > 1 && (
+          {showBranchStep && (
             <View style={styles.groupChipRow}>
-              {groups.map((g) => (
+              {allBranches.map((b) => (
                 <TouchableOpacity
-                  key={g.id}
-                  style={[styles.groupChip, selectedGroupId === g.id && styles.groupChipActive]}
-                  onPress={() => setSelectedGroupId(g.id)}
+                  key={b.id}
+                  style={[styles.groupChip, adminBranchFilter === b.name && styles.groupChipActive]}
+                  onPress={() => setAdminBranchFilter(b.name)}
                 >
-                  <Text style={[styles.groupChipText, selectedGroupId === g.id && styles.groupChipTextActive]}>{g.name}</Text>
+                  <Text style={[styles.groupChipText, adminBranchFilter === b.name && styles.groupChipTextActive]}>{b.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
 
-          {error && <Text style={styles.error}>{error}</Text>}
-
-          {!selectedGroupId ? (
-            <Text style={styles.empty}>Bir grup seç.</Text>
-          ) : loadingSessions ? (
-            <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />
+          {showBranchStep && !adminBranchFilter ? (
+            <Text style={styles.empty}>Önce bir branş seç.</Text>
           ) : (
-            <FlatList
-              data={sessions}
-              keyExtractor={(s) => s.id}
-              contentContainerStyle={{ paddingBottom: spacing.xl }}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />
-              }
-              ListEmptyComponent={<Text style={styles.empty}>Bu grupta henüz geçmiş antrenman yok.</Text>}
-              renderItem={({ item }) => {
-                const summary = summaries[item.id];
-                return (
-                  <TouchableOpacity
-                    style={styles.row}
-                    onPress={() =>
-                      navigation.navigate("Attendance", {
-                        sessionId: item.id,
-                        groupId: item.group_id,
-                        groupName: selectedGroup?.name ?? item.groups?.name ?? "",
-                      })
-                    }
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.rowDate}>{formatDate(item.session_date)}</Text>
-                      <Text style={styles.rowTime}>
-                        {item.start_time.slice(0, 5)}–{item.end_time.slice(0, 5)}
-                        {item.topic ? ` · ${item.topic}` : ""}
-                      </Text>
-                    </View>
-                    {summary ? (
-                      <Text style={styles.badgeTaken}>
-                        {summary.geldi} geldi{summary.gelmedi > 0 ? ` · ${summary.gelmedi} gelmedi` : ""}
-                      </Text>
-                    ) : (
-                      <Text style={styles.badgeMissing}>Yoklama alınmadı</Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-            />
+            <>
+              {groups.length > 1 && (
+                <View style={styles.groupChipRow}>
+                  {groups.map((g) => (
+                    <TouchableOpacity
+                      key={g.id}
+                      style={[styles.groupChip, selectedGroupId === g.id && styles.groupChipActive]}
+                      onPress={() => setSelectedGroupId(g.id)}
+                    >
+                      <Text style={[styles.groupChipText, selectedGroupId === g.id && styles.groupChipTextActive]}>{g.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {error && <Text style={styles.error}>{error}</Text>}
+
+              {!selectedGroupId ? (
+                <Text style={styles.empty}>Bir grup seç.</Text>
+              ) : loadingSessions ? (
+                <ActivityIndicator color={colors.yellow} style={{ marginTop: spacing.xl }} />
+              ) : (
+                <FlatList
+                  data={sessions}
+                  keyExtractor={(s) => s.id}
+                  contentContainerStyle={{ paddingBottom: spacing.xl }}
+                  refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.yellow} />
+                  }
+                  ListEmptyComponent={<Text style={styles.empty}>Bu grupta henüz geçmiş antrenman yok.</Text>}
+                  renderItem={({ item }) => {
+                    const summary = summaries[item.id];
+                    return (
+                      <TouchableOpacity
+                        style={styles.row}
+                        onPress={() =>
+                          navigation.navigate("Attendance", {
+                            sessionId: item.id,
+                            groupId: item.group_id,
+                            groupName: selectedGroup?.name ?? item.groups?.name ?? "",
+                          })
+                        }
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.rowDate}>{formatDate(item.session_date)}</Text>
+                          <Text style={styles.rowTime}>
+                            {item.start_time.slice(0, 5)}–{item.end_time.slice(0, 5)}
+                            {item.topic ? ` · ${item.topic}` : ""}
+                          </Text>
+                        </View>
+                        {summary ? (
+                          <Text style={styles.badgeTaken}>
+                            {summary.geldi} geldi{summary.gelmedi > 0 ? ` · ${summary.gelmedi} gelmedi` : ""}
+                          </Text>
+                        ) : (
+                          <Text style={styles.badgeMissing}>Yoklama alınmadı</Text>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              )}
+            </>
           )}
         </>
       )}

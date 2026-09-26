@@ -152,7 +152,7 @@ e("yoklama-alma", "takvim", "ACK", "Yoklama alma (Günün Programı)",
 5. Antrenman bitince "Antrenmanı Tamamlandı Olarak İşaretle"ye bas.
 Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar.
 
-Geçmiş bir antrenmanın yoklamasına bakmak için "📅 Geçmiş Antrenmanlar"a dokun — bu, hem "Günün Programı" ekranında hem de Takvim ekranının üstünde "🏆 Sonuçlar"ın yanında "📋 Yoklama Geçmişi" adıyla bulunur. Bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.`);
+Geçmiş bir antrenmanın yoklamasına bakmak için "📅 Geçmiş Antrenmanlar"a dokun — bu, hem "Günün Programı" ekranında hem de Takvim ekranının üstünde "🏆 Sonuçlar"ın yanında "📋 Yoklama" adıyla bulunur. Kulüp yöneticisi birden çok branşı varsa önce bir branş seçer, sonra o branşın grupları çıkar; branş koordinatörü ve antrenör bu adımı hiç görmez, direkt kendi grupları listelenir. Bir grup seçilince o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.`);
 
 e("yoklama-zaman-penceresi", "takvim", "ACK", "Yoklama neden açılmıyor / \"Henüz zamanı değil\"",
   ["yoklama açılmıyor", "henüz zamanı değil", "yoklama kapalı", "yoklama süresi", "yoklama penceresi", "yoklama zamanı geçti", "yoklama ekranı kilitli", "yoklama ekranı açılmıyor"],
