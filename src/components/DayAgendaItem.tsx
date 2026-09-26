@@ -86,13 +86,21 @@ export default function DayAgendaItem({
   const s = session.group_id ? staffing[session.group_id] : undefined;
   const coachNames = s ? ([s.headName, ...s.assistantNames].filter(Boolean) as string[]) : [];
   const isCompleted = session.status === "completed";
-  const attendanceOpen = isAdmin || isAttendanceWindowOpen(session, attendanceWindowBeforeMinutes, attendanceWindowAfterMinutes);
+  // Admin istisnası kaldırıldı — geçmiş bir antrenmanın yoklaması artık
+  // hiç kimse tarafından değiştirilemez (kullanıcı kararı, 2026-09-26;
+  // sunucu tarafında da can_write_attendance ile zorunlu kılınıyor).
+  const attendanceOpen = isAttendanceWindowOpen(session, attendanceWindowBeforeMinutes, attendanceWindowAfterMinutes);
   const completionOpen = isCompletionWindowOpen(session, completionWindowBeforeMinutes);
   const isPast = isSessionPast(session);
   const canDeleteThis = isAdminOrCoordinator || (!!session.venue_id && authorizedVenueIds.includes(session.venue_id));
 
   const handleYoklamaPress = () => {
-    if (!attendanceOpen) {
+    // Geçmiş bir antrenman için pencere kapalı olsa da ekrana GİRİLEBİLİR —
+    // artık salt önizleme (AttendanceScreen kendi içinde düzenlemeyi
+    // engelliyor). Sadece henüz BAŞLAMAMIŞ bir antrenmanda (pencere daha
+    // açılmadı) "Henüz zamanı değil" diyip girişi engelliyoruz — önizlenecek
+    // bir şey yok.
+    if (!attendanceOpen && !isPast) {
       Alert.alert(
         "Henüz zamanı değil",
         `Yoklama Al, antrenman başlamadan ${attendanceWindowBeforeMinutes} dakika önce açılır ve başladıktan ${attendanceWindowAfterMinutes} dakika sonra kapanır.`,
@@ -151,11 +159,11 @@ export default function DayAgendaItem({
           <Text style={styles.actionButtonText}>👥 Sporcular</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.actionButton, !attendanceOpen && styles.actionButtonDisabled]}
+          style={[styles.actionButton, !attendanceOpen && !isPast && styles.actionButtonDisabled]}
           onPress={handleYoklamaPress}
         >
-          <Text style={[styles.actionButtonText, !attendanceOpen && styles.actionButtonTextDisabled]}>
-            Yoklama Al
+          <Text style={[styles.actionButtonText, !attendanceOpen && !isPast && styles.actionButtonTextDisabled]}>
+            {isPast ? "🔒 Önizle" : "Yoklama Al"}
           </Text>
         </TouchableOpacity>
         {!isCompleted && (

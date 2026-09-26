@@ -4,10 +4,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
 import { getSessionRoster, saveAttendance, type AttendanceStatus, type RosterEntry } from "../lib/api/attendance";
-import { completeSession, getSession, isAttendanceWindowOpen, isCompletionWindowOpen, type TrainingSession } from "../lib/api/trainingSessions";
+import { completeSession, getSession, isAttendanceWindowOpen, isCompletionWindowOpen, isSessionPast, type TrainingSession } from "../lib/api/trainingSessions";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useClubSettings } from "../context/ClubSettingsContext";
-import { useAuth } from "../context/AuthContext";
 import { useResponsiveColumns, fillGridRow } from "../hooks/useResponsiveColumns";
 import Avatar from "../components/Avatar";
 
@@ -16,13 +15,6 @@ type Props = NativeStackScreenProps<HomeStackParamList, "Attendance">;
 export default function AttendanceScreen({ route, navigation }: Props) {
   const { sessionId, groupId, groupName } = route.params;
   const { settings } = useClubSettings();
-  const { role } = useAuth();
-  // Kulüp admini yoklama penceresi dışında da (ör. ofisten geriye dönük
-  // düzeltme yaparken) yoklama alabilmeli — pencere kısıtlaması sadece
-  // sahadaki antrenör/koordinatör için anlamlı (web zaten sadece admin
-  // girişine izin verdiği için orada bu kısıtlama hiç yok, mobildeki
-  // AYNI davranışı burada da admin için tekrarlıyoruz).
-  const isAdmin = role === "club_admin";
   const columns = useResponsiveColumns(2);
 
   const [session, setSession] = useState<TrainingSession | null>(null);
@@ -64,10 +56,16 @@ export default function AttendanceScreen({ route, navigation }: Props) {
 
   const handleSave = async () => {
     if (savingRef.current) return;
-    if (!isAdmin && session && !isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)) {
+    // Pencere dışında kimse (admin dahil) kaydedemez — geçmiş bir
+    // antrenmanın yoklaması artık sadece önizleme (kullanıcı kararı,
+    // 2026-09-26). Sunucu (can_write_attendance) zaten aynı kuralı
+    // uyguluyor; bu, kullanıcıya erken ve anlaşılır bir uyarı vermek için.
+    if (session && !isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)) {
       Alert.alert(
-        "Henüz zamanı değil",
-        `Günün Programı, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır ve başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`,
+        isSessionPast(session) ? "Artık değiştirilemez" : "Henüz zamanı değil",
+        isSessionPast(session)
+          ? "Bu antrenmanın yoklama penceresi kapandı. Geçmiş yoklamalar sadece görüntülenebilir, değiştirilemez."
+          : `Günün Programı, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır ve başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`,
         [{ text: "Tamam" }]
       );
       return;
@@ -112,12 +110,15 @@ export default function AttendanceScreen({ route, navigation }: Props) {
     }
   };
 
-  const attendanceOpen =
-    isAdmin ||
-    (session
-      ? isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)
-      : false);
+  // Admin istisnası kaldırıldı — geçmiş bir antrenmanın yoklaması artık
+  // hiç kimse tarafından değiştirilemez, sadece önizlenir (kullanıcı
+  // kararı, 2026-09-26; sunucu tarafında da can_write_attendance ile
+  // zorunlu kılınıyor).
+  const attendanceOpen = session
+    ? isAttendanceWindowOpen(session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes)
+    : false;
   const completionOpen = session ? isCompletionWindowOpen(session, settings.completion_window_before_minutes) : false;
+  const sessionIsPast = session ? isSessionPast(session) : false;
 
   if (loading) {
     return (
@@ -137,12 +138,14 @@ export default function AttendanceScreen({ route, navigation }: Props) {
       {!attendanceOpen && (
         <View style={styles.windowNotice}>
           <Text style={styles.windowNoticeText}>
-            ⏱ Yoklama, antrenman başlamadan {settings.attendance_window_before_minutes} dakika önce açılır, başladıktan {settings.attendance_window_after_minutes} dakika sonra kapanır.
+            {sessionIsPast
+              ? "🔒 Bu antrenmanın yoklama penceresi kapandı — sadece önizleme, değiştirilemez."
+              : `⏱ Yoklama, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır, başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`}
           </Text>
         </View>
       )}
 
-      {roster.length > 0 && (
+      {roster.length > 0 && attendanceOpen && (
         <TouchableOpacity style={styles.markAllButton} onPress={markAllPresent}>
           <Text style={styles.markAllButtonText}>✓ Hepsini Geldi İşaretle</Text>
         </TouchableOpacity>
@@ -171,28 +174,31 @@ export default function AttendanceScreen({ route, navigation }: Props) {
               </View>
             </View>
 
-            <View style={styles.statusButtons}>
+            <View style={[styles.statusButtons, !attendanceOpen && styles.statusButtonsDisabled]}>
               <TouchableOpacity
                 style={[styles.statusButton, item.status === "geldi" && { backgroundColor: colors.teal, borderColor: colors.teal }]}
                 onPress={() => setStatus(item.athlete_id, "geldi")}
+                disabled={!attendanceOpen}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: item.status === "geldi" }}
+                accessibilityState={{ selected: item.status === "geldi", disabled: !attendanceOpen }}
               >
                 <Text style={[styles.statusButtonText, item.status === "geldi" && styles.statusButtonTextActive]}>Geldi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, item.status === "gelmedi" && { backgroundColor: colors.coral, borderColor: colors.coral }]}
                 onPress={() => setStatus(item.athlete_id, "gelmedi")}
+                disabled={!attendanceOpen}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: item.status === "gelmedi" }}
+                accessibilityState={{ selected: item.status === "gelmedi", disabled: !attendanceOpen }}
               >
                 <Text style={[styles.statusButtonText, item.status === "gelmedi" && styles.statusButtonTextActive]}>Gelmedi</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.statusButton, item.status === "izinli" && { backgroundColor: colors.muted, borderColor: colors.muted }]}
                 onPress={() => setStatus(item.athlete_id, "izinli")}
+                disabled={!attendanceOpen}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: item.status === "izinli" }}
+                accessibilityState={{ selected: item.status === "izinli", disabled: !attendanceOpen }}
               >
                 <Text style={[styles.statusButtonText, item.status === "izinli" && styles.statusButtonTextActive]}>İzinli</Text>
               </TouchableOpacity>
@@ -206,9 +212,13 @@ export default function AttendanceScreen({ route, navigation }: Props) {
         <TouchableOpacity
           style={[styles.saveButton, !attendanceOpen && styles.buttonDisabled]}
           onPress={handleSave}
-          disabled={saving}
+          disabled={saving || sessionIsPast}
         >
-          {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveButtonText}>Yoklamayı Kaydet</Text>}
+          {saving ? (
+            <ActivityIndicator color={colors.bg} />
+          ) : (
+            <Text style={styles.saveButtonText}>{sessionIsPast ? "Sadece Önizleme" : "Yoklamayı Kaydet"}</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -260,6 +270,7 @@ const styles = StyleSheet.create({
   athleteName: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   athleteBirth: { color: colors.muted, fontSize: 11 },
   statusButtons: { flexDirection: "row", gap: 6 },
+  statusButtonsDisabled: { opacity: 0.5 },
   // Üçü de işaretlenmeden önce AYNI nötr görünümde — hangisinin seçili
   // olduğu sadece dokunulunca (kendi rengiyle) belli olsun diye, önceden
   // her biri kendi rengiyle (teal/coral/muted) duran çerçeveler kaldırıldı

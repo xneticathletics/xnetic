@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, 
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing } from "../theme/tokens";
-import { listSessions, listSessionsForGroups, isAttendanceWindowOpen, type TrainingSession } from "../lib/api/trainingSessions";
+import { listSessions, listSessionsForGroups, isAttendanceWindowOpen, isSessionPast, type TrainingSession } from "../lib/api/trainingSessions";
 import { getMyCoachedGroupIds } from "../lib/api/myGroups";
 import type { HomeStackParamList } from "../navigation/HomeStack";
 import { useHomeButton } from "../hooks/useHomeButton";
@@ -26,7 +26,6 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
   const { role } = useAuth();
   const { settings } = useClubSettings();
   const isCoach = role === "coach";
-  const isAdmin = role === "club_admin";
 
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,14 +79,22 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
         }
         ListEmptyComponent={!loading ? <Text style={styles.empty}>Bugün için planlanmış antrenman yok.</Text> : null}
         renderItem={({ item }) => {
-          const attendanceOpen = isAdmin || isAttendanceWindowOpen(
+          // Admin istisnası kaldırıldı — geçmiş bir antrenmanın yoklaması
+          // artık hiç kimse tarafından değiştirilemez (kullanıcı kararı,
+          // 2026-09-26). Bugün içinde ERKEN saatte olup penceresi çoktan
+          // kapanmış bir antrenman için ekrana yine de GİRİLEBİLİR — artık
+          // salt önizleme (AttendanceScreen kendi içinde düzenlemeyi
+          // engelliyor); sadece henüz BAŞLAMAMIŞ bir antrenmanda giriş
+          // engelleniyor, önizlenecek bir şey yok.
+          const attendanceOpen = isAttendanceWindowOpen(
             item, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes
           );
+          const past = isSessionPast(item);
           return (
             <TouchableOpacity
-              style={[styles.row, !attendanceOpen && styles.rowDisabled]}
+              style={[styles.row, !attendanceOpen && !past && styles.rowDisabled]}
               onPress={() => {
-                if (!attendanceOpen) {
+                if (!attendanceOpen && !past) {
                   Alert.alert(
                     "Henüz zamanı değil",
                     `Günün Programı, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır ve başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`,
@@ -101,7 +108,9 @@ export default function TodayAttendanceScreen({ navigation }: Props) {
               <Text style={styles.rowGroup}>{item.groups?.name ?? "Grup atanmadı"}</Text>
               <Text style={styles.rowTime}>{item.start_time.slice(0, 5)}–{item.end_time.slice(0, 5)}</Text>
               <Text style={styles.rowVenue}>{item.venues?.name ?? "Salon atanmadı"}</Text>
-              {!attendanceOpen && <Text style={styles.rowHint}>Yoklama henüz açık değil</Text>}
+              {!attendanceOpen && (
+                <Text style={styles.rowHint}>{past ? "🔒 Sadece önizleme" : "Yoklama henüz açık değil"}</Text>
+              )}
             </TouchableOpacity>
           );
         }}
