@@ -476,23 +476,28 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.titleRow}>
-        <Text style={styles.pageTitle}>Takvim</Text>
-        <View style={styles.titleActionsRow}>
-          <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("MatchResults")}>
-            <Text style={styles.titleActionButtonText} numberOfLines={1}>🏆 Sonuçlar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("AttendanceHistory")}>
-            <Text style={styles.titleActionButtonText} numberOfLines={1}>📋 Yoklama Geçmişi</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.titleActionButton} onPress={handleCalendarSync} disabled={syncing}>
-            {syncing ? (
-              <ActivityIndicator color={colors.ink} size="small" />
-            ) : (
-              <Text style={styles.titleActionButtonText} numberOfLines={1}>📲 Takvimime Ekle</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+      {/* Başlık metni ("Takvim") kaldırıldı (kullanıcı isteği) — hem yer
+          açtı hem zaten Ana Sayfa'dan buraya "Antrenman ve Müsabaka
+          Takvimi" başlığıyla giriliyor, tekrar yazmaya gerek yoktu.
+          3 düğme + başlık dar telefonlarda sarıyordu; başlık kalkınca ve
+          düğmeler küçülünce (10px/6 dolgu, "Yoklama Geçmişi" -> "Yoklama",
+          "Takvimime Ekle" -> "Takvime Ekle") en dar telefonda bile (360dp)
+          tek satıra rahatça sığıyor — flexWrap yine de bir güvenlik ağı
+          olarak duruyor (ör. büyük sistem yazı tipi ayarında). */}
+      <View style={styles.titleActionsRow}>
+        <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("MatchResults")}>
+          <Text style={styles.titleActionButtonText} numberOfLines={1}>🏆 Sonuçlar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("AttendanceHistory")}>
+          <Text style={styles.titleActionButtonText} numberOfLines={1}>📋 Yoklama</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.titleActionButton} onPress={handleCalendarSync} disabled={syncing}>
+          {syncing ? (
+            <ActivityIndicator color={colors.ink} size="small" />
+          ) : (
+            <Text style={styles.titleActionButtonText} numberOfLines={1}>📲 Takvime Ekle</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.segmentedRow}>
@@ -744,14 +749,12 @@ const styles = StyleSheet.create({
   // ekranda sığmıyordu (ölçüldü: gereken ~413dp, 360-412dp'lik telefonlarda
   // mevcut ~312-364dp'den fazla) — flexWrap ile önce "Takvim" başlığının
   // altına, gerekirse düğmeler kendi aralarında da 2. satıra sarıyor.
-  titleRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm, rowGap: spacing.xs },
-  pageTitle: { color: colors.ink, fontSize: 22, fontWeight: "700" },
-  titleActionsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: spacing.xs },
+  titleActionsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, marginBottom: spacing.sm },
   titleActionButton: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
-    paddingHorizontal: spacing.sm, paddingVertical: 6,
+    paddingHorizontal: 6, paddingVertical: 6,
   },
-  titleActionButtonText: { color: colors.ink, fontWeight: "600", fontSize: 11 },
+  titleActionButtonText: { color: colors.ink, fontWeight: "600", fontSize: 10 },
 
   segmentedRow: {
     flexDirection: "row", backgroundColor: colors.surface, borderRadius: radius.full,
