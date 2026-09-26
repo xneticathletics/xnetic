@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -109,6 +109,17 @@ export default function AttendanceHistoryScreen({ navigation }: Props) {
     setSelectedGroupId((prev) => (prev && visible.some((g) => g.id === prev) ? prev : visible.length === 1 ? visible[0].id : null));
   }, [isAdmin, adminBranchFilter, allGroups]);
 
+  // Bir antrenmana bakıp geri dönünce (ya da ekrana her odaklanışta) TAM
+  // EKRAN yükleniyor simgesi çıkması rahatsız ediciydi (kullanıcı isteği:
+  // "tekrar tekrar yüklemeye gerek var mı") — liste hâlâ ekrandayken
+  // gereksiz yere kayboluyordu. Odaklanınca veri YİNE tazeleniyor (aynı
+  // grupta bir antrenman ekleniyor/silinebiliyor olabilir), ama sadece bu
+  // GRUP için İLK kez yükleniyorsa tam ekran döndürme gösteriliyor; aynı
+  // gruba geri dönüşte liste yerinde kalıp arka planda sessizce tazeleniyor
+  // (bu ekranın grup/branş çipi seçim akışındaki diğer useEffect'lerle aynı
+  // "hasLoadedOnceRef" deseni, bkz. TodayAttendanceScreen/AnnouncementsScreen).
+  const loadedGroupIdRef = useRef<string | null>(null);
+
   const load = useCallback(async () => {
     if (!selectedGroupId) return;
     try {
@@ -126,13 +137,14 @@ export default function AttendanceHistoryScreen({ navigation }: Props) {
     } finally {
       setLoadingSessions(false);
       setRefreshing(false);
+      loadedGroupIdRef.current = selectedGroupId;
     }
   }, [selectedGroupId]);
 
   useFocusEffect(
     useCallback(() => {
       if (!selectedGroupId) return;
-      setLoadingSessions(true);
+      if (loadedGroupIdRef.current !== selectedGroupId) setLoadingSessions(true);
       load();
     }, [selectedGroupId, load])
   );
