@@ -163,7 +163,7 @@ export default function DayAgendaItem({
           onPress={handleYoklamaPress}
         >
           <Text style={[styles.actionButtonText, !attendanceOpen && !isPast && styles.actionButtonTextDisabled]}>
-            {isPast ? "🔒 Önizle" : "Yoklama Al"}
+            {isPast ? "🔒 Yoklama" : "Yoklama Al"}
           </Text>
         </TouchableOpacity>
         {!isCompleted && (
