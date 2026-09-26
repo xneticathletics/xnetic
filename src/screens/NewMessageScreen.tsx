@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -24,14 +24,15 @@ export default function NewMessageScreen({ navigation, role }: Props) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       listMyContacts(role)
         .then(setContacts)
         .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .finally(() => { setLoading(false); hasLoadedOnceRef.current = true; });
     }, [role])
   );
 

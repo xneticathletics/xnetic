@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -17,14 +17,15 @@ export default function MyAthleteListScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const [athletes, setAthletes] = useState<MyAthlete[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       getMyAthletes()
         .then((data) => { if (!cancelled) setAthletes(data); })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) setLoading(false); hasLoadedOnceRef.current = true; });
       return () => { cancelled = true; };
     }, [])
   );

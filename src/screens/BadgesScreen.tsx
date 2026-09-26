@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, radius, spacing } from "../theme/tokens";
@@ -11,15 +11,16 @@ export default function BadgesScreen() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [clubTiers, setClubTiers] = useState<Partial<Record<AutoBadgeType, TierThresholds>>>({});
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       Promise.all([listMyBadges(), listBadgeTierSettings()])
         .then(([rows, tiers]) => { if (!cancelled) { setBadges(rows); setClubTiers(tiers); } })
         .catch(() => {})
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) setLoading(false); hasLoadedOnceRef.current = true; });
       return () => { cancelled = true; };
     }, [])
   );

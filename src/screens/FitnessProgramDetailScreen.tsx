@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform,
@@ -83,11 +83,13 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
   const [duration, setDuration] = useState("");
   const [setsByItem, setSetsByItem] = useState<Record<string, SetEntry[]>>({});
   const [marking, setMarking] = useState(false);
+  const loadedProgramIdRef = useRef<string | null>(null);
+  const loadedMyCompletionKeyRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (loadedProgramIdRef.current !== programId) setLoading(true);
       Promise.all([getProgram(programId), listProgramItems(programId)])
         .then(([p, i]) => {
           if (cancelled) return;
@@ -95,7 +97,7 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
           setItems(i);
           navigation.setOptions({ title: p.name });
         })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) { setLoading(false); loadedProgramIdRef.current = programId; } });
 
       if (canManage) {
         setLoadingCompletions(true);
@@ -118,10 +120,11 @@ export default function FitnessProgramDetailScreen({ route, navigation }: Props)
         return;
       }
       let cancelled = false;
-      setLoadingMyCompletion(true);
+      const key = `${programId}:${targetAthleteId}`;
+      if (loadedMyCompletionKeyRef.current !== key) setLoadingMyCompletion(true);
       getMyCompletionForProgram(programId, targetAthleteId)
         .then((data) => { if (!cancelled) setMyCompletion(data); })
-        .finally(() => { if (!cancelled) setLoadingMyCompletion(false); });
+        .finally(() => { if (!cancelled) { setLoadingMyCompletion(false); loadedMyCompletionKeyRef.current = key; } });
       return () => { cancelled = true; };
     }, [programId, targetAthleteId, showLogSection])
   );

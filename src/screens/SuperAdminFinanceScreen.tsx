@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform,
@@ -40,6 +40,7 @@ export default function SuperAdminFinanceScreen({ navigation }: Props) {
   const [date, setDate] = useState(todayKey());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(() => {
     setError(null);
@@ -50,8 +51,8 @@ export default function SuperAdminFinanceScreen({ navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      load().finally(() => setLoading(false));
+      if (!hasLoadedOnceRef.current) setLoading(true);
+      load().finally(() => { setLoading(false); hasLoadedOnceRef.current = true; });
     }, [load])
   );
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -18,11 +18,13 @@ export default function AthleteFitnessProgramScreen({ route, navigation }: Props
   const [programs, setPrograms] = useState<FitnessProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Bir programa bakıp geri dönünce tam ekran yeniden yüklenmesin diye.
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       setError(null);
       Promise.all([
         getAthlete(athleteId).then((athlete) => (athlete?.group_id ? listProgramsForGroup(athlete.group_id) : [])),
@@ -36,7 +38,7 @@ export default function AthleteFitnessProgramScreen({ route, navigation }: Props
           setPrograms(merged);
         })
         .catch((e) => { if (!cancelled) setError(e.message ?? "Programlar yüklenemedi"); })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) setLoading(false); hasLoadedOnceRef.current = true; });
       return () => { cancelled = true; };
     }, [athleteId])
   );

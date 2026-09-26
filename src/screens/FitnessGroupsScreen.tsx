@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -28,6 +28,7 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasVenueAuthority, setHasVenueAuthority] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
 
   // Oluşturma: club_admin, branş koordinatörü ya da en az bir salonun
   // yetkilisi olan antrenör — düz (etiketsiz) antrenör artık oluşturamaz.
@@ -65,8 +66,8 @@ export default function FitnessGroupsScreen({ navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      load().finally(() => setLoading(false));
+      if (!hasLoadedOnceRef.current) setLoading(true);
+      load().finally(() => { setLoading(false); hasLoadedOnceRef.current = true; });
     }, [load])
   );
 

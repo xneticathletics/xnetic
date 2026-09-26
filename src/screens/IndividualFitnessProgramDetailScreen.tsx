@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -64,6 +64,7 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
   const [history, setHistory] = useState<Record<string, FitnessMeasurement[]>>({});
   const [setsByItem, setSetsByItem] = useState<Record<string, SetEntry[]>>({});
   const [savingItem, setSavingItem] = useState<string | null>(null);
+  const loadedProgramIdRef = useRef<string | null>(null);
 
   const loadHistory = useCallback(async (currentItems: IndividualFitnessProgramItem[], preFetched?: Promise<FitnessMeasurement[]>) => {
     // Sporcunun TÜM ölçümlerini TEK sorguda çekip programdaki hareketlere
@@ -81,7 +82,8 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      const key = `${programId}:${athleteId}`;
+      if (loadedProgramIdRef.current !== key) setLoading(true);
       // Ölçüm geçmişi program/hareketlerin sonucuna bağlı değil — athleteId
       // yeterli, o yüzden diğer ikisiyle aynı anda başlatılıyor.
       const measurementsPromise = listAllMeasurementsForAthlete(athleteId);
@@ -93,7 +95,7 @@ export default function IndividualFitnessProgramDetailScreen({ route, navigation
           navigation.setOptions({ title: p.name });
           await loadHistory(i, measurementsPromise);
         })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) { setLoading(false); loadedProgramIdRef.current = key; } });
       return () => { cancelled = true; };
     }, [programId, athleteId, navigation, loadHistory])
   );

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform } from "react-native";
 import { WebView } from "react-native-webview";
 import { useFocusEffect } from "@react-navigation/native";
@@ -43,14 +43,15 @@ export default function NutritionArticleDetailScreen({ route, navigation }: Prop
   const canEditThis = !!article && (article.club_id === null ? role === "super_admin" : canEdit);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedArticleIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      if (loadedArticleIdRef.current !== articleId) setLoading(true);
       getNutritionArticle(articleId)
         .then(setArticle)
         .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .finally(() => { setLoading(false); loadedArticleIdRef.current = articleId; });
     }, [articleId])
   );
 

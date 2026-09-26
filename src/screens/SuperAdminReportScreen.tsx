@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -13,14 +13,15 @@ export default function SuperAdminReportScreen({ navigation }: Props) {
   useHomeButton(navigation);
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       getPlatformStats()
         .then((s) => { if (!cancelled) setStats(s); })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) setLoading(false); hasLoadedOnceRef.current = true; });
       return () => { cancelled = true; };
     }, [])
   );

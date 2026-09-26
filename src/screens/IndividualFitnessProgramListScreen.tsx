@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -24,11 +24,12 @@ export default function IndividualFitnessProgramListScreen({ route, navigation }
   const [branch, setBranch] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedAthleteIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (loadedAthleteIdRef.current !== athleteId) setLoading(true);
       setError(null);
       Promise.all([
         listMyIndividualPrograms(athleteId),
@@ -40,7 +41,7 @@ export default function IndividualFitnessProgramListScreen({ route, navigation }
           setBranch(athlete?.groups?.branch ?? null);
         })
         .catch((e) => { if (!cancelled) setError(e.message ?? "Programlar yüklenemedi"); })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) { setLoading(false); loadedAthleteIdRef.current = athleteId; } });
       return () => { cancelled = true; };
     }, [athleteId, isStaff])
   );

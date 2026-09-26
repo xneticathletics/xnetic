@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, TextInput,
 } from "react-native";
@@ -38,6 +38,7 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
   const [editAmount, setEditAmount] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   // Onay bekleyen (yeni ödeme bildirimi) VE süresi dolmuş (yenileme
   // gereken) kayıtlar en üstte görünsün — süper adminin her açılışta ilk
@@ -62,8 +63,8 @@ export default function SuperAdminSubscriptionsScreen({ navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      load().finally(() => setLoading(false));
+      if (!hasLoadedOnceRef.current) setLoading(true);
+      load().finally(() => { setLoading(false); hasLoadedOnceRef.current = true; });
     }, [load])
   );
 

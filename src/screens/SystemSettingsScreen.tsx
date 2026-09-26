@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Switch,
   ScrollView, KeyboardAvoidingView, Platform, Alert,
@@ -25,11 +25,12 @@ export default function SystemSettingsScreen() {
   const [supportPhone, setSupportPhone] = useState("");
   const [bankAccountName, setBankAccountName] = useState("");
   const [bankIban, setBankIban] = useState("");
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       setError(null);
       getPlatformSettings()
         .then((s) => {
@@ -44,7 +45,7 @@ export default function SystemSettingsScreen() {
           setBankIban(s.bankIban ?? "");
         })
         .catch((e) => { if (!cancelled) setError(e.message ?? "Ayarlar yüklenemedi"); })
-        .finally(() => { if (!cancelled) setLoading(false); });
+        .finally(() => { if (!cancelled) setLoading(false); hasLoadedOnceRef.current = true; });
       return () => { cancelled = true; };
     }, [])
   );

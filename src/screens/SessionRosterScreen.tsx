@@ -28,14 +28,16 @@ export default function SessionRosterScreen({ route, navigation }: Props) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedKeyRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      const key = `${sessionId}:${groupId}`;
+      if (loadedKeyRef.current !== key) setLoading(true);
       getSessionRoster(sessionId, groupId)
         .then(setRoster)
         .catch((e) => setError(e.message ?? "Yüklenemedi"))
-        .finally(() => setLoading(false));
+        .finally(() => { setLoading(false); loadedKeyRef.current = key; });
     }, [sessionId, groupId])
   );
 

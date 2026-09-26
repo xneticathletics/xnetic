@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -17,6 +17,8 @@ export default function AthleteWellnessDetailScreen({ route, navigation }: Props
   const [history, setHistory] = useState<WellnessCheckin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Bir kayda bakıp geri dönünce tam ekran yeniden yüklenmesin diye.
+  const loadedAthleteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     navigation.setOptions({ title: athleteName });
@@ -24,11 +26,11 @@ export default function AthleteWellnessDetailScreen({ route, navigation }: Props
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      if (loadedAthleteIdRef.current !== athleteId) setLoading(true);
       listCheckinsForAthlete(athleteId, 30)
         .then(setHistory)
         .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .finally(() => { setLoading(false); loadedAthleteIdRef.current = athleteId; });
     }, [athleteId])
   );
 

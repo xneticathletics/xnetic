@@ -46,6 +46,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
   // hiç kullanılmıyor (aşağıdaki allowedBranchNames boş kalır, tüm
   // branşlar gösterilir). MatchFormScreen.tsx'teki aynı desen.
   const [myGroupIds, setMyGroupIds] = useState<string[] | undefined>(isCoach ? undefined : []);
+  const loadedGroupIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     listGroups().then(setAllGroups).catch(() => {});
@@ -73,7 +74,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
     useCallback(() => {
       if (isNew) return;
       let cancelled = false;
-      setLoading(true);
+      if (loadedGroupIdRef.current !== fitnessGroupId) setLoading(true);
       getFitnessGroup(fitnessGroupId!)
         .then((g) => {
           if (cancelled) return;
@@ -83,7 +84,7 @@ export default function FitnessGroupFormScreen({ route, navigation }: Props) {
           initialSnapshotRef.current = JSON.stringify({ name: g.name, ids: [...g.athleteIds].sort() });
         })
         .catch((e) => !cancelled && setError(e.message))
-        .finally(() => !cancelled && setLoading(false));
+        .finally(() => { if (!cancelled) { setLoading(false); loadedGroupIdRef.current = fitnessGroupId ?? null; } });
       return () => { cancelled = true; };
     }, [fitnessGroupId, isNew])
   );

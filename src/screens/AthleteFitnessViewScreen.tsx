@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -70,6 +70,8 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
   // bölüm göstermeye gerek yok (kullanıcı kararı).
   const [individualPrograms, setIndividualPrograms] = useState<IndividualFitnessProgram[]>([]);
   const [loading, setLoading] = useState(true);
+  // Bir egzersize bakıp geri dönünce tam ekran yeniden yüklenmesin diye.
+  const loadedAthleteIdRef = useRef<string | null>(null);
 
   const toggleDate = (dateKey: string) => {
     setExpandedDates((prev) => {
@@ -84,7 +86,7 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
     useCallback(() => {
       navigation.setOptions({ title: `${athleteName} — Egzersizler` });
       let cancelled = false;
-      setLoading(true);
+      if (loadedAthleteIdRef.current !== athleteId) setLoading(true);
       (async () => {
         try {
           const [all, allCompletions, ownPrograms] = await Promise.all([
@@ -131,6 +133,7 @@ export default function AthleteFitnessViewScreen({ route, navigation }: Props) {
           }
         } finally {
           if (!cancelled) setLoading(false);
+          loadedAthleteIdRef.current = athleteId;
         }
       })();
       return () => { cancelled = true; };

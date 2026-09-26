@@ -14,14 +14,15 @@ export default function BranchSelectScreen({ navigation }: Props) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       listBranches()
         .then(setBranches)
         .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .finally(() => { setLoading(false); hasLoadedOnceRef.current = true; });
     }, [])
   );
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -67,12 +67,17 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
   const isStaff = role === "club_admin" || role === "coach";
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  // Bir teste bakıp geri dönünce tam ekran yeniden yüklenmesin diye —
+  // sadece bu sporcu için İLK kez yükleniyorsa döndürme gösteriliyor,
+  // sonraki odaklanmalarda liste yerinde kalıp arka planda tazeleniyor
+  // (bkz. AttendanceHistoryScreen'deki aynı düzeltme).
+  const loadedAthleteIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions({ title: `${athleteName} — Ölçümler` });
       let cancelled = false;
-      setLoading(true);
+      if (loadedAthleteIdRef.current !== athleteId) setLoading(true);
       (async () => {
         try {
           const measurements = await listAllMeasurementsForAthlete(athleteId);
@@ -93,6 +98,7 @@ export default function AthletePerformanceViewScreen({ route, navigation }: Prop
           if (!cancelled) setGroups(valid);
         } finally {
           if (!cancelled) setLoading(false);
+          loadedAthleteIdRef.current = athleteId;
         }
       })();
       return () => { cancelled = true; };

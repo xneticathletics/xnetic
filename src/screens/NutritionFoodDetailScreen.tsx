@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -29,14 +29,15 @@ export default function NutritionFoodDetailScreen({ route, navigation }: Props) 
   const [food, setFood] = useState<NutritionFood | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedFoodIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      if (loadedFoodIdRef.current !== foodId) setLoading(true);
       getNutritionFood(foodId)
         .then(setFood)
         .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .finally(() => { setLoading(false); loadedFoodIdRef.current = foodId; });
     }, [foodId])
   );
 
