@@ -1090,9 +1090,11 @@ export const MANUAL_ENTRIES: ManualEntry[] = [
       "geldi gelmedi işaretle",
       "hepsini geldi işaretle",
       "yoklamayı kaydet",
+      "yoklama geçmişi",
+      "geçmiş yoklamaları görme",
       "Yoklama nasıl alınır?"
     ],
-    "answer": "1. Ana Sayfa → \"Günün Programı\"na dokun; bugün antrenmanı olan gruplar listelenir.\n2. Grubu seç.\n3. Her sporcu için Geldi / Gelmedi / İzinli durumunu seç. Herkes geldiyse \"✓ Hepsini Geldi İşaretle\" işini hızlandırır.\n4. \"Yoklamayı Kaydet\"e dokun.\n5. Antrenman bitince \"Antrenmanı Tamamlandı Olarak İşaretle\"ye bas.\nYoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse \"Henüz zamanı değil\" uyarısı çıkar.\n\nGeçmiş bir antrenmanın yoklamasına bakmak için \"Günün Programı\" ekranındaki \"📅 Geçmiş Antrenmanlar\"a dokun; bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir (\"X geldi · Y gelmedi\" özetiyle, hiç alınmamışsa \"Yoklama alınmadı\" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler."
+    "answer": "1. Ana Sayfa → \"Günün Programı\"na dokun; bugün antrenmanı olan gruplar listelenir.\n2. Grubu seç.\n3. Her sporcu için Geldi / Gelmedi / İzinli durumunu seç. Herkes geldiyse \"✓ Hepsini Geldi İşaretle\" işini hızlandırır.\n4. \"Yoklamayı Kaydet\"e dokun.\n5. Antrenman bitince \"Antrenmanı Tamamlandı Olarak İşaretle\"ye bas.\nYoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse \"Henüz zamanı değil\" uyarısı çıkar.\n\nGeçmiş bir antrenmanın yoklamasına bakmak için \"📅 Geçmiş Antrenmanlar\"a dokun — bu, hem \"Günün Programı\" ekranında hem de Takvim ekranının üstünde \"🏆 Sonuçlar\"ın yanında \"📋 Yoklama Geçmişi\" adıyla bulunur. Bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir (\"X geldi · Y gelmedi\" özetiyle, hiç alınmamışsa \"Yoklama alınmadı\" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler."
   },
   {
     "id": "yoklama-zaman-penceresi",

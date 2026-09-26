@@ -482,6 +482,9 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
           <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("MatchResults")}>
             <Text style={styles.titleActionButtonText} numberOfLines={1}>🏆 Sonuçlar</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.titleActionButton} onPress={() => navigation.navigate("AttendanceHistory")}>
+            <Text style={styles.titleActionButtonText} numberOfLines={1}>📋 Yoklama Geçmişi</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.titleActionButton} onPress={handleCalendarSync} disabled={syncing}>
             {syncing ? (
               <ActivityIndicator color={colors.ink} size="small" />
@@ -737,9 +740,13 @@ export default function TrainingSessionsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm },
-  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
+  // "Yoklama Geçmişi" eklenince (3. düğme) satır dar telefonlarda hiçbir
+  // ekranda sığmıyordu (ölçüldü: gereken ~413dp, 360-412dp'lik telefonlarda
+  // mevcut ~312-364dp'den fazla) — flexWrap ile önce "Takvim" başlığının
+  // altına, gerekirse düğmeler kendi aralarında da 2. satıra sarıyor.
+  titleRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm, rowGap: spacing.xs },
   pageTitle: { color: colors.ink, fontSize: 22, fontWeight: "700" },
-  titleActionsRow: { flexDirection: "row", gap: spacing.xs },
+  titleActionsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: spacing.xs },
   titleActionButton: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.full,
     paddingHorizontal: spacing.sm, paddingVertical: 6,

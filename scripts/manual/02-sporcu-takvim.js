@@ -144,7 +144,7 @@ e("antrenman-sil", "takvim", "ACK", "Antrenmanı silme veya düzenleme",
   `Takvimde o günü açıp antrenmana dokunarak formunu aç; saat, salon, konu ve notları düzenleyip Kaydet'le. Tamamen kaldırmak için formdaki "Antrenmanı Sil"e dokun ya da takvimde (geçmiş) antrenmanı silme seçeneğini kullan. DİKKAT: Silinen antrenmanın yoklama ve fotoğraf kayıtları da silinir, geri alınamaz.`);
 
 e("yoklama-alma", "takvim", "ACK", "Yoklama alma (Günün Programı)",
-  ["yoklama al", "yoklama nasıl alınır", "günün programı", "sporcuları işaretle", "geldi gelmedi işaretle", "hepsini geldi işaretle", "yoklamayı kaydet"],
+  ["yoklama al", "yoklama nasıl alınır", "günün programı", "sporcuları işaretle", "geldi gelmedi işaretle", "hepsini geldi işaretle", "yoklamayı kaydet", "yoklama geçmişi", "geçmiş yoklamaları görme"],
   `1. Ana Sayfa → "Günün Programı"na dokun; bugün antrenmanı olan gruplar listelenir.
 2. Grubu seç.
 3. Her sporcu için Geldi / Gelmedi / İzinli durumunu seç. Herkes geldiyse "✓ Hepsini Geldi İşaretle" işini hızlandırır.
@@ -152,7 +152,7 @@ e("yoklama-alma", "takvim", "ACK", "Yoklama alma (Günün Programı)",
 5. Antrenman bitince "Antrenmanı Tamamlandı Olarak İşaretle"ye bas.
 Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar.
 
-Geçmiş bir antrenmanın yoklamasına bakmak için "Günün Programı" ekranındaki "📅 Geçmiş Antrenmanlar"a dokun; bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.`);
+Geçmiş bir antrenmanın yoklamasına bakmak için "📅 Geçmiş Antrenmanlar"a dokun — bu, hem "Günün Programı" ekranında hem de Takvim ekranının üstünde "🏆 Sonuçlar"ın yanında "📋 Yoklama Geçmişi" adıyla bulunur. Bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.`);
 
 e("yoklama-zaman-penceresi", "takvim", "ACK", "Yoklama neden açılmıyor / \"Henüz zamanı değil\"",
   ["yoklama açılmıyor", "henüz zamanı değil", "yoklama kapalı", "yoklama süresi", "yoklama penceresi", "yoklama zamanı geçti", "yoklama ekranı kilitli", "yoklama ekranı açılmıyor"],

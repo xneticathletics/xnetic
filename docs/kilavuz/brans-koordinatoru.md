@@ -294,7 +294,7 @@ Takvimde o günü açıp antrenmana dokunarak formunu aç; saat, salon, konu ve 
 5. Antrenman bitince "Antrenmanı Tamamlandı Olarak İşaretle"ye bas.
 Yoklama, antrenman başlamadan 15 dakika önce açılır ve başladıktan 15 dakika sonra kapanır (bu süreleri yönetici ayarlayabilir). Zamanı gelmediyse "Henüz zamanı değil" uyarısı çıkar.
 
-Geçmiş bir antrenmanın yoklamasına bakmak için "Günün Programı" ekranındaki "📅 Geçmiş Antrenmanlar"a dokun; bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.
+Geçmiş bir antrenmanın yoklamasına bakmak için "📅 Geçmiş Antrenmanlar"a dokun — bu, hem "Günün Programı" ekranında hem de Takvim ekranının üstünde "🏆 Sonuçlar"ın yanında "📋 Yoklama Geçmişi" adıyla bulunur. Bir grup seç, o grubun tüm geçmiş antrenmanları tarih tarih listelenir ("X geldi · Y gelmedi" özetiyle, hiç alınmamışsa "Yoklama alınmadı" yazar). Bir antrenmana dokununca yoklaması açılır — yönetici her zaman düzeltebilir, antrenör pencere kapandıysa sadece görüntüler.
 
 ### Yoklama neden açılmıyor / "Henüz zamanı değil"
 
