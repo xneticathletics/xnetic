@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal";
 import { getSessionRoster, saveAttendance, type AttendanceStatus, type RosterEntry } from "../../lib/api/attendance";
 import { listExcusesForSession, type SessionExcuse } from "../../lib/api/sessionExcuses";
-import type { TrainingSession } from "../../lib/api/trainingSessions";
+import { isAttendanceWindowOpen, isSessionPast, type TrainingSession } from "../../lib/api/trainingSessions";
+import { useClubSettings } from "../../context/ClubSettingsContext";
 
 export default function AttendanceModal({
   session,
@@ -23,6 +24,15 @@ export default function AttendanceModal({
   // deseni (savingRef) — senkron bir bayrak, render'ı beklemiyor.
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const { settings } = useClubSettings();
+  // Pencere dışında (admin dahil) kimse yazamıyor — geçmiş bir antrenman
+  // için salt önizleme (kullanıcı kararı, 2026-09-26; mobildeki
+  // AttendanceScreen'le aynı desen, sunucu tarafında can_write_attendance
+  // ile zaten zorunlu kılınıyor, burası kullanıcıya erken/anlaşılır uyarı).
+  const attendanceOpen = isAttendanceWindowOpen(
+    session, settings.attendance_window_before_minutes, settings.attendance_window_after_minutes
+  );
+  const sessionIsPast = isSessionPast(session);
 
   useEffect(() => {
     Promise.all([getSessionRoster(session.id, session.group_id), listExcusesForSession(session.id)])
@@ -47,7 +57,7 @@ export default function AttendanceModal({
   const markedCount = roster.filter((r) => r.status !== null).length;
 
   const handleSave = async () => {
-    if (savingRef.current) return;
+    if (savingRef.current || !attendanceOpen) return;
     const entries = roster.filter((r) => r.status !== null) as { athlete_id: string; status: AttendanceStatus }[];
     if (entries.length === 0) {
       setError("En az bir sporcu için durum seçmelisiniz.");
@@ -75,12 +85,20 @@ export default function AttendanceModal({
         <>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold text-muted">{markedCount}/{roster.length} işaretlendi</p>
-            {roster.length > 0 && (
+            {roster.length > 0 && attendanceOpen && (
               <button onClick={markAllPresent} className="text-xs font-bold text-teal hover:underline">
                 ✓ Hepsini Geldi İşaretle
               </button>
             )}
           </div>
+
+          {!attendanceOpen && (
+            <p className="mb-3 rounded-lg bg-yellow/15 p-2.5 text-xs text-yellow">
+              {sessionIsPast
+                ? "🔒 Bu antrenmanın yoklama penceresi kapandı — sadece önizleme, değiştirilemez."
+                : `⏱ Yoklama, antrenman başlamadan ${settings.attendance_window_before_minutes} dakika önce açılır, başladıktan ${settings.attendance_window_after_minutes} dakika sonra kapanır.`}
+            </p>
+          )}
 
           <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
             {roster.length === 0 && <p className="text-sm text-muted">Bu grupta aktif sporcu bulunamadı.</p>}
@@ -105,7 +123,8 @@ export default function AttendanceModal({
                 <div className="flex gap-1.5">
                   <button
                     onClick={() => setStatus(r.athlete_id, "geldi")}
-                    className={`rounded-md border px-3 py-1.5 text-xs font-bold ${
+                    disabled={!attendanceOpen}
+                    className={`rounded-md border px-3 py-1.5 text-xs font-bold disabled:opacity-40 ${
                       r.status === "geldi" ? "border-teal bg-teal text-bg" : "border-teal text-teal"
                     }`}
                   >
@@ -113,7 +132,8 @@ export default function AttendanceModal({
                   </button>
                   <button
                     onClick={() => setStatus(r.athlete_id, "gelmedi")}
-                    className={`rounded-md border px-3 py-1.5 text-xs font-bold ${
+                    disabled={!attendanceOpen}
+                    className={`rounded-md border px-3 py-1.5 text-xs font-bold disabled:opacity-40 ${
                       r.status === "gelmedi" ? "border-coral bg-coral text-bg" : "border-coral text-coral"
                     }`}
                   >
@@ -128,10 +148,10 @@ export default function AttendanceModal({
 
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || sessionIsPast}
             className="mt-3 w-full rounded-lg bg-yellow py-2.5 text-sm font-bold text-bg disabled:opacity-60"
           >
-            {saving ? "Kaydediliyor…" : "Yoklamayı Kaydet"}
+            {saving ? "Kaydediliyor…" : sessionIsPast ? "Sadece Önizleme" : "Yoklamayı Kaydet"}
           </button>
         </>
       )}

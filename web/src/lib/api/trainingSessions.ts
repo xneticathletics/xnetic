@@ -126,3 +126,41 @@ export async function deleteSession(id: string) {
   const { error } = await supabase.from("training_sessions").delete().eq("id", id);
   if (error) throw error;
 }
+
+// Mobildeki src/lib/api/trainingSessions.ts'teki aynı yardımcılar —
+// AttendanceModal'ın geçmiş bir antrenmanı salt-önizleme göstermesi için
+// (bkz. can_write_attendance RLS kuralı: pencere dışında admin dahil
+// kimse yazamıyor, 2026-09-26).
+type SessionTiming = Pick<TrainingSession, "session_date" | "start_time" | "end_time">;
+
+function toDateTime(dateStr: string, timeStr: string): Date {
+  return new Date(`${dateStr}T${timeStr}`);
+}
+
+// Bitiş saati başlangıçtan küçük/eşitse (ör. 23:30 - 00:00), antrenman
+// gece yarısını geçiyor demektir — bitiş, session_date'in ERTESİ günü
+// olarak hesaplanmalı.
+function toEndDateTime(session: SessionTiming): Date {
+  const end = toDateTime(session.session_date, session.end_time);
+  const start = toDateTime(session.session_date, session.start_time);
+  if (end <= start) end.setDate(end.getDate() + 1);
+  return end;
+}
+
+export function isAttendanceWindowOpen(
+  session: SessionTiming,
+  beforeMinutes: number = 15,
+  afterMinutes: number = 15
+): boolean {
+  const start = toDateTime(session.session_date, session.start_time);
+  const windowStart = new Date(start.getTime() - beforeMinutes * 60 * 1000);
+  const windowEnd = new Date(start.getTime() + afterMinutes * 60 * 1000);
+  const now = new Date();
+  return now >= windowStart && now <= windowEnd;
+}
+
+// Bir antrenmanın süresi tamamen geçmiş mi.
+export function isSessionPast(session: SessionTiming): boolean {
+  const end = toEndDateTime(session);
+  return new Date() > end;
+}
